@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,6 +16,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $products = Product::query()
+            ->with(['primaryImage', 'images'])
             ->orderByDesc('updated_at')
             ->get();
 
@@ -29,12 +32,41 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $data = $this->validateProduct($request);
         $data['slug'] = $this->ensureSlug($data['slug'] ?? null, $data['name_en']);
 
+        $imageData = $request->validate([
+            'images' => ['nullable', 'array', 'max:8'],
+            'images.*' => ['file', 'image', 'max:4096'],
+            'alt_en' => ['nullable', 'string', 'max:160'],
+            'alt_ka' => ['nullable', 'string', 'max:160'],
+        ]);
+
         $product = Product::create($data);
+
+        if (!empty($imageData['images'])) {
+            foreach ($imageData['images'] as $index => $upload) {
+                $path = $upload->store('images/products', 'public');
+
+                $product->images()->create([
+                    'path' => 'storage/' . $path,
+                    'alt_en' => $imageData['alt_en'] ?? null,
+                    'alt_ka' => $imageData['alt_ka'] ?? null,
+                    'sort_order' => $product->images()->count() + $index,
+                    'is_primary' => $product->images()->count() === 0 && $index === 0,
+                ]);
+            }
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Product created.',
+                'redirect' => route('admin.products.edit', $product),
+                'product_id' => $product->id,
+            ]);
+        }
 
         return redirect()->route('admin.products.edit', $product)
             ->with('status', 'Product created.');
@@ -42,19 +74,26 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
-        $product->load('images');
+        $product->load(['images', 'variants']);
 
         return view('admin.products.edit', [
             'product' => $product,
         ]);
     }
 
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(Request $request, Product $product): RedirectResponse|JsonResponse
     {
         $data = $this->validateProduct($request, $product->id);
         $data['slug'] = $this->ensureSlug($data['slug'] ?? null, $data['name_en'], $product->id);
 
         $product->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Product updated.',
+                'product_id' => $product->id,
+            ]);
+        }
 
         return redirect()->route('admin.products.edit', $product)
             ->with('status', 'Product updated.');
@@ -68,6 +107,52 @@ class ProductController extends Controller
             ->with('status', 'Product deleted.');
     }
 
+    public function storeVariant(Request $request, Product $product): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:160'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $data['product_id'] = $product->id;
+
+        $variant = ProductVariant::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Variant added successfully.',
+            'variant' => $variant,
+        ]);
+    }
+
+    public function updateVariant(Request $request, ProductVariant $variant): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:160'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $variant->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Variant updated successfully.',
+            'variant' => $variant,
+        ]);
+    }
+
+    public function deleteVariant(ProductVariant $variant): JsonResponse
+    {
+        $variant->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Variant deleted successfully.',
+        ]);
+    }
+
     private function validateProduct(Request $request, ?int $productId = null): array
     {
         $data = $request->validate([
@@ -79,6 +164,7 @@ class ProductController extends Controller
             'description_en' => ['nullable', 'string'],
             'description_ka' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0'],
+            'sale_price' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'max:3'],
             'sim_support' => ['nullable', 'boolean'],
             'gps_features' => ['nullable', 'boolean'],

@@ -1,48 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin')</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ asset('assets/vendors/core/core.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/feather-font/css/iconfont.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendors/flag-icon-css/css/flag-icon.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/demo1/style.css') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.png') }}" />
+
+    @stack('styles')
 </head>
-<body class="bg-gray-50 text-gray-900">
-    <div class="min-h-screen">
-        <!-- Admin Header -->
-        <header class="border-b border-gray-200 bg-white">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-                <div class="flex items-center gap-3">
-                    <span class="font-bold text-lg">Admin Panel</span>
+<body>
+    <div class="main-wrapper">
+        @auth
+            @include('admin.partials.sidebar')
+            <div class="page-wrapper">
+                @include('admin.partials.navbar')
+                <div class="page-content">
+                    @include('admin.partials.alerts')
+                    @yield('content')
                 </div>
-                @auth
-                    <form method="POST" action="{{ route('admin.logout') }}">
-                        @csrf
-                        <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-blue-600">Logout</button>
-                    </form>
-                @endauth
+                @include('admin.partials.footer')
             </div>
-        </header>
-
-        <!-- Admin Content -->
-        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-            @if (session('status'))
-                <div class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700">
-                    {{ session('status') }}
+        @else
+            <div class="page-wrapper full-page">
+                <div class="page-content d-flex align-items-center justify-content-center">
+                    <div class="w-100">
+                        @include('admin.partials.alerts')
+                        @yield('content')
+                    </div>
                 </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
-                    <ul class="list-inside text-sm text-red-700">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @yield('content')
-        </main>
+            </div>
+        @endauth
     </div>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+        <div id="async-toast" class="toast align-items-center bg-dark text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 280px;">
+            <div class="d-flex">
+                <div class="toast-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ asset('assets/vendors/core/core.js') }}"></script>
+    <script src="{{ asset('assets/vendors/feather-icons/feather.min.js') }}"></script>
+    <script src="{{ asset('assets/js/template.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

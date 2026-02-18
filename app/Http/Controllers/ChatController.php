@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\Chatbot\RagContextBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
-    public function respond(Request $request): JsonResponse
+    public function respond(Request $request, RagContextBuilder $ragBuilder): JsonResponse
     {
         $request->validate([
             'message' => ['required', 'string', 'max:1000'],
@@ -26,42 +27,54 @@ class ChatController extends Controller
             ], 503);
         }
 
-        $products = Product::active()
-            ->with('primaryImage')
-            ->orderByDesc('updated_at')
-            ->take(6)
-            ->get();
-
-        $productLines = $products->map(function (Product $product): string {
-            $price = $product->sale_price
-                ? $product->sale_price . ' (ფასდაკლება, ძველი ფასი ' . $product->price . ')'
-                : (string) $product->price;
-
-            $imagePath = $product->primaryImage?->path
-                ? url('storage/' . $product->primaryImage->path)
-                : null;
-
-            $imagePart = $imagePath ? ' | image: ' . $imagePath : '';
-
-            return '- ' . $product->name . ' | slug: ' . $product->slug . ' | price: ' . $price . $imagePart;
-        })->implode("\n");
-
         $systemPrompt = implode("\n", [
-            'You are the KidSIM Watch assistant.',
-            'Reply in Georgian only.',
-            'Be concise and helpful.',
-            'If you are unsure, suggest contacting the team via the contact page.',
-            'Use the provided product list when relevant.',
+            'ROLE: You are the KidSIM Watch assistant.',
+            'LANGUAGE: Reply only in fluent Georgian.',
+            'TONE: Friendly, warm, and helpful.',
+            'STYLE: Short paragraphs; avoid slang; be clear and practical.',
+            'FACTS: Use the provided context when possible. If unsure, suggest contacting the team.',
+            'PRODUCTS: When recommending, mention name, key features, and price if available.',
+            'LINKS: Share product or contact links when helpful.',
         ]);
 
-        $context = implode("\n", [
+        $ragContext = $ragBuilder->build($request->input('message'));
+
+        $contextSections = [
             'Site links:',
             '- Home: ' . route('home'),
             '- Catalog: ' . route('products.index'),
             '- Contact: ' . route('contact'),
-            'Products:',
-            $productLines !== '' ? $productLines : 'No products available.',
-        ]);
+        ];
+
+        if ($ragContext) {
+            $contextSections[] = 'Knowledge base:';
+            $contextSections[] = $ragContext;
+        } else {
+            $products = Product::active()
+                ->with('primaryImage')
+                ->orderByDesc('updated_at')
+                ->take(6)
+                ->get();
+
+            $productLines = $products->map(function (Product $product): string {
+                $price = $product->sale_price
+                    ? $product->sale_price . ' (ფასდაკლება, ძველი ფასი ' . $product->price . ')'
+                    : (string) $product->price;
+
+                $imagePath = $product->primaryImage?->path
+                    ? url('storage/' . $product->primaryImage->path)
+                    : null;
+
+                $imagePart = $imagePath ? ' | image: ' . $imagePath : '';
+
+                return '- ' . $product->name . ' | slug: ' . $product->slug . ' | price: ' . $price . $imagePart;
+            })->implode("\n");
+
+            $contextSections[] = 'Products:';
+            $contextSections[] = $productLines !== '' ? $productLines : 'No products available.';
+        }
+
+        $context = implode("\n", $contextSections);
 
         $payload = [
             'model' => $model,
