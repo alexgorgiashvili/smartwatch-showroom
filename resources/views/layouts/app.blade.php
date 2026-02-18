@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'KidSIM Watch')</title>
     <meta name="description" content="@yield('meta_description', '')">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -142,6 +143,37 @@
     <footer>
         @include('components.footer')
     </footer>
+
+    <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}">
+      <button type="button" class="chatbot-fab" data-chatbot-toggle aria-expanded="false" aria-controls="chatbot-panel">
+        <span class="chatbot-fab-icon">🤖</span>
+        <span class="chatbot-fab-text">დახმარება</span>
+      </button>
+
+      <section id="chatbot-panel" class="chatbot-panel" aria-live="polite" aria-hidden="true">
+        <header class="chatbot-header">
+          <div>
+            <p class="chatbot-title">KidSIM Assistant</p>
+            <p class="chatbot-subtitle">ონლაინ დახმარება</p>
+          </div>
+          <button type="button" class="chatbot-close" data-chatbot-close aria-label="დახურვა">✕</button>
+        </header>
+
+        <div class="chatbot-messages" data-chatbot-messages></div>
+
+        <form class="chatbot-form" data-chatbot-form>
+          <input
+            type="text"
+            name="message"
+            class="chatbot-input"
+            placeholder="კითხვა მოგვწერე..."
+            autocomplete="off"
+            required
+          />
+          <button type="submit" class="chatbot-send">გაგზავნა</button>
+        </form>
+      </section>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
     <script>

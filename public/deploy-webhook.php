@@ -1,10 +1,10 @@
 <?php
 /**
  * GitHub Webhook Auto-Deploy Handler
- * 
+ *
  * This script receives GitHub webhook notifications and automatically
  * deploys the latest changes to the production server.
- * 
+ *
  * Setup Instructions:
  * 1. Generate a secure secret token (e.g., using: openssl rand -hex 32)
  * 2. Add the secret to GitHub repo: Settings → Webhooks → Add webhook
@@ -48,15 +48,15 @@ define('DEPLOYMENT_ENABLED', true);
 function logMessage($message, $level = 'INFO') {
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[{$timestamp}] [{$level}] {$message}" . PHP_EOL;
-    
+
     // Ensure log directory exists
     $logDir = dirname(LOG_FILE);
     if (!is_dir($logDir)) {
         mkdir($logDir, 0755, true);
     }
-    
+
     file_put_contents(LOG_FILE, $logEntry, FILE_APPEND | LOCK_EX);
-    
+
     // Also output for webhook response
     echo $logEntry;
 }
@@ -68,15 +68,15 @@ function verifyGitHubSignature($payload, $signature) {
     if (empty($signature)) {
         return false;
     }
-    
+
     list($algo, $hash) = explode('=', $signature, 2) + ['', ''];
-    
+
     if (empty($hash)) {
         return false;
     }
-    
+
     $expectedHash = hash_hmac($algo, $payload, WEBHOOK_SECRET);
-    
+
     return hash_equals($expectedHash, $hash);
 }
 
@@ -85,33 +85,33 @@ function verifyGitHubSignature($payload, $signature) {
  */
 function executeDeploy() {
     logMessage('Starting deployment process...');
-    
+
     if (!file_exists(DEPLOY_SCRIPT)) {
         logMessage('ERROR: Deploy script not found at ' . DEPLOY_SCRIPT, 'ERROR');
         http_response_code(500);
         die('Deploy script not found');
     }
-    
+
     if (!is_executable(DEPLOY_SCRIPT)) {
         logMessage('ERROR: Deploy script is not executable. Run: chmod +x ' . DEPLOY_SCRIPT, 'ERROR');
         http_response_code(500);
         die('Deploy script is not executable');
     }
-    
+
     // Change to project root directory
     $projectRoot = dirname(__DIR__);
     chdir($projectRoot);
-    
+
     // Execute deployment script
     $output = [];
     $returnCode = 0;
     exec(DEPLOY_SCRIPT . ' 2>&1', $output, $returnCode);
-    
+
     // Log output
     foreach ($output as $line) {
         logMessage($line, 'DEPLOY');
     }
-    
+
     if ($returnCode === 0) {
         logMessage('✓ Deployment completed successfully', 'SUCCESS');
         return true;

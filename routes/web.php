@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImageController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\ProductController;
@@ -28,6 +29,9 @@ Route::get('/privacy', fn () => view('pages.privacy'))->name('privacy');
 Route::get('/terms', fn () => view('pages.terms'))->name('terms');
 Route::get('/lang/{locale}', [HomeController::class, 'locale'])->name('locale');
 Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
+Route::post('/chatbot', [ChatController::class, 'respond'])
+	->name('chatbot.respond')
+	->middleware('throttle:30,1');
 
 Route::prefix('admin')->name('admin.')->group(function () {
 	Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
