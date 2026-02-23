@@ -197,6 +197,102 @@
         </div>
     </div>
 
+    <!-- Payment Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted mb-2">Completed Payments</p>
+                            <h4 class="mb-0 text-success">{{ $completedPayments }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted mb-2">Pending Payments</p>
+                            <h4 class="mb-0 text-warning">{{ $pendingPayments }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-hourglass-split text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted mb-2">Rejected Payments</p>
+                            <h4 class="mb-0 text-danger">{{ $rejectedPayments }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-x-circle text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Quality Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Chatbot Quality (Today)</h5>
+                    <small class="text-muted">{{ $chatbotQualityToday['date'] ?? now()->toDateString() }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1">Fallback Rate</p>
+                                <h4 class="mb-0 text-warning">{{ number_format($chatbotQualityToday['rates']['fallback_rate'] ?? 0, 2) }}%</h4>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1">Non-Georgian Rate</p>
+                                <h4 class="mb-0 text-danger">{{ number_format($chatbotQualityToday['rates']['non_georgian_rate'] ?? 0, 2) }}%</h4>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1">Auto-Reply Accept Rate</p>
+                                <h4 class="mb-0 text-success">{{ number_format($chatbotQualityToday['rates']['auto_reply_accept_rate'] ?? 0, 2) }}%</h4>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1">Total Responses</p>
+                                <h4 class="mb-0">{{ $chatbotQualityToday['counts']['response_total'] ?? 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-muted small">
+                        Auto decisions: {{ $chatbotQualityToday['counts']['auto_reply_decision_total'] ?? 0 }} |
+                        Accepted: {{ $chatbotQualityToday['counts']['auto_reply_accepted_total'] ?? 0 }} |
+                        Rejected: {{ $chatbotQualityToday['counts']['auto_reply_rejected_total'] ?? 0 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Inquiries and Stock Section -->
     <div class="row">
         <div class="col-lg-8 mb-4">

@@ -155,79 +155,112 @@
                         </div>
                     </div>
                 @else
-                    <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <ul class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
                         @foreach ($products as $product)
                             @php
                                 $image = $product->primaryImage ?? $product->images->first();
+                                $secondaryImage = $product->images->skip(1)->first();
                                 $imageUrl = $image?->url ?: asset('storage/images/home/smart-watch3.jpg');
+                                $secondaryImageUrl = $secondaryImage?->url;
                                 $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
                                 $basePrice = $product->price;
                                 $salePrice = $product->sale_price ?? null;
                                 $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
                                 $discountPercent = $hasDiscount ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : null;
+                                $isNewArrival = $product->created_at && $product->created_at->greaterThan(now()->subDays(30));
+
+                                $featureBadges = [];
+                                if ($product->sim_support) {
+                                    $featureBadges[] = 'SIM Support';
+                                }
+                                if ($product->gps_features) {
+                                    $featureBadges[] = 'GPS';
+                                }
+                                if ($product->water_resistant) {
+                                    $featureBadges[] = $product->water_resistant;
+                                }
+                                if ($product->battery_capacity_mah) {
+                                    $featureBadges[] = $product->battery_capacity_mah . 'mAh';
+                                }
+                                if ($product->display_type) {
+                                    $featureBadges[] = $product->display_type;
+                                }
+                                $featureBadges = array_slice($featureBadges, 0, 2);
                             @endphp
                             <li>
-                                <a href="{{ route('products.show', $product) }}" class="group block overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm transition hover:shadow-lg">
-                                    <div class="relative">
-                                        @if ($hasDiscount)
-                                            <span class="absolute right-3 top-3 z-10 rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
-                                                -{{ $discountPercent }}%
-                                            </span>
-                                        @endif
-                                        @if ($product->featured)
-                                            <span class="absolute left-3 top-3 z-10 rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
-                                                <i class="fa-solid fa-star"></i>
-                                            </span>
-                                        @endif
+                                <div class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_28px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
+                                    <a href="{{ route('products.show', $product) }}" class="block">
+                                    <div class="relative isolate overflow-hidden">
+                                        <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-2 sm:p-3">
+                                            <div class="flex flex-wrap gap-1.5">
+                                                @if ($product->featured)
+                                                    <span class="inline-flex items-center rounded-full border border-white/30 bg-slate-900/80 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-white">
+                                                        Featured
+                                                    </span>
+                                                @elseif ($isNewArrival)
+                                                    <span class="inline-flex items-center rounded-full border border-white/30 bg-white/85 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-900">
+                                                        New Arrival
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <div>
+                                                @if ($hasDiscount)
+                                                    <span class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50/95 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700">
+                                                        -{{ $discountPercent }}%
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+
                                         <img
                                             src="{{ $imageUrl }}"
                                             alt="{{ $image?->alt ?: $product->name }}"
-                                            class="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
+                                            class="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.06] {{ $secondaryImageUrl ? 'group-hover:opacity-0' : '' }}"
                                         />
+
+                                        @if ($secondaryImageUrl)
+                                            <img
+                                                src="{{ $secondaryImageUrl }}"
+                                                alt="{{ $secondaryImage?->alt ?: $product->name }}"
+                                                class="absolute inset-0 h-44 w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100"
+                                            />
+                                        @endif
+
+                                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/10 to-transparent"></div>
                                     </div>
 
-                                    <div class="p-4">
-                                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-blue-600">
+                                    <div class="space-y-3 p-3 sm:p-4">
+                                        <h3 class="line-clamp-2 text-sm font-semibold tracking-tight text-slate-900 sm:text-base [font-family:'Space_Grotesk',system-ui,sans-serif] group-hover:text-slate-700">
                                             {{ $product->name }}
                                         </h3>
 
                                         @if ($product->short_description)
-                                            <p class="mt-2 text-sm text-gray-500 line-clamp-2">{{ $product->short_description }}</p>
+                                            <p class="line-clamp-2 text-xs text-slate-500 sm:text-sm">{{ $product->short_description }}</p>
                                         @endif
 
-                                        <div class="mt-3 flex items-center gap-4 text-xs text-gray-500">
-                                            @if ($product->sim_support)
-                                                <span class="flex items-center gap-1">
-                                                    <i class="fa-solid fa-sim-card text-blue-600"></i>
-                                                    <span>SIM</span>
-                                                </span>
-                                            @endif
-                                            @if ($product->gps_features)
-                                                <span class="flex items-center gap-1">
-                                                    <i class="fa-solid fa-location-dot text-green-600"></i>
-                                                    <span>GPS</span>
-                                                </span>
-                                            @endif
-                                            @if ($product->warranty_months)
-                                                <span class="flex items-center gap-1">
-                                                    <i class="fa-solid fa-shield text-purple-600"></i>
-                                                    <span>{{ $product->warranty_months }} {{ __('ui.months') }}</span>
-                                                </span>
-                                            @endif
-                                        </div>
+                                        @if (!empty($featureBadges))
+                                            <div class="flex flex-wrap gap-1.5">
+                                                @foreach ($featureBadges as $badge)
+                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-600 sm:text-[11px]">
+                                                        {{ $badge }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
 
-                                        <div class="mt-4 border-t border-gray-100 pt-4">
+                                        <div class="border-t border-slate-100 pt-3">
                                             @if ($hasDiscount)
-                                                <div class="flex items-center gap-2">
-                                                    <p class="text-xl font-bold text-blue-600">
+                                                <div class="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                                                    <p class="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl [font-family:'Space_Grotesk',system-ui,sans-serif]">
                                                         {{ number_format($salePrice, 2) }} {{ $currency }}
                                                     </p>
-                                                    <p class="text-sm text-gray-400 line-through">
+                                                    <p class="text-xs text-slate-400 line-through sm:text-sm">
                                                         {{ number_format($basePrice, 2) }} {{ $currency }}
                                                     </p>
                                                 </div>
                                             @else
-                                                <p class="text-xl font-bold text-blue-600">
+                                                <p class="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl [font-family:'Space_Grotesk',system-ui,sans-serif]">
                                                     @if ($basePrice)
                                                         {{ number_format($basePrice, 2) }} {{ $currency }}
                                                     @else
@@ -237,7 +270,26 @@
                                             @endif
                                         </div>
                                     </div>
-                                </a>
+                                    </a>
+                                    @php $firstInStock = $product->variants->firstWhere('quantity', '>', 0); @endphp
+                                    <div class="px-3 pb-3 sm:px-4 sm:pb-4">
+                                        @if($firstInStock)
+                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form>
+                                                @csrf
+                                                <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-primary-600">
+                                                    <i class="fa-solid fa-cart-shopping text-[10px]"></i>
+                                                    {{ app()->getLocale() === 'ka' ? 'კალათაში' : 'Add to Cart' }}
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400">
+                                                {{ app()->getLocale() === 'ka' ? 'მარაგი ამოიწურა' : 'Out of Stock' }}
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
                             </li>
                         @endforeach
                     </ul>

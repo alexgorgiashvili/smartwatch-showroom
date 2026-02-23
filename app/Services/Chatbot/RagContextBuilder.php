@@ -16,7 +16,8 @@ class RagContextBuilder
 
     public function __construct(
         private EmbeddingService $embedding,
-        private PineconeService $pinecone
+        private PineconeService $pinecone,
+        private UnifiedAiPolicyService $policy
     ) {
     }
 
@@ -27,7 +28,8 @@ class RagContextBuilder
         }
 
         try {
-            $vector = $this->embedding->embed($question);
+            $normalizedQuestion = $this->policy->normalizeIncomingMessage($question);
+            $vector = $this->embedding->embed($normalizedQuestion !== '' ? $normalizedQuestion : $question);
 
             if ($vector === []) {
                 return null;

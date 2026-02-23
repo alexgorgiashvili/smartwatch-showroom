@@ -45,6 +45,12 @@ class ProductImage extends Model
             return $this->path;
         }
 
-        return asset($this->path);
+        $normalizedPath = ltrim($this->path ?? '', '/');
+
+        if (str_starts_with($normalizedPath, 'storage/')) {
+            return asset($normalizedPath);
+        }
+
+        return asset('storage/' . $normalizedPath);
     }
 }

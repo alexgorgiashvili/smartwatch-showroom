@@ -2,353 +2,452 @@
 
 @section('title', isset($product) ? $product->name : 'Product')
 
-@section('header')
-    <!-- Header component -->
-@endsection
-
 @section('content')
-    <section class="bg-white">
-        <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
-            <!-- Breadcrumbs -->
-            <nav class="mb-8 flex" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="{{ route('home') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="fa-solid fa-house mr-2"></i>
-                            {{ __('ui.nav_home') }}
+    @php
+        $basePrice = $product->price;
+        $salePrice = $product->sale_price ?? null;
+        $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
+        $discountPercent = $hasDiscount ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : null;
+        $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
+        $defaultVariant = $product->variants->first(fn ($variant) => $variant->quantity > 0) ?? $product->variants->first();
+        $colorVariants = $product->variants
+            ->filter(fn ($variant) => filled($variant->color_name) && filled($variant->color_hex))
+            ->unique(fn ($variant) => strtoupper($variant->color_hex) . '|' . mb_strtolower($variant->color_name))
+            ->values();
+        $defaultColor = $colorVariants->first();
+    @endphp
+
+    <section class="bg-gray-50 py-8 sm:py-10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <nav class="mb-6 flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center gap-1 text-sm text-gray-500">
+                    <li>
+                        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 hover:text-primary-600">
+                            <i class="fa-solid fa-house text-xs"></i>{{ __('ui.nav_home') }}
                         </a>
                     </li>
+                    <li><i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i></li>
                     <li>
-                        <div class="flex items-center">
-                            <svg class="mx-1 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <a href="{{ route('products.index') }}" class="text-sm font-medium text-gray-700 hover:text-blue-600">
-                                {{ __('ui.nav_catalog') }}
-                            </a>
-                        </div>
+                        <a href="{{ route('products.index') }}" class="hover:text-primary-600">{{ __('ui.nav_catalog') }}</a>
                     </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg class="mx-1 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <span class="text-sm font-medium text-gray-500">{{ $product->name }}</span>
-                        </div>
-                    </li>
+                    <li><i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i></li>
+                    <li class="truncate text-gray-700">{{ $product->name }}</li>
                 </ol>
             </nav>
 
-            <!-- Product Grid: Image Gallery + Details -->
-            <div class="grid gap-8 md:grid-cols-2">
-                <!-- Image Gallery with Splide Carousel -->
-                <div>
+            <div class="grid gap-6 lg:grid-cols-12 lg:gap-8">
+                <div class="lg:col-span-7">
                     @if ($product->images->isNotEmpty())
-                        <div id="product-splide" class="splide" aria-label="Product images">
-                            <div class="splide__track">
-                                <ul class="splide__list">
-                                    @foreach ($product->images as $image)
-                                        <li class="splide__slide">
-                                            <img
-                                                src="{{ $image->url }}"
-                                                alt="{{ $image->alt }}"
-                                                class="h-96 w-full rounded-lg object-cover shadow-md"
-                                            />
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                            <div class="splide__progress mt-2">
-                                <div class="splide__progress__bar h-1 bg-blue-600"></div>
+                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div id="product-splide" class="splide" aria-label="Product images">
+                                <div class="splide__track">
+                                    <ul class="splide__list">
+                                        @foreach ($product->images as $image)
+                                            <li class="splide__slide">
+                                                <img src="{{ $image->url }}" alt="{{ $image->alt ?: $product->name }}" class="h-[340px] w-full object-cover sm:h-[460px]" />
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     @else
-                        <div class="flex h-96 w-full items-center justify-center rounded-lg bg-gray-100">
-                            <div class="text-center text-gray-600">
-                                <i class="fa-solid fa-image text-4xl mb-2"></i>
+                        <div class="flex h-[340px] w-full items-center justify-center rounded-2xl border border-slate-200 bg-white sm:h-[460px]">
+                            <div class="text-center text-gray-500">
+                                <i class="fa-solid fa-image mb-2 text-4xl"></i>
                                 <p class="text-sm">{{ __('ui.no_image') }}</p>
                             </div>
                         </div>
                     @endif
                 </div>
 
-                <!-- Product Details -->
-                <div>
-                    <!-- Featured Badge -->
-                    @if ($product->featured)
-                        <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2">
-                            <i class="fa-solid fa-star text-blue-600"></i>
-                            <span class="text-sm font-medium text-blue-600">{{ __('ui.sort_featured') }}</span>
+                <div class="lg:col-span-5">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-24">
+                        @if ($product->featured)
+                            <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-600">
+                                <i class="fa-solid fa-star"></i>{{ __('ui.sort_featured') }}
+                            </div>
+                        @endif
+
+                        <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">{{ $product->name }}</h1>
+
+                        @if ($product->short_description)
+                            <p class="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">{{ $product->short_description }}</p>
+                        @endif
+
+                        <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="mb-1 text-xs uppercase tracking-wide text-gray-500">{{ __('ui.product_price') }}</p>
+                            @if ($hasDiscount)
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-3xl font-extrabold tracking-tight text-primary-600 [font-family:'Space_Grotesk',system-ui,sans-serif]">{{ number_format($salePrice, 2) }} {{ $currency }}</span>
+                                    <span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">-{{ $discountPercent }}%</span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-400 line-through">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
+                            @elseif ($basePrice)
+                                <p class="text-3xl font-extrabold tracking-tight text-gray-900 [font-family:'Space_Grotesk',system-ui,sans-serif]">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
+                            @else
+                                <p class="text-lg font-semibold text-gray-700">{{ __('ui.price_on_request') }}</p>
+                            @endif
                         </div>
-                    @endif
 
-                    <!-- Product Name -->
-                    <h1 class="mb-2 text-4xl font-bold text-gray-900">{{ $product->name }}</h1>
-
-                    <!-- Short Description -->
-                    @if ($product->short_description)
-                        <p class="mb-6 text-lg text-gray-600">{{ $product->short_description }}</p>
-                    @endif
-
-                    <!-- Price Section -->
-                    <div class="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-6">
-                        @php
-                            $basePrice = $product->price;
-                            $salePrice = $product->sale_price ?? null;
-                            $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
-                            $discountPercent = $hasDiscount ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : null;
-                            $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
-                        @endphp
-
-                        @if ($hasDiscount)
-                            <div class="flex items-center gap-4">
-                                <div>
-                                    <p class="text-sm text-gray-600">{{ __('ui.product_price') }}</p>
-                                    <p class="text-4xl font-bold text-blue-600">
-                                        {{ number_format($salePrice, 2) }} {{ $currency }}
-                                    </p>
+                        <div class="mt-5 grid grid-cols-2 gap-2.5">
+                            @if ($product->sim_support)
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">SIM</p>
+                                    <p>{{ __('ui.yes') }}</p>
                                 </div>
-                                <div class="rounded-lg bg-orange-100 px-4 py-2 text-center">
-                                    <p class="text-2xl font-bold text-orange-600">-{{ $discountPercent }}%</p>
-                                    <p class="text-xs text-orange-700 line-through">
-                                        {{ number_format($basePrice, 2) }}
-                                    </p>
+                            @endif
+                            @if ($product->gps_features)
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">GPS</p>
+                                    <p>{{ __('ui.yes') }}</p>
                                 </div>
-                            </div>
-                        @elseif ($basePrice)
-                            <p class="text-sm text-gray-600 mb-2">{{ __('ui.product_price') }}</p>
-                            <p class="text-4xl font-bold text-blue-600">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
-                        @else
-                            <p class="text-lg font-semibold text-gray-700">{{ __('ui.price_on_request') }}</p>
-                        @endif
-                    </div>
-
-                    <!-- Quick Specs -->
-                    <div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        @if ($product->sim_support)
-                            <div class="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                <i class="fa-solid fa-sim-card text-xl text-blue-600"></i>
-                                <div>
-                                    <p class="text-xs text-gray-600">SIM</p>
-                                    <p class="font-semibold text-gray-900">{{ __('ui.yes') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($product->gps_features)
-                            <div class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
-                                <i class="fa-solid fa-location-dot text-xl text-green-600"></i>
-                                <div>
-                                    <p class="text-xs text-gray-600">GPS</p>
-                                    <p class="font-semibold text-gray-900">{{ __('ui.yes') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($product->water_resistant)
-                            <div class="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 p-3">
-                                <i class="fa-solid fa-droplet text-xl text-purple-600"></i>
-                                <div>
-                                    <p class="text-xs text-gray-600">{{ __('ui.product_water') }}</p>
-                                    <p class="font-semibold text-gray-900">{{ __('ui.yes') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($product->battery_life_hours)
-                            <div class="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-                                <i class="fa-solid fa-battery-three-quarters text-xl text-yellow-600"></i>
-                                <div>
-                                    <p class="text-xs text-gray-600">{{ __('ui.product_battery') }}</p>
-                                    <p class="font-semibold text-gray-900">{{ $product->battery_life_hours }}h</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Inquiry Form CTA Button -->
-                    <button
-                        type="button"
-                        onclick="document.getElementById('inquiry-form-section').scrollIntoView({ behavior: 'smooth' })"
-                        class="w-full rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 text-lg font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <i class="fa-solid fa-message mr-2"></i>
-                        {{ __('ui.form_submit') }}
-                    </button>
-                </div>
-            </div>
-
-            <!-- Full Specifications Table -->
-            <div class="mt-12 rounded-lg border border-gray-200 bg-white p-6">
-                <h2 class="mb-6 text-2xl font-bold text-gray-900">{{ __('ui.product_specs') }}</h2>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <tbody>
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900">{{ __('ui.product_sim') }}</td>
-                                <td class="px-4 py-3 text-gray-700">
-                                    {{ $product->sim_support ? __('ui.yes') : __('ui.no') }}
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900">{{ __('ui.product_gps') }}</td>
-                                <td class="px-4 py-3 text-gray-700">
-                                    {{ $product->gps_features ? __('ui.yes') : __('ui.no') }}
-                                </td>
-                            </tr>
+                            @endif
                             @if ($product->water_resistant)
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-semibold text-gray-900">{{ __('ui.product_water') }}</td>
-                                    <td class="px-4 py-3 text-gray-700">✓ {{ __('ui.yes') }}</td>
-                                </tr>
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">{{ __('ui.product_water') }}</p>
+                                    <p>{{ __('ui.yes') }}</p>
+                                </div>
                             @endif
                             @if ($product->battery_life_hours)
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
-                                    <td class="px-4 py-3 text-gray-700">{{ $product->battery_life_hours }} {{ __('ui.hours') }}</td>
-                                </tr>
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">{{ __('ui.product_battery') }}</p>
+                                    <p>{{ $product->battery_life_hours }} {{ __('ui.hours') }}</p>
+                                </div>
                             @endif
-                            @if ($product->warranty_months)
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-semibold text-gray-900">{{ __('ui.product_warranty') }}</td>
-                                    <td class="px-4 py-3 text-gray-700">{{ $product->warranty_months }} {{ __('ui.months') }}</td>
-                                </tr>
+                            @if ($product->screen_size)
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">Screen</p>
+                                    <p>{{ $product->screen_size }}</p>
+                                </div>
                             @endif
-                        </tbody>
-                    </table>
+                            @if ($product->display_type)
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">Display</p>
+                                    <p>{{ $product->display_type }}</p>
+                                </div>
+                            @endif
+                            @if ($product->battery_capacity_mah)
+                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
+                                    <p class="font-semibold text-gray-900">Battery Capacity</p>
+                                    <p>{{ $product->battery_capacity_mah }} mAh</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        @if($colorVariants->isNotEmpty())
+                            <div class="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ app()->getLocale() === 'ka' ? 'ფერი' : 'Color' }}</p>
+                                <p id="selected-color-label" class="mt-1 text-sm font-semibold text-gray-900">
+                                    {{ app()->getLocale() === 'ka' ? 'არჩეული' : 'Selected' }}: {{ $defaultColor->color_name }}
+                                </p>
+                                <div class="mt-3 flex flex-wrap items-center gap-2.5">
+                                    @foreach($colorVariants as $index => $variantColor)
+                                        <button
+                                            type="button"
+                                            class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $index === 0 ? 'ring-2 ring-primary-500 ring-offset-2' : '' }}"
+                                            style="background-color: {{ $variantColor->color_hex }};"
+                                            title="{{ $variantColor->color_name }}"
+                                            data-color-name="{{ $variantColor->color_name }}"
+                                            data-color-hex="{{ strtoupper($variantColor->color_hex) }}"
+                                            data-variant-id="{{ $variantColor->id }}"
+                                            data-stock="{{ (int) $variantColor->quantity }}"
+                                            aria-label="{{ $variantColor->color_name }}"
+                                        ></button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="mt-6 space-y-2.5">
+                            @if(session('cart_error'))
+                                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                                    {{ session('cart_error') }}
+                                </div>
+                            @endif
+
+                            @if($defaultVariant)
+                                <form method="POST" action="{{ route('cart.add') }}" id="add-to-cart-form" data-cart-form class="space-y-2">
+                                    @csrf
+                                    <input type="hidden" name="variant_id" id="selected-variant-id" value="{{ $defaultVariant->id }}">
+
+                                    <div class="flex items-center gap-2">
+                                        <label for="cart-quantity" class="text-sm font-semibold text-gray-700">რაოდენობა</label>
+                                        <input
+                                            id="cart-quantity"
+                                            type="number"
+                                            name="quantity"
+                                            min="1"
+                                            max="{{ max(1, min(10, (int) $defaultVariant->quantity)) }}"
+                                            value="1"
+                                            class="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                        >
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+                                    >
+                                        <i class="fa-solid fa-cart-shopping text-xs"></i>კალათაში დამატება
+                                    </button>
+                                </form>
+                            @endif
+                            <button
+                                type="button"
+                                onclick="document.getElementById('inquiry-form-section').scrollIntoView({ behavior: 'smooth' })"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600"
+                            >
+                                <i class="fa-solid fa-message text-xs"></i>{{ __('ui.form_submit') }}
+                            </button>
+                            <a href="{{ route('products.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600">
+                                <i class="fa-solid fa-arrow-left text-xs"></i>{{ __('ui.product_back') }}
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Full Description -->
-            @if ($product->description)
-                <div class="mt-12">
-                    <h2 class="mb-6 text-2xl font-bold text-gray-900">{{ __('ui.product_description') }}</h2>
-                    <div class="prose prose-sm max-w-none text-gray-700">
-                        {!! nl2br(e($product->description)) !!}
+            <div class="mt-8 grid gap-6 lg:grid-cols-12">
+                <div class="lg:col-span-7">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                        <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_specs') }}</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <tbody>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_sim') }}</td>
+                                        <td class="px-2 py-3 text-gray-700">{{ $product->sim_support ? __('ui.yes') : __('ui.no') }}</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_gps') }}</td>
+                                        <td class="px-2 py-3 text-gray-700">{{ $product->gps_features ? __('ui.yes') : __('ui.no') }}</td>
+                                    </tr>
+                                    @if ($product->water_resistant)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_water') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ __('ui.yes') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->battery_life_hours)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_hours }} {{ __('ui.hours') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->warranty_months)
+                                        <tr>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_warranty') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->warranty_months }} {{ __('ui.months') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->operating_system)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Operating System</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->operating_system }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->screen_size)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Screen Size</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_size }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->display_type)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Display Type</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->display_type }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->screen_resolution)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Screen Resolution</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_resolution }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->battery_capacity_mah)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Battery Capacity</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_capacity_mah }} mAh</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->charging_time_hours)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Charging Time</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->charging_time_hours }} h</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->case_material)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Case Material</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->case_material }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->band_material)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Band Material</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->band_material }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->camera)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Camera</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->camera }}</td>
+                                        </tr>
+                                    @endif
+                                    @if (is_array($product->functions) && $product->functions !== [])
+                                        <tr>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">Functions</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ implode(', ', $product->functions) }}</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            @endif
 
-            <!-- Inquiry Form Section -->
-            <div id="inquiry-form-section" class="mt-12 rounded-lg border border-gray-200 bg-gray-50 p-8">
-                <h2 class="mb-6 text-2xl font-bold text-gray-900">{{ __('ui.section_contact') }}</h2>
-                <p class="mb-6 text-gray-600">{{ __('ui.section_contact_sub') }}</p>
-
-                <form method="POST" action="{{ route('inquiries.store') }}" class="space-y-5">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-
-                    @if (session('status'))
-                        <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
-                            <i class="fa-solid fa-check-circle mr-2"></i>
-                            {{ session('status') }}
+                    @if ($product->description)
+                        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                            <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_description') }}</h2>
+                            <div class="prose prose-sm max-w-none text-gray-700">{!! nl2br(e($product->description)) !!}</div>
                         </div>
                     @endif
+                </div>
 
-                    @if ($errors->any())
-                        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-                            <ul class="space-y-1">
-                                @foreach ($errors->all() as $error)
-                                    <li><i class="fa-solid fa-exclamation-circle mr-2"></i>{{ $error }}</li>
+                <div class="lg:col-span-5">
+                    <div id="inquiry-form-section" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                        <h2 class="text-xl font-bold text-gray-900">{{ __('ui.section_contact') }}</h2>
+                        <p class="mt-2 text-sm text-gray-600">{{ __('ui.section_contact_sub') }}</p>
+
+                        <form method="POST" action="{{ route('inquiries.store') }}" class="mt-5 space-y-4">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="selected_color" id="selected-color-input" value="{{ $defaultColor?->color_name }}">
+
+                            @if (session('status'))
+                                <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                                    <i class="fa-solid fa-check-circle mr-2"></i>{{ session('status') }}
+                                </div>
+                            @endif
+
+                            @if ($errors->any())
+                                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                                    <ul class="space-y-1">
+                                        @foreach ($errors->all() as $error)
+                                            <li><i class="fa-solid fa-exclamation-circle mr-2"></i>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <input type="text" name="name" value="{{ old('name') }}" placeholder="{{ __('ui.form_name') }} *" required class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500" />
+                                <input type="text" name="phone" value="{{ old('phone') }}" placeholder="{{ __('ui.form_phone') }} *" required class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500" />
+                            </div>
+
+                            <input type="email" name="email" value="{{ old('email') }}" placeholder="{{ __('ui.form_email') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500" />
+                            <textarea name="message" rows="4" placeholder="{{ __('ui.form_message') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">{{ old('message') }}</textarea>
+
+                            <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>{{ __('ui.form_submit') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            @if(isset($relatedProducts) && $relatedProducts->isNotEmpty())
+                <div class="mt-10">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-900">{{ app()->getLocale() === 'ka' ? 'მსგავსი პროდუქტები' : 'Related Products' }}</h2>
+                        <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">{{ app()->getLocale() === 'ka' ? 'ყველას ნახვა' : 'View all' }}</a>
+                    </div>
+
+                    <div id="related-products-splide" class="splide" aria-label="Related products">
+                        <div class="splide__track">
+                            <ul class="splide__list">
+                                @foreach($relatedProducts as $related)
+                                    @php
+                                        $relatedImage = $related->primaryImage;
+                                        $relatedBase = $related->price;
+                                        $relatedSale = $related->sale_price ?? null;
+                                        $relatedDiscount = $relatedSale !== null && $relatedBase !== null && $relatedSale < $relatedBase;
+                                        $relatedCurrency = $related->currency === 'GEL' ? '₾' : $related->currency;
+                                    @endphp
+                                    <li class="splide__slide">
+                                        <a href="{{ route('products.show', $related) }}" class="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                                            <div class="aspect-square overflow-hidden bg-gray-100">
+                                                <img src="{{ $relatedImage?->url ?: asset('storage/images/home/smart-watch3.jpg') }}" alt="{{ $related->name }}" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                            </div>
+                                            <div class="p-3">
+                                                <h3 class="truncate text-sm font-semibold text-gray-900">{{ $related->name }}</h3>
+                                                <div class="mt-1">
+                                                    @if($relatedDiscount)
+                                                        <p class="text-sm font-bold text-primary-600">{{ number_format($relatedSale, 2) }} {{ $relatedCurrency }}</p>
+                                                    @elseif($relatedBase)
+                                                        <p class="text-sm font-bold text-gray-900">{{ number_format($relatedBase, 2) }} {{ $relatedCurrency }}</p>
+                                                    @else
+                                                        <p class="text-sm font-semibold text-gray-600">{{ __('ui.price_on_request') }}</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
                                 @endforeach
                             </ul>
                         </div>
-                    @endif
-
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                {{ __('ui.form_name') }}
-                                <span class="text-red-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="name"
-                                value="{{ old('name') }}"
-                                placeholder="მაკსიმე"
-                                required
-                                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                {{ __('ui.form_phone') }}
-                                <span class="text-red-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="phone"
-                                value="{{ old('phone') }}"
-                                placeholder="+995 555 123 456"
-                                required
-                                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                            />
-                        </div>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-900 mb-2">
-                            {{ __('ui.form_email') }}
-                            {{-- <span class="text-gray-500 text-xs">(არასავალდებულო)</span> --}}
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="example@mail.com"
-                            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-900 mb-2">
-                            {{ __('ui.form_message') }}
-                        </label>
-                        <textarea
-                            name="message"
-                            rows="4"
-                            placeholder="დათხოვე რაითაც დაგეხმარებოდნ..."
-                            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                        ></textarea>
-                    </div>
-
-                    <button
-                        type="submit"
-                        class="w-full rounded-lg bg-blue-600 px-6 py-3 text-lg font-semibold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <i class="fa-solid fa-paper-plane mr-2"></i>
-                        {{ __('ui.form_submit') }}
-                    </button>
-                </form>
-            </div>
-
-            <!-- Back to Catalog Button -->
-            <div class="mt-8 text-center">
-                <a
-                    href="{{ route('products.index') }}"
-                    class="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-300"
-                >
-                    <i class="fa-solid fa-arrow-left"></i>
-                    {{ __('ui.product_back') }}
-                </a>
-            </div>
+                </div>
+            @endif
         </div>
     </section>
+@endsection
 
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                new Splide('#product-splide', {
-                    type: 'slide',
-                    perPage: 1,
-                    autoplay: false,
-                    pagination: true,
-                    arrows: true,
-                    speed: 400,
-                }).mount();
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const swatches = Array.from(document.querySelectorAll('.product-color-swatch'));
+            if (!swatches.length) {
+                return;
+            }
+
+            const selectedLabel = document.getElementById('selected-color-label');
+            const selectedInput = document.getElementById('selected-color-input');
+            const selectedVariantInput = document.getElementById('selected-variant-id');
+            const quantityInput = document.getElementById('cart-quantity');
+
+            const setActive = (targetSwatch) => {
+                swatches.forEach((swatch) => {
+                    swatch.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2');
+                });
+                targetSwatch.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2');
+
+                const colorName = targetSwatch.dataset.colorName || '';
+                const selectedText = "{{ app()->getLocale() === 'ka' ? 'არჩეული' : 'Selected' }}";
+                if (selectedLabel) {
+                    selectedLabel.textContent = `${selectedText}: ${colorName}`;
+                }
+                if (selectedInput) {
+                    selectedInput.value = colorName;
+                }
+
+                if (selectedVariantInput && targetSwatch.dataset.variantId) {
+                    selectedVariantInput.value = targetSwatch.dataset.variantId;
+                }
+
+                if (quantityInput && targetSwatch.dataset.stock) {
+                    const stock = Math.max(1, Math.min(10, parseInt(targetSwatch.dataset.stock, 10) || 1));
+                    quantityInput.max = String(stock);
+                    if (parseInt(quantityInput.value, 10) > stock) {
+                        quantityInput.value = String(stock);
+                    }
+                }
+            };
+
+            swatches.forEach((swatch) => {
+                swatch.addEventListener('click', function () {
+                    setActive(this);
+                });
             });
-        </script>
-    @endpush
-@endsection
-
-@section('footer')
-    <!-- Footer component -->
-@endsection
+        });
+    </script>
+@endpush

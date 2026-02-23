@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(AdminUserSeeder::class);
+        $this->call(ProductSeeder::class);
         $this->call(ChatbotDocumentSeeder::class);
 
         // \App\Models\User::factory()->create([

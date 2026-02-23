@@ -19,6 +19,7 @@
                             <th>Name</th>
                             <th>Contact</th>
                             <th>Product</th>
+                            <th>Color</th>
                             <th>Message</th>
                             <th>Preferred</th>
                             <th>Date</th>
@@ -46,6 +47,7 @@
                                         <span class="text-muted">General</span>
                                     @endif
                                 </td>
+                                <td>{{ $inquiry->selected_color ?: '-' }}</td>
                                 <td>{{ \Illuminate\Support\Str::limit($inquiry->message ?: 'No message', 80) }}</td>
                                 <td>{{ $inquiry->preferred_contact ?: '-' }}</td>
                                 <td>{{ $inquiry->created_at?->format('Y-m-d') }}</td>
@@ -55,7 +57,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">No inquiries found.</td>
+                                <td colspan="8" class="text-center text-muted">No inquiries found.</td>
                             </tr>
                         @endforelse
                     </tbody>

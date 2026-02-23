@@ -66,24 +66,20 @@
                             <td>{{ $order->customer_phone }}</td>
                         </tr>
                         <tr>
-                            <th>Email:</th>
-                            <td>{{ $order->customer_email ?: '-' }}</td>
+                            <th>Personal #:</th>
+                            <td>{{ $order->personal_number ?: '-' }}</td>
                         </tr>
                     </table>
                 </div>
                 <div class="col-lg-6">
                     <table class="table table-sm table-borderless">
                         <tr>
-                            <th style="width: 150px;">Delivery Address:</th>
-                            <td>{{ $order->delivery_address }}</td>
+                            <th style="width: 150px;">Exact Address:</th>
+                            <td>{{ $order->exact_address ?: $order->delivery_address }}</td>
                         </tr>
                         <tr>
                             <th>City:</th>
-                            <td>{{ $order->city ?: '-' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Postal Code:</th>
-                            <td>{{ $order->postal_code ?: '-' }}</td>
+                            <td>{{ $order->cityRelation?->name ?: $order->city ?: '-' }}</td>
                         </tr>
                         <tr>
                             <th>Order Source:</th>
@@ -143,6 +139,120 @@
             </div>
         </div>
     </div>
+
+    <!-- Payment Information -->
+    @if(!is_null($order->payment_type))
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Payment Information</h5>
+                <form method="POST" action="{{ route('admin.orders.update-payment-status', $order) }}" class="d-flex gap-2">
+                    @csrf
+                    @method('PATCH')
+                    <select name="payment_status" class="form-select form-select-sm" required>
+                        <option value="pending" @selected($order->payment_status === 'pending')>Pending</option>
+                        <option value="completed" @selected($order->payment_status === 'completed')>Completed</option>
+                        <option value="rejected" @selected($order->payment_status === 'rejected')>Rejected</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <th style="width: 160px;">Payment Type:</th>
+                                <td>
+                                    @if($order->payment_type === 1)
+                                        <span class="badge bg-primary">Card (BOG)</span>
+                                    @else
+                                        <span class="badge bg-secondary">Type {{ $order->payment_type }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Payment Status:</th>
+                                <td>
+                                    @if($order->payment_status === 'completed')
+                                        <span class="badge bg-success">Completed</span>
+                                    @elseif($order->payment_status === 'rejected')
+                                        <span class="badge bg-danger">Rejected</span>
+                                    @else
+                                        <span class="badge bg-warning">Pending</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-lg-6">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <th style="width: 180px;">BOG Order ID:</th>
+                                <td>{{ $order->bog_order_id ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>External Order ID:</th>
+                                <td>{{ $order->bog_external_order_id ?: '-' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Payment Log History</h5>
+            </div>
+            <div class="card-body">
+                @if($order->paymentLogs->count())
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>BOG Status</th>
+                                    <th>Detail</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($order->paymentLogs as $log)
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ $log->status ?: '-' }}</span></td>
+                                        <td>
+                                            @if($log->chveni_statusi === 'completed')
+                                                <span class="badge bg-success">Completed</span>
+                                            @elseif($log->chveni_statusi === 'rejected')
+                                                <span class="badge bg-danger">Rejected</span>
+                                            @elseif($log->chveni_statusi === 'pending')
+                                                <span class="badge bg-warning">Pending</span>
+                                            @else
+                                                <span class="badge bg-light text-dark">{{ $log->chveni_statusi ?: '-' }}</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(is_array($log->payment_detail))
+                                                <details>
+                                                    <summary class="text-primary">View JSON</summary>
+                                                    <pre class="mb-0 mt-2 small">{{ json_encode($log->payment_detail, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                                </details>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td><small>{{ $log->created_at->format('M d, Y H:i') }}</small></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="text-muted mb-0">No payment logs found for this order.</p>
+                @endif
+            </div>
+        </div>
+    @endif
 
     <!-- Actions -->
     @if($order->canBeCancelled())

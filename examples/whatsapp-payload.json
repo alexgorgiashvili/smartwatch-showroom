@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "123456789000000",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "1234567890",
+              "phone_number_id": "348949538797379"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Maria Garcia"
+                },
+                "wa_id": "5521987654321"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5521987654321",
+                "id": "wamid.HBEUGoIBIAooDTMyNTA3NzIwMjc1NjE1NQFQAQAREzExNDM2NTMyNDkzNzQ1MTQ1FA==",
+                "timestamp": "1645180154",
+                "type": "text",
+                "text": {
+                  "body": "Hello! I'm very interested in purchasing a smartwatch. Do you have the new model in stock and what's the delivery time to Brazil?"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ─── 1. Checkout ──────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ─── 2. Setup Node & build Vite assets ────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Vite assets
+        run: npm run build
+
+      # ─── 3. Setup SSH key ─────────────────────────────────────────
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT || '22' }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # ─── 4. Git pull on server ────────────────────────────────────
+      - name: Pull latest code on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT || '22' }} \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
+            "cd ${{ secrets.DEPLOY_PATH }} && git pull origin main"
+
+      # ─── 5. Upload built assets (public/build) ────────────────────
+      - name: Upload Vite build assets
+        run: |
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.SSH_PORT || '22' }} -r \
+            public/build \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/public/
+
+      # ─── 6. Run post-deploy commands on server ────────────────────
+      - name: Run post-deploy commands
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT || '22' }} \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Install PHP dependencies (no dev, optimized)
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            # Run database migrations
+            php artisan migrate --force
+
+            # Clear & re-cache config / routes / views
+            php artisan config:clear
+            php artisan config:cache
+            php artisan route:clear
+            php artisan route:cache
+            php artisan view:clear
+            php artisan view:cache
+
+            # Restart queue workers (if using queues)
+            php artisan queue:restart
+
+            echo "✅ Deployment complete."
+          ENDSSH

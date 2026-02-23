@@ -9,6 +9,7 @@ class Inquiry extends Model
 {
     protected $fillable = [
         'product_id',
+        'selected_color',
         'name',
         'phone',
         'email',

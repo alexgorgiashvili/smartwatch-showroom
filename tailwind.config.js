@@ -22,7 +22,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Source Sans 3', 'sans-serif'],
+        sans: ['Space Grotesk', 'sans-serif'],
       },
     },
   },

@@ -12,6 +12,7 @@
                     <thead>
                         <tr>
                             <th>Variant Name</th>
+                            <th>Color</th>
                             <th>Quantity</th>
                             <th>Low Stock Threshold</th>
                             <th>Status</th>
@@ -22,6 +23,16 @@
                         @foreach ($product->variants as $variant)
                             <tr>
                                 <td class="fw-semibold">{{ $variant->name }}</td>
+                                <td>
+                                    @if($variant->color_name && $variant->color_hex)
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-block rounded-circle border" style="width: 18px; height: 18px; background-color: {{ $variant->color_hex }};"></span>
+                                            <span>{{ $variant->color_name }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="badge @if($variant->isOutOfStock()) bg-danger @elseif($variant->isLowStock()) bg-warning @else bg-success @endif">
                                         {{ $variant->quantity }}
@@ -41,7 +52,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#adjustStockModal{{ $variant->id }}" title="Adjust Stock">
                                         <i class="bi bi-graph-up"></i> Adjust
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-variant-btn" data-variant-id="{{ $variant->id }}" data-name="{{ $variant->name }}" data-quantity="{{ $variant->quantity }}" data-threshold="{{ $variant->low_stock_threshold }}" title="Edit Variant">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-variant-btn" data-variant-id="{{ $variant->id }}" data-name="{{ $variant->name }}" data-color-name="{{ $variant->color_name }}" data-color-hex="{{ $variant->color_hex }}" data-quantity="{{ $variant->quantity }}" data-threshold="{{ $variant->low_stock_threshold }}" title="Edit Variant">
                                         <i class="bi bi-pencil"></i> Edit
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-variant-btn" data-variant-id="{{ $variant->id }}" title="Delete Variant">
@@ -124,10 +135,18 @@
                     <label for="lowStockThreshold" class="form-label">Low Stock Alert</label>
                     <input type="number" name="low_stock_threshold" id="lowStockThreshold" class="form-control" min="0" value="5" required>
                 </div>
+                <div class="col-lg-3 mb-3">
+                    <label for="variantColorName" class="form-label">Color Name</label>
+                    <input type="text" name="color_name" id="variantColorName" class="form-control" placeholder="e.g., Gold">
+                </div>
+                <div class="col-lg-2 mb-3">
+                    <label for="variantColorHex" class="form-label">Color</label>
+                    <input type="color" name="color_hex" id="variantColorHex" class="form-control form-control-color" value="#000000" title="Pick color">
+                </div>
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
-                        Add Variant
+                        <span class="variant-submit-label">Add Variant</span>
                     </button>
                     <button type="button" class="btn btn-secondary d-none" id="cancelEditBtn">Cancel</button>
                 </div>
@@ -139,6 +158,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const productId = {{ $product->id }};
+    const submitButton = document.querySelector('#variantForm button[type="submit"]');
+    const submitLabel = submitButton?.querySelector('.variant-submit-label');
 
     // Add/Edit Variant Form
     document.getElementById('variantForm').addEventListener('submit', function(e) {
@@ -147,19 +168,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = variantId
             ? `{{ route('admin.products.variants.update', ['variant' => ':id']) }}`.replace(':id', variantId)
             : `{{ route('admin.products.variants.store', $product) }}`;
-        const method = variantId ? 'PATCH' : 'POST';
 
         const data = new FormData(this);
+        if (variantId) {
+            data.append('_method', 'PATCH');
+        }
         const btn = this.querySelector('button[type="submit"]');
         const spinner = btn.querySelector('.spinner-border');
 
-        spinner.classList.remove('d-none');
+        if (spinner) {
+            spinner.classList.remove('d-none');
+        }
         btn.disabled = true;
 
         fetch(url, {
-            method: method,
+            method: 'POST',
             headers: {
-                'X-HTTP-Method-Override': method,
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
             body: data
@@ -176,7 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error: ' + err.message);
         })
         .finally(() => {
-            spinner.classList.add('d-none');
+            if (spinner) {
+                spinner.classList.add('d-none');
+            }
             btn.disabled = false;
         });
     });
@@ -186,9 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             document.getElementById('variantId').value = this.dataset.variantId;
             document.getElementById('variantName').value = this.dataset.name;
+            document.getElementById('variantColorName').value = this.dataset.colorName || '';
+            document.getElementById('variantColorHex').value = this.dataset.colorHex || '#000000';
             document.getElementById('variantQuantity').value = this.dataset.quantity;
             document.getElementById('lowStockThreshold').value = this.dataset.threshold;
-            document.querySelector('#variantForm button[type="submit"]').textContent = 'Update Variant';
+            if (submitLabel) {
+                submitLabel.textContent = 'Update Variant';
+            }
             document.getElementById('cancelEditBtn').classList.remove('d-none');
         });
     });
@@ -197,7 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cancelEditBtn')?.addEventListener('click', function() {
         document.getElementById('variantForm').reset();
         document.getElementById('variantId').value = '';
-        document.querySelector('#variantForm button[type="submit"]').textContent = 'Add Variant';
+        document.getElementById('variantColorHex').value = '#000000';
+        if (submitLabel) {
+            submitLabel.textContent = 'Add Variant';
+        }
         this.classList.add('d-none');
     });
 

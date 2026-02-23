@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inquiry;
+use App\Services\TelegramInquiryNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class InquiryController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, TelegramInquiryNotifier $telegramInquiryNotifier): RedirectResponse
     {
         $data = $request->validate([
             'product_id' => ['nullable', 'exists:products,id'],
+            'selected_color' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:120'],
@@ -21,7 +23,10 @@ class InquiryController extends Controller
 
         $data['locale'] = app()->getLocale();
 
-        Inquiry::create($data);
+        $inquiry = Inquiry::create($data);
+        $inquiry->load('product');
+
+        $telegramInquiryNotifier->send($inquiry);
 
         return redirect()
             ->back()

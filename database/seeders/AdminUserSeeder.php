@@ -10,13 +10,28 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::firstOrCreate(
-            ['email' => 'admin@kidsimwatch.ge'],
+        $admins = [
             [
-                'name' => 'Admin',
-                'password' => Hash::make('password123'),
-                'is_admin' => true,
-            ]
-        );
+                'name' => 'Admin One',
+                'email' => 'admin@kidsimwatch.ge',
+                'password' => 'password123',
+            ],
+            [
+                'name' => 'Admin Two',
+                'email' => 'admin2@kidsimwatch.ge',
+                'password' => 'password123',
+            ],
+        ];
+
+        foreach ($admins as $admin) {
+            User::updateOrCreate(
+                ['email' => $admin['email']],
+                [
+                    'name' => $admin['name'],
+                    'password' => Hash::make($admin['password']),
+                    'is_admin' => true,
+                ]
+            );
+        }
     }
 }

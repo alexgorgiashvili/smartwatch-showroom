@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\ContactSetting;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,18 +22,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (app()->runningInConsole()) {
-            return;
+        if (!app()->runningInConsole()) {
+            session(['locale' => 'ka']);
+            app()->setLocale('ka');
         }
 
-        $availableLocales = ['en', 'ka'];
-        $requestedLocale = request()->get('lang');
+        View::composer('*', function ($view) {
+            $settings = ContactSetting::DEFAULTS;
 
-        if ($requestedLocale && in_array($requestedLocale, $availableLocales, true)) {
-            session(['locale' => $requestedLocale]);
-        }
+            if (Schema::hasTable('contact_settings')) {
+                $settings = ContactSetting::allKeyed();
+            }
 
-        $locale = session('locale', config('app.locale'));
-        app()->setLocale($locale);
+            $view->with('contactSettings', $settings);
+        });
     }
 }

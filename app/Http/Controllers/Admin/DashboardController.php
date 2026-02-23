@@ -9,11 +9,12 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockAdjustment;
 use App\Models\User;
+use App\Services\Chatbot\ChatbotQualityMetricsService;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(ChatbotQualityMetricsService $metrics): View
     {
         $totalProducts = Product::count();
         $totalInquiries = Inquiry::count();
@@ -45,12 +46,17 @@ class DashboardController extends Controller
         $totalOrders = Order::count();
         $pendingOrders = Order::where('status', 'pending')->count();
         $totalRevenue = Order::whereNotIn('status', ['cancelled'])->sum('total_amount');
+        $completedPayments = Order::where('payment_status', 'completed')->count();
+        $pendingPayments = Order::where('payment_status', 'pending')->whereNotNull('payment_type')->count();
+        $rejectedPayments = Order::where('payment_status', 'rejected')->count();
 
         $recentOrders = Order::query()
             ->with('items')
             ->orderByDesc('created_at')
             ->take(5)
             ->get();
+
+        $chatbotQualityToday = $metrics->getDailySummary();
 
         return view('admin.dashboard', [
             'totalProducts' => $totalProducts,
@@ -65,7 +71,11 @@ class DashboardController extends Controller
             'totalOrders' => $totalOrders,
             'pendingOrders' => $pendingOrders,
             'totalRevenue' => $totalRevenue,
+            'completedPayments' => $completedPayments,
+            'pendingPayments' => $pendingPayments,
+            'rejectedPayments' => $rejectedPayments,
             'recentOrders' => $recentOrders,
+            'chatbotQualityToday' => $chatbotQualityToday,
         ]);
     }
 }

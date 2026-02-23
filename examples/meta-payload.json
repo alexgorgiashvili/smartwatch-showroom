@@ -1,0 +1,25 @@
+{
+  "object": "page",
+  "entry": [
+    {
+      "id": "103895737647195",
+      "time": 1645180154,
+      "messaging": [
+        {
+          "sender": {
+            "id": "5326818264"
+          },
+          "recipient": {
+            "id": "103895737647195"
+          },
+          "timestamp": 1645180154457,
+          "message": {
+            "mid": "m_bh8kjvs79sN7sKsK8d9ksl",
+            "text": "Hi, I'm interested in your new smartwatch model. Can you tell me more about the features and pricing?",
+            "attachments": []
+          }
+        }
+      ]
+    }
+  ]
+}

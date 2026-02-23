@@ -96,6 +96,46 @@ class PineconeService
         return $response->json('matches', []);
     }
 
+    public function deleteByIds(array $ids, ?string $namespace = null): void
+    {
+        $ids = array_values(array_filter($ids));
+
+        if ($ids === []) {
+            return;
+        }
+
+        $apiKey = config('services.pinecone.api_key');
+        $baseUrl = $this->baseUrl();
+
+        if (!$apiKey || !$baseUrl) {
+            throw new \RuntimeException('Pinecone configuration is missing.');
+        }
+
+        $payload = ['ids' => $ids];
+        $namespace = $namespace ?? config('services.pinecone.namespace');
+
+        if ($namespace) {
+            $payload['namespace'] = $namespace;
+        }
+
+        $response = Http::withHeaders([
+                'Api-Key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])
+            ->timeout(20)
+            ->post($baseUrl . '/vectors/delete', $payload);
+
+        if (!$response->successful()) {
+            Log::warning('Pinecone delete failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'ids' => $ids,
+            ]);
+
+            throw new \RuntimeException('Pinecone delete failed.');
+        }
+    }
+
     private function baseUrl(): string
     {
         return rtrim(config('services.pinecone.host', ''), '/');

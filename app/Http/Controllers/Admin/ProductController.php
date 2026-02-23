@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse|JsonResponse
+    public function store(Request $request, ChatbotContentSyncService $contentSync): RedirectResponse|JsonResponse
     {
         $data = $this->validateProduct($request);
         $data['slug'] = $this->ensureSlug($data['slug'] ?? null, $data['name_en']);
@@ -60,6 +61,8 @@ class ProductController extends Controller
             }
         }
 
+        $contentSync->syncProduct($product->fresh('variants'));
+
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Product created.',
@@ -81,12 +84,14 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product): RedirectResponse|JsonResponse
+    public function update(Request $request, Product $product, ChatbotContentSyncService $contentSync): RedirectResponse|JsonResponse
     {
         $data = $this->validateProduct($request, $product->id);
         $data['slug'] = $this->ensureSlug($data['slug'] ?? null, $data['name_en'], $product->id);
 
         $product->update($data);
+
+        $contentSync->syncProduct($product->fresh('variants'));
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -99,25 +104,36 @@ class ProductController extends Controller
             ->with('status', 'Product updated.');
     }
 
-    public function destroy(Product $product): RedirectResponse
+    public function destroy(Product $product, ChatbotContentSyncService $contentSync): RedirectResponse
     {
+        $contentSync->deactivateProduct($product);
         $product->delete();
 
         return redirect()->route('admin.products.index')
             ->with('status', 'Product deleted.');
     }
 
-    public function storeVariant(Request $request, Product $product): JsonResponse
+    public function storeVariant(
+        Request $request,
+        Product $product,
+        ChatbotContentSyncService $contentSync
+    ): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
+            'color_name' => ['nullable', 'string', 'max:50'],
+            'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'quantity' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
         ]);
 
+        $data['color_hex'] = isset($data['color_hex']) ? strtoupper($data['color_hex']) : null;
+
         $data['product_id'] = $product->id;
 
         $variant = ProductVariant::create($data);
+
+        $contentSync->syncProduct($product->fresh('variants'));
 
         return response()->json([
             'success' => true,
@@ -126,15 +142,28 @@ class ProductController extends Controller
         ]);
     }
 
-    public function updateVariant(Request $request, ProductVariant $variant): JsonResponse
+    public function updateVariant(
+        Request $request,
+        ProductVariant $variant,
+        ChatbotContentSyncService $contentSync
+    ): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
+            'color_name' => ['nullable', 'string', 'max:50'],
+            'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'quantity' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
         ]);
 
+        $data['color_hex'] = isset($data['color_hex']) ? strtoupper($data['color_hex']) : null;
+
         $variant->update($data);
+
+        $product = $variant->product()->with('variants')->first();
+        if ($product) {
+            $contentSync->syncProduct($product);
+        }
 
         return response()->json([
             'success' => true,
@@ -143,9 +172,14 @@ class ProductController extends Controller
         ]);
     }
 
-    public function deleteVariant(ProductVariant $variant): JsonResponse
+    public function deleteVariant(ProductVariant $variant, ChatbotContentSyncService $contentSync): JsonResponse
     {
+        $product = $variant->product()->with('variants')->first();
         $variant->delete();
+
+        if ($product) {
+            $contentSync->syncProduct($product->fresh('variants'));
+        }
 
         return response()->json([
             'success' => true,
@@ -171,6 +205,16 @@ class ProductController extends Controller
             'water_resistant' => ['nullable', 'string', 'max:50'],
             'battery_life_hours' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'warranty_months' => ['nullable', 'integer', 'min:0', 'max:120'],
+            'operating_system' => ['nullable', 'string', 'max:100'],
+            'screen_size' => ['nullable', 'string', 'max:100'],
+            'display_type' => ['nullable', 'string', 'max:100'],
+            'screen_resolution' => ['nullable', 'string', 'max:100'],
+            'battery_capacity_mah' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'charging_time_hours' => ['nullable', 'numeric', 'min:0', 'max:999.9'],
+            'case_material' => ['nullable', 'string', 'max:100'],
+            'band_material' => ['nullable', 'string', 'max:100'],
+            'camera' => ['nullable', 'string', 'max:100'],
+            'functions' => ['nullable'],
             'is_active' => ['nullable', 'boolean'],
             'featured' => ['nullable', 'boolean'],
         ]);
@@ -180,8 +224,35 @@ class ProductController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $data['featured'] = $request->boolean('featured');
         $data['currency'] = $data['currency'] ?: 'GEL';
+        $data['functions'] = $this->normalizeFunctions($request->input('functions'));
 
         return $data;
+    }
+
+    private function normalizeFunctions(mixed $value): ?array
+    {
+        if (is_array($value)) {
+            $items = $value;
+        } else {
+            $text = trim((string) ($value ?? ''));
+            if ($text === '') {
+                return null;
+            }
+
+            $items = preg_split('/[,\n]+/', $text) ?: [];
+        }
+
+        $normalized = [];
+        foreach ($items as $item) {
+            $clean = trim((string) $item);
+            if ($clean !== '') {
+                $normalized[] = Str::limit($clean, 100, '');
+            }
+        }
+
+        $normalized = array_values(array_unique($normalized));
+
+        return $normalized === [] ? null : $normalized;
     }
 
     private function ensureSlug(?string $slug, string $name, ?int $productId = null): string

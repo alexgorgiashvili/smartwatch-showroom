@@ -38,6 +38,18 @@
                             <span>{{ $product->warranty_months }}m</span>
                         </div>
                     @endif
+                    @if ($product->battery_capacity_mah)
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-battery-half"></i>
+                            <span>{{ $product->battery_capacity_mah }}mAh</span>
+                        </div>
+                    @endif
+                    @if ($product->screen_size)
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-smartwatch"></i>
+                            <span>{{ $product->screen_size }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

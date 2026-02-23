@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -15,25 +16,33 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $orders = Order::query()
             ->with('items')
+            ->when(
+                $request->filled('payment_status'),
+                fn ($query) => $query->where('payment_status', $request->string('payment_status')->value())
+            )
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends($request->query());
 
         return view('admin.orders.index', [
             'orders' => $orders,
+            'paymentStatus' => $request->string('payment_status')->value(),
         ]);
     }
 
     public function create(): View
     {
         $products = Product::with('variants')->where('is_active', true)->get();
+        $cities = City::query()->orderBy('name')->get(['id', 'name']);
 
         return view('admin.orders.create', [
             'order' => new Order(),
             'products' => $products,
+            'cities' => $cities,
         ]);
     }
 
@@ -42,10 +51,9 @@ class OrderController extends Controller
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:160'],
             'customer_phone' => ['required', 'string', 'max:50'],
-            'customer_email' => ['nullable', 'email', 'max:160'],
-            'delivery_address' => ['required', 'string'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
+            'personal_number' => ['required', 'regex:/^\d{11}$/'],
+            'city_id' => ['required', 'integer', 'exists:cities,id'],
+            'exact_address' => ['required', 'string'],
             'order_source' => ['required', 'in:Facebook,Instagram,Direct,Other'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
@@ -57,10 +65,16 @@ class OrderController extends Controller
 
         try {
             // Generate order number
+            $city = City::query()->findOrFail((int) $data['city_id']);
+
             $data['order_number'] = Order::generateOrderNumber();
             $data['status'] = 'pending';
             $data['currency'] = 'GEL';
             $data['total_amount'] = 0;
+            $data['city'] = $city->name;
+            $data['delivery_address'] = $data['exact_address'];
+            $data['customer_email'] = null;
+            $data['postal_code'] = null;
 
             // Create order
             $order = Order::create($data);
@@ -123,7 +137,11 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['items.variant.product']);
+        $order->load([
+            'items.variant.product',
+            'cityRelation',
+            'paymentLogs' => fn ($query) => $query->latest(),
+        ]);
 
         return view('admin.orders.show', [
             'order' => $order,
@@ -179,6 +197,20 @@ class OrderController extends Controller
 
         return redirect()->route('admin.orders.show', $order)
             ->with('status', 'Order status updated.');
+    }
+
+    public function updatePaymentStatus(Request $request, Order $order): RedirectResponse
+    {
+        $data = $request->validate([
+            'payment_status' => ['required', 'in:pending,completed,rejected'],
+        ]);
+
+        $order->update([
+            'payment_status' => $data['payment_status'],
+        ]);
+
+        return redirect()->route('admin.orders.show', $order)
+            ->with('status', 'Payment status updated.');
     }
 
     public function destroy(Order $order): RedirectResponse

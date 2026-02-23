@@ -11,6 +11,8 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'name',
+        'color_name',
+        'color_hex',
         'quantity',
         'low_stock_threshold',
     ];
@@ -38,5 +40,10 @@ class ProductVariant extends Model
     public function isOutOfStock(): bool
     {
         return $this->quantity <= 0;
+    }
+
+    public function hasColor(): bool
+    {
+        return filled($this->color_name) && filled($this->color_hex);
     }
 }

@@ -32,6 +32,7 @@
                 </div>
                 <div class="col-lg-4">
                     <h6 class="text-muted">Meta</h6>
+                    <p class="mb-1">Selected Color: {{ $inquiry->selected_color ?: '-' }}</p>
                     <p class="mb-1">Preferred: {{ $inquiry->preferred_contact ?: '-' }}</p>
                     <p class="mb-1">Locale: {{ $inquiry->locale }}</p>
                     <p class="mb-0">Date: {{ $inquiry->created_at?->format('Y-m-d H:i') }}</p>

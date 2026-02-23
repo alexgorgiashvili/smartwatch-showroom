@@ -43,32 +43,33 @@
                         @enderror
                     </div>
                     <div class="col-lg-4 mb-3">
-                        <label for="customer_email" class="form-label">Email</label>
-                        <input type="email" name="customer_email" id="customer_email" class="form-control @error('customer_email') is-invalid @enderror" value="{{ old('customer_email') }}">
-                        @error('customer_email')
+                        <label for="personal_number" class="form-label">Personal Number <span class="text-danger">*</span></label>
+                        <input type="text" name="personal_number" id="personal_number" maxlength="11" pattern="[0-9]{11}" class="form-control @error('personal_number') is-invalid @enderror" value="{{ old('personal_number') }}" required>
+                        @error('personal_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-lg-6 mb-3">
-                        <label for="delivery_address" class="form-label">Delivery Address <span class="text-danger">*</span></label>
-                        <textarea name="delivery_address" id="delivery_address" class="form-control @error('delivery_address') is-invalid @enderror" rows="2" required>{{ old('delivery_address') }}</textarea>
-                        @error('delivery_address')
+                        <label for="exact_address" class="form-label">Exact Address <span class="text-danger">*</span></label>
+                        <textarea name="exact_address" id="exact_address" class="form-control @error('exact_address') is-invalid @enderror" rows="2" required>{{ old('exact_address') }}</textarea>
+                        @error('exact_address')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-lg-3 mb-3">
-                        <label for="city" class="form-label">City</label>
-                        <input type="text" name="city" id="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}">
-                        @error('city')
+                        <label for="city_id" class="form-label">City <span class="text-danger">*</span></label>
+                        <div class="position-relative" id="admin-city-picker">
+                            <input type="hidden" name="city_id" id="city_id" value="{{ old('city_id') }}" required>
+                            <input type="text" id="city_search" class="form-control @error('city_id') is-invalid @enderror" placeholder="Search city..." autocomplete="off">
+                            <div id="admin-city-results" class="list-group position-absolute w-100 shadow-sm d-none" style="z-index: 20; max-height: 220px; overflow: auto;"></div>
+                        </div>
+                        @error('city_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-lg-3 mb-3">
-                        <label for="postal_code" class="form-label">Postal Code</label>
-                        <input type="text" name="postal_code" id="postal_code" class="form-control @error('postal_code') is-invalid @enderror" value="{{ old('postal_code') }}">
-                        @error('postal_code')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label">&nbsp;</label>
+                        <input type="text" class="form-control" value="Auto from selected city" disabled>
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label for="order_source" class="form-label">Order Source <span class="text-danger">*</span></label>
@@ -161,8 +162,11 @@
 @push('scripts')
 <script>
 let itemIndex = 1;
+const adminCities = @json($cities->map(fn ($city) => ['id' => $city->id, 'name' => $city->name])->values());
 
 document.addEventListener('DOMContentLoaded', function() {
+    initCitySearch();
+
     // Add item
     document.getElementById('add-item').addEventListener('click', function() {
         const container = document.getElementById('order-items');
@@ -193,6 +197,77 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach event listeners
     attachEventListeners();
 });
+
+function initCitySearch() {
+    const cityInput = document.getElementById('city_search');
+    const cityId = document.getElementById('city_id');
+    const cityResults = document.getElementById('admin-city-results');
+    const oldCityId = cityId.value;
+
+    if (!cityInput || !cityId || !cityResults) {
+        return;
+    }
+
+    if (oldCityId) {
+        const oldCity = adminCities.find(city => String(city.id) === String(oldCityId));
+        if (oldCity) {
+            cityInput.value = oldCity.name;
+        }
+    }
+
+    cityInput.addEventListener('input', function () {
+        const query = cityInput.value.trim().toLowerCase();
+        cityId.value = '';
+        cityInput.setCustomValidity('');
+
+        if (!query) {
+            cityResults.classList.add('d-none');
+            cityResults.innerHTML = '';
+            return;
+        }
+
+        const matches = adminCities
+            .filter(city => city.name.toLowerCase().includes(query))
+            .slice(0, 40);
+
+        if (!matches.length) {
+            cityResults.innerHTML = '<div class="list-group-item text-muted">City not found</div>';
+            cityResults.classList.remove('d-none');
+            return;
+        }
+
+        cityResults.innerHTML = matches
+            .map(city => `<button type="button" class="list-group-item list-group-item-action" data-city-id="${city.id}" data-city-name="${city.name}">${city.name}</button>`)
+            .join('');
+
+        cityResults.classList.remove('d-none');
+    });
+
+    cityResults.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-city-id]');
+        if (!button) return;
+
+        cityId.value = button.getAttribute('data-city-id') || '';
+        cityInput.value = button.getAttribute('data-city-name') || '';
+        cityInput.setCustomValidity('');
+        cityResults.classList.add('d-none');
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('#admin-city-picker')) {
+            cityResults.classList.add('d-none');
+        }
+    });
+
+    const form = cityInput.closest('form');
+    form?.addEventListener('submit', function (event) {
+        if (!cityId.value) {
+            event.preventDefault();
+            cityInput.setCustomValidity('Select city from list');
+            cityInput.reportValidity();
+        }
+    });
+}
 
 function attachEventListeners() {
     // Remove item

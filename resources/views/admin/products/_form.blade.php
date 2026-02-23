@@ -151,6 +151,120 @@
 		>
 		<div class="invalid-feedback" data-error-for="warranty_months"></div>
 	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="operating_system" class="form-label">Operating System</label>
+		<input
+			type="text"
+			name="operating_system"
+			id="operating_system"
+			class="form-control"
+			value="{{ old('operating_system', $product->operating_system) }}"
+		>
+		<div class="invalid-feedback" data-error-for="operating_system"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="screen_size" class="form-label">Screen Size</label>
+		<input
+			type="text"
+			name="screen_size"
+			id="screen_size"
+			class="form-control"
+			value="{{ old('screen_size', $product->screen_size) }}"
+		>
+		<div class="invalid-feedback" data-error-for="screen_size"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="display_type" class="form-label">Display Type</label>
+		<input
+			type="text"
+			name="display_type"
+			id="display_type"
+			class="form-control"
+			value="{{ old('display_type', $product->display_type) }}"
+		>
+		<div class="invalid-feedback" data-error-for="display_type"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="screen_resolution" class="form-label">Screen Resolution</label>
+		<input
+			type="text"
+			name="screen_resolution"
+			id="screen_resolution"
+			class="form-control"
+			value="{{ old('screen_resolution', $product->screen_resolution) }}"
+		>
+		<div class="invalid-feedback" data-error-for="screen_resolution"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="battery_capacity_mah" class="form-label">Battery Capacity (mAh)</label>
+		<input
+			type="number"
+			name="battery_capacity_mah"
+			id="battery_capacity_mah"
+			class="form-control"
+			min="1"
+			max="100000"
+			value="{{ old('battery_capacity_mah', $product->battery_capacity_mah) }}"
+		>
+		<div class="invalid-feedback" data-error-for="battery_capacity_mah"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="charging_time_hours" class="form-label">Charging Time (hours)</label>
+		<input
+			type="number"
+			name="charging_time_hours"
+			id="charging_time_hours"
+			class="form-control"
+			step="0.1"
+			min="0"
+			max="999.9"
+			value="{{ old('charging_time_hours', $product->charging_time_hours) }}"
+		>
+		<div class="invalid-feedback" data-error-for="charging_time_hours"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="case_material" class="form-label">Case Material</label>
+		<input
+			type="text"
+			name="case_material"
+			id="case_material"
+			class="form-control"
+			value="{{ old('case_material', $product->case_material) }}"
+		>
+		<div class="invalid-feedback" data-error-for="case_material"></div>
+	</div>
+	<div class="col-lg-3 mb-3">
+		<label for="band_material" class="form-label">Band Material</label>
+		<input
+			type="text"
+			name="band_material"
+			id="band_material"
+			class="form-control"
+			value="{{ old('band_material', $product->band_material) }}"
+		>
+		<div class="invalid-feedback" data-error-for="band_material"></div>
+	</div>
+	<div class="col-lg-4 mb-3">
+		<label for="camera" class="form-label">Camera</label>
+		<input
+			type="text"
+			name="camera"
+			id="camera"
+			class="form-control"
+			value="{{ old('camera', $product->camera) }}"
+		>
+		<div class="invalid-feedback" data-error-for="camera"></div>
+	</div>
+	<div class="col-lg-8 mb-3">
+		<label for="functions" class="form-label">Functions (comma separated)</label>
+		<textarea
+			name="functions"
+			id="functions"
+			rows="2"
+			class="form-control"
+		>{{ old('functions', is_array($product->functions) ? implode(', ', $product->functions) : $product->functions) }}</textarea>
+		<div class="invalid-feedback" data-error-for="functions"></div>
+	</div>
 	<div class="col-12">
 		<div class="row">
 			<div class="col-sm-6 col-lg-3 mb-2">

@@ -10,7 +10,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Product::active()->with(['primaryImage', 'images']);
+        $query = Product::active()->with(['primaryImage', 'images', 'variants']);
 
         // Apply search
         if ($search = $request->input('search')) {
@@ -57,10 +57,19 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product->load(['primaryImage', 'images']);
+        $product->load(['primaryImage', 'images', 'variants']);
+
+        $relatedProducts = Product::active()
+            ->whereKeyNot($product->getKey())
+            ->with(['primaryImage'])
+            ->orderByDesc('featured')
+            ->orderByDesc('updated_at')
+            ->limit(4)
+            ->get();
 
         return view('products.show', [
             'product' => $product,
+            'relatedProducts' => $relatedProducts,
         ]);
     }
 }

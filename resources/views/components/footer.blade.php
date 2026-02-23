@@ -9,16 +9,16 @@
           {{ __('ui.footer_tagline') }}
         </p>
         <div class="mt-6 flex gap-3">
-          <a href="https://wa.me/995555123456" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition" title="WhatsApp">
+          <a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition" title="WhatsApp">
             <i class="fab fa-whatsapp"></i>
           </a>
-          <a href="https://www.facebook.com/kidsimwatch" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition" title="Facebook">
+          <a href="{{ $contactSettings['facebook_url'] ?? 'https://www.facebook.com/kidsimwatch' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition" title="Facebook">
             <i class="fab fa-facebook"></i>
           </a>
-          <a href="https://www.instagram.com/kidsimwatch" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-pink-600 hover:bg-pink-700 text-white rounded-full transition" title="Instagram">
+          <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/kidsimwatch' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-pink-600 hover:bg-pink-700 text-white rounded-full transition" title="Instagram">
             <i class="fab fa-instagram"></i>
           </a>
-          <a href="https://t.me/kidsimwatch" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full transition" title="Telegram">
+          <a href="{{ $contactSettings['telegram_url'] ?? 'https://t.me/kidsimwatch' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full transition" title="Telegram">
             <i class="fab fa-telegram"></i>
           </a>
         </div>
@@ -59,21 +59,21 @@
             <i class="fas fa-phone mt-1 text-green-500"></i>
             <div>
               <p class="text-gray-400">{{ __('ui.footer_phone') }}</p>
-              <a href="tel:+995555123456" class="hover:text-white transition font-medium">+995 555 123 456</a>
+              <a href="tel:{{ $contactSettings['phone_link'] ?? '+995555123456' }}" class="hover:text-white transition font-medium">{{ $contactSettings['phone_display'] ?? '+995 555 123 456' }}</a>
             </div>
           </li>
           <li class="flex items-start gap-2">
             <i class="fas fa-envelope mt-1 text-blue-500"></i>
             <div>
               <p class="text-gray-400">{{ __('ui.footer_email') }}</p>
-              <a href="mailto:info@kidsimwatch.ge" class="hover:text-white transition font-medium">info@kidsimwatch.ge</a>
+              <a href="mailto:{{ $contactSettings['email'] ?? 'info@kidsimwatch.ge' }}" class="hover:text-white transition font-medium">{{ $contactSettings['email'] ?? 'info@kidsimwatch.ge' }}</a>
             </div>
           </li>
           <li class="flex items-start gap-2">
             <i class="fas fa-map-marker-alt mt-1 text-red-500"></i>
             <div>
               <p class="text-gray-400">{{ __('ui.footer_location') }}</p>
-              <p class="font-medium">Tbilisi, Georgia</p>
+              <p class="font-medium">{{ $contactSettings['location'] ?? 'Tbilisi, Georgia' }}</p>
             </div>
           </li>
         </ul>
@@ -81,7 +81,7 @@
     </div>
 
     <!-- Divider -->
-    <div class="border-t border-gray-800 mb-8"></div>
+    <div class="tech-hairline my-8"></div>
 
     <!-- Bottom Footer -->
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 text-sm text-gray-400">

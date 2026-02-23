@@ -13,14 +13,14 @@ class HomeController extends Controller
     {
         $featured = Product::active()
             ->featured()
-            ->with(['primaryImage', 'images'])
+            ->with(['primaryImage', 'images', 'variants'])
             ->orderByDesc('updated_at')
             ->take(6)
             ->get();
 
         if ($featured->isEmpty()) {
             $featured = Product::active()
-                ->with(['primaryImage', 'images'])
+                ->with(['primaryImage', 'images', 'variants'])
                 ->orderByDesc('updated_at')
                 ->take(6)
                 ->get();
@@ -38,11 +38,7 @@ class HomeController extends Controller
 
     public function locale(Request $request, string $locale): RedirectResponse
     {
-        $availableLocales = ['en', 'ka'];
-
-        if (in_array($locale, $availableLocales, true)) {
-            $request->session()->put('locale', $locale);
-        }
+        $request->session()->put('locale', 'ka');
 
         return redirect()->back();
     }

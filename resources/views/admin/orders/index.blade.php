@@ -13,6 +13,22 @@
 
     <div class="card">
         <div class="card-body">
+            <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-2 align-items-end mb-3">
+                <div class="col-md-4">
+                    <label for="payment_status" class="form-label mb-1">Payment Status</label>
+                    <select name="payment_status" id="payment_status" class="form-select">
+                        <option value="">All</option>
+                        <option value="pending" @selected($paymentStatus === 'pending')>Pending</option>
+                        <option value="completed" @selected($paymentStatus === 'completed')>Completed</option>
+                        <option value="rejected" @selected($paymentStatus === 'rejected')>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-8 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
@@ -23,6 +39,7 @@
                             <th>Total</th>
                             <th>Source</th>
                             <th>Status</th>
+                            <th>Payment</th>
                             <th>Date</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -52,6 +69,17 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if(is_null($order->payment_type))
+                                        <span class="text-muted">-</span>
+                                    @elseif($order->payment_status === 'completed')
+                                        <span class="badge bg-success">Completed</span>
+                                    @elseif($order->payment_status === 'rejected')
+                                        <span class="badge bg-danger">Rejected</span>
+                                    @else
+                                        <span class="badge bg-warning">Pending</span>
+                                    @endif
+                                </td>
+                                <td>
                                     <small>{{ $order->created_at->format('M d, Y') }}</small>
                                 </td>
                                 <td class="text-end">
@@ -60,7 +88,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No orders yet.</td>
+                                <td colspan="9" class="text-center text-muted py-4">No orders yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
