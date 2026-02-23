@@ -10,10 +10,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('personal_number', 20)->nullable()->after('customer_phone');
-            $table->text('exact_address')->nullable()->after('delivery_address');
-            $table->foreignId('city_id')->nullable()->after('city')->constrained('cities')->nullOnDelete();
+            if (!Schema::hasColumn('orders', 'personal_number')) {
+                $table->string('personal_number', 20)->nullable()->after('customer_phone');
+            }
+            if (!Schema::hasColumn('orders', 'exact_address')) {
+                $table->text('exact_address')->nullable()->after('delivery_address');
+            }
+            if (!Schema::hasColumn('orders', 'city_id')) {
+                $table->unsignedBigInteger('city_id')->nullable()->after('city');
+            }
         });
+
+        // Add FK separately (cities table is guaranteed to exist via earlier migration)
+        $hasFk = DB::select("
+            SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'
+            AND CONSTRAINT_NAME = 'orders_city_id_foreign'
+        ");
+        if (empty($hasFk)) {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->foreign('city_id')->references('id')->on('cities')->nullOnDelete();
+            });
+        }
 
         DB::table('orders')
             ->whereNull('exact_address')
