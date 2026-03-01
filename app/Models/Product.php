@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\CompetitorMapping;
 use App\Models\ProductImage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,13 @@ class Product extends Model
         'name_en',
         'name_ka',
         'slug',
+        'external_source',
+        'external_source_url',
+        'external_product_id',
+        'meta_title_ka',
+        'meta_title_en',
+        'meta_description_ka',
+        'meta_description_en',
         'short_description_en',
         'short_description_ka',
         'description_en',
@@ -26,6 +34,9 @@ class Product extends Model
         'water_resistant',
         'battery_life_hours',
         'warranty_months',
+        'brand',
+        'model',
+        'memory_size',
         'operating_system',
         'screen_size',
         'display_type',
@@ -51,7 +62,12 @@ class Product extends Model
         'featured' => 'boolean',
     ];
 
-    protected $appends = ['name', 'short_description', 'description'];
+    protected $appends = ['name', 'short_description', 'description', 'meta_title', 'meta_description'];
+
+    public function setCurrencyAttribute($value): void
+    {
+        $this->attributes['currency'] = 'GEL';
+    }
 
     public function images(): HasMany
     {
@@ -66,6 +82,11 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function competitorMappings(): HasMany
+    {
+        return $this->hasMany(\App\Models\CompetitorMapping::class);
     }
 
     public function scopeActive(Builder $query): Builder
@@ -110,6 +131,25 @@ class Product extends Model
     public function getNameAttribute(): ?string
     {
         return $this->localizedValue($this->name_en, $this->name_ka);
+    }
+
+    public function getMetaTitleAttribute(): ?string
+    {
+        $custom = $this->localizedValue($this->meta_title_en, $this->meta_title_ka);
+        if ($custom) {
+            return $custom;
+        }
+        $name = $this->localizedValue($this->name_en, $this->name_ka);
+        return $name ? $name . ' — MyTechnic' : null;
+    }
+
+    public function getMetaDescriptionAttribute(): ?string
+    {
+        $custom = $this->localizedValue($this->meta_description_en, $this->meta_description_ka);
+        if ($custom) {
+            return $custom;
+        }
+        return $this->localizedValue($this->short_description_en, $this->short_description_ka);
     }
 
     public function getShortDescriptionAttribute(): ?string

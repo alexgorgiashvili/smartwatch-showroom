@@ -29,13 +29,24 @@ class AlibabaImportController extends Controller
     public function parse(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'url' => ['nullable', 'url', 'required_without:raw_html'],
+            'url' => ['nullable', 'url'],
             'raw_html' => ['nullable', 'string', 'min:1000'],
         ]);
 
+        if (trim((string) ($data['url'] ?? '')) === '' && trim((string) ($data['raw_html'] ?? '')) === '') {
+            return response()->json([
+                'message' => 'Alibaba product URL or full page source is required.',
+            ], 422);
+        }
+
         try {
             $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
+
             $processed = $this->processor->process($raw);
+        } catch (\InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (\RuntimeException $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),
@@ -59,6 +70,7 @@ class AlibabaImportController extends Controller
     {
         $payload = $request->validate([
             'source_url' => ['nullable', 'url'],
+            'source_product_id' => ['nullable', 'string', 'max:120'],
             'name_en' => ['required', 'string', 'max:160'],
             'name_ka' => ['required', 'string', 'max:160'],
             'slug' => ['nullable', 'string', 'max:200'],
@@ -74,6 +86,9 @@ class AlibabaImportController extends Controller
             'water_resistant' => ['nullable', 'string', 'max:50'],
             'battery_life_hours' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'warranty_months' => ['nullable', 'integer', 'min:0', 'max:120'],
+            'brand' => ['nullable', 'string', 'max:100'],
+            'model' => ['nullable', 'string', 'max:100'],
+            'memory_size' => ['nullable', 'string', 'max:100'],
             'operating_system' => ['nullable', 'string', 'max:100'],
             'screen_size' => ['nullable', 'string', 'max:100'],
             'display_type' => ['nullable', 'string', 'max:100'],
@@ -90,26 +105,47 @@ class AlibabaImportController extends Controller
             'selected_images.*' => ['url'],
             'variants' => ['nullable', 'array'],
             'variants.*.name' => ['required', 'string', 'max:160'],
+            'variants.*.color_name' => ['nullable', 'string', 'max:50'],
+            'variants.*.color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'variants.*.quantity' => ['nullable', 'integer', 'min:0'],
             'variants.*.low_stock_threshold' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        $duplicate = $this->findDuplicateBySource(
+            $payload['source_url'] ?? null,
+            $payload['source_product_id'] ?? null
+        );
+
+        if ($duplicate) {
+            return response()->json([
+                'message' => 'This Alibaba product has already been imported.',
+                'redirect' => route('admin.products.edit', $duplicate),
+                'product_id' => $duplicate->id,
+            ], 409);
+        }
 
         $productData = [
             'name_en' => $payload['name_en'],
             'name_ka' => $payload['name_ka'],
             'slug' => $this->ensureSlug($payload['slug'] ?? null, $payload['name_en']),
+            'external_source' => 'alibaba',
+            'external_source_url' => $payload['source_url'] ?? null,
+            'external_product_id' => $payload['source_product_id'] ?? null,
             'short_description_en' => $payload['short_description_en'] ?? null,
             'short_description_ka' => $payload['short_description_ka'] ?? null,
             'description_en' => $payload['description_en'] ?? null,
             'description_ka' => $payload['description_ka'] ?? null,
             'price' => $payload['price'] ?? null,
             'sale_price' => $payload['sale_price'] ?? null,
-            'currency' => strtoupper($payload['currency'] ?? 'GEL'),
+            'currency' => 'GEL',
             'sim_support' => $request->boolean('sim_support'),
             'gps_features' => $request->boolean('gps_features'),
             'water_resistant' => $payload['water_resistant'] ?? null,
             'battery_life_hours' => $payload['battery_life_hours'] ?? null,
             'warranty_months' => $payload['warranty_months'] ?? null,
+            'brand' => $payload['brand'] ?? null,
+            'model' => $payload['model'] ?? null,
+            'memory_size' => $payload['memory_size'] ?? null,
             'operating_system' => $payload['operating_system'] ?? null,
             'screen_size' => $payload['screen_size'] ?? null,
             'display_type' => $payload['display_type'] ?? null,
@@ -129,10 +165,18 @@ class AlibabaImportController extends Controller
 
             $selectedImages = array_slice((array) ($payload['selected_images'] ?? []), 0, 12);
             if ($selectedImages !== []) {
-                $paths = $this->scraper->downloadImages($selectedImages, $product->slug);
-                foreach ($paths as $index => $path) {
+                $assets = $this->scraper->downloadImages($selectedImages, $product->slug);
+                foreach ($assets as $index => $asset) {
+                    $mainPath = (string) ($asset['path'] ?? '');
+                    if ($mainPath === '') {
+                        continue;
+                    }
+
                     $product->images()->create([
-                        'path' => 'storage/' . $path,
+                        'path' => 'storage/' . $mainPath,
+                        'thumbnail_path' => isset($asset['thumbnail_path']) && $asset['thumbnail_path']
+                            ? 'storage/' . $asset['thumbnail_path']
+                            : null,
                         'alt_en' => $product->name_en,
                         'alt_ka' => $product->name_ka,
                         'sort_order' => $index,
@@ -149,6 +193,8 @@ class AlibabaImportController extends Controller
 
                 $product->variants()->create([
                     'name' => $name,
+                    'color_name' => $this->nullableString($variant['color_name'] ?? null),
+                    'color_hex' => $this->nullableColorHex($variant['color_hex'] ?? null),
                     'quantity' => max(0, (int) ($variant['quantity'] ?? 0)),
                     'low_stock_threshold' => max(0, (int) ($variant['low_stock_threshold'] ?? 5)),
                 ]);
@@ -164,6 +210,36 @@ class AlibabaImportController extends Controller
             'redirect' => route('admin.products.edit', $product),
             'product_id' => $product->id,
         ]);
+    }
+
+    private function findDuplicateBySource(?string $sourceUrl, ?string $sourceProductId): ?Product
+    {
+        $sourceUrl = trim((string) ($sourceUrl ?? ''));
+        $sourceProductId = trim((string) ($sourceProductId ?? ''));
+
+        if ($sourceUrl === '' && $sourceProductId === '') {
+            return null;
+        }
+
+        return Product::query()
+            ->where('external_source', 'alibaba')
+            ->where(function ($query) use ($sourceUrl, $sourceProductId) {
+                $hasCondition = false;
+
+                if ($sourceProductId !== '') {
+                    $query->where('external_product_id', $sourceProductId);
+                    $hasCondition = true;
+                }
+
+                if ($sourceUrl !== '') {
+                    if ($hasCondition) {
+                        $query->orWhere('external_source_url', $sourceUrl);
+                    } else {
+                        $query->where('external_source_url', $sourceUrl);
+                    }
+                }
+            })
+            ->first();
     }
 
     private function ensureSlug(?string $slug, string $name): string
@@ -204,5 +280,23 @@ class AlibabaImportController extends Controller
         $normalized = array_values(array_unique($normalized));
 
         return $normalized === [] ? null : $normalized;
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        return $text === '' ? null : Str::limit($text, 255, '');
+    }
+
+    private function nullableColorHex(mixed $value): ?string
+    {
+        $hex = strtoupper(trim((string) ($value ?? '')));
+
+        if ($hex === '') {
+            return null;
+        }
+
+        return preg_match('/^#[0-9A-F]{6}$/', $hex) === 1 ? $hex : null;
     }
 }

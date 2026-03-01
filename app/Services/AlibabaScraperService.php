@@ -36,25 +36,34 @@ class AlibabaScraperService
             ?: '';
 
         $imageUrls = $this->extractImageUrls($html, $detailData);
-        $priceData = $this->extractPriceData($html);
-        $specs = $this->extractSpecs($html);
-        $mappedSpecs = $this->mapProductSpecs($html, $specs);
+        $priceData = $this->extractPriceData($html, $detailData);
+        $tableSpecs = $this->extractSpecTablePairs($html);
+        $detailSpecs = $this->extractSpecPairsFromDetailData($detailData);
+        $specs = array_merge($tableSpecs, $detailSpecs, $this->extractSpecs($html));
+        $mappedSpecs = $this->mapProductSpecs($html, $specs, $detailData);
         $variants = $this->extractVariants($html, $detailData);
+        $sourceProductId = $this->extractSourceProductId($detailData, $url);
 
         return [
             'source_url' => $url,
+            'source_product_id' => $sourceProductId,
             'title' => trim($title),
+            'product_name' => $mappedSpecs['product_name'] ?? null,
             'description' => trim($description),
             'price_min' => $priceData['min'],
             'price_max' => $priceData['max'],
             'currency' => $priceData['currency'] ?: 'USD',
             'specs' => $specs,
+            'brand' => $mappedSpecs['brand'],
+            'model' => $mappedSpecs['model'],
+            'memory_size' => $mappedSpecs['memory_size'],
             'operating_system' => $mappedSpecs['operating_system'],
             'screen_size' => $mappedSpecs['screen_size'],
             'display_type' => $mappedSpecs['display_type'],
             'screen_resolution' => $mappedSpecs['screen_resolution'],
             'battery_capacity_mah' => $mappedSpecs['battery_capacity_mah'],
             'charging_time_hours' => $mappedSpecs['charging_time_hours'],
+            'warranty_months' => $mappedSpecs['warranty_months'],
             'case_material' => $mappedSpecs['case_material'],
             'band_material' => $mappedSpecs['band_material'],
             'camera' => $mappedSpecs['camera'],
@@ -84,9 +93,16 @@ class AlibabaScraperService
                 continue;
             }
 
-            $filePath = 'images/products/' . $slug . '/' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) . '.' . $extension;
+            $baseName = str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
+            $filePath = 'images/products/' . $slug . '/' . $baseName . '.' . $extension;
             Storage::disk('public')->put($filePath, $response->body());
-            $saved[] = $filePath;
+
+            $thumbnailPath = $this->createThumbnailFromBinary($response->body(), $slug, $baseName, $extension);
+
+            $saved[] = [
+                'path' => $filePath,
+                'thumbnail_path' => $thumbnailPath,
+            ];
 
             if (count($saved) >= 8) {
                 break;
@@ -94,6 +110,85 @@ class AlibabaScraperService
         }
 
         return $saved;
+    }
+
+    private function createThumbnailFromBinary(string $binary, string $slug, string $baseName, string $extension): ?string
+    {
+        if (!function_exists('imagecreatefromstring')) {
+            return null;
+        }
+
+        $sourceImage = @imagecreatefromstring($binary);
+        if ($sourceImage === false) {
+            return null;
+        }
+
+        $sourceWidth = imagesx($sourceImage);
+        $sourceHeight = imagesy($sourceImage);
+        if ($sourceWidth <= 0 || $sourceHeight <= 0) {
+            imagedestroy($sourceImage);
+            return null;
+        }
+
+        $targetWidth = 320;
+        $targetHeight = 320;
+
+        $sourceRatio = $sourceWidth / $sourceHeight;
+        $targetRatio = $targetWidth / $targetHeight;
+
+        if ($sourceRatio > $targetRatio) {
+            $cropHeight = $sourceHeight;
+            $cropWidth = (int) round($sourceHeight * $targetRatio);
+            $srcX = (int) round(($sourceWidth - $cropWidth) / 2);
+            $srcY = 0;
+        } else {
+            $cropWidth = $sourceWidth;
+            $cropHeight = (int) round($sourceWidth / $targetRatio);
+            $srcX = 0;
+            $srcY = (int) round(($sourceHeight - $cropHeight) / 2);
+        }
+
+        $thumb = imagecreatetruecolor($targetWidth, $targetHeight);
+
+        if (in_array($extension, ['png', 'webp'], true)) {
+            imagealphablending($thumb, false);
+            imagesavealpha($thumb, true);
+            $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
+            imagefilledrectangle($thumb, 0, 0, $targetWidth, $targetHeight, $transparent);
+        }
+
+        imagecopyresampled(
+            $thumb,
+            $sourceImage,
+            0,
+            0,
+            $srcX,
+            $srcY,
+            $targetWidth,
+            $targetHeight,
+            $cropWidth,
+            $cropHeight
+        );
+
+        ob_start();
+        $written = match ($extension) {
+            'png' => imagepng($thumb, null, 6),
+            'webp' => function_exists('imagewebp') ? imagewebp($thumb, null, 80) : imagejpeg($thumb, null, 82),
+            default => imagejpeg($thumb, null, 82),
+        };
+        $thumbBinary = ob_get_clean();
+
+        imagedestroy($thumb);
+        imagedestroy($sourceImage);
+
+        if (!$written || !is_string($thumbBinary) || $thumbBinary === '') {
+            return null;
+        }
+
+        $thumbnailPath = 'images/products/' . $slug . '/' . $baseName . '_thumb.' . ($extension === 'webp' && !function_exists('imagewebp') ? 'jpg' : $extension);
+        Storage::disk('public')->put($thumbnailPath, $thumbBinary);
+
+        return $thumbnailPath;
     }
 
     private function fetchHtml(string $url): string
@@ -170,6 +265,7 @@ class AlibabaScraperService
     private function extractImageUrls(string $html, ?array $detailData = null): array
     {
         $urls = [];
+        $hasMediaImages = false;
 
         $mediaItems = data_get($detailData, 'globalData.product.mediaItems', []);
         if (is_array($mediaItems)) {
@@ -186,44 +282,77 @@ class AlibabaScraperService
                 $origin = data_get($item, 'imageUrl.origin');
                 $normal = data_get($item, 'imageUrl.normal');
 
-                foreach ([$big, $origin, $normal] as $candidate) {
-                    if (is_string($candidate) && trim($candidate) !== '') {
-                        $urls[] = $candidate;
+                foreach ([$origin, $big, $normal] as $candidate) {
+                    $normalizedCandidate = $this->normalizeImageUrl($candidate);
+                    if ($normalizedCandidate !== null) {
+                        $urls[] = $normalizedCandidate;
+                        $hasMediaImages = true;
+                        break;
                     }
                 }
             }
         }
 
-        foreach ($this->extractJsonLdImageUrls($html) as $jsonLdImage) {
-            $urls[] = $jsonLdImage;
+        if (!$hasMediaImages) {
+            foreach ($this->extractJsonLdImageUrls($html) as $jsonLdImage) {
+                $urls[] = $jsonLdImage;
+            }
+
+            if (preg_match_all('/(?:https?:)?\/\/[^"\']+\.(?:jpg|jpeg|png|webp)(?:\?[^"\']*)?/i', $html, $matches) > 0) {
+                foreach ($matches[0] as $url) {
+                    if (str_contains($url, 'alicdn.com') || str_contains($url, 'alibaba.com')) {
+                        $urls[] = html_entity_decode($url, ENT_QUOTES | ENT_HTML5);
+                    }
+                }
+            }
+
+            $ogImage = $this->extractMetaContent($html, 'property="og:image"');
+            if ($ogImage) {
+                $urls[] = $ogImage;
+            }
         }
 
-        if (preg_match_all('/(?:https?:)?\/\/[^"\']+\.(?:jpg|jpeg|png|webp)(?:\?[^"\']*)?/i', $html, $matches) > 0) {
-            foreach ($matches[0] as $url) {
-                if (str_contains($url, 'alicdn.com') || str_contains($url, 'alibaba.com')) {
-                    $urls[] = html_entity_decode($url, ENT_QUOTES | ENT_HTML5);
+        $normalizedByKey = [];
+        foreach ($urls as $url) {
+            $normalizedUrl = $this->normalizeImageUrl($url);
+            if ($normalizedUrl !== null) {
+                $key = $this->imageDedupKey($normalizedUrl);
+                if (!isset($normalizedByKey[$key])) {
+                    $normalizedByKey[$key] = $normalizedUrl;
                 }
             }
         }
 
-        $ogImage = $this->extractMetaContent($html, 'property="og:image"');
-        if ($ogImage) {
-            $urls[] = $ogImage;
-        }
+        return array_values(array_slice(array_values($normalizedByKey), 0, 12));
+    }
 
-        $normalized = [];
-        foreach ($urls as $url) {
-            $normalizedUrl = $this->normalizeImageUrl($url);
-            if ($normalizedUrl !== null) {
-                $normalized[] = $normalizedUrl;
+    private function extractPriceData(string $html, ?array $detailData = null): array
+    {
+        $ladderPrices = data_get($detailData, 'globalData.product.price.productLadderPrices', []);
+        if (is_array($ladderPrices) && $ladderPrices !== []) {
+            $values = [];
+            foreach ($ladderPrices as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+
+                $price = data_get($entry, 'price');
+                if (is_numeric($price)) {
+                    $values[] = (float) $price;
+                }
+            }
+
+            if ($values !== []) {
+                sort($values);
+
+                return [
+                    'min' => $values[0],
+                    'max' => $values[count($values) - 1],
+                    'currency' => 'USD',
+                ];
             }
         }
 
-        return array_values(array_slice(array_unique($normalized), 0, 12));
-    }
-
-    private function extractPriceData(string $html): array
-    {
         $currency = null;
         $numbers = [];
 
@@ -314,8 +443,12 @@ class AlibabaScraperService
                         continue;
                     }
 
+                    $colorHex = $this->normalizeColorHex((string) data_get($value, 'color', ''));
+
                     $variants[] = [
                         'name' => $name,
+                        'color_name' => str_contains($attrName, 'color') ? $name : null,
+                        'color_hex' => $colorHex,
                         'quantity' => 0,
                         'low_stock_threshold' => 5,
                     ];
@@ -329,6 +462,8 @@ class AlibabaScraperService
                 if ($name !== '' && strlen($name) <= 160) {
                     $variants[] = [
                         'name' => $name,
+                        'color_name' => $name,
+                        'color_hex' => null,
                         'quantity' => 0,
                         'low_stock_threshold' => 5,
                     ];
@@ -340,6 +475,8 @@ class AlibabaScraperService
             $title = $this->extractTitleTag($html) ?: 'Default Variant';
             $variants[] = [
                 'name' => Str::limit($title, 120),
+                'color_name' => null,
+                'color_hex' => null,
                 'quantity' => 0,
                 'low_stock_threshold' => 5,
             ];
@@ -525,40 +662,189 @@ class AlibabaScraperService
         return null;
     }
 
-    private function mapProductSpecs(string $html, array $specs): array
+    private function imageDedupKey(string $url): string
     {
-        $pairs = $this->extractSpecTablePairs($html);
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $path = strtolower((string) ($parts['path'] ?? ''));
 
-        $operatingSystem = $this->findSpecValue($pairs, ['operating system', 'os']);
+        if ($path === '') {
+            return strtolower($url);
+        }
+
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $filename = pathinfo($path, PATHINFO_FILENAME);
+
+        $filename = preg_replace('/(?:[_-])(?:\d{2,4}x\d{2,4})(?:[a-z0-9]*)$/i', '', (string) $filename) ?: (string) $filename;
+        $filename = preg_replace('/(?:[_-])(?:q\d{2,3}|quality\d{2,3}|small|normal|thumb|thumbnail)$/i', '', (string) $filename) ?: (string) $filename;
+
+        $directory = trim(strtolower((string) pathinfo($path, PATHINFO_DIRNAME)), '/.');
+
+        return $host . '/' . $directory . '/' . trim($filename, '_-') . '.' . strtolower((string) $extension);
+    }
+
+    private function mapProductSpecs(string $html, array $specs, ?array $detailData = null): array
+    {
+        $pairs = array_merge($this->extractSpecTablePairs($html), $this->extractSpecPairsFromDetailData($detailData));
+
+        $operatingSystem = $this->findSpecValue($pairs, ['operating system', 'operation system', 'operating system (os)', 'os', 'system']);
         $screenSize = $this->findSpecValue($pairs, ['screen size', 'screen']);
-        $displayType = $this->findSpecValue($pairs, ['display type']);
+        $displayType = $this->findSpecValue($pairs, ['display type', 'display']);
         $screenResolution = $this->findSpecValue($pairs, ['screen resolution', 'resolution']);
         $caseMaterial = $this->findSpecValue($pairs, ['case material']);
         $bandMaterial = $this->findSpecValue($pairs, ['band material', 'strap material']);
         $camera = $this->findSpecValue($pairs, ['camera']);
 
-        $batteryRaw = $this->findSpecValue($pairs, ['battery time', 'battery capacity', 'battery']);
+        $batteryRaw = $this->findSpecValue($pairs, ['battery capacity', 'battery capacity (mah)', 'battery capacity mah', 'battery']);
         $chargingRaw = $this->findSpecValue($pairs, ['charging time', 'charge time']);
+        $warrantyRaw = $this->findSpecValue($pairs, ['warranty', 'warranty year', 'warranty period', 'after-sales service']);
 
-        $functionRaw = $this->findSpecValue($pairs, ['function', 'functions']);
+        $productName = $this->findSpecValue($pairs, ['product name', 'item name']);
+        $model = $this->findSpecValue($pairs, ['model number', 'model', 'model no']);
+        $memorySize = $this->findSpecValue($pairs, ['memory size', 'ram', 'rom', 'memory', 'ram rom']);
+
+        $functionRaw = $this->findSpecValue($pairs, ['function', 'functions', 'featured functions', 'feature', 'features']);
         $featureRaw = $this->findSpecValue($pairs, ['feature', 'features']);
+
+        if (!$screenResolution && is_string($screenSize) && preg_match('/([0-9]{2,4}\s*[x\*]\s*[0-9]{2,4})/i', $screenSize, $match) === 1) {
+            $screenResolution = strtoupper(str_replace(' ', '', $match[1]));
+        }
 
         if (!$operatingSystem && isset($specs['system'])) {
             $operatingSystem = $specs['system'];
         }
 
         return [
+            'product_name' => $this->nullableLimitedString($productName, 160),
             'operating_system' => $this->nullableLimitedString($operatingSystem),
+            'brand' => $this->nullableLimitedString($this->findSpecValue($pairs, ['brand', 'brand name', 'manufacturer'])),
+            'model' => $this->nullableLimitedString($model),
+            'memory_size' => $this->nullableLimitedString($memorySize),
             'screen_size' => $this->nullableLimitedString($screenSize),
             'display_type' => $this->nullableLimitedString($displayType),
             'screen_resolution' => $this->nullableLimitedString($screenResolution),
             'battery_capacity_mah' => $this->parseFirstInt($batteryRaw),
             'charging_time_hours' => $this->parseFirstFloat($chargingRaw),
+            'warranty_months' => $this->parseWarrantyMonths($warrantyRaw),
             'case_material' => $this->nullableLimitedString($caseMaterial),
             'band_material' => $this->nullableLimitedString($bandMaterial),
             'camera' => $this->nullableLimitedString($camera),
             'functions' => $this->splitFunctionList([$functionRaw, $featureRaw]),
         ];
+    }
+
+    private function extractSpecPairsFromDetailData(?array $detailData): array
+    {
+        if (!is_array($detailData)) {
+            return [];
+        }
+
+        $pairs = [];
+
+        $propertySources = [
+            data_get($detailData, 'globalData.product.productBasicProperties', []),
+            data_get($detailData, 'globalData.product.productKeyIndustryProperties', []),
+            data_get($detailData, 'globalData.product.productOtherProperties', []),
+        ];
+
+        foreach ($propertySources as $properties) {
+            if (!is_array($properties)) {
+                continue;
+            }
+
+            foreach ($properties as $property) {
+                if (!is_array($property)) {
+                    continue;
+                }
+
+                $name = $this->normalizeSpecKey((string) ($property['attrName'] ?? ''));
+                $value = trim((string) ($property['attrValue'] ?? ''));
+
+                if ($name !== '' && $value !== '') {
+                    $pairs[$name] = $value;
+                }
+            }
+        }
+
+        $mediaItems = data_get($detailData, 'globalData.product.mediaItems', []);
+        if (is_array($mediaItems)) {
+            foreach ($mediaItems as $item) {
+                if (!is_array($item) || (string) ($item['group'] ?? '') !== 'attributes') {
+                    continue;
+                }
+
+                $attributeGroups = [
+                    data_get($item, 'attributeData.keyAttributes', []),
+                    data_get($item, 'attributeData.otherAttributes', []),
+                ];
+
+                foreach ($attributeGroups as $group) {
+                    if (!is_array($group)) {
+                        continue;
+                    }
+
+                    foreach ($group as $attribute) {
+                        if (!is_array($attribute)) {
+                            continue;
+                        }
+
+                        $name = $this->normalizeSpecKey((string) ($attribute['attributeName'] ?? ''));
+                        $value = trim((string) ($attribute['attributeValue'] ?? ''));
+
+                        if ($name !== '' && $value !== '') {
+                            $pairs[$name] = $value;
+                        }
+                    }
+                }
+            }
+        }
+
+        $sortedProperties = data_get($detailData, 'nodeMap.module_sorted_attribute.privateData.productSortedProperties', []);
+        if (is_array($sortedProperties)) {
+            foreach ($sortedProperties as $group) {
+                if (!is_array($group)) {
+                    continue;
+                }
+
+                $attributeList = $group['attributeList'] ?? [];
+                if (!is_array($attributeList)) {
+                    continue;
+                }
+
+                foreach ($attributeList as $attribute) {
+                    if (!is_array($attribute)) {
+                        continue;
+                    }
+
+                    $name = $this->normalizeSpecKey((string) ($attribute['attribute'] ?? ''));
+                    $value = trim((string) ($attribute['value'] ?? ''));
+
+                    if ($name !== '' && $value !== '') {
+                        $pairs[$name] = $value;
+                    }
+                }
+            }
+        }
+
+        return $pairs;
+    }
+
+    private function extractSourceProductId(?array $detailData, ?string $url): ?string
+    {
+        $detailProductId = data_get($detailData, 'globalData.product.productId');
+        if (is_numeric($detailProductId) || (is_string($detailProductId) && trim($detailProductId) !== '')) {
+            return (string) $detailProductId;
+        }
+
+        if (!is_string($url) || trim($url) === '') {
+            return null;
+        }
+
+        if (preg_match('/(?:product-detail|product)\/[^\/_]+_([0-9]{6,})\.html/i', $url, $match) === 1) {
+            return $match[1];
+        }
+
+        return null;
     }
 
     private function extractSpecTablePairs(string $html): array
@@ -593,7 +879,10 @@ class AlibabaScraperService
 
     private function normalizeSpecKey(string $key): string
     {
-        return strtolower(trim(preg_replace('/\s+/', ' ', $key) ?: ''));
+        $decoded = html_entity_decode($key, ENT_QUOTES | ENT_HTML5);
+        $lettersOnly = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $decoded) ?: '';
+
+        return strtolower(trim(preg_replace('/\s+/', ' ', $lettersOnly) ?: ''));
     }
 
     private function findSpecValue(array $pairs, array $candidateKeys): ?string
@@ -602,6 +891,30 @@ class AlibabaScraperService
             $normalized = $this->normalizeSpecKey($candidateKey);
             if (isset($pairs[$normalized])) {
                 return $pairs[$normalized];
+            }
+
+            $value = $this->findSpecValueByPartialKey($pairs, $normalized);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function findSpecValueByPartialKey(array $pairs, string $candidateKey): ?string
+    {
+        if ($candidateKey === '') {
+            return null;
+        }
+
+        foreach ($pairs as $key => $value) {
+            if (!is_string($key) || !is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            if (str_contains($key, $candidateKey) || str_contains($candidateKey, $key)) {
+                return $value;
             }
         }
 
@@ -634,6 +947,31 @@ class AlibabaScraperService
         return (float) $match[1];
     }
 
+    private function parseWarrantyMonths(?string $value): ?int
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $text = strtolower(trim($value));
+
+        if (preg_match('/([0-9]{1,2})\s*(year|years|yr|yrs)/i', $text, $match) === 1) {
+            return ((int) $match[1]) * 12;
+        }
+
+        if (preg_match('/([0-9]{1,3})\s*(month|months|mo|mos)/i', $text, $match) === 1) {
+            return (int) $match[1];
+        }
+
+        if (preg_match('/([0-9]{1,3})/', $text, $match) === 1) {
+            $number = (int) $match[1];
+
+            return $number <= 10 ? $number * 12 : $number;
+        }
+
+        return null;
+    }
+
     private function splitFunctionList(array $values): array
     {
         $items = [];
@@ -643,9 +981,9 @@ class AlibabaScraperService
                 continue;
             }
 
-            $parts = preg_split('/[,;\n]+/', $value) ?: [];
+            $parts = preg_split('/[,;\n]+|\s+(?=\d+\.)/', $value) ?: [];
             foreach ($parts as $part) {
-                $clean = trim($part);
+                $clean = trim(preg_replace('/^\d+\.\s*/', '', $part) ?? $part);
                 if ($clean !== '') {
                     $items[] = Str::limit($clean, 100, '');
                 }
@@ -664,5 +1002,15 @@ class AlibabaScraperService
         $clean = trim($value);
 
         return $clean === '' ? null : Str::limit($clean, $max, '');
+    }
+
+    private function normalizeColorHex(string $value): ?string
+    {
+        $value = strtoupper(trim($value));
+        if (preg_match('/^#[0-9A-F]{6}$/', $value) !== 1) {
+            return null;
+        }
+
+        return $value;
     }
 }

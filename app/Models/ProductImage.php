@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class ProductImage extends Model
 {
     protected $fillable = [
         'product_id',
         'path',
+        'thumbnail_path',
         'alt_en',
         'alt_ka',
         'sort_order',
@@ -21,7 +23,7 @@ class ProductImage extends Model
         'sort_order' => 'integer',
     ];
 
-    protected $appends = ['alt', 'url'];
+    protected $appends = ['alt', 'url', 'thumbnail_url'];
 
     public function product(): BelongsTo
     {
@@ -46,11 +48,26 @@ class ProductImage extends Model
         }
 
         $normalizedPath = ltrim($this->path ?? '', '/');
-
         if (str_starts_with($normalizedPath, 'storage/')) {
-            return asset($normalizedPath);
+            $normalizedPath = substr($normalizedPath, 8);
         }
 
-        return asset('storage/' . $normalizedPath);
+        return Storage::url($normalizedPath);
+    }
+
+    public function getThumbnailUrlAttribute(): string
+    {
+        $path = $this->thumbnail_path ?: $this->path;
+
+        if (str_starts_with((string) $path, 'http')) {
+            return (string) $path;
+        }
+
+        $normalizedPath = ltrim((string) $path, '/');
+        if (str_starts_with($normalizedPath, 'storage/')) {
+            $normalizedPath = substr($normalizedPath, 8);
+        }
+
+        return Storage::url($normalizedPath);
     }
 }

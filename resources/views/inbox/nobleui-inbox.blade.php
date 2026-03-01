@@ -50,7 +50,7 @@
 
         /* Admin message (me) styling */
         .message-item.me .bubble {
-            background-color: #3b82f6;
+            background-color: #7c3aed;
             color: white;
             border-radius: 18px 18px 4px 18px;
         }
@@ -232,7 +232,7 @@
                                         <input class="form-check-input" type="checkbox" id="ai-toggle" style="cursor: pointer;">
                                         <label class="form-check-label ms-2" for="ai-toggle" style="cursor: pointer;">
                                             <i data-feather="cpu" class="icon-sm me-1"></i>
-                                            <span id="ai-toggle-label">AI Auto-Reply</span>
+                                            <span id="ai-toggle-label">Auto Reply</span>
                                         </label>
                                     </div>
                                 </div>
@@ -270,7 +270,7 @@
                                 </div>
                             </form>
                             <div>
-                                <button type="button" id="ai-suggest-btn" class="btn btn-success btn-icon rounded-circle me-2" data-bs-toggle="tooltip" title="Get AI Suggestion">
+                                <button type="button" id="ai-suggest-btn" class="btn btn-success btn-icon rounded-circle me-2" data-bs-toggle="tooltip" title="Generate Draft Reply">
                                     <i data-feather="zap" id="ai-suggest-icon"></i>
                                     <span class="spinner-border spinner-border-sm d-none" id="ai-suggest-spinner"></span>
                                 </button>
@@ -306,6 +306,7 @@
 
         function selectConversation(conversationId) {
             currentConversationId = conversationId;
+            window.currentConversationId = conversationId;
 
             // Update UI
             document.querySelectorAll('.conversation-item').forEach(item => {
@@ -434,6 +435,8 @@
             scrollToBottom();
         }
 
+        window.appendMessage = appendMessage;
+
         function scrollToBottom() {
             const container = document.getElementById('messages-container');
             container.scrollTop = container.scrollHeight;
@@ -534,6 +537,7 @@
                 }
 
                 currentConversationId = null;
+                window.currentConversationId = null;
 
                 console.log('Returned to conversations list');
             });
@@ -565,7 +569,7 @@
                 if (data.success) {
                     showNotification(
                         data.message,
-                        isEnabled ? 'AI will automatically respond to customer messages' : 'AI auto-reply disabled'
+                        isEnabled ? 'Auto Reply enabled for new incoming messages' : 'Auto Reply disabled; use Generate Draft for manual replies'
                     );
                 } else {
                     // Revert toggle if failed
@@ -620,7 +624,7 @@
                     // Put AI suggestion in the message input
                     messageInput.value = data.suggestion;
                     messageInput.focus();
-                    showNotification('AI Suggestion', 'Review and edit before sending');
+                    showNotification('Draft ready', 'Review and edit before sending');
                 } else {
                     showNotification('No suggestion', 'AI could not generate a response');
                 }
@@ -643,6 +647,8 @@
                 item.style.display = text.includes(query) ? '' : 'none';
             });
         });
+
+        window.currentConversationId = currentConversationId;
     </script>
 @endpush
 @endsection

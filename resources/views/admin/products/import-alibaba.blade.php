@@ -6,7 +6,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h3 class="mb-0">Import from Alibaba</h3>
-            <p class="text-muted mb-0">Paste one product URL, review parsed data, then confirm creation.</p>
+            <p class="text-muted mb-0">Paste one Alibaba URL or full page source, then review and confirm.</p>
         </div>
         <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">Back to Products</a>
     </div>
@@ -19,7 +19,7 @@
                 <div class="col-lg-10">
                     <label for="alibaba-url" class="form-label">Alibaba Product URL</label>
                     <input type="url" name="url" id="alibaba-url" class="form-control" placeholder="https://www.alibaba.com/product-detail/..." required>
-                    <div class="form-text">If Alibaba blocks server parsing, paste full browser Page Source below.</div>
+                    <div class="form-text">If crawler is blocked by captcha/interception, paste full browser Page Source below.</div>
                 </div>
                 <div class="col-lg-2 d-flex align-items-end">
                     <button type="submit" id="parse-button" class="btn btn-primary w-100">Parse Product</button>
@@ -38,6 +38,7 @@
             <form id="alibaba-confirm-form">
                 @csrf
                 <input type="hidden" name="source_url" id="source_url">
+                <input type="hidden" name="source_product_id" id="source_product_id">
 
                 <div class="border rounded p-3 mb-4">
                     <h6 class="mb-3">Images (Select to Import)</h6>
@@ -63,7 +64,7 @@
                     </div>
                     <div class="col-lg-3 mb-3">
                         <label for="currency" class="form-label">Currency</label>
-                        <input type="text" maxlength="3" name="currency" id="currency" class="form-control" value="USD">
+                        <input type="text" maxlength="3" name="currency" id="currency" class="form-control" value="GEL">
                     </div>
 
                     <div class="col-lg-6 mb-3">
@@ -95,6 +96,18 @@
                     <div class="col-lg-4 mb-3">
                         <label for="warranty_months" class="form-label">Warranty (months)</label>
                         <input type="number" min="0" max="120" name="warranty_months" id="warranty_months" class="form-control">
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <label for="brand" class="form-label">Brand</label>
+                        <input type="text" name="brand" id="brand" class="form-control">
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <label for="model" class="form-label">Model</label>
+                        <input type="text" name="model" id="model" class="form-control">
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <label for="memory_size" class="form-label">Memory Size</label>
+                        <input type="text" name="memory_size" id="memory_size" class="form-control">
                     </div>
                     <div class="col-lg-3 mb-3">
                         <label for="operating_system" class="form-label">Operating System</label>
@@ -257,6 +270,8 @@
                     <tr>
                         <td>
                             <input type="text" class="form-control" name="variants[${index}][name]" value="${(variant.name || '').replace(/"/g, '&quot;')}" required>
+                            <input type="hidden" name="variants[${index}][color_name]" value="${(variant.color_name || '').replace(/"/g, '&quot;')}">
+                            <input type="hidden" name="variants[${index}][color_hex]" value="${(variant.color_hex || '').replace(/"/g, '&quot;')}">
                         </td>
                         <td>
                             <input type="number" min="0" class="form-control" name="variants[${index}][quantity]" value="${variant.quantity ?? 0}">
@@ -272,7 +287,11 @@
 
                 variantsBody.innerHTML = rows || `
                     <tr>
-                        <td><input type="text" class="form-control" name="variants[0][name]" value="Default" required></td>
+                        <td>
+                            <input type="text" class="form-control" name="variants[0][name]" value="Default" required>
+                            <input type="hidden" name="variants[0][color_name]" value="">
+                            <input type="hidden" name="variants[0][color_hex]" value="">
+                        </td>
                         <td><input type="number" min="0" class="form-control" name="variants[0][quantity]" value="0"></td>
                         <td><input type="number" min="0" class="form-control" name="variants[0][low_stock_threshold]" value="5"></td>
                         <td><button type="button" class="btn btn-outline-danger btn-sm remove-variant">Remove</button></td>
@@ -285,10 +304,14 @@
                     const nameInput = row.querySelector('input[name*="[name]"]');
                     const qtyInput = row.querySelector('input[name*="[quantity]"]');
                     const thresholdInput = row.querySelector('input[name*="[low_stock_threshold]"]');
+                    const colorNameInput = row.querySelector('input[name*="[color_name]"]');
+                    const colorHexInput = row.querySelector('input[name*="[color_hex]"]');
 
                     if (nameInput) nameInput.name = `variants[${index}][name]`;
                     if (qtyInput) qtyInput.name = `variants[${index}][quantity]`;
                     if (thresholdInput) thresholdInput.name = `variants[${index}][low_stock_threshold]`;
+                    if (colorNameInput) colorNameInput.name = `variants[${index}][color_name]`;
+                    if (colorHexInput) colorHexInput.name = `variants[${index}][color_hex]`;
                 });
             };
 
@@ -319,6 +342,7 @@
                     const product = data.product || {};
 
                     document.getElementById('source_url').value = data.source_url || document.getElementById('alibaba-url').value;
+                    document.getElementById('source_product_id').value = data.source_product_id || '';
                     fillField('name_en', product.name_en);
                     fillField('name_ka', product.name_ka);
                     fillField('slug', product.slug);
@@ -327,10 +351,13 @@
                     fillField('description_en', product.description_en);
                     fillField('description_ka', product.description_ka);
                     fillField('price', product.price);
-                    fillField('currency', product.currency || 'USD');
+                    fillField('currency', product.currency || 'GEL');
                     fillField('water_resistant', product.water_resistant);
                     fillField('battery_life_hours', product.battery_life_hours);
                     fillField('warranty_months', product.warranty_months);
+                    fillField('brand', product.brand);
+                    fillField('model', product.model);
+                    fillField('memory_size', product.memory_size);
                     fillField('operating_system', product.operating_system);
                     fillField('screen_size', product.screen_size);
                     fillField('display_type', product.display_type);
@@ -368,7 +395,11 @@
                 const nextIndex = variantsBody.querySelectorAll('tr').length;
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><input type="text" class="form-control" name="variants[${nextIndex}][name]" value="" required></td>
+                    <td>
+                        <input type="text" class="form-control" name="variants[${nextIndex}][name]" value="" required>
+                        <input type="hidden" name="variants[${nextIndex}][color_name]" value="">
+                        <input type="hidden" name="variants[${nextIndex}][color_hex]" value="">
+                    </td>
                     <td><input type="number" min="0" class="form-control" name="variants[${nextIndex}][quantity]" value="0"></td>
                     <td><input type="number" min="0" class="form-control" name="variants[${nextIndex}][low_stock_threshold]" value="5"></td>
                     <td><button type="button" class="btn btn-outline-danger btn-sm remove-variant">Remove</button></td>
@@ -398,6 +429,15 @@
                         window.location.href = response.data.redirect;
                     }
                 } catch (error) {
+                    if (error?.response?.status === 409) {
+                        const message = error?.response?.data?.message || 'This source product already exists.';
+                        showMessage('warning', message);
+                        if (error?.response?.data?.redirect) {
+                            window.location.href = error.response.data.redirect;
+                        }
+                        return;
+                    }
+
                     if (error?.response?.status === 422 && error?.response?.data?.errors) {
                         const errors = Object.values(error.response.data.errors).flat();
                         showMessage('danger', `<ul class="mb-0">${errors.map((item) => `<li>${item}</li>`).join('')}</ul>`);

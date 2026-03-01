@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageReceived;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Conversation;
@@ -11,6 +12,7 @@ use App\Models\ProductVariant;
 use App\Services\Chatbot\ChatbotQualityMetricsService;
 use App\Services\Chatbot\UnifiedAiPolicyService;
 use App\Services\Chatbot\RagContextBuilder;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -83,7 +85,7 @@ class ChatController extends Controller
         $conversation = $this->getWidgetConversation($customer);
 
         // Save user message
-        Message::create([
+        $customerMessage = Message::create([
             'conversation_id' => $conversation->id,
             'customer_id' => $customer->id,
             'sender_type' => 'customer',
@@ -92,6 +94,29 @@ class ChatController extends Controller
             'content' => $request->input('message'),
             'platform_message_id' => 'home_' . Str::uuid(),
         ]);
+
+        $conversation->update([
+            'last_message_at' => now(),
+            'unread_count' => $conversation->unread_count + 1,
+        ]);
+
+        event(new MessageReceived(
+            $customerMessage,
+            $conversation,
+            $customer,
+            'home'
+        ));
+
+        app(PushNotificationService::class)->sendToAdmins(
+            'New message from ' . ($customer->name ?: 'Customer'),
+            mb_substr((string) $customerMessage->content, 0, 120),
+            url('/admin/inbox?conversation=' . $conversation->id),
+            [
+                'conversation_id' => $conversation->id,
+                'message_id' => $customerMessage->id,
+                'platform' => 'home',
+            ]
+        );
 
 
         $apiKey = config('services.openai.key');
@@ -127,8 +152,8 @@ class ChatController extends Controller
                 ? $product->sale_price . ' (ფასდაკლება, ძველი ფასი ' . $product->price . ')'
                 : (string) $product->price;
 
-            $imagePath = $product->primaryImage?->path
-                ? url('storage/' . $product->primaryImage->path)
+            $imagePath = $product->primaryImage?->url
+                ? $product->primaryImage->url
                 : null;
 
             $imagePart = $imagePath ? ' | image: ' . $imagePath : '';
@@ -233,7 +258,7 @@ class ChatController extends Controller
                 'customer_id' => $customer->id,
                 'sender_type' => 'bot',
                 'sender_id' => 0,
-                'sender_name' => 'KidSIM Assistant',
+                'sender_name' => 'MyTechnic Assistant',
                 'content' => $reply,
                 'platform_message_id' => 'home_' . Str::uuid(),
             ]);
@@ -241,7 +266,6 @@ class ChatController extends Controller
             // Update conversation last message time and mark unread
             $conversation->update([
                 'last_message_at' => now(),
-                'unread_count' => $conversation->unread_count + 1,
             ]);
 
             return response()->json([

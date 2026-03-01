@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Services;
 
@@ -30,7 +30,7 @@ class AiSuggestionService
         $this->openaiModel = config('ai.openai.model', 'gpt-4-turbo');
         $this->pineconeApiKey = config('ai.pinecone.api_key');
         $this->pineconeHost = config('ai.pinecone.host');
-        $this->pineconeNamespace = config('ai.pinecone.namespace', 'kidsim');
+        $this->pineconeNamespace = config('ai.pinecone.namespace', 'mytechnic');
         $this->pineconeIndex = config('ai.pinecone.index', 'products');
     }
 
@@ -322,7 +322,7 @@ class AiSuggestionService
     public function buildPrompt(string $messageText, string $context, string $productInfo, string $contactInfo): string
     {
         $systemPrompt = <<<PROMPT
-You are a helpful and professional customer support representative for KidSIM Watch, a premium smartwatch for kids.
+You are a helpful and professional customer support representative for MyTechnic, a premium smartwatch for kids.
 
 Your role is to:
 - Provide courteous, professional responses

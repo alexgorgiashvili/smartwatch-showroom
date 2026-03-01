@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Services;
 
@@ -289,11 +289,11 @@ class AiConversationService
 
         if ($isGeorgian) {
             if ($looksLikeModelQuestion) {
-                $response = 'ამჟამად გვაქვს KidSIM-ის რამდენიმე მოდელი. რომელი ფუნქციები გაინტერესებთ (GPS, SOS, ზარები, კამერა) და შევარჩევთ შესაბამისს.';
+                $response = 'ამჟამად გვაქვს MyTechnic-ის რამდენიმე მოდელი. რომელი ფუნქციები გაინტერესებთ (GPS, SOS, ზარები, კამერა) და შევარჩევთ შესაბამისს.';
             } elseif ($looksLikeStockQuestion) {
                 $response = 'მარაგების დასაზუსტებლად გვითხარით სასურველი მოდელი/ფერი და დაგიდასტურებთ.';
             } elseif ($looksLikeDeliveryQuestion) {
-                $response = 'მიწოდება გვაქვს თბილისში და რეგიონებში. მითხარით ქალაქი და სასურველი ვადა.';
+                $response = 'მიწოდება უფასოა მთელი ქვეყნის მასშტაბით. მითხარით ქალაქი და სასურველი ვადა.';
             } elseif ($looksLikePriceQuestion) {
                 $response = 'ფასი დამოკიდებულია მოდელზე და ფუნქციებზე. რომელი მოდელი ან ფუნქცია გაინტერესებთ?';
             } else {
@@ -301,15 +301,15 @@ class AiConversationService
             }
         } else {
             if ($looksLikeModelQuestion) {
-                $response = 'We have multiple KidSIM models available. Which features are most important to you (GPS, SOS, calling, or camera)?';
+                $response = 'We have multiple MyTechnic models available. Which features are most important to you (GPS, SOS, calling, or camera)?';
             } elseif ($looksLikeStockQuestion) {
                 $response = 'To confirm stock, please tell us the model and color you want.';
             } elseif ($looksLikeDeliveryQuestion) {
-                $response = 'We do offer delivery. What city are you in and when do you need it?';
+                $response = 'Delivery is free nationwide across Georgia. What city are you in and when do you need it?';
             } elseif ($looksLikePriceQuestion) {
-                $response = 'Prices depend on the model and features. Which KidSIM model or features are you interested in?';
+                $response = 'Prices depend on the model and features. Which MyTechnic model or features are you interested in?';
             } else {
-                $response = 'Thanks for reaching out! Which KidSIM model or features are you interested in (GPS, SOS, battery, or calling)?';
+                $response = 'Thanks for reaching out! Which MyTechnic model or features are you interested in (GPS, SOS, battery, or calling)?';
             }
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\MessageReceived;
 use App\Services\MetaApiService;
 use App\Services\OmnichannelService;
+use App\Services\PushNotificationService;
 use App\Services\WebhookVerificationService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
@@ -16,13 +17,16 @@ class WebhookController extends Controller
 {
     protected WebhookVerificationService $verificationService;
     protected OmnichannelService $omnichannelService;
+    protected PushNotificationService $pushNotificationService;
 
     public function __construct(
         WebhookVerificationService $verificationService,
-        OmnichannelService $omnichannelService
+        OmnichannelService $omnichannelService,
+        PushNotificationService $pushNotificationService
     ) {
         $this->verificationService = $verificationService;
         $this->omnichannelService = $omnichannelService;
+        $this->pushNotificationService = $pushNotificationService;
     }
 
     /**
@@ -107,6 +111,19 @@ class WebhookController extends Controller
                 $customer = $message->customer;
 
                 broadcast(new MessageReceived($message, $conversation, $customer, $platform))->toOthers();
+
+                if ($message->sender_type !== 'admin') {
+                    $this->pushNotificationService->sendToAdmins(
+                        'New message from ' . ($customer->name ?: 'Customer'),
+                        mb_substr((string) $message->content, 0, 120),
+                        url('/admin/inbox?conversation=' . $conversation->id),
+                        [
+                            'conversation_id' => $conversation->id,
+                            'message_id' => $message->id,
+                            'platform' => $platform,
+                        ]
+                    );
+                }
 
                 Log::info('Message received event broadcasted', [
                     'message_id' => $message->id,

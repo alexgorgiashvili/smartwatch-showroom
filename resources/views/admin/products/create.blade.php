@@ -6,7 +6,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h3 class="mb-0">Create Product</h3>
-            <p class="text-muted">Add a new KidSIM product to the catalog.</p>
+            <p class="text-muted">Add a new MyTechnic product to the catalog.</p>
         </div>
         <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">Back to Products</a>
     </div>

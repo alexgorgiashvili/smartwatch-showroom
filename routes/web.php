@@ -10,10 +10,13 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\AlibabaImportController as AdminAlibabaImportController;
+use App\Http\Controllers\Admin\CompetitorMonitorController as AdminCompetitorMonitorController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImageController;
 use App\Http\Controllers\Admin\StockAdjustmentController as AdminStockAdjustmentController;
 use App\Http\Controllers\Admin\ChatbotContentController as AdminChatbotContentController;
+use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InquiryController;
@@ -23,6 +26,9 @@ use App\Http\Controllers\Site\CartController;
 use App\Http\Controllers\Site\CheckoutController;
 use App\Http\Controllers\Site\GeoPaymentController;
 use App\Http\Controllers\Site\PaymentStatusController;
+use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,6 +43,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
@@ -46,6 +53,17 @@ Route::get('/privacy', fn () => view('pages.privacy'))->name('privacy');
 Route::get('/terms', fn () => view('pages.terms'))->name('terms');
 Route::get('/lang/{locale}', [HomeController::class, 'locale'])->name('locale');
 Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
+
+// Blog
+Route::get('/blog', [ArticleController::class, 'index'])->name('blog.index');
+Route::get('/blog/{article:slug}', [ArticleController::class, 'show'])->name('blog.show');
+
+// Landing pages — niche SEO
+Route::get('/smartwatches/bavshvis-saati-{range}', [LandingPageController::class, 'age'])
+    ->name('landing.age')
+    ->where('range', '4-6|7-10|11-14');
+Route::get('/sim-card-guide', [LandingPageController::class, 'simGuide'])->name('landing.sim-guide');
+Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('landing.gift-guide');
 Route::post('/chatbot', [ChatController::class, 'respond'])
 	->name('chatbot.respond')
 	->middleware('throttle:30,1');
@@ -85,6 +103,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
 			->name('inquiries.index');
 		Route::get('/inquiries/{inquiry}', [AdminInquiryController::class, 'show'])
 			->name('inquiries.show');
+
+		Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])
+			->name('push-subscriptions.store');
+		Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])
+			->name('push-subscriptions.destroy');
+		Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test'])
+			->name('push-subscriptions.test');
 
 		// Inbox Routes
 		Route::prefix('inbox')->name('inbox.')->group(function () {
@@ -131,7 +156,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
 			->name('products.import-alibaba.parse');
 		Route::post('products/import-alibaba/confirm', [AdminAlibabaImportController::class, 'confirm'])
 			->name('products.import-alibaba.confirm');
+		Route::get('competitors', [AdminCompetitorMonitorController::class, 'index'])
+			->name('competitors.index');
+		Route::post('competitors/sources', [AdminCompetitorMonitorController::class, 'storeSource'])
+			->name('competitors.sources.store');
+		Route::post('competitors/sources/{source}/refresh', [AdminCompetitorMonitorController::class, 'refresh'])
+			->name('competitors.refresh');
+		Route::post('competitors/products/{competitorProduct}/mapping', [AdminCompetitorMonitorController::class, 'saveMapping'])
+			->name('competitors.mapping');
 		Route::resource('products', AdminProductController::class)->except(['show']);
+		Route::resource('articles', AdminArticleController::class)->except(['show']);
+		Route::patch('articles/{article}/toggle-publish', [AdminArticleController::class, 'togglePublish'])
+			->name('articles.toggle-publish');
 		Route::post('products/{product}/images', [AdminProductImageController::class, 'store'])
 			->name('products.images.store');
 		Route::post('products/{product}/images/{image}/primary', [AdminProductImageController::class, 'setPrimary'])

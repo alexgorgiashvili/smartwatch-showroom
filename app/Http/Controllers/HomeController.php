@@ -15,14 +15,14 @@ class HomeController extends Controller
             ->featured()
             ->with(['primaryImage', 'images', 'variants'])
             ->orderByDesc('updated_at')
-            ->take(6)
+            // ->take(6)
             ->get();
 
         if ($featured->isEmpty()) {
             $featured = Product::active()
                 ->with(['primaryImage', 'images', 'variants'])
                 ->orderByDesc('updated_at')
-                ->take(6)
+                // ->take(6)
                 ->get();
         }
 

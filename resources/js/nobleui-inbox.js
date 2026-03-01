@@ -4,9 +4,14 @@
  */
 
 const avatarFallbackUrl = '/assets/images/others/placeholder.jpg';
+const browserNotificationIcon = '/assets/images/others/placeholder.jpg';
 let currentPlatformFilter = 'all';
+let browserNotificationPermissionRequested = false;
+let notificationUnavailableNoticeShown = false;
 
 document.addEventListener('DOMContentLoaded', function() {
+    initializeBrowserNotificationPermission();
+    initializeWebPushSubscription();
     initializePusherListeners();
     initializePlatformTabs();
 });
@@ -86,10 +91,12 @@ function initializePusherListeners() {
  * Handle incoming message from Pusher broadcast
  * @param {Object} event - The broadcast event data
  */
-function handleIncomingMessage(event) {
+async function handleIncomingMessage(event) {
     const message = event.message;
     const conversation = event.conversation;
     const customer = event.customer;
+    const customerName = customer?.name || 'Customer';
+    const messagePreview = (message?.content || '').substring(0, 50);
 
     console.log('Incoming payload:', {
         messageId: message?.id,
@@ -101,8 +108,11 @@ function handleIncomingMessage(event) {
     updateConversationInList(conversation, message);
 
     // If this conversation is currently open, append the message
-    if (currentConversationId === conversation.id) {
-        appendMessage(message);
+    const activeConversationId = Number(window.currentConversationId || 0) || null;
+    if (activeConversationId && Number(conversation?.id) === activeConversationId) {
+        if (typeof window.appendMessage === 'function') {
+            window.appendMessage(message);
+        }
 
         // Mark as read if it's from customer
         if (message.sender_type !== 'admin') {
@@ -111,10 +121,9 @@ function handleIncomingMessage(event) {
     }
 
     if (message.sender_type !== 'admin') {
-        showNotification(
-            `New message from ${customer?.name || 'Customer'}`,
-            message.content.substring(0, 50)
-        );
+        const title = `New message from ${customerName}`;
+        showNotification(title, messagePreview);
+        await showSystemNotificationWhenHidden(title, messagePreview, conversation?.id);
     }
 }
 
@@ -293,7 +302,8 @@ function handleConversationStatusChange(event) {
     console.log('Conversation status changed:', conversation.status);
 
     // Update UI if needed
-    if (currentConversationId === conversation.id) {
+    const activeConversationId = Number(window.currentConversationId || 0) || null;
+    if (activeConversationId && Number(conversation?.id) === activeConversationId) {
         // Could update status badge or other UI elements here
     }
 }
@@ -315,19 +325,172 @@ function markConversationAsRead(conversationId) {
         .catch(err => console.error('Error marking as read:', err));
 }
 
+function initializeBrowserNotificationPermission() {
+    reportNotificationState('init');
+
+    if (!canUseSystemNotifications()) {
+        notifyNotificationUnavailable('System notifications require HTTPS or localhost.');
+        return;
+    }
+
+    if (Notification.permission === 'default' && !browserNotificationPermissionRequested) {
+        browserNotificationPermissionRequested = true;
+        Notification.requestPermission().catch((error) => {
+            console.warn('Notification permission request failed:', error);
+        });
+    }
+}
+
+async function showSystemNotificationWhenHidden(title, message, conversationId = null) {
+    reportNotificationState('incoming-event');
+
+    if (!canUseSystemNotifications()) {
+        notifyNotificationUnavailable('System notifications are unavailable in this browser context.');
+        return;
+    }
+
+    if (Notification.permission === 'default' && !browserNotificationPermissionRequested) {
+        browserNotificationPermissionRequested = true;
+        try {
+            await Notification.requestPermission();
+        } catch (error) {
+            console.warn('Notification permission request failed during incoming event:', error);
+        }
+    }
+
+    if (Notification.permission !== 'granted') {
+        notifyNotificationUnavailable('Browser notifications are blocked. Allow them in site settings.');
+        return;
+    }
+
+    try {
+        const notification = new Notification(title, {
+            body: message,
+            icon: browserNotificationIcon,
+            tag: conversationId ? `conversation-${conversationId}` : undefined,
+        });
+
+        notification.onclick = () => {
+            window.focus();
+            notification.close();
+        };
+
+        console.log('System notification sent', {
+            title,
+            conversationId,
+        });
+    } catch (error) {
+        console.error('Error showing system notification:', error);
+        notifyNotificationUnavailable('Failed to show system notification. Check OS notification settings.');
+    }
+}
+
+function canUseSystemNotifications() {
+    return 'Notification' in window && window.isSecureContext;
+}
+
+function reportNotificationState(context) {
+    const permission = 'Notification' in window ? Notification.permission : 'unsupported';
+    console.log('Notification state', {
+        context,
+        permission,
+        isSecureContext: window.isSecureContext,
+        hasFocus: document.hasFocus(),
+        hidden: document.hidden,
+    });
+}
+
+function notifyNotificationUnavailable(reason) {
+    if (notificationUnavailableNoticeShown) {
+        return;
+    }
+
+    notificationUnavailableNoticeShown = true;
+    console.warn('System notification unavailable:', reason);
+
+    showNotification('Browser popup unavailable', reason);
+}
+
+async function initializeWebPushSubscription() {
+    const vapidPublicKey = document.querySelector('meta[name="webpush-public-key"]')?.content || '';
+
+    if (!vapidPublicKey) {
+        return;
+    }
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !window.isSecureContext) {
+        console.warn('Web push not supported in this environment.');
+        return;
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === 'default') {
+        permission = await Notification.requestPermission();
+    }
+
+    if (permission !== 'granted') {
+        console.warn('Web push subscription skipped: notification permission is not granted.');
+        return;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.register('/admin-sw.js', {
+            scope: '/admin/',
+        });
+
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            });
+        }
+
+        await fetch('/admin/push-subscriptions', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            body: JSON.stringify(subscription.toJSON()),
+        });
+
+        console.log('Web push subscription active');
+    } catch (error) {
+        console.error('Failed to initialize web push subscription:', error);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+
+    return outputArray;
+}
+
 /**
  * Show notification toast
  * @param {string} title - Notification title
  * @param {string} message - Notification message
  */
 function showNotification(title, message) {
-    const toastContainer = document.querySelector('.toast-container') ||
-                          document.querySelector('.position-fixed');
-
-    if (!toastContainer) return;
+    const toastContainer = getOrCreateNotificationContainer();
 
     if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
-        console.warn('Bootstrap Toast not available. Skipping notification.');
+        const fallback = document.createElement('div');
+        fallback.className = 'alert alert-primary shadow-sm mb-2';
+        fallback.innerHTML = `<strong>${title}</strong><div>${message}</div>`;
+        toastContainer.appendChild(fallback);
+        setTimeout(() => fallback.remove(), 3500);
         return;
     }
 
@@ -354,6 +517,20 @@ function showNotification(title, message) {
 
     // Remove after disappears
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+function getOrCreateNotificationContainer() {
+    let container = document.getElementById('inbox-runtime-toast-container');
+
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'inbox-runtime-toast-container';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '2000';
+        document.body.appendChild(container);
+    }
+
+    return container;
 }
 
 window.showNotification = showNotification;

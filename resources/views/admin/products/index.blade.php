@@ -30,7 +30,7 @@
                             @php
                                 $price = $product->price !== null ? number_format((float) $product->price, 2) : null;
                                 $salePrice = $product->sale_price !== null ? number_format((float) $product->sale_price, 2) : null;
-                                $primaryImage = $product->primaryImage?->url;
+                                $primaryImage = $product->primaryImage?->thumbnail_url;
                                 $fallbackImage = asset('assets/images/others/placeholder.jpg');
                             @endphp
                             <tr>

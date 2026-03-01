@@ -10,7 +10,7 @@
                     <div class="card-body p-4">
                         <div class="text-center mb-4">
                             <h4 class="mb-1">Admin Login</h4>
-                            <p class="text-muted">Sign in to manage KidSIM Watch.</p>
+                            <p class="text-muted">Sign in to manage MyTechnic.</p>
                         </div>
                         <form method="POST" action="{{ route('admin.login.store') }}">
                             @csrf

@@ -1,7 +1,40 @@
 @extends('layouts.app')
 
-@section('title', __('ui.contact_title'))
+@section('title', app()->getLocale() === 'ka' ? 'კონტაქტი — MyTechnic' : 'Contact — MyTechnic')
 @section('meta_description', __('ui.contact_sub'))
+@section('canonical', url('/contact'))
+@section('og_title', app()->getLocale() === 'ka' ? 'კონტაქტი — MyTechnic' : 'Contact — MyTechnic')
+@section('og_url', url('/contact'))
+
+@push('json_ld')
+@php
+$_contactSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'ElectronicsStore',
+    '@id' => url('/') . '/#organization',
+    'name' => 'MyTechnic',
+    'url' => url('/'),
+    'telephone' => $contactSettings['phone_link'] ?? '+995555123456',
+    'email' => $contactSettings['email'] ?? null,
+    'address' => [
+        '@type' => 'PostalAddress',
+        'addressCountry' => 'GE',
+        'addressRegion' => 'Tbilisi',
+    ],
+    'contactPoint' => [
+        '@type' => 'ContactPoint',
+        'telephone' => $contactSettings['phone_link'] ?? '+995555123456',
+        'contactType' => 'customer service',
+        'availableLanguage' => ['Georgian', 'English'],
+    ],
+    'sameAs' => array_filter([
+        $contactSettings['facebook_url'] ?? null,
+        $contactSettings['instagram_url'] ?? null,
+    ]),
+];
+@endphp
+<script type="application/ld+json">{!! json_encode(array_filter($_contactSchema), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+@endpush
 
 @section('content')
 	<section class="tech-surface overflow-hidden">
@@ -45,18 +78,18 @@
 							<div class="flex items-center justify-between gap-3">
 								<div>
 									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">LIVE CHAT</p>
-									<p class="mt-2 font-semibold text-white">KidSIM Assistant</p>
+									<p class="mt-2 font-semibold text-white">MyTechnic Assistant</p>
 									<p class="mt-1 text-xs text-white/70">ონლაინ დახმარება</p>
 								</div>
 								<i class="fas fa-comment-dots text-white/70"></i>
 							</div>
 						</button>
 
-						<a href="mailto:{{ $contactSettings['email'] ?? 'info@kidsimwatch.ge' }}" class="glass-card p-4 hover:bg-white/5">
+						<a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="glass-card p-4 hover:bg-white/5">
 							<div class="flex items-center justify-between gap-3">
 								<div>
 									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">EMAIL</p>
-									<p class="mt-2 font-semibold text-white">{{ $contactSettings['email'] ?? 'info@kidsimwatch.ge' }}</p>
+									<p class="mt-2 font-semibold text-white">{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}</p>
 									<p class="mt-1 text-xs text-white/70">დეტალური მოთხოვნა</p>
 								</div>
 								<i class="fas fa-envelope text-white/70"></i>

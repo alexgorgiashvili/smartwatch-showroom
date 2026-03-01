@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -59,7 +59,7 @@ class TestInboxSeeder extends Seeder
             'sender_type' => 'customer',
             'sender_id' => $customer1->id,
             'sender_name' => $customer1->name,
-            'content' => 'Hello! I\'m interested in the KidSIM Watch Pro',
+            'content' => 'Hello! I\'m interested in the MyTechnic Pro',
             'created_at' => now()->subMinutes(5),
             'updated_at' => now()->subMinutes(5),
         ]);
@@ -71,7 +71,7 @@ class TestInboxSeeder extends Seeder
             'sender_type' => 'admin',
             'sender_id' => 1,
             'sender_name' => 'Admin',
-            'content' => 'Hi John! The KidSIM Watch Pro is available. Would you like to know more about its features?',
+            'content' => 'Hi John! The MyTechnic Pro is available. Would you like to know more about its features?',
             'read_at' => now()->subMinutes(2),
             'created_at' => now()->subMinutes(3),
             'updated_at' => now()->subMinutes(3),

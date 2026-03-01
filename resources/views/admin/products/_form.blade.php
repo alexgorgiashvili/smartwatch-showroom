@@ -326,3 +326,61 @@
 		</div>
 	</div>
 </div>
+
+{{-- ═══ SEO Section ═══ --}}
+<div class="row mt-4">
+	<div class="col-12 mb-3">
+		<h6 class="fw-bold text-muted border-bottom pb-2">SEO (Search Engine Optimization)</h6>
+		<p class="text-muted small">If left blank, the product name and short description are used automatically.</p>
+	</div>
+	<div class="col-lg-6 mb-3">
+		<label for="meta_title_ka" class="form-label">Meta Title (KA) <small class="text-muted">max 160 chars</small></label>
+		<input
+			type="text"
+			name="meta_title_ka"
+			id="meta_title_ka"
+			class="form-control"
+			maxlength="160"
+			value="{{ old('meta_title_ka', $product->meta_title_ka) }}"
+			placeholder="{{ $product->name_ka ? $product->name_ka . ' — MyTechnic' : '' }}"
+		>
+		<div class="invalid-feedback" data-error-for="meta_title_ka"></div>
+	</div>
+	<div class="col-lg-6 mb-3">
+		<label for="meta_title_en" class="form-label">Meta Title (EN) <small class="text-muted">max 160 chars</small></label>
+		<input
+			type="text"
+			name="meta_title_en"
+			id="meta_title_en"
+			class="form-control"
+			maxlength="160"
+			value="{{ old('meta_title_en', $product->meta_title_en) }}"
+			placeholder="{{ $product->name_en ? $product->name_en . ' — MyTechnic' : '' }}"
+		>
+		<div class="invalid-feedback" data-error-for="meta_title_en"></div>
+	</div>
+	<div class="col-lg-6 mb-3">
+		<label for="meta_description_ka" class="form-label">Meta Description (KA) <small class="text-muted">max 160 chars</small></label>
+		<textarea
+			name="meta_description_ka"
+			id="meta_description_ka"
+			rows="3"
+			maxlength="160"
+			class="form-control"
+			placeholder="{{ Str::limit($product->short_description_ka ?? '', 155) }}"
+		>{{ old('meta_description_ka', $product->meta_description_ka) }}</textarea>
+		<div class="invalid-feedback" data-error-for="meta_description_ka"></div>
+	</div>
+	<div class="col-lg-6 mb-3">
+		<label for="meta_description_en" class="form-label">Meta Description (EN) <small class="text-muted">max 160 chars</small></label>
+		<textarea
+			name="meta_description_en"
+			id="meta_description_en"
+			rows="3"
+			maxlength="160"
+			class="form-control"
+			placeholder="{{ Str::limit($product->short_description_en ?? '', 155) }}"
+		>{{ old('meta_description_en', $product->meta_description_en) }}</textarea>
+		<div class="invalid-feedback" data-error-for="meta_description_en"></div>
+	</div>
+</div>

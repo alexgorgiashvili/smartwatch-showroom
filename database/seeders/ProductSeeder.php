@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -13,13 +13,13 @@ class ProductSeeder extends Seeder
     {
         $products = [
             [
-                'name_en' => 'KidSIM Watch Pro GPS',
-                'name_ka' => 'KidSIM საათი Pro GPS',
-                'slug' => 'kidsim-watch-pro-gps',
+                'name_en' => 'MyTechnic Pro GPS',
+                'name_ka' => 'MyTechnic სმარტ საათი Pro GPS',
+                'slug' => 'mytechnic-pro-gps',
                 'short_description_en' => 'Advanced GPS tracking smartwatch for kids with SOS button and geofencing',
                 'short_description_ka' => 'პროფესიონალური GPS საათი ბავშვებისთვის SOS ღილაკითა და გეოფენსინგით',
-                'description_en' => 'The KidSIM Watch Pro GPS is the ultimate safety device for your child. Features include real-time GPS tracking, SOS emergency button, two-way calling, geofencing alerts, and 3-day battery life. Water-resistant IP67 design perfect for active kids.',
-                'description_ka' => 'KidSIM Watch Pro GPS არის საუკეთესო უსაფრთხოების მოწყობილობა თქვენი ბავშვისთვის. ფუნქციები მოიცავს: რეალურ დროში GPS თრექინგს, SOS საგანგებო ღილაკს, ორმხრივ ზარებს, გეოფენსინგ შეტყობინებებს და 3-დღიან ბატარეას. წყლისადმი გამძლე IP67 დიზაინი იდეალურია აქტიური ბავშვებისთვის.',
+                'description_en' => 'The MyTechnic Pro GPS is the ultimate safety device for your child. Features include real-time GPS tracking, SOS emergency button, two-way calling, geofencing alerts, and 3-day battery life. Water-resistant IP67 design perfect for active kids.',
+                'description_ka' => 'MyTechnic Pro GPS არის საუკეთესო უსაფრთხოების მოწყობილობა თქვენი ბავშვისთვის. ფუნქციები მოიცავს: რეალურ დროში GPS თრექინგს, SOS საგანგებო ღილაკს, ორმხრივ ზარებს, გეოფენსინგ შეტყობინებებს და 3-დღიან ბატარეას. წყლისადმი გამძლე IP67 დიზაინი იდეალურია აქტიური ბავშვებისთვის.',
                 'price' => 249.00,
                 'sale_price' => 199.00,
                 'sim_support' => true,

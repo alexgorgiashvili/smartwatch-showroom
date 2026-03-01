@@ -176,42 +176,12 @@ class ConversationController extends Controller
             'ai_enabled' => $newState
         ]);
 
-        // If AI is being enabled, check for unanswered customer message and auto-reply
-        if ($newState) {
-            // Check if last message is from customer
-            $lastMessage = $conversation->messages()
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($lastMessage && $lastMessage->sender_type === 'customer') {
-                // Auto-reply to the existing message
-                try {
-                    $aiService = app(\App\Services\AiConversationService::class);
-                    if ($aiService->shouldAutoReplyToConversation($conversation, $lastMessage)) {
-                        $aiService->autoReply($conversation);
-                    } else {
-                        Log::info('AI selective policy skipped auto-reply on toggle', [
-                            'conversation_id' => $conversationId,
-                            'message_id' => $lastMessage->id,
-                        ]);
-                    }
-
-                    Log::info('AI auto-reply triggered on toggle', [
-                        'conversation_id' => $conversationId
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to auto-reply on toggle', [
-                        'conversation_id' => $conversationId,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
-        }
-
         return response()->json([
             'success' => true,
             'ai_enabled' => $newState,
-            'message' => $newState ? 'AI auto-reply enabled' : 'AI auto-reply disabled'
+            'message' => $newState
+                ? 'Auto Reply enabled for future incoming messages'
+                : 'Auto Reply disabled'
         ]);
     }
 

@@ -4,9 +4,52 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'KidSIM Watch')</title>
-    <meta name="description" content="@yield('meta_description', '')">
+
+    {{-- ═══ SEO: Title ═══ --}}
+    <title>@yield('title', 'MyTechnic')</title>
+
+    {{-- ═══ SEO: Robots & Canonical ═══ --}}
+    <meta name="robots" content="@yield('robots', 'index, follow')">
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+
+    {{-- ═══ SEO: Meta Description ═══ --}}
+    <meta name="description" content="@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის. 4G LTE, GPS ტრეკინგი, ზარი ტელეფონის გარეშე. ოფიციალური იმპორტიორი საქართველოში.')">
+
+    {{-- ═══ SEO: hreflang (session-based locale — same URL serves ka/en) ═══ --}}
+    <link rel="alternate" hreflang="ka" href="{{ url()->current() }}">
+    <link rel="alternate" hreflang="en" href="{{ url()->current() }}">
+    <link rel="alternate" hreflang="x-default" href="{{ url()->current() }}">
+
+    {{-- ═══ SEO: Open Graph ═══ --}}
+    <meta property="og:site_name" content="MyTechnic">
+    <meta property="og:locale" content="{{ app()->getLocale() === 'ka' ? 'ka_GE' : 'en_US' }}">
+    <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'ka' ? 'en_US' : 'ka_GE' }}">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:url" content="@yield('og_url', url()->current())">
+    <meta property="og:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
+    <meta property="og:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის. ოფიციალური იმპორტიორი.')@endif">
+    <meta property="og:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="@yield('og_image_alt', 'MyTechnic სმარტ საათები')">
+
+    {{-- ═══ SEO: Twitter Card ═══ --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
+    <meta name="twitter:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის.')@endif">
+    <meta name="twitter:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+
+    {{-- ═══ Favicon ═══ --}}
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
+
+    {{-- ═══ Per-page JSON-LD structured data ═══ --}}
+    @stack('json_ld')
+
+    {{-- ═══ Per-page extra head meta ═══ --}}
     @stack('head_meta')
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-x-hidden bg-white text-gray-900">
@@ -19,11 +62,10 @@
         <div class="flex h-16 items-center justify-between">
           <!-- Logo -->
           <div class="md:flex md:items-center md:gap-12">
-            <a class="flex items-center gap-1" href="{{ route('home') }}" aria-label="KidSIM Watch">
+            <a class="flex items-center gap-1" href="{{ route('home') }}" aria-label="MyTechnic">
               <span class="rounded-full bg-gray-900 px-3 py-1 text-sm font-extrabold tracking-tight">
-                <span class="text-primary-400">KID</span><span class="text-white">SIM</span>
+                <span class="text-primary-400">My</span><span class="text-white">Technic</span>
               </span>
-              <span class="hidden text-sm font-semibold text-gray-100 sm:inline">Watch</span>
             </a>
           </div>
 
@@ -40,6 +82,28 @@
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">კითხვები</a>
                 </li>
+                {{-- სახელმძღვანელოები dropdown --}}
+                <li class="relative group/guides">
+                  <button class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition-colors {{ request()->routeIs('blog.*','landing.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}">
+                    {{ app()->getLocale() === 'ka' ? 'სახელმძღვანელოები' : 'Guides' }}
+                    <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover/guides:rotate-180"></i>
+                  </button>
+                  <div class="pointer-events-none absolute left-0 top-full z-50 min-w-[220px] translate-y-1 rounded-xl border border-white/10 bg-gray-900 py-2 opacity-0 shadow-2xl transition-all duration-150 group-hover/guides:pointer-events-auto group-hover/guides:translate-y-0 group-hover/guides:opacity-100">
+                    <a href="{{ route('blog.index') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('blog.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
+                      <i class="fa-solid fa-newspaper w-4 text-center text-xs text-primary-400"></i>
+                      {{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }}
+                    </a>
+                    <div class="my-1.5 border-t border-white/10"></div>
+                    <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white">
+                      <i class="fa-solid fa-sim-card w-4 text-center text-xs text-primary-400"></i>
+                      {{ app()->getLocale() === 'ka' ? 'SIM ბარათის გზამკვლევი' : 'SIM Card Guide' }}
+                    </a>
+                    <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white">
+                      <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
+                      {{ app()->getLocale() === 'ka' ? 'საჩუქრის გზამკვლევი' : 'Gift Guide' }}
+                    </a>
+                  </div>
+                </li>
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('contact') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('contact') }}">კონტაქტი</a>
                 </li>
@@ -52,8 +116,7 @@
             <!-- Mobile Menu Header with Logo + Close -->
             <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <a class="flex items-center gap-1" href="{{ route('home') }}">
-                <span class="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs font-extrabold"><span class="text-primary-400">KID</span><span class="text-white">SIM</span></span>
-                <span class="text-sm font-semibold text-gray-100">Watch</span>
+                <span class="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs font-extrabold"><span class="text-primary-400">My</span><span class="text-white">Technic</span></span>
               </a>
               <button id="mobile-menu-close" aria-label="Close menu" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -83,6 +146,24 @@
                 </a>
               </li>
               <li class="border-b border-white/10">
+                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('blog.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('blog.index') }}">
+                  <i class="fa-solid fa-newspaper w-4 text-center text-xs opacity-60"></i>{{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }}
+                </a>
+              </li>
+              {{-- Mobile guides accordion --}}
+              <li class="border-b border-white/10">
+                <details class="group/det">
+                  <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-book-open w-4 text-center text-xs opacity-60"></i>{{ app()->getLocale() === 'ka' ? 'სახელმძღვანელოები' : 'Guides' }}</span>
+                    <i class="fa-solid fa-chevron-down text-xs opacity-50 transition-transform group-open/det:rotate-180"></i>
+                  </summary>
+                  <div class="bg-gray-900/60 pb-1">
+                    <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'SIM გზამკვლევი' : 'SIM Guide' }}</a>
+                    <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}</a>
+                  </div>
+                </details>
+              </li>
+              <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('cart.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('cart.index') }}">
                   <i class="fa-solid fa-cart-shopping w-4 text-center text-xs opacity-60"></i>კალათა
                   <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
@@ -99,12 +180,12 @@
                 </a>
 
                 <!-- Instagram -->
-                <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/kidsimwatch' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
+                <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
                   <i class="fab fa-instagram text-3xl"></i>
                 </a>
 
                 <!-- Facebook Messenger -->
-                <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-blue-400" title="Messenger">
+                <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
                   <i class="fab fa-facebook-messenger text-3xl"></i>
                 </a>
               </div>
@@ -124,12 +205,12 @@
               </a>
 
               <!-- Instagram -->
-              <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/kidsimwatch' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
+              <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
                 <i class="fab fa-instagram text-xl"></i>
               </a>
 
               <!-- Facebook Messenger -->
-              <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-blue-400" title="Messenger">
+              <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
                 <i class="fab fa-facebook-messenger text-xl"></i>
               </a>
             </div>
@@ -137,7 +218,7 @@
 
 
             <!-- Mobile menu toggle -->
-            <a href="{{ route('cart.index') }}" class="relative inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white" aria-label="Cart">
+            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="Cart">
               <i class="fa-solid fa-cart-shopping text-sm"></i>
               <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
             </a>
@@ -175,7 +256,7 @@
       <section id="chatbot-panel" class="chatbot-panel" aria-live="polite" aria-hidden="true">
         <header class="chatbot-header">
           <div>
-            <p class="chatbot-title">KidSIM Assistant</p>
+            <p class="chatbot-title">MyTechnic Assistant</p>
             <p class="chatbot-subtitle">ონლაინ დახმარება</p>
           </div>
           <button type="button" class="chatbot-close" data-chatbot-close aria-label="დახურვა">✕</button>

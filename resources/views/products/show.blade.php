@@ -1,6 +1,65 @@
 @extends('layouts.app')
 
-@section('title', isset($product) ? $product->name : 'Product')
+@section('title', $product->meta_title ?? ($product->name . ' — MyTechnic'))
+@section('meta_description', $product->meta_description ?? $product->short_description ?? '')
+@section('canonical', url('/products/' . $product->slug))
+@section('og_type', 'product')
+@section('og_title', $product->meta_title ?? $product->name)
+@section('og_description', $product->meta_description ?? $product->short_description ?? '')
+@section('og_url', url('/products/' . $product->slug))
+@section('og_image', $product->primaryImage?->url ?? asset('images/og-default.jpg'))
+@section('og_image_alt', $product->name)
+
+@push('json_ld')
+@php
+$_breadcrumbSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        [
+            '@type' => 'ListItem',
+            'position' => 1,
+            'name' => app()->getLocale() === 'ka' ? 'მთავარი' : 'Home',
+            'item' => url('/'),
+        ],
+        [
+            '@type' => 'ListItem',
+            'position' => 2,
+            'name' => app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათები' : 'Smartwatches',
+            'item' => url('/products'),
+        ],
+        [
+            '@type' => 'ListItem',
+            'position' => 3,
+            'name' => $product->name ?? '',
+            'item' => url('/products/' . ($product->slug ?? '')),
+        ],
+    ],
+];
+$_productSchema = [
+    '@context' => 'https://schema.org/',
+    '@type' => 'Product',
+    'name' => $product->name ?? '',
+    'description' => $product->short_description ?? '',
+    'image' => $product->primaryImage?->url ?? asset('images/og-default.jpg'),
+    'sku' => $product->slug ?? '',
+    'brand' => [
+        '@type' => 'Brand',
+        'name' => 'MyTechnic',
+    ],
+    'offers' => [
+        '@type' => 'Offer',
+        'url' => url('/products/' . ($product->slug ?? '')),
+        'priceCurrency' => $product->currency ?? 'GEL',
+        'price' => (string) ($product->sale_price ?? $product->price ?? '0'),
+        'availability' => 'https://schema.org/InStock',
+        'itemCondition' => 'https://schema.org/NewCondition',
+    ],
+];
+@endphp
+<script type="application/ld+json">{!! json_encode($_breadcrumbSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+<script type="application/ld+json">{!! json_encode($_productSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+@endpush
 
 @section('content')
     @php
@@ -15,6 +74,53 @@
             ->unique(fn ($variant) => strtoupper($variant->color_hex) . '|' . mb_strtolower($variant->color_name))
             ->values();
         $defaultColor = $colorVariants->first();
+        $thumbnailPaths = $product->images
+            ->map(function ($image) {
+                $thumbnailPath = ltrim((string) ($image->thumbnail_path ?? ''), '/');
+                if ($thumbnailPath === '') {
+                    return null;
+                }
+
+                return str_starts_with($thumbnailPath, 'storage/')
+                    ? substr($thumbnailPath, 8)
+                    : $thumbnailPath;
+            })
+            ->filter()
+            ->values()
+            ->all();
+        $galleryImages = $product->images
+            ->filter(function ($image) use ($thumbnailPaths) {
+                $path = (string) ($image->path ?? '');
+                if ($path === '') {
+                    return false;
+                }
+
+                $normalizedPath = ltrim($path, '/');
+                $filename = strtolower(pathinfo($normalizedPath, PATHINFO_FILENAME));
+                if (str_ends_with($filename, '_thumb')) {
+                    return false;
+                }
+
+                $storagePath = str_starts_with($normalizedPath, 'storage/')
+                    ? substr($normalizedPath, 8)
+                    : $normalizedPath;
+
+                if (in_array($storagePath, $thumbnailPaths, true)) {
+                    return false;
+                }
+
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    return true;
+                }
+
+                if (str_starts_with($normalizedPath, 'storage/')) {
+                    $normalizedPath = substr($normalizedPath, 8);
+                }
+
+                return \Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedPath);
+            })
+            ->unique(fn ($image) => ltrim((string) ($image->path ?? ''), '/'))
+            ->values();
     @endphp
 
     <section class="bg-gray-50 py-8 sm:py-10">
@@ -37,14 +143,14 @@
 
             <div class="grid gap-6 lg:grid-cols-12 lg:gap-8">
                 <div class="lg:col-span-7">
-                    @if ($product->images->isNotEmpty())
+                    @if ($galleryImages->isNotEmpty())
                         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div id="product-splide" class="splide" aria-label="Product images">
                                 <div class="splide__track">
                                     <ul class="splide__list">
-                                        @foreach ($product->images as $image)
+                                        @foreach ($galleryImages as $image)
                                             <li class="splide__slide">
-                                                <img src="{{ $image->url }}" alt="{{ $image->alt ?: $product->name }}" class="h-[340px] w-full object-cover sm:h-[460px]" />
+                                                <img src="{{ $image->url }}" alt="{{ $image->alt ?: $product->name }}" class="h-[340px] w-full object-contain sm:h-[460px]" />
                                             </li>
                                         @endforeach
                                     </ul>
@@ -117,19 +223,19 @@
                             @endif
                             @if ($product->screen_size)
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
-                                    <p class="font-semibold text-gray-900">Screen</p>
+                                    <p class="font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</p>
                                     <p>{{ $product->screen_size }}</p>
                                 </div>
                             @endif
                             @if ($product->display_type)
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
-                                    <p class="font-semibold text-gray-900">Display</p>
+                                    <p class="font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</p>
                                     <p>{{ $product->display_type }}</p>
                                 </div>
                             @endif
                             @if ($product->battery_capacity_mah)
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
-                                    <p class="font-semibold text-gray-900">Battery Capacity</p>
+                                    <p class="font-semibold text-gray-900">{{ __('ui.spec_battery_cap') }}</p>
                                     <p>{{ $product->battery_capacity_mah }} mAh</p>
                                 </div>
                             @endif
@@ -242,61 +348,60 @@
                                     @endif
                                     @if ($product->operating_system)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Operating System</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_os') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->operating_system }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->screen_size)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Screen Size</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->screen_size }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->display_type)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Display Type</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->display_type }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->screen_resolution)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Screen Resolution</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_resolution') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->screen_resolution }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->battery_capacity_mah)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Battery Capacity</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_capacity_mah }} mAh</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_battery_cap') }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->charging_time_hours)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Charging Time</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_charging') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->charging_time_hours }} h</td>
                                         </tr>
                                     @endif
                                     @if ($product->case_material)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Case Material</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_case') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->case_material }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->band_material)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Band Material</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_band') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->band_material }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->camera)
                                         <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Camera</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_camera') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ $product->camera }}</td>
                                         </tr>
                                     @endif
                                     @if (is_array($product->functions) && $product->functions !== [])
                                         <tr>
-                                            <td class="px-2 py-3 font-semibold text-gray-900">Functions</td>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_functions') }}</td>
                                             <td class="px-2 py-3 text-gray-700">{{ implode(', ', $product->functions) }}</td>
                                         </tr>
                                     @endif
@@ -304,6 +409,22 @@
                             </table>
                         </div>
                     </div>
+
+                    {{-- Contextual guide links --}}
+                    @if($product->sim_support)
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('landing.sim-guide') }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100 transition">
+                            <i class="fa-solid fa-sim-card text-[10px]"></i>
+                            {{ app()->getLocale() === 'ka' ? 'SIM ბარათის გზამკვლევი →' : 'SIM Card Guide →' }}
+                        </a>
+                        <a href="{{ route('blog.index') }}"
+                           class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-newspaper text-[10px]"></i>
+                            {{ app()->getLocale() === 'ka' ? 'სტატიები და რჩევები →' : 'Articles & Tips →' }}
+                        </a>
+                    </div>
+                    @endif
 
                     @if ($product->description)
                         <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -376,7 +497,7 @@
                                     <li class="splide__slide">
                                         <a href="{{ route('products.show', $related) }}" class="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
                                             <div class="aspect-square overflow-hidden bg-gray-100">
-                                                <img src="{{ $relatedImage?->url ?: asset('storage/images/home/smart-watch3.jpg') }}" alt="{{ $related->name }}" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                                <img src="{{ $relatedImage?->url ?: asset('storage/images/home/smart-watch3.jpg') }}" alt="{{ $related->name }}" class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
                                             </div>
                                             <div class="p-3">
                                                 <h3 class="truncate text-sm font-semibold text-gray-900">{{ $related->name }}</h3>

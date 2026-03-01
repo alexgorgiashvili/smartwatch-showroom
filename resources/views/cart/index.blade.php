@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'კალათა')
+@section('robots', 'noindex, nofollow')
 
 @section('content')
     <section class="bg-gray-50 py-8 sm:py-10">
@@ -77,6 +78,14 @@
                                             @csrf
                                             @method('PATCH')
                                             <input type="hidden" name="variant_id" value="{{ $item['variant']->id }}">
+                                            <button
+                                                type="button"
+                                                data-cart-qty-minus
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600"
+                                                aria-label="რაოდენობის შემცირება"
+                                            >
+                                                −
+                                            </button>
                                             <input
                                                 type="number"
                                                 name="quantity"
@@ -86,8 +95,13 @@
                                                 data-cart-qty-input
                                                 class="w-14 rounded-lg border border-gray-300 px-2 py-1 text-center text-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
                                             >
-                                            <button type="submit" class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:border-primary-400 hover:text-primary-600">
-                                                <i class="fa-solid fa-rotate-right"></i>
+                                            <button
+                                                type="button"
+                                                data-cart-qty-plus
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600"
+                                                aria-label="რაოდენობის გაზრდა"
+                                            >
+                                                +
                                             </button>
                                         </form>
 
@@ -117,7 +131,7 @@
                                     <dd class="font-medium" data-cart-total>{{ number_format($cartTotal, 2) }} ₾</dd>
                                 </div>
                                 <div class="flex justify-between text-gray-500">
-                                    <dt>მიტანა</dt>
+                                    <dt>მიწოდება</dt>
                                     <dd>უფასო</dd>
                                 </div>
                                 <div class="flex justify-between border-t border-slate-100 pt-2 text-base font-bold text-gray-900">
@@ -127,7 +141,7 @@
                             </dl>
 
                             <a href="{{ route('checkout.index') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
-                                <i class="fa-solid fa-lock text-xs"></i>გადახდაზე გადასვლა
+                                <i class="fa-solid fa-lock text-xs"></i>შეკვეთის გაფორმება
                             </a>
 
                             <form method="POST" action="{{ route('cart.clear') }}" class="mt-3">
@@ -147,6 +161,18 @@
 @endsection
 
 @push('scripts')
+<style>
+    [data-cart-qty-input]::-webkit-outer-spin-button,
+    [data-cart-qty-input]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    [data-cart-qty-input] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+</style>
 <script>
     (function () {
         function showMessage(message, isError) {
@@ -223,15 +249,92 @@
             });
         }
 
+        function clampQuantity(input) {
+            var min = parseInt(input.getAttribute('min') || '1', 10);
+            var max = parseInt(input.getAttribute('max') || '10', 10);
+            var value = parseInt(input.value || String(min), 10);
+
+            if (isNaN(value)) {
+                value = min;
+            }
+
+            if (!isNaN(min) && value < min) {
+                value = min;
+            }
+
+            if (!isNaN(max) && value > max) {
+                value = max;
+            }
+
+            input.value = String(value);
+            return value;
+        }
+
+        function scheduleUpdate(form) {
+            if (form._cartUpdateTimer) {
+                clearTimeout(form._cartUpdateTimer);
+            }
+
+            form._cartUpdateTimer = setTimeout(function () {
+                var quantityInput = form.querySelector('[data-cart-qty-input]');
+                if (!quantityInput) {
+                    return;
+                }
+
+                var rawValue = (quantityInput.value || '').trim();
+                if (rawValue === '') {
+                    return;
+                }
+
+                clampQuantity(quantityInput);
+                submitUpdate(form);
+            }, 350);
+        }
+
         document.querySelectorAll('[data-cart-update-form]').forEach(function (form) {
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
+                var inputOnSubmit = form.querySelector('[data-cart-qty-input]');
+                if (inputOnSubmit) {
+                    clampQuantity(inputOnSubmit);
+                }
                 submitUpdate(form);
             });
 
             var quantityInput = form.querySelector('[data-cart-qty-input]');
             if (quantityInput) {
+                quantityInput.addEventListener('input', function () {
+                    if ((quantityInput.value || '').trim() === '') {
+                        if (form._cartUpdateTimer) {
+                            clearTimeout(form._cartUpdateTimer);
+                        }
+                        return;
+                    }
+
+                    scheduleUpdate(form);
+                });
+
                 quantityInput.addEventListener('change', function () {
+                    clampQuantity(quantityInput);
+                    submitUpdate(form);
+                });
+            }
+
+            var minusButton = form.querySelector('[data-cart-qty-minus]');
+            if (minusButton && quantityInput) {
+                minusButton.addEventListener('click', function () {
+                    var current = clampQuantity(quantityInput);
+                    quantityInput.value = String(Math.max(1, current - 1));
+                    submitUpdate(form);
+                });
+            }
+
+            var plusButton = form.querySelector('[data-cart-qty-plus]');
+            if (plusButton && quantityInput) {
+                plusButton.addEventListener('click', function () {
+                    var current = clampQuantity(quantityInput);
+                    var max = parseInt(quantityInput.getAttribute('max') || '10', 10);
+                    quantityInput.value = String(Math.min(isNaN(max) ? 10 : max, current + 1));
                     submitUpdate(form);
                 });
             }

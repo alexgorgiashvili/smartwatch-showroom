@@ -20,7 +20,7 @@ return [
     'pinecone' => [
         'api_key' => env('PINECONE_API_KEY'),
         'host' => env('PINECONE_HOST'),
-        'namespace' => env('PINECONE_NAMESPACE', 'kidsim'),
+        'namespace' => env('PINECONE_NAMESPACE', 'mytechnic'),
         'index' => env('PINECONE_INDEX_NAME', 'products'),
     ],
 ];

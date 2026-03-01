@@ -1,7 +1,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <a href="{{ route('admin.home') }}" class="sidebar-brand">
-            KidSIM<span>Admin</span>
+            MyTechnic<span>Admin</span>
         </a>
         <div class="sidebar-toggler not-active">
             <span></span>
@@ -37,10 +37,22 @@
                     <span class="link-title">Products</span>
                 </a>
             </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.articles.*')])>
+                <a href="{{ route('admin.articles.index') }}" class="nav-link">
+                    <i class="link-icon" data-feather="file-text"></i>
+                    <span class="link-title">Blog Articles</span>
+                </a>
+            </li>
             <li @class(['nav-item', 'active' => request()->routeIs('admin.products.import-alibaba*')])>
                 <a href="{{ route('admin.products.import-alibaba') }}" class="nav-link">
                     <i class="link-icon" data-feather="download-cloud"></i>
                     <span class="link-title">Import Alibaba</span>
+                </a>
+            </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.competitors.*')])>
+                <a href="{{ route('admin.competitors.index') }}" class="nav-link">
+                    <i class="link-icon" data-feather="activity"></i>
+                    <span class="link-title">Competitor Monitor</span>
                 </a>
             </li>
             <li @class(['nav-item', 'active' => request()->routeIs('admin.orders.*')])>

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Payment Success')
+@section('robots', 'noindex, nofollow')
 
 @section('content')
     <section class="bg-gray-50 py-14">

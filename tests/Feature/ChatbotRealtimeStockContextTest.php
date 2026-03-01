@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature;
 
@@ -19,9 +19,9 @@ class ChatbotRealtimeStockContextTest extends TestCase
         config()->set('services.openai.model', 'gpt-4.1-mini');
 
         $product = Product::create([
-            'name_en' => 'KidSIM Ultra',
-            'name_ka' => 'KidSIM Ultra',
-            'slug' => 'kidsim-ultra',
+            'name_en' => 'MyTechnic Ultra',
+            'name_ka' => 'MyTechnic Ultra',
+            'slug' => 'mytechnic-ultra',
             'price' => 299,
             'sale_price' => 249,
             'currency' => 'GEL',
@@ -41,7 +41,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => 'დიახ, KidSIM Ultra ამჟამად მარაგშია.',
+                            'content' => 'დიახ, MyTechnic Ultra ამჟამად მარაგშია.',
                         ],
                     ],
                 ],
@@ -49,7 +49,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
         ]);
 
         $response = $this->postJson('/chatbot', [
-            'message' => 'KidSIM Ultra მარაგშია?',
+            'message' => 'MyTechnic Ultra მარაგშია?',
         ]);
 
         $response->assertStatus(200);
@@ -63,7 +63,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
             $userMessage = $messages[1]['content'] ?? '';
 
             return str_contains($userMessage, 'Products (live stock from database):')
-                && str_contains($userMessage, 'KidSIM Ultra')
+                && str_contains($userMessage, 'MyTechnic Ultra')
                 && str_contains($userMessage, 'stock: მარაგშია (7 ცალი)');
         });
     }
@@ -75,9 +75,9 @@ class ChatbotRealtimeStockContextTest extends TestCase
         config()->set('services.openai.model', 'gpt-4.1-mini');
 
         $target = Product::create([
-            'name_en' => 'KidSIM Ultra',
-            'name_ka' => 'KidSIM Ultra',
-            'slug' => 'kidsim-ultra',
+            'name_en' => 'MyTechnic Ultra',
+            'name_ka' => 'MyTechnic Ultra',
+            'slug' => 'mytechnic-ultra',
             'price' => 299,
             'currency' => 'GEL',
             'is_active' => true,
@@ -92,9 +92,9 @@ class ChatbotRealtimeStockContextTest extends TestCase
         ]);
 
         $other = Product::create([
-            'name_en' => 'KidSIM Neo',
-            'name_ka' => 'KidSIM Neo',
-            'slug' => 'kidsim-neo',
+            'name_en' => 'MyTechnic Neo',
+            'name_ka' => 'MyTechnic Neo',
+            'slug' => 'mytechnic-neo',
             'price' => 199,
             'currency' => 'GEL',
             'is_active' => true,
@@ -115,7 +115,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => 'KidSIM Ultra მარაგშია.',
+                            'content' => 'MyTechnic Ultra მარაგშია.',
                         ],
                     ],
                 ],
@@ -123,7 +123,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
         ]);
 
         $response = $this->postJson('/chatbot', [
-            'message' => 'მაინტერესებს kidsim ultra მარაგშია?',
+            'message' => 'მაინტერესებს MyTechnic Ultra მარაგშია?',
         ]);
 
         $response->assertStatus(200);
@@ -136,8 +136,8 @@ class ChatbotRealtimeStockContextTest extends TestCase
             $messages = $request->data()['messages'] ?? [];
             $userMessage = (string) ($messages[1]['content'] ?? '');
 
-            $ultraPos = strpos($userMessage, '- KidSIM Ultra');
-            $neoPos = strpos($userMessage, '- KidSIM Neo');
+            $ultraPos = strpos($userMessage, '- MyTechnic Ultra');
+            $neoPos = strpos($userMessage, '- MyTechnic Neo');
 
             return $ultraPos !== false
                 && $neoPos !== false
@@ -152,9 +152,9 @@ class ChatbotRealtimeStockContextTest extends TestCase
         config()->set('services.openai.model', 'gpt-4.1-mini');
 
         $product = Product::create([
-            'name_en' => 'KidSIM Ultra',
-            'name_ka' => 'KidSIM Ultra',
-            'slug' => 'kidsim-ultra',
+            'name_en' => 'MyTechnic Ultra',
+            'name_ka' => 'MyTechnic Ultra',
+            'slug' => 'mytechnic-ultra',
             'price' => 299,
             'currency' => 'GEL',
             'is_active' => true,
@@ -188,7 +188,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
         ]);
 
         $response = $this->postJson('/chatbot', [
-            'message' => 'kidsim ultra blue მარაგშია?',
+            'message' => 'MyTechnic Ultra blue მარაგშია?',
         ]);
 
         $response->assertStatus(200);
@@ -202,7 +202,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
             $userMessage = (string) ($messages[1]['content'] ?? '');
 
             return str_contains($userMessage, 'Requested product (exact match from live database):')
-                && str_contains($userMessage, 'Product: KidSIM Ultra | slug: kidsim-ultra')
+                && str_contains($userMessage, 'Product: MyTechnic Ultra | slug: mytechnic-ultra')
                 && str_contains($userMessage, 'Requested variant: Color: Blue')
                 && str_contains($userMessage, 'Variant stock: ამოწურულია (0 ცალი)');
         });
@@ -215,9 +215,9 @@ class ChatbotRealtimeStockContextTest extends TestCase
         config()->set('services.openai.model', 'gpt-4.1-mini');
 
         $product = Product::create([
-            'name_en' => 'KidSIM Ultra',
-            'name_ka' => 'KidSIM Ultra',
-            'slug' => 'kidsim-ultra',
+            'name_en' => 'MyTechnic Ultra',
+            'name_ka' => 'MyTechnic Ultra',
+            'slug' => 'mytechnic-ultra',
             'price' => 299,
             'currency' => 'GEL',
             'is_active' => true,
@@ -251,7 +251,7 @@ class ChatbotRealtimeStockContextTest extends TestCase
         ]);
 
         $response = $this->postJson('/chatbot', [
-            'message' => 'kidsim ultra ლურჯი ფერი არის?',
+            'message' => 'MyTechnic Ultra ლურჯი ფერი არის?',
         ]);
 
         $response->assertStatus(200);

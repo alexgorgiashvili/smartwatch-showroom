@@ -16,12 +16,12 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DXaUkG2E.css",
+    "file": "assets/app-CFiiDlNT.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DNg9_dWm.js",
+    "file": "assets/app-BX-RLxNb.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -30,7 +30,7 @@
     ]
   },
   "resources/js/nobleui-inbox.js": {
-    "file": "assets/nobleui-inbox-Cf0q_u7p.js",
+    "file": "assets/nobleui-inbox-kYjlFZ-6.js",
     "name": "nobleui-inbox",
     "src": "resources/js/nobleui-inbox.js",
     "isEntry": true

@@ -1,7 +1,34 @@
 @extends('layouts.app')
 
-@section('title', 'ხშირად დასმული კითხვები')
-@section('meta_description', 'ხშირად დასმული კითხვები KidSIM Watch საათებზე, მიწოდებაზე, დაბრუნებაზე და ბავშვის უსაფრთხოებაზე.')
+@section('title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები — MyTechnic' : 'FAQ — MyTechnic')
+@section('meta_description', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები MyTechnic სმარტ საათებზე — SIM, GPS, მიწოდება, გარანტია.' : 'Frequently asked questions about MyTechnic smartwatches — SIM, GPS, delivery, warranty.')
+@section('canonical', url('/faq'))
+@section('og_title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები — MyTechnic' : 'FAQ — MyTechnic')
+@section('og_url', url('/faq'))
+
+@push('json_ld')
+@php
+$_faqItems = [];
+foreach ($faqCategories as $category => $items) {
+    foreach ($items as $faq) {
+        $_faqItems[] = [
+            '@type' => 'Question',
+            'name' => $faq->question,
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => $faq->answer,
+            ],
+        ];
+    }
+}
+$_faqSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'FAQPage',
+    'mainEntity' => $_faqItems,
+];
+@endphp
+<script type="application/ld+json">{!! json_encode($_faqSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+@endpush
 
 @section('content')
   <section class="tech-surface overflow-hidden">
@@ -10,7 +37,7 @@
         <p class="font-mono text-[11px] sm:text-xs uppercase tracking-[0.26em] text-white/60">[01] SUPPORT • FAQ</p>
         <h1 class="mt-3 text-3xl sm:text-5xl font-semibold tracking-tight text-white">ხშირად დასმული კითხვები</h1>
         <p class="mt-4 text-sm sm:text-base text-white/70 max-w-2xl mx-auto">
-          სწრაფი პასუხები KidSIM Watch-ის SIM-კავშირზე, უსაფრთხოებაზე, მიწოდებასა და დაბრუნებაზე.
+          სწრაფი პასუხები MyTechnic სმარტ საათების SIM-კავშირზე, GPS-ზე, მიწოდებასა და გარანტიაზე.
         </p>
       </header>
 

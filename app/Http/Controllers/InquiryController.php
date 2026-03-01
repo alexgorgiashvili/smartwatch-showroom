@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inquiry;
+use App\Services\InquiryDraftReplyService;
 use App\Services\TelegramInquiryNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class InquiryController extends Controller
 {
-    public function store(Request $request, TelegramInquiryNotifier $telegramInquiryNotifier): RedirectResponse
+    public function store(
+        Request $request,
+        TelegramInquiryNotifier $telegramInquiryNotifier,
+        InquiryDraftReplyService $inquiryDraftReplyService
+    ): RedirectResponse
     {
         $data = $request->validate([
             'product_id' => ['nullable', 'exists:products,id'],
@@ -25,6 +30,12 @@ class InquiryController extends Controller
 
         $inquiry = Inquiry::create($data);
         $inquiry->load('product');
+
+        $draftReply = $inquiryDraftReplyService->generate($inquiry);
+
+        if ($draftReply) {
+            $inquiry->setAttribute('chatbot_draft_reply', $draftReply);
+        }
 
         $telegramInquiryNotifier->send($inquiry);
 

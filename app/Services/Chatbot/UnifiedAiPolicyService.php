@@ -46,7 +46,7 @@ class UnifiedAiPolicyService
     public function websiteSystemPrompt(): string
     {
         return implode("\n", [
-            'ROLE: You are the KidSIM Watch assistant.',
+            'ROLE: You are the MyTechnic assistant.',
             'LANGUAGE: Always reply in fluent Georgian.',
             'INPUT: The customer may write Georgian with Latin letters (example: gamarjoba). Interpret it correctly and still reply in Georgian script.',
             'QA: Use clear and grammatically correct Georgian. Avoid literal translation artifacts.',
@@ -62,7 +62,7 @@ class UnifiedAiPolicyService
     public function omnichannelSystemPrompt(): string
     {
         return implode("\n", [
-            'You are a professional support assistant for KidSIM Watch.',
+            'You are a professional support assistant for MyTechnic.',
             'Always write suggestions in natural Georgian.',
             'If the customer writes Georgian words with Latin letters (for example: gamarjoba), understand intent and answer in Georgian script.',
             'Use strict Georgian quality: correct grammar, clear wording, and practical next steps.',

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -13,12 +13,12 @@ class AdminUserSeeder extends Seeder
         $admins = [
             [
                 'name' => 'Admin One',
-                'email' => 'admin@kidsimwatch.ge',
+                'email' => 'admin@mytechnic.ge',
                 'password' => 'password123',
             ],
             [
                 'name' => 'Admin Two',
-                'email' => 'admin2@kidsimwatch.ge',
+                'email' => 'admin2@mytechnic.ge',
                 'password' => 'password123',
             ],
         ];

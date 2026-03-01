@@ -1,19 +1,44 @@
 @extends('layouts.app')
 
-@section('title', __('ui.catalog_title'))
+@section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — ყველა მოდელი | MyTechnic' : 'Kids SIM Smartwatches — All Models in Georgia | MyTechnic')
+@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic-ის ბავშვის SIM სმარტ საათების კატალოგი — 4G GPS, ბავშვთა უსაფრთხოება. ნახეთ ყველა მოდელი, ფასები, მახასიათათებლები.' : 'Browse MyTechnic SIM smartwatch catalog — 4G GPS, child safety. All models, prices and specs.')
+@section('canonical', url('/products'))
+@section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — MyTechnic' : 'Kids SIM Smartwatches — MyTechnic')
+@section('og_url', url('/products'))
+@section('og_image', asset('images/og-default.jpg'))
 
 @section('header')
     <!-- Header component -->
 @endsection
 
 @section('content')
+    {{-- SEO H1 (visible but styled to blend with page intro) --}}
+    <div class="bg-white border-b border-gray-100 py-8 sm:py-10">
+        <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+                @if(app()->getLocale() === 'ka')
+                    ბავშვის SIM სმარტ საათები — ყველა მოდელი საქართველოში
+                @else
+                    Kids SIM Smartwatches — All Models in Georgia
+                @endif
+            </h1>
+            <p class="mt-2 text-sm text-gray-500">
+                @if(app()->getLocale() === 'ka')
+                    4G LTE · GPS ტრეკინგი · SOS ღილაკი · ზარები ტელეფონის გარეშე
+                @else
+                    4G LTE · GPS Tracking · SOS Button · Calls Without a Phone
+                @endif
+            </p>
+        </div>
+    </div>
+
     <!-- Trust Signals Bar -->
-    <section class="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+    <section class="border-b border-gray-100 bg-gradient-to-r from-primary-50 to-white">
         <div class="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="flex items-center justify-center gap-3 sm:justify-start">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                        <i class="fa-solid fa-truck-fast text-xl text-blue-600"></i>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
+                        <i class="fa-solid fa-truck-fast text-xl text-primary-600"></i>
                     </div>
                     <div class="text-center sm:text-left">
                         <p class="text-sm font-semibold text-gray-900">{{ __('ui.trust_shipping') }}</p>
@@ -44,6 +69,26 @@
         </div>
     </section>
 
+    {{-- Guides strip --}}
+    <section class="border-b border-slate-100 bg-white">
+        <div class="mx-auto max-w-screen-xl px-4 py-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('landing.sim-guide') }}"
+                   class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700">
+                    <i class="fa-solid fa-sim-card text-[10px] text-primary-500"></i>SIM გზამკვლევი
+                </a>
+                <a href="{{ route('landing.gift-guide') }}"
+                   class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700">
+                    <i class="fa-solid fa-gift text-[10px] text-amber-500"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}
+                </a>
+                <a href="{{ route('blog.index') }}"
+                   class="ml-auto hidden items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-primary-600 sm:inline-flex">
+                    <i class="fa-solid fa-newspaper text-[10px]"></i>{{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }} →
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Products Section -->
     <section class="bg-white">
         <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -56,7 +101,7 @@
                             name="search"
                             value="{{ $search }}"
                             placeholder="{{ __('ui.search_placeholder') }}"
-                            class="w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            class="w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
                         />
                         <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
@@ -64,7 +109,7 @@
                     </div>
                     <button
                         type="submit"
-                        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        class="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                     >
                         {{ __('ui.search') }}
                     </button>
@@ -86,28 +131,28 @@
             <div class="mt-6 flex flex-wrap justify-center gap-2">
                 <a
                     href="{{ route('products.index', ['search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ !$category ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ !$category ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
                 >
                     <i class="fa-solid fa-border-all"></i>
                     {{ __('ui.category_all') }}
                 </a>
                 <a
                     href="{{ route('products.index', ['category' => 'sim', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'sim' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'sim' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
                 >
                     <i class="fa-solid fa-sim-card"></i>
                     {{ __('ui.category_sim') }}
                 </a>
                 <a
                     href="{{ route('products.index', ['category' => 'gps', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'gps' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'gps' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
                 >
                     <i class="fa-solid fa-location-dot"></i>
                     {{ __('ui.category_gps') }}
                 </a>
                 <a
                     href="{{ route('products.index', ['category' => 'new', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'new' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'new' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
                 >
                     <i class="fa-solid fa-sparkles"></i>
                     {{ __('ui.category_new') }}
@@ -148,7 +193,7 @@
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ __('ui.no_products') }}</h3>
                         <p class="mt-1 text-sm text-gray-500">{{ __('ui.no_products_text') }}</p>
                         <div class="mt-6">
-                            <a href="{{ route('products.index') }}" class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                            <a href="{{ route('products.index') }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
                                 <i class="fa-solid fa-arrow-rotate-left mr-2"></i>
                                 {{ __('ui.filter_reset') }}
                             </a>
@@ -160,8 +205,8 @@
                             @php
                                 $image = $product->primaryImage ?? $product->images->first();
                                 $secondaryImage = $product->images->skip(1)->first();
-                                $imageUrl = $image?->url ?: asset('storage/images/home/smart-watch3.jpg');
-                                $secondaryImageUrl = $secondaryImage?->url;
+                                $imageUrl = $image?->thumbnail_url ?: asset('storage/images/home/smart-watch3.jpg');
+                                $secondaryImageUrl = $secondaryImage?->thumbnail_url;
                                 $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
                                 $basePrice = $product->price;
                                 $salePrice = $product->sale_price ?? null;
@@ -216,14 +261,14 @@
                                         <img
                                             src="{{ $imageUrl }}"
                                             alt="{{ $image?->alt ?: $product->name }}"
-                                            class="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.06] {{ $secondaryImageUrl ? 'group-hover:opacity-0' : '' }}"
+                                            class="h-44 w-full object-contain transition duration-500 group-hover:scale-[1.06] {{ $secondaryImageUrl ? 'group-hover:opacity-0' : '' }}"
                                         />
 
                                         @if ($secondaryImageUrl)
                                             <img
                                                 src="{{ $secondaryImageUrl }}"
                                                 alt="{{ $secondaryImage?->alt ?: $product->name }}"
-                                                class="absolute inset-0 h-44 w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100"
+                                                class="absolute inset-0 h-44 w-full object-contain opacity-0 transition duration-500 group-hover:opacity-100"
                                             />
                                         @endif
 

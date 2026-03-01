@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminUserSeeder::class);
         $this->call(ProductSeeder::class);
         $this->call(ChatbotDocumentSeeder::class);
+        $this->call(ArticleSeeder::class);
 
         // \App\Models\User::factory()->create([
         //     'name' => 'Test User',

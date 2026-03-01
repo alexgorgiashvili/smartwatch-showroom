@@ -1,4 +1,4 @@
-# KidSIM Watch - Deployment Script
+﻿# MyTechnic - Deployment Script
 # Usage: .\deploy.ps1
 
 Write-Host ""

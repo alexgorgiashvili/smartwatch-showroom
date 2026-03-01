@@ -4,7 +4,7 @@ import '@splidejs/splide/css';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const popularSplide = document.getElementById('popular-splide');
-	if (popularSplide) {
+	if (popularSplide && !popularSplide.classList.contains('is-initialized')) {
 		new Splide('#popular-splide', {
 			type      : 'slide',
 			gap       : '1rem',
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	const productSplide = document.getElementById('product-splide');
-	if (productSplide) {
+	if (productSplide && !productSplide.classList.contains('is-initialized')) {
 		new Splide('#product-splide', {
 			type: 'slide',
 			perPage: 1,
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	const relatedSplide = document.getElementById('related-products-splide');
-	if (relatedSplide) {
+	if (relatedSplide && !relatedSplide.classList.contains('is-initialized')) {
 		new Splide('#related-products-splide', {
 			type: 'slide',
 			gap: '1rem',
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		setOpenState(false);
 	});
 
-	addMessage('გამარჯობა! სიამოვნებით დაგეხმარებით KidSIM Watch-ის შერჩევაში. რა გაინტერესებთ?', 'bot');
+	addMessage('გამარჯობა! MyTechnic ასისტენტიႠ სიამოვნებით დაგეხმარებთ. რა გაინტერესებთ?', 'bot');
 
 	form?.addEventListener('submit', async (event) => {
 		event.preventDefault();

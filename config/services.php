@@ -57,4 +57,32 @@ return [
         'chat_id' => env('TELEGRAM_CHAT_ID'),
     ],
 
+    'webpush' => [
+        'public_key' => env('WEBPUSH_VAPID_PUBLIC_KEY'),
+        'private_key' => env('WEBPUSH_VAPID_PRIVATE_KEY'),
+        'subject' => env('WEBPUSH_VAPID_SUBJECT', 'mailto:admin@localhost'),
+    ],
+
+    'apify' => [
+        'token' => env('APIFY_API_TOKEN'),
+        'actor_id' => env('APIFY_ACTOR_ID', 'apify/web-scraper'),
+        'base_url' => env('APIFY_BASE_URL', 'https://api.apify.com/v2'),
+        'timeout' => (int) env('APIFY_TIMEOUT', 180),
+        'use_proxy' => filter_var(env('APIFY_USE_PROXY', true), FILTER_VALIDATE_BOOL),
+        'retry_with_residential' => filter_var(env('APIFY_RETRY_WITH_RESIDENTIAL', true), FILTER_VALIDATE_BOOL),
+        'proxy_country' => env('APIFY_PROXY_COUNTRY'),
+        'respect_robots' => filter_var(env('APIFY_RESPECT_ROBOTS', false), FILTER_VALIDATE_BOOL),
+        'use_template_page_function' => filter_var(env('APIFY_USE_TEMPLATE_PAGE_FUNCTION', false), FILTER_VALIDATE_BOOL),
+        'input_template_json' => env('APIFY_INPUT_TEMPLATE_JSON'),
+    ],
+
+    'scrapingbee' => [
+        'api_key' => env('SCRAPINGBEE_API_KEY'),
+        'base_url' => env('SCRAPINGBEE_BASE_URL', 'https://app.scrapingbee.com/api/v1/'),
+        'render_js' => filter_var(env('SCRAPINGBEE_RENDER_JS', true), FILTER_VALIDATE_BOOL),
+        'timeout' => (int) env('SCRAPINGBEE_TIMEOUT', 60),
+        'premium_proxy' => filter_var(env('SCRAPINGBEE_PREMIUM_PROXY', true), FILTER_VALIDATE_BOOL),
+        'country_code' => env('SCRAPINGBEE_COUNTRY_CODE'),
+    ],
+
 ];
