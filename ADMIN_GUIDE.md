@@ -578,3 +578,42 @@ For additional help:
 - **Slack**: #support-help channel
 - **Phone**: Internal extension #555
 - **Documentation**: Check OMNICHANNEL_API.md and OMNICHANNEL_CONFIG.md
+
+---
+
+## Server Shortcut Cheat Sheet (PowerShell)
+
+These shortcuts are configured in your PowerShell profile and are set up for your current server/project.
+
+### One-time setup
+
+1. Save default server:
+    - `sset "mytechn1@142.132.203.78"`
+2. Reload profile in current terminal:
+    - `. $PROFILE`
+
+### Daily shortcuts
+
+- Open SSH session to default server:
+   - `s`
+- Run one command on server:
+   - `sr "whoami; pwd"`
+- Open SSH directly inside project directory:
+   - `sproj`
+- Run deploy script on server project:
+   - `sd`
+- Push local git changes (`add + commit + push`):
+   - `gpush "commit message"`
+- Full deploy + smoke check in one command:
+   - `sfull`
+
+### Notes
+
+- If command is not recognized in a new terminal, run:
+   - `. $PROFILE`
+- Check saved default server:
+   - `sget`
+- Current project path used by shortcuts:
+   - `/home/mytechn1/public_html/smartwatch-showroom`
+- Current domain used by `sfull` smoke-check:
+   - `https://mytechnic.ge`

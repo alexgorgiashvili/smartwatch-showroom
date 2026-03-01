@@ -6,6 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="webpush-public-key" content="{{ config('services.webpush.public_key') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyTechnic Admin">
+    <meta name="theme-color" content="#ffffff">
     <title>@yield('title', 'Admin')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +20,8 @@
     <link rel="stylesheet" href="{{ asset('assets/fonts/feather-font/css/iconfont.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendors/flag-icon-css/css/flag-icon.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/demo1/style.css') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/images/favicon.png') }}">
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.png') }}" />
 
     @stack('styles')

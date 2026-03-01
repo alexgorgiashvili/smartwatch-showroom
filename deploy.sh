@@ -34,6 +34,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "ssh user@your-server-ip"
 echo "cd /var/www/smartwatch-showroom"
 echo "git pull origin main"
+echo "ln -sfn /home/mytechn1/public_html/smartwatch-showroom/public/admin-sw.js /home/mytechn1/public_html/admin-sw.js"
 echo "composer install --optimize-autoloader --no-dev"
 echo "npm install && npm run build"
 echo "php artisan migrate --force"

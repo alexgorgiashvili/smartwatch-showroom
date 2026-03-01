@@ -43,6 +43,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "ssh user@your-server-ip" -ForegroundColor White
     Write-Host "cd /var/www/smartwatch-showroom" -ForegroundColor White
     Write-Host "git pull origin main" -ForegroundColor White
+    Write-Host "ln -sfn /home/mytechn1/public_html/smartwatch-showroom/public/admin-sw.js /home/mytechn1/public_html/admin-sw.js" -ForegroundColor White
     Write-Host "composer install --optimize-autoloader --no-dev" -ForegroundColor White
     Write-Host "npm install && npm run build" -ForegroundColor White
     Write-Host "php artisan migrate --force" -ForegroundColor White
