@@ -8,6 +8,7 @@ const browserNotificationIcon = '/assets/images/others/placeholder.jpg';
 let currentPlatformFilter = 'all';
 let browserNotificationPermissionRequested = false;
 let notificationUnavailableNoticeShown = false;
+let notificationPermissionGestureBound = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeBrowserNotificationPermission();
@@ -329,15 +330,15 @@ function initializeBrowserNotificationPermission() {
     reportNotificationState('init');
 
     if (!canUseSystemNotifications()) {
-        notifyNotificationUnavailable('System notifications require HTTPS or localhost.');
+        const reason = hasWebPushSecureContext()
+            ? 'System notifications are unavailable in this app context. Open from Safari Home Screen app.'
+            : 'System notifications require HTTPS or localhost.';
+        notifyNotificationUnavailable(reason);
         return;
     }
 
-    if (Notification.permission === 'default' && !browserNotificationPermissionRequested) {
-        browserNotificationPermissionRequested = true;
-        Notification.requestPermission().catch((error) => {
-            console.warn('Notification permission request failed:', error);
-        });
+    if (Notification.permission === 'default') {
+        bindNotificationPermissionRequestOnUserGesture();
     }
 }
 
@@ -349,13 +350,10 @@ async function showSystemNotificationWhenHidden(title, message, conversationId =
         return;
     }
 
-    if (Notification.permission === 'default' && !browserNotificationPermissionRequested) {
-        browserNotificationPermissionRequested = true;
-        try {
-            await Notification.requestPermission();
-        } catch (error) {
-            console.warn('Notification permission request failed during incoming event:', error);
-        }
+    if (Notification.permission === 'default') {
+        bindNotificationPermissionRequestOnUserGesture();
+        notifyNotificationUnavailable('Tap once in the app to allow browser notifications.');
+        return;
     }
 
     if (Notification.permission !== 'granted') {
@@ -422,6 +420,48 @@ function notifyNotificationUnavailable(reason) {
     showNotification('Browser popup unavailable', reason);
 }
 
+function bindNotificationPermissionRequestOnUserGesture() {
+    if (notificationPermissionGestureBound || browserNotificationPermissionRequested || Notification.permission !== 'default') {
+        return;
+    }
+
+    notificationPermissionGestureBound = true;
+
+    const requestFromGesture = async () => {
+        document.removeEventListener('click', requestFromGesture, true);
+        document.removeEventListener('touchend', requestFromGesture, true);
+
+        notificationPermissionGestureBound = false;
+        await requestNotificationPermissionFromGesture();
+    };
+
+    document.addEventListener('click', requestFromGesture, true);
+    document.addEventListener('touchend', requestFromGesture, true);
+}
+
+async function requestNotificationPermissionFromGesture() {
+    if (!('Notification' in window) || Notification.permission !== 'default' || browserNotificationPermissionRequested) {
+        return;
+    }
+
+    browserNotificationPermissionRequested = true;
+
+    try {
+        const permission = await Notification.requestPermission();
+
+        if (permission === 'granted') {
+            notificationUnavailableNoticeShown = false;
+            await initializeWebPushSubscription();
+            return;
+        }
+
+        notifyNotificationUnavailable('Browser notifications are blocked. Allow them in site settings.');
+    } catch (error) {
+        console.warn('Notification permission request failed:', error);
+        browserNotificationPermissionRequested = false;
+    }
+}
+
 async function initializeWebPushSubscription() {
     const vapidPublicKey = document.querySelector('meta[name="webpush-public-key"]')?.content || '';
 
@@ -429,7 +469,7 @@ async function initializeWebPushSubscription() {
         return;
     }
 
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !hasWebPushSecureContext()) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || !hasWebPushSecureContext()) {
         console.warn('Web push not supported in this environment.');
         return;
     }
@@ -437,7 +477,9 @@ async function initializeWebPushSubscription() {
     let permission = Notification.permission;
 
     if (permission === 'default') {
-        permission = await Notification.requestPermission();
+        bindNotificationPermissionRequestOnUserGesture();
+        console.log('Web push subscription deferred: waiting for user gesture permission prompt.');
+        return;
     }
 
     if (permission !== 'granted') {
