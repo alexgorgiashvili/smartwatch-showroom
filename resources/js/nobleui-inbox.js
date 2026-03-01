@@ -386,7 +386,15 @@ async function showSystemNotificationWhenHidden(title, message, conversationId =
 }
 
 function canUseSystemNotifications() {
-    return 'Notification' in window && window.isSecureContext;
+    return 'Notification' in window && hasWebPushSecureContext();
+}
+
+function hasWebPushSecureContext() {
+    return window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || isStandaloneDisplayMode();
+}
+
+function isStandaloneDisplayMode() {
+    return window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true;
 }
 
 function reportNotificationState(context) {
@@ -395,6 +403,9 @@ function reportNotificationState(context) {
         context,
         permission,
         isSecureContext: window.isSecureContext,
+        protocol: window.location?.protocol,
+        host: window.location?.host,
+        standalone: isStandaloneDisplayMode(),
         hasFocus: document.hasFocus(),
         hidden: document.hidden,
     });
@@ -418,7 +429,7 @@ async function initializeWebPushSubscription() {
         return;
     }
 
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !window.isSecureContext) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !hasWebPushSecureContext()) {
         console.warn('Web push not supported in this environment.');
         return;
     }
