@@ -14,7 +14,7 @@
 
 ## Getting Started
 
-### Logging In
+### Logging Inნ
 
 1. Navigate to: `https://yourdomain.com/admin/login`
 2. Enter your credentials:
