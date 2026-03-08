@@ -32,5 +32,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="META_APP_SECRET" value="test-secret"/>
+        <env name="WHATSAPP_API_KEY" value="test-key"/>
     </php>
 </phpunit>

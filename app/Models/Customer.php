@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 
 class Customer extends Model
 {
     protected $fillable = [
+        'global_user_id',
         'name',
         'platform_user_ids',
         'email',
@@ -20,6 +20,7 @@ class Customer extends Model
     protected $casts = [
         'platform_user_ids' => 'array',
         'metadata' => 'array',
+        'global_user_id' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

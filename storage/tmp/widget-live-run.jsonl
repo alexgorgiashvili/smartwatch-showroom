@@ -1,0 +1,4 @@
+﻿{"site":"http://smartwatch-showroom.test","status":200,"csrf_found":true}
+{"label":"budget","message":"რამე 20 ლარის ფარგლებში გაქვთ?","ok":true,"reply":null,"intent":"recommendation","products_found":5,"products_attached":3,"trace_id":"widget_qn2e1wdkvn3m"}
+{"label":"exact","message":"Wonlex CT23 გაქვთ და რა ღირს?","ok":true,"reply":null,"intent":"price_query","products_found":1,"products_attached":1,"trace_id":"widget_u0fetvumoccz"}
+{"label":"features","message":"ბავშვის საათი მინდა GPS და SOS ფუნქციებით","ok":true,"reply":null,"intent":"recommendation","products_found":5,"products_attached":3,"trace_id":"widget_sa6zaw1af6qk"}

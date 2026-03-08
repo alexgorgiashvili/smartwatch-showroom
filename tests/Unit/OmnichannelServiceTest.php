@@ -2,15 +2,15 @@
 
 namespace Tests\Unit;
 
-use App\Models\Conversation;
 use App\Models\Customer;
 use App\Models\Message;
 use App\Services\MetaApiService;
 use App\Services\OmnichannelService;
 use App\Services\WhatsAppService;
+use App\Services\Chatbot\CarouselBuilderService;
+use App\Services\Chatbot\IdentityResolutionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
-use Mockery\MockInterface;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class OmnichannelServiceTest extends TestCase
@@ -18,19 +18,15 @@ class OmnichannelServiceTest extends TestCase
     use RefreshDatabase;
 
     protected OmnichannelService $service;
-    protected MockInterface $metaServiceMock;
-    protected MockInterface $whatsappServiceMock;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->metaServiceMock = Mockery::mock(MetaApiService::class);
-        $this->whatsappServiceMock = Mockery::mock(WhatsAppService::class);
-
         $this->service = new OmnichannelService(
-            $this->metaServiceMock,
-            $this->whatsappServiceMock
+            new MetaApiService(),
+            new WhatsAppService(),
+            new IdentityResolutionService()
         );
     }
 
@@ -161,6 +157,81 @@ class OmnichannelServiceTest extends TestCase
         $this->assertEquals('1234567890', $parsed['sender_id']);
         $this->assertEquals('WhatsApp test message', $parsed['message_text']);
         $this->assertEquals('1234567890', $parsed['conversation_id']);
+    }
+
+    public function testWhatsAppSendCarouselUsesSharedBuilderPayload(): void
+    {
+        config()->set('services.whatsapp.access_token', 'test-token');
+        config()->set('services.whatsapp.phone_number_id', 'phone-123');
+        config()->set('services.whatsapp.business_id', 'catalog-123');
+
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.123']]], 200),
+        ]);
+
+        $products = [
+            [
+                'title' => 'MyTechnic Ultra',
+                'subtitle' => 'ფასი: 79 ₾',
+                'image_url' => 'https://example.com/ultra.jpg',
+                'product_url' => 'https://example.com/products/mytechnic-ultra',
+                'cta_label' => 'ნახვა',
+                'cart_label' => 'კალათაში',
+            ],
+            [
+                'title' => 'MyTechnic Pro',
+                'subtitle' => 'ფასი: 99 ₾',
+                'image_url' => 'https://example.com/pro.jpg',
+                'product_url' => 'https://example.com/products/mytechnic-pro',
+                'cta_label' => 'ნახვა',
+                'cart_label' => 'კალათაში',
+            ],
+        ];
+
+        $service = new WhatsAppService();
+        $result = $service->sendCarousel('user-123', 'conv-123', $products);
+        $expected = app(CarouselBuilderService::class)->buildWhatsAppCarousel($products);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame($expected['type'], $result['payload']['type']);
+        $this->assertSame($expected['interactive'], $result['payload']['interactive']);
+        $this->assertSame('user-123', $result['payload']['to']);
+    }
+
+    public function testMetaSendCarouselUsesSharedBuilderPayload(): void
+    {
+        config()->set('services.facebook.page_access_token', 'page-token');
+
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::response(['message_id' => 'mid.123'], 200),
+        ]);
+
+        $products = [
+            [
+                'title' => 'MyTechnic Ultra',
+                'subtitle' => 'ფასი: 79 ₾',
+                'image_url' => 'https://example.com/ultra.jpg',
+                'product_url' => 'https://example.com/products/mytechnic-ultra',
+                'cta_label' => 'ნახვა',
+                'cart_label' => 'კალათაში',
+            ],
+            [
+                'title' => 'MyTechnic Pro',
+                'subtitle' => 'ფასი: 99 ₾',
+                'image_url' => 'https://example.com/pro.jpg',
+                'product_url' => 'https://example.com/products/mytechnic-pro',
+                'cta_label' => 'ნახვა',
+                'cart_label' => 'კალათაში',
+            ],
+        ];
+
+        $service = new MetaApiService();
+        $result = $service->sendCarousel('user-456', $products, 'facebook');
+        $expected = app(CarouselBuilderService::class)->buildMetaGenericCarousel($products);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame($expected['attachment'], $result['payload']['message']['attachment']);
+        $this->assertSame('user-456', data_get($result['payload'], 'recipient.id'));
     }
 
     /** Test invalid message data returns null */

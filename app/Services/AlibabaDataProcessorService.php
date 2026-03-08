@@ -21,9 +21,9 @@ class AlibabaDataProcessorService
 
     private function processWithAi(array $raw): ?array
     {
-        $apiKey = config('ai.openai.api_key');
-        $orgId = config('ai.openai.org_id');
-        $model = config('ai.openai.model', 'gpt-4-turbo');
+        $apiKey = config('services.openai.key');
+        $orgId = config('services.openai.org_id');
+        $model = config('services.openai.model', 'gpt-4.1-mini');
 
         if (!$apiKey) {
             return null;
@@ -440,9 +440,9 @@ class AlibabaDataProcessorService
             $fallback[$text] = $this->translateWithDictionary($text);
         }
 
-        $apiKey = config('ai.openai.api_key');
-        $orgId = config('ai.openai.org_id');
-        $model = config('ai.openai.model', 'gpt-4-turbo');
+        $apiKey = config('services.openai.key');
+        $orgId = config('services.openai.org_id');
+        $model = config('services.openai.model', 'gpt-4.1-mini');
         if (!$apiKey) {
             return $fallback;
         }

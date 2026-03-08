@@ -79,6 +79,12 @@
                     <span class="link-title">Chatbot Content</span>
                 </a>
             </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.chatbot-lab.*')])>
+                <a href="{{ route('admin.chatbot-lab.index') }}" class="nav-link">
+                    <i class="link-icon" data-feather="message-square"></i>
+                    <span class="link-title">ჩატბოტ ლაბი</span>
+                </a>
+            </li>
             <li @class(['nav-item', 'active' => request()->routeIs('admin.users.*')])>
                 <a href="{{ route('admin.users.index') }}" class="nav-link">
                     <i class="link-icon" data-feather="users"></i>

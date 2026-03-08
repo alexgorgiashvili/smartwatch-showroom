@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'chatbot_widget_trace' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/chatbot-widget-trace.log'),
+            'level' => env('CHATBOT_WIDGET_TRACE_LEVEL', 'debug'),
+            'days' => env('CHATBOT_WIDGET_TRACE_DAYS', 7),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

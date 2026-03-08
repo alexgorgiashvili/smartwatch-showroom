@@ -14,7 +14,8 @@ class ChatbotContentSyncService
 {
     public function __construct(
         private EmbeddingService $embedding,
-        private PineconeService $pinecone
+        private PineconeService $pinecone,
+        private DocumentChunker $chunker
     ) {
     }
 
@@ -81,7 +82,7 @@ class ChatbotContentSyncService
 
     public function syncProduct(Product $product): bool
     {
-        $product->loadMissing('variants');
+        $product->loadMissing(['variants', 'primaryImage']);
 
         if (!$product->is_active) {
             return $this->deactivateProduct($product);
@@ -182,6 +183,8 @@ class ChatbotContentSyncService
         }
 
         $totalStock = $product->variants->sum('quantity');
+        $category = $this->resolveProductCategory($product);
+        $isInStock = max(0, (int) $totalStock) > 0;
         $lines[] = 'საერთო მარაგი: ' . max(0, (int) $totalStock) . ' ცალი';
 
         $content = implode("\n", $lines);
@@ -196,8 +199,13 @@ class ChatbotContentSyncService
                 'metadata' => [
                     'key' => 'product-' . $product->id,
                     'slug' => $product->slug,
-                    'price' => (string) $product->price,
-                    'sale_price' => $product->sale_price ? (string) $product->sale_price : null,
+                    'image_url' => $product->primaryImage?->url,
+                    'price' => (float) $product->price,
+                    'sale_price' => $product->sale_price !== null ? (float) $product->sale_price : null,
+                    'is_in_stock' => $isInStock,
+                    'category' => $category,
+                    'brand' => $product->brand,
+                    'last_updated' => $product->updated_at?->timestamp ?? now()->timestamp,
                     'sim_support' => (bool) $product->sim_support,
                     'gps_features' => (bool) $product->gps_features,
                     'water_resistant' => $product->water_resistant,
@@ -242,7 +250,17 @@ class ChatbotContentSyncService
 
         if ($document->pinecone_id && $this->pinecone->isConfigured()) {
             try {
-                $this->pinecone->deleteByIds([$document->pinecone_id]);
+                $chunkCount = max(1, (int) data_get($document->metadata, 'chunk_count', 1));
+
+                if ($chunkCount > 1) {
+                    $ids = [];
+                    for ($index = 0; $index < $chunkCount; $index++) {
+                        $ids[] = $document->pinecone_id . '#chunk-' . $index;
+                    }
+                    $this->pinecone->deleteByIds($ids);
+                } else {
+                    $this->pinecone->deleteByIds([$document->pinecone_id]);
+                }
             } catch (\Throwable $exception) {
                 Log::warning('Failed to delete product vector from Pinecone', [
                     'key' => $document->key,
@@ -273,16 +291,87 @@ class ChatbotContentSyncService
         }
 
         try {
+            $pineconeId = $document->pinecone_id ?: $this->resolvePineconeId($document);
+
+            if (!$document->pinecone_id) {
+                $document->update(['pinecone_id' => $pineconeId]);
+            }
+
+            if ($document->type === 'product') {
+                $chunks = $this->chunker->chunk((string) $document->content_ka, 'product');
+
+                if ($chunks === []) {
+                    return false;
+                }
+
+                $inputs = array_map(static function (array $chunk): string {
+                    return $chunk['section'] . "\n" . $chunk['text'];
+                }, $chunks);
+
+                $vectors = $this->embedding->embedMany($inputs);
+
+                $oldChunkCount = max(1, (int) data_get($document->metadata, 'chunk_count', 1));
+                $newChunkCount = count($chunks);
+
+                if ($oldChunkCount > $newChunkCount) {
+                    $staleIds = [];
+                    for ($index = $newChunkCount; $index < $oldChunkCount; $index++) {
+                        $staleIds[] = $pineconeId . '#chunk-' . $index;
+                    }
+
+                    if ($staleIds !== []) {
+                        $this->pinecone->deleteByIds($staleIds);
+                    }
+                }
+
+                $documentMetadata = is_array($document->metadata) ? $document->metadata : [];
+                $documentMetadata['chunk_count'] = $newChunkCount;
+
+                if ((int) data_get($document->metadata, 'chunk_count', 1) !== $newChunkCount) {
+                    $document->update(['metadata' => $documentMetadata]);
+                }
+
+                $metadataBase = [
+                    'key' => $document->key,
+                    'type' => $document->type,
+                    'title' => $document->title,
+                    'product_id' => $document->product_id,
+                    'chunk_count' => $newChunkCount,
+                ];
+
+                $upsertVectors = [];
+
+                foreach ($chunks as $index => $chunk) {
+                    $values = $vectors[$index] ?? [];
+
+                    if ($values === []) {
+                        continue;
+                    }
+
+                    $upsertVectors[] = [
+                        'id' => $pineconeId . '#chunk-' . $index,
+                        'values' => $values,
+                        'metadata' => array_filter(array_merge($documentMetadata, $metadataBase, [
+                            'chunk_index' => $index,
+                            'section' => (string) ($chunk['section'] ?? 'product'),
+                            'text' => (string) ($chunk['text'] ?? ''),
+                        ]), static fn ($value) => $value !== null),
+                    ];
+                }
+
+                if ($upsertVectors === []) {
+                    return false;
+                }
+
+                $this->pinecone->upsert($upsertVectors);
+
+                return true;
+            }
+
             $vector = $this->embedding->embed($document->title . "\n" . $document->content_ka);
 
             if ($vector === []) {
                 return false;
-            }
-
-            $pineconeId = $document->pinecone_id ?: 'doc_' . $document->id;
-
-            if (!$document->pinecone_id) {
-                $document->update(['pinecone_id' => $pineconeId]);
             }
 
             $metadata = [
@@ -292,11 +381,13 @@ class ChatbotContentSyncService
                 'product_id' => $document->product_id,
             ];
 
+            $documentMetadata = is_array($document->metadata) ? $document->metadata : [];
+
             $this->pinecone->upsert([
                 [
                     'id' => $pineconeId,
                     'values' => $vector,
-                    'metadata' => array_filter($metadata, static fn ($value) => $value !== null),
+                    'metadata' => array_filter(array_merge($documentMetadata, $metadata), static fn ($value) => $value !== null),
                 ],
             ]);
 
@@ -309,5 +400,31 @@ class ChatbotContentSyncService
 
             return false;
         }
+    }
+
+    private function resolvePineconeId(ChatbotDocument $document): string
+    {
+        if ($document->type === 'product') {
+            $metadata = is_array($document->metadata) ? $document->metadata : [];
+            $category = (string) ($metadata['category'] ?? 'smartwatch');
+            $category = trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $category) ?? 'smartwatch'), '-');
+
+            if ($category === '') {
+                $category = 'smartwatch';
+            }
+
+            return 'product#' . $category . '#' . $document->product_id;
+        }
+
+        return 'doc_' . $document->id;
+    }
+
+    private function resolveProductCategory(Product $product): string
+    {
+        if ($product->brand && str_contains(strtolower($product->brand), 'smart')) {
+            return 'smartwatch';
+        }
+
+        return 'smartwatch';
     }
 }

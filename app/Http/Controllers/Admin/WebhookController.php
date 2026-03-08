@@ -70,7 +70,7 @@ class WebhookController extends Controller
         }
 
         // Process message events
-        if ($eventType === 'message' && $isVerified) {
+        if (in_array($eventType, ['message', 'messages'], true) && $isVerified) {
             $this->processMessage($platform, $request->all());
         }
 
@@ -169,9 +169,20 @@ class WebhookController extends Controller
     public function verify(Request $request)
     {
         // Get verification parameters from Meta
-        $hubMode = $request->input('hub.mode');
-        $hubChallenge = $request->input('hub.challenge');
-        $hubVerifyToken = $request->input('hub.verify_token');
+        $hubMode = $request->query('hub_mode')
+            ?? $request->query('hub.mode')
+            ?? $request->header('hub_mode')
+            ?? $request->header('hub.mode');
+
+        $hubChallenge = $request->query('hub_challenge')
+            ?? $request->query('hub.challenge')
+            ?? $request->header('hub_challenge')
+            ?? $request->header('hub.challenge');
+
+        $hubVerifyToken = $request->query('hub_verify_token')
+            ?? $request->query('hub.verify_token')
+            ?? $request->header('hub_verify_token')
+            ?? $request->header('hub.verify_token');
 
         // Get verify token from config
         $expectedToken = config('services.meta.verify_token');

@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Customer;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Chatbot\IdentityResolutionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,11 +21,17 @@ class OmnichannelService
 
     protected MetaApiService $metaApiService;
     protected WhatsAppService $whatsAppService;
+    protected IdentityResolutionService $identityResolutionService;
 
-    public function __construct(MetaApiService $metaApiService, WhatsAppService $whatsAppService)
+    public function __construct(
+        MetaApiService $metaApiService,
+        WhatsAppService $whatsAppService,
+        IdentityResolutionService $identityResolutionService
+    )
     {
         $this->metaApiService = $metaApiService;
         $this->whatsAppService = $whatsAppService;
+        $this->identityResolutionService = $identityResolutionService;
     }
 
     /**
@@ -67,8 +74,28 @@ class OmnichannelService
                     return null;
                 }
 
-                // Find or create customer
-                $customer = Customer::findOrCreateByPlatformId($platform, $senderId);
+                $identityPhone = $parsedMessage['phone'] ?? null;
+                $identityEmail = $parsedMessage['email'] ?? null;
+
+                if ($identityPhone === null && $platform === self::PLATFORM_WHATSAPP) {
+                    $identityPhone = $senderId;
+                }
+
+                // Find or create customer through identity resolution
+                $customer = $this->identityResolutionService->resolveCustomer(
+                    $platform,
+                    $senderId,
+                    $identityPhone,
+                    $identityEmail,
+                    [
+                        'name' => $parsedMessage['name'] ?? null,
+                        'avatar_url' => $parsedMessage['avatar_url'] ?? null,
+                        'metadata' => [
+                            'platform' => $platform,
+                            'last_sender_platform_id' => $senderId,
+                        ],
+                    ]
+                );
 
                 // Find or create conversation
                 $conversation = Conversation::findOrCreateByPlatformId(
@@ -87,6 +114,24 @@ class OmnichannelService
                     $attachmentType = $firstAttachment['type'] ?? null;
                 }
 
+                $platformMessageId = $parsedMessage['platform_message_id']
+                    ?? $this->generatePlatformMessageId($platform, $senderId);
+
+                $existingMessage = Message::query()
+                    ->where('platform_message_id', $platformMessageId)
+                    ->first();
+
+                if ($existingMessage) {
+                    Log::info('Duplicate incoming message skipped', [
+                        'platform' => $platform,
+                        'platform_message_id' => $platformMessageId,
+                    ]);
+
+                    $existingMessage->load(['conversation', 'customer']);
+
+                    return $existingMessage;
+                }
+
                 // Create message record
                 $message = Message::create([
                     'conversation_id' => $conversation->id,
@@ -97,7 +142,7 @@ class OmnichannelService
                     'content' => $messageText,
                     'media_url' => $attachment,
                     'media_type' => $attachmentType,
-                    'platform_message_id' => $this->generatePlatformMessageId($platform, $senderId),
+                    'platform_message_id' => $platformMessageId,
                     'metadata' => [
                         'platform' => $platform,
                         'sender_platform_id' => $senderId,
@@ -292,7 +337,8 @@ class OmnichannelService
                 $senderId,
                 $conversationId,
                 $message,
-                $mediaUrl
+                $mediaUrl,
+                $platform
             ),
             self::PLATFORM_WHATSAPP => $this->whatsAppService->sendMessage(
                 $senderId,

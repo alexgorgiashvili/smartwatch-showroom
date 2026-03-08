@@ -6,6 +6,7 @@ class UnifiedAiPolicyService
 {
     private const TRANSLITERATION_MAP = [
         'gamarjoba' => 'გამარჯობა',
+        'gamarjveba' => 'გამარჯობა',
         'rogor xar' => 'როგორ ხარ',
         'rogor khar' => 'როგორ ხარ',
         'madloba' => 'მადლობა',
@@ -21,6 +22,13 @@ class UnifiedAiPolicyService
         'maragi' => 'მარაგი',
         'aris' => 'არის',
         'rame' => 'რამე',
+    ];
+
+    private const TYPO_REPLACEMENTS = [
+        '/გაქვტ/u' => 'გაქვთ',
+        '/ამისპას/u' => 'ამის ფას',
+        '/ამისფას/u' => 'ამის ფას',
+        '/ფასალარია/u' => 'ფასი რა არის',
     ];
 
     private const INTENT_PATTERNS = [
@@ -43,33 +51,74 @@ class UnifiedAiPolicyService
         '/^\s*(gamarjoba|salami)\s*[!.?]*\s*$/i',
     ];
 
+    /**
+     * Build the full master system prompt from config sections.
+     *
+     * @param  string[]  $sections  Config keys from chatbot-prompt.php to include
+     */
+    private function buildMasterPrompt(array $sections): string
+    {
+        $parts = [];
+
+        foreach ($sections as $key) {
+            $value = config("chatbot-prompt.{$key}");
+
+            if (is_string($value) && trim($value) !== '') {
+                $parts[] = trim($value);
+            }
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    /**
+     * Master system prompt for the website widget chatbot.
+     * Includes all persona, linguistic, RAG integration, and formatting rules.
+     */
     public function websiteSystemPrompt(): string
     {
-        return implode("\n", [
-            'ROLE: You are the MyTechnic assistant.',
-            'LANGUAGE: Always reply in fluent Georgian.',
-            'INPUT: The customer may write Georgian with Latin letters (example: gamarjoba). Interpret it correctly and still reply in Georgian script.',
-            'QA: Use clear and grammatically correct Georgian. Avoid literal translation artifacts.',
-            'TONE: Friendly, warm, and helpful.',
-            'STYLE: Short paragraphs; avoid slang; be clear and practical.',
-            'FACTS: Use the provided context when possible. If unsure, suggest contacting the team.',
-            'PRODUCTS: When recommending, mention name, key features, and price if available.',
-            'LINKS: Share product or contact links when helpful.',
-            'QUALITY BAR: Be specific, actionable, and human. Ask one clarifying follow-up when details are missing.',
+        return $this->buildMasterPrompt([
+            'identity',
+            'language_core',
+            'linguistic_rules',
+            'price_formatting',
+            'rag_integration',
+            'output_format',
+            'ecommerce_rules',
+            'guardrails',
+            'greetings',
         ]);
     }
 
+    /**
+     * System prompt for omnichannel (WhatsApp / Instagram / Messenger) suggestions.
+     * Uses the same master prompt with an additional conciseness constraint.
+     */
     public function omnichannelSystemPrompt(): string
     {
-        return implode("\n", [
-            'You are a professional support assistant for MyTechnic.',
-            'Always write suggestions in natural Georgian.',
-            'If the customer writes Georgian words with Latin letters (for example: gamarjoba), understand intent and answer in Georgian script.',
-            'Use strict Georgian quality: correct grammar, clear wording, and practical next steps.',
-            'Keep each suggestion concise (1-3 sentences), helpful, and specific.',
-            'Avoid generic filler and avoid English output.',
-            'Avoid repeating previous assistant messages verbatim.',
+        $master = $this->buildMasterPrompt([
+            'identity',
+            'language_core',
+            'linguistic_rules',
+            'price_formatting',
+            'rag_integration',
+            'output_format',
+            'ecommerce_rules',
+            'guardrails',
+            'greetings',
         ]);
+
+        $omnichannelOverride = implode("\n", [
+            '',
+            '## Omnichannel-სპეციფიკური წესები',
+            '- თითოეული პასუხი მოკლე იყოს (1-3 წინადადება მაქსიმუმ)',
+            '- WhatsApp/Instagram-ზე Markdown მინიმალურად გამოიყენე (*bold* მხოლოდ)',
+            '- არ გაიმეორო წინა ასისტენტის შეტყობინებები სიტყვა-სიტყვით',
+            '- წინა კონტექსტი გაითვალისწინე — ნუ იკითხავ იგივეს ხელახლა',
+            '- უპასუხე კონკრეტულად მომხმარებლის ბოლო შეტყობინებას',
+        ]);
+
+        return $master . $omnichannelOverride;
     }
 
     public function normalizeIncomingMessage(string $text): string
@@ -88,7 +137,33 @@ class UnifiedAiPolicyService
             $normalized = preg_replace($pattern, $georgian, $normalized) ?? $normalized;
         }
 
+        foreach (self::TYPO_REPLACEMENTS as $pattern => $replacement) {
+            $normalized = preg_replace($pattern, $replacement, $normalized) ?? $normalized;
+        }
+
         return preg_replace('/\s+/u', ' ', $normalized) ?? $normalized;
+    }
+
+    public function isGreetingOnly(string $text): bool
+    {
+        $normalized = trim($this->normalizeIncomingMessage($text));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        foreach (self::GREETING_ONLY_PATTERNS as $pattern) {
+            if (preg_match($pattern, $normalized) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function websiteGreetingReply(): string
+    {
+        return 'გამარჯობა! სიამოვნებით დაგეხმარებით. მითხარით რა გაინტერესებთ: ფასი, მარაგი, GPS, SOS თუ კონკრეტული მოდელი.';
     }
 
     public function looksGeorgianOrTransliterated(string $text): bool

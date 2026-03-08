@@ -52,7 +52,14 @@ class PineconeService
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function query(array $vector, int $topK = 5, array $filter = [], ?string $namespace = null): array
+    public function query(
+        array $vector,
+        int $topK = 5,
+        array $filter = [],
+        ?string $namespace = null,
+        array $sparseVector = [],
+        ?float $alpha = null
+    ): array
     {
         $apiKey = config('services.pinecone.api_key');
         $baseUrl = $this->baseUrl();
@@ -61,11 +68,30 @@ class PineconeService
             return [];
         }
 
+        if ($alpha !== null && $sparseVector !== []) {
+            $alpha = max(0.0, min(1.0, $alpha));
+            $vector = array_map(static fn ($value) => (float) $value * $alpha, $vector);
+
+            if (isset($sparseVector['values']) && is_array($sparseVector['values'])) {
+                $sparseVector['values'] = array_map(
+                    static fn ($value) => (float) $value * (1 - $alpha),
+                    $sparseVector['values']
+                );
+            }
+        }
+
         $payload = [
-            'vector' => $vector,
+            'vector' => array_values($vector),
             'topK' => $topK,
             'includeMetadata' => true,
         ];
+
+        if ($sparseVector !== [] && isset($sparseVector['indices'], $sparseVector['values'])) {
+            $payload['sparseVector'] = [
+                'indices' => array_values($sparseVector['indices']),
+                'values' => array_values($sparseVector['values']),
+            ];
+        }
 
         if ($filter !== []) {
             $payload['filter'] = $filter;
@@ -124,6 +150,15 @@ class PineconeService
             ])
             ->timeout(20)
             ->post($baseUrl . '/vectors/delete', $payload);
+
+        if ($response->status() === 404 && str_contains($response->body(), 'Namespace not found')) {
+            Log::info('Pinecone namespace missing during delete; treating as no-op', [
+                'namespace' => $namespace,
+                'ids' => $ids,
+            ]);
+
+            return;
+        }
 
         if (!$response->successful()) {
             Log::warning('Pinecone delete failed', [

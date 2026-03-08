@@ -102,12 +102,12 @@ return [
     'about_communication' => 'Easy Communication: Get answers quickly via WhatsApp, Telegram, or direct phone call.',
     'privacy_title' => 'Privacy Policy',
     'privacy_updated' => 'Last updated: February 18, 2026',
-    'privacy_intro' => 'Your privacy is important to us. This page informs you of our policies regarding data collection and use.',
+    'privacy_intro' => 'Protecting your personal information is our top priority. This page explains how we collect, use, and protect your data on the MyTechnic website.',
     'privacy_types' => 'Types of Data Collected',
     'privacy_use' => 'Use of Data',
     'privacy_security' => 'Security of Data',
     'terms_title' => 'Terms of Service',
-    'terms_intro' => 'By accessing MyTechnic website, you agree to be bound by these terms of service.',
+    'terms_intro' => 'By accessing and using the MyTechnic website, you agree to be bound by these terms of service and all applicable Georgian laws.',
 
     // Spec table labels
     'spec_os' => 'Operating System',

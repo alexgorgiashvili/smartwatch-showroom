@@ -13,9 +13,11 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\AlibabaImportController as AdminAlibabaImportController;
 use App\Http\Controllers\Admin\CompetitorMonitorController as AdminCompetitorMonitorController;
+use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImageController;
 use App\Http\Controllers\Admin\StockAdjustmentController as AdminStockAdjustmentController;
 use App\Http\Controllers\Admin\ChatbotContentController as AdminChatbotContentController;
+use App\Http\Controllers\Admin\ChatbotLabController as AdminChatbotLabController;
 use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
@@ -67,6 +69,9 @@ Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('la
 Route::post('/chatbot', [ChatController::class, 'respond'])
 	->name('chatbot.respond')
 	->middleware('throttle:30,1');
+Route::get('/chatbot/history', [ChatController::class, 'history'])
+	->name('chatbot.history')
+	->middleware('throttle:10,1');
 
 Route::get('/cart', [CartController::class, 'show'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
@@ -86,8 +91,9 @@ Route::get('/payment/fail', [PaymentStatusController::class, 'fail'])->name('pay
 | Facebook Webhook Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/webhook/facebook', [\App\Http\Controllers\FacebookWebhookController::class, 'verify']);
-Route::post('/webhook/facebook', [\App\Http\Controllers\FacebookWebhookController::class, 'webhook']);
+Route::get('/webhook/facebook', [AdminWebhookController::class, 'verify']);
+Route::post('/webhook/facebook', [AdminWebhookController::class, 'handle'])
+	->middleware('webhook.verify');
 
 Route::prefix('admin')->name('admin.')->group(function () {
 	Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
@@ -192,6 +198,47 @@ Route::prefix('admin')->name('admin.')->group(function () {
 			->name('chatbot-content.faqs.destroy');
 		Route::put('/chatbot-content/contacts', [AdminChatbotContentController::class, 'updateContacts'])
 			->name('chatbot-content.contacts.update');
+
+		Route::get('/chatbot-lab', [AdminChatbotLabController::class, 'index'])
+			->name('chatbot-lab.index');
+		Route::post('/chatbot-lab/manual', [AdminChatbotLabController::class, 'runManualTest'])
+			->name('chatbot-lab.manual.run');
+		Route::post('/chatbot-lab/manual/retry', [AdminChatbotLabController::class, 'retryManualResult'])
+			->name('chatbot-lab.manual.retry');
+		Route::post('/chatbot-lab/manual/reset', [AdminChatbotLabController::class, 'resetManualSession'])
+			->name('chatbot-lab.manual.reset');
+		Route::get('/chatbot-lab/cases', [AdminChatbotLabController::class, 'cases'])
+			->name('chatbot-lab.cases.index');
+		Route::post('/chatbot-lab/cases/preview-diagnostics', [AdminChatbotLabController::class, 'previewCaseDiagnostics'])
+			->name('chatbot-lab.cases.preview-diagnostics');
+		Route::post('/chatbot-lab/cases/{trainingCase}/preview-diagnostics', [AdminChatbotLabController::class, 'previewCaseDiagnostics'])
+			->name('chatbot-lab.cases.preview-diagnostics-existing');
+		Route::post('/chatbot-lab/cases', [AdminChatbotLabController::class, 'storeCase'])
+			->name('chatbot-lab.cases.store');
+		Route::patch('/chatbot-lab/cases/{trainingCase}', [AdminChatbotLabController::class, 'updateCase'])
+			->name('chatbot-lab.cases.update');
+		Route::delete('/chatbot-lab/cases/{trainingCase}', [AdminChatbotLabController::class, 'destroyCase'])
+			->name('chatbot-lab.cases.destroy');
+		Route::get('/chatbot-lab/runs', [AdminChatbotLabController::class, 'runs'])
+			->name('chatbot-lab.runs.index');
+		Route::post('/chatbot-lab/runs', [AdminChatbotLabController::class, 'startRun'])
+			->name('chatbot-lab.runs.start');
+		Route::get('/chatbot-lab/runs/{run}', [AdminChatbotLabController::class, 'showRun'])
+			->name('chatbot-lab.runs.show');
+		Route::get('/chatbot-lab/runs/{run}/status', [AdminChatbotLabController::class, 'runStatus'])
+			->name('chatbot-lab.runs.status');
+		Route::post('/chatbot-lab/runs/{run}/cancel', [AdminChatbotLabController::class, 'cancelRunAction'])
+			->name('chatbot-lab.runs.cancel');
+		Route::get('/chatbot-lab/runs/{run}/export', [AdminChatbotLabController::class, 'exportRunCsv'])
+			->name('chatbot-lab.runs.export');
+		Route::post('/chatbot-lab/results/{result}/observation', [AdminChatbotLabController::class, 'saveObservation'])
+			->name('chatbot-lab.results.observation');
+		Route::post('/chatbot-lab/results/{result}/rerun', [AdminChatbotLabController::class, 'rerunResult'])
+			->name('chatbot-lab.results.rerun');
+		Route::post('/chatbot-lab/results/{result}/promote', [AdminChatbotLabController::class, 'promoteResult'])
+			->name('chatbot-lab.results.promote');
+		Route::post('/chatbot-lab/results/{result}/promote-rerun', [AdminChatbotLabController::class, 'promoteAndRerunResult'])
+			->name('chatbot-lab.results.promote-rerun');
 	});
 });
 

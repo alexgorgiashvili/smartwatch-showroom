@@ -16,40 +16,53 @@ class SecurityHeaders
 
         // X-Content-Type-Options: nosniff
         // Prevents browsers from MIME-sniffing and forces them to respect the Content-Type header
-        $response->header('X-Content-Type-Options', 'nosniff');
+        $this->setHeader($response, 'X-Content-Type-Options', 'nosniff');
 
         // X-Frame-Options: DENY
         // Prevents the page from being displayed in a frame, combating clickjacking attacks
         // Use SAMEORIGIN if you need to allow framing from same origin
-        $response->header('X-Frame-Options', 'DENY');
+        $this->setHeader($response, 'X-Frame-Options', 'DENY');
 
         // Content-Security-Policy
         // Restricts script sources and prevents XSS attacks
         $csp = $this->getContentSecurityPolicy();
-        $response->header('Content-Security-Policy', $csp);
+        $this->setHeader($response, 'Content-Security-Policy', $csp);
 
         // X-XSS-Protection: 1; mode=block
         // Enables XSS filtering in older browsers
-        $response->header('X-XSS-Protection', '1; mode=block');
+        $this->setHeader($response, 'X-XSS-Protection', '1; mode=block');
 
         // Strict-Transport-Security: max-age=31536000; includeSubDomains
         // Forces HTTPS for all future requests
         // Only set in production
         if (config('app.env') === 'production') {
-            $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+            $this->setHeader($response, 'Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         } elseif (config('app.env') === 'staging') {
-            $response->header('Strict-Transport-Security', 'max-age=604800; includeSubDomains');
+            $this->setHeader($response, 'Strict-Transport-Security', 'max-age=604800; includeSubDomains');
         }
 
         // Referrer-Policy
         // Controls how much referrer information is sent
-        $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $this->setHeader($response, 'Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Permissions-Policy (formerly Feature-Policy)
         // Controls which browser features and APIs can be used
-        $response->header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        $this->setHeader($response, 'Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
         return $response;
+    }
+
+    private function setHeader(mixed $response, string $name, string $value): void
+    {
+        if (method_exists($response, 'header')) {
+            $response->header($name, $value);
+
+            return;
+        }
+
+        if (isset($response->headers)) {
+            $response->headers->set($name, $value);
+        }
     }
 
     /**

@@ -62,9 +62,8 @@ class OmnichannelWebhookTest extends TestCase
         $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
 
         // Send POST request with valid signature
-        $response = $this->post('/api/webhooks/messages', $payload, [
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
             'X-Hub-Signature-256' => $signature,
-            'Content-Type' => 'application/json',
         ]);
 
         // Assert: Returns 200 OK
@@ -119,9 +118,8 @@ class OmnichannelWebhookTest extends TestCase
         $wrongSignature = 'sha256=invalidsignaturehash';
 
         // Send POST with wrong signature
-        $response = $this->post('/api/webhooks/messages', $payload, [
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
             'X-Hub-Signature-256' => $wrongSignature,
-            'Content-Type' => 'application/json',
         ]);
 
         // Assert: Returns 403 Forbidden
@@ -196,9 +194,8 @@ class OmnichannelWebhookTest extends TestCase
 
         // Send 100 valid requests
         for ($i = 0; $i < 100; $i++) {
-            $response = $this->post('/api/webhooks/messages', $payload, [
+            $response = $this->postJson('/api/webhooks/messages', $payload, [
                 'X-Hub-Signature-256' => $signature,
-                'Content-Type' => 'application/json',
             ]);
 
             if ($response->status() === 200) {
@@ -255,9 +252,8 @@ class OmnichannelWebhookTest extends TestCase
         ];
 
         // Send POST with API key
-        $response = $this->post('/api/webhooks/messages', $payload, [
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
             'Authorization' => "Bearer $apiKey",
-            'Content-Type' => 'application/json',
         ]);
 
         // Assert: Returns 200 OK
@@ -316,9 +312,8 @@ class OmnichannelWebhookTest extends TestCase
         $rawPayload = json_encode($payload);
         $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
 
-        $response = $this->post('/api/webhooks/messages', $payload, [
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
             'X-Hub-Signature-256' => $signature,
-            'Content-Type' => 'application/json',
         ]);
 
         // Assert: Message with attachment created
@@ -356,9 +351,8 @@ class OmnichannelWebhookTest extends TestCase
         $rawPayload = json_encode($payload);
         $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
 
-        $response = $this->post('/api/webhooks/messages', $payload, [
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
             'X-Hub-Signature-256' => $signature,
-            'Content-Type' => 'application/json',
         ]);
 
         // Assert: Returns 200 but no message created
@@ -401,9 +395,8 @@ class OmnichannelWebhookTest extends TestCase
             $rawPayload = json_encode($payload);
             $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
 
-            $response = $this->post('/api/webhooks/messages', $payload, [
+            $response = $this->postJson('/api/webhooks/messages', $payload, [
                 'X-Hub-Signature-256' => $signature,
-                'Content-Type' => 'application/json',
             ]);
 
             $response->assertStatus(200);

@@ -132,7 +132,7 @@
               </li>
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('products.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('products.index') }}">
-                  <i class="fa-solid fa-watch w-4 text-center text-xs opacity-60"></i>კატალოგი
+                  <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>კატალოგი
                 </a>
               </li>
               <li class="border-b border-white/10">
@@ -247,7 +247,7 @@
     {{-- Cart toast notification --}}
     <div id="cart-toast" class="pointer-events-none fixed bottom-6 right-6 z-[9999] hidden rounded-xl px-5 py-3 text-sm font-semibold text-white opacity-0 shadow-xl transition-opacity duration-300"></div>
 
-    <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}">
+    <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}" data-history-endpoint="{{ route('chatbot.history') }}">
       <button type="button" class="chatbot-fab" data-chatbot-toggle aria-expanded="false" aria-controls="chatbot-panel">
         <span class="chatbot-fab-icon">🤖</span>
         <span class="chatbot-fab-text">დახმარება</span>
@@ -284,15 +284,26 @@
         const mobileMenuClose = document.getElementById('mobile-menu-close');
         const mobileMenu = document.getElementById('mobile-menu');
         const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const chatbotWidget = document.getElementById('chatbot-widget');
+
+      function isMobileMenuOpen() {
+        return !mobileMenu.classList.contains('translate-x-full');
+      }
 
         function openMobileMenu() {
             mobileMenu.classList.remove('translate-x-full');
             mobileMenuOverlay.classList.remove('hidden');
+          if (chatbotWidget) {
+            chatbotWidget.classList.add('hidden');
+          }
             document.body.style.overflow = 'hidden';
         }
         function closeMobileMenu() {
             mobileMenu.classList.add('translate-x-full');
             mobileMenuOverlay.classList.add('hidden');
+          if (chatbotWidget) {
+            chatbotWidget.classList.remove('hidden');
+          }
             document.body.style.overflow = '';
         }
 
@@ -302,6 +313,25 @@
         document.querySelectorAll('#mobile-menu a').forEach(link => {
             link.addEventListener('click', closeMobileMenu);
         });
+        document.addEventListener('click', function (event) {
+      if (!isMobileMenuOpen()) {
+        return;
+      }
+
+      const clickedInsideMenu = mobileMenu.contains(event.target);
+      const clickedMenuButton = mobileMenuBtn.contains(event.target);
+
+      if (!clickedInsideMenu && !clickedMenuButton) {
+            event.preventDefault();
+            event.stopPropagation();
+        closeMobileMenu();
+      }
+        }, true);
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && isMobileMenuOpen()) {
+        closeMobileMenu();
+      }
+    });
 
     </script>
     <script>

@@ -1,6 +1,8 @@
 import './bootstrap';
 import Splide from '@splidejs/splide';
 import '@splidejs/splide/css';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const popularSplide = document.getElementById('popular-splide');
@@ -52,6 +54,20 @@ document.addEventListener('DOMContentLoaded', () => {
 		}).mount();
 	}
 
+	// ── Configure marked for chatbot ──
+	marked.setOptions({
+		breaks: true,
+		gfm: true,
+	});
+
+	const renderMarkdown = (text) => {
+		const raw = marked.parse(text);
+		return DOMPurify.sanitize(raw, {
+			ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br', 'p', 'ul', 'ol', 'li', 'code'],
+			ALLOWED_ATTR: ['href', 'target', 'rel'],
+		});
+	};
+
 	const widget = document.getElementById('chatbot-widget');
 	if (!widget) {
 		const sidebarBadge = document.getElementById('sidebar-inbox-badge');
@@ -79,14 +95,154 @@ document.addEventListener('DOMContentLoaded', () => {
 	const input = widget.querySelector('.chatbot-input');
 	const messages = widget.querySelector('[data-chatbot-messages]');
 	const endpoint = widget.dataset.endpoint;
+	const historyEndpoint = widget.dataset.historyEndpoint || '';
 	const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+	let conversationId = null;
+	let isSending = false;
+	let historyLoaded = false;
 
 	const addMessage = (text, role) => {
 		const bubble = document.createElement('div');
 		bubble.className = `chatbot-message ${role}`;
-		bubble.textContent = text;
+		if (role === 'bot') {
+			bubble.innerHTML = renderMarkdown(text);
+			bubble.querySelectorAll('a').forEach((a) => {
+				a.setAttribute('target', '_blank');
+				a.setAttribute('rel', 'noopener noreferrer');
+			});
+		} else {
+			bubble.textContent = text;
+		}
 		messages.appendChild(bubble);
 		messages.scrollTop = messages.scrollHeight;
+	};
+
+	const scrollMessagesToBottom = () => {
+		messages.scrollTop = messages.scrollHeight;
+		requestAnimationFrame(() => {
+			messages.scrollTop = messages.scrollHeight;
+		});
+	};
+
+	// ── Typing indicator (animated dots) ──
+	const createTypingIndicator = () => {
+		const bubble = document.createElement('div');
+		bubble.className = 'chatbot-message bot chatbot-typing';
+		bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+		return bubble;
+	};
+
+	// ── Quick reply buttons ──
+	const addQuickReplies = (replies) => {
+		const existing = messages.querySelector('.chatbot-quick-replies');
+		if (existing) existing.remove();
+
+		const container = document.createElement('div');
+		container.className = 'chatbot-quick-replies';
+		replies.forEach((text) => {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'chatbot-quick-btn';
+			btn.textContent = text;
+			btn.addEventListener('click', () => {
+				container.remove();
+				input.value = text;
+				form.requestSubmit();
+			});
+			container.appendChild(btn);
+		});
+		messages.appendChild(container);
+		scrollMessagesToBottom();
+	};
+
+	// ── Product carousel ──
+	const addCarousel = (products) => {
+		const root = document.createElement('div');
+		root.className = 'chatbot-carousel splide';
+
+		const splideTrack = document.createElement('div');
+		splideTrack.className = 'splide__track';
+
+		const list = document.createElement('ul');
+		list.className = 'splide__list';
+
+		products.forEach((p) => {
+			const slide = document.createElement('li');
+			slide.className = 'splide__slide';
+
+			const card = document.createElement('a');
+			card.className = 'chatbot-carousel-card';
+			card.href = p.url || '#';
+			card.target = '_blank';
+			card.rel = 'noopener noreferrer';
+			const safeName = DOMPurify.sanitize(p.name || 'პროდუქტი');
+			const safePrice = p.price ? DOMPurify.sanitize(String(p.price)) : '';
+			const safeImage = p.image ? DOMPurify.sanitize(p.image) : '';
+			const placeholder = `<div class="chatbot-carousel-placeholder" aria-hidden="true">${safeName.charAt(0).toUpperCase()}</div>`;
+			const media = safeImage
+				? `<div class="chatbot-carousel-media"><img src="${safeImage}" alt="${safeName}" class="chatbot-carousel-img" loading="lazy"></div>`
+				: `<div class="chatbot-carousel-media">${placeholder}</div>`;
+			card.innerHTML = `${media}<div class="chatbot-carousel-body"><p class="chatbot-carousel-name">${safeName}</p>${safePrice ? `<p class="chatbot-carousel-price">${safePrice}</p>` : ''}</div>`;
+
+			const image = card.querySelector('.chatbot-carousel-img');
+			if (image) {
+				image.addEventListener('load', scrollMessagesToBottom, { once: true });
+				image.addEventListener('error', () => {
+					const mediaContainer = card.querySelector('.chatbot-carousel-media');
+					if (mediaContainer) {
+						mediaContainer.innerHTML = placeholder;
+					}
+					scrollMessagesToBottom();
+				}, { once: true });
+			}
+
+			slide.appendChild(card);
+			list.appendChild(slide);
+		});
+
+		splideTrack.appendChild(list);
+		root.appendChild(splideTrack);
+		messages.appendChild(root);
+
+		const splide = new Splide(root, {
+			type: 'slide',
+			gap: '0.6rem',
+			pagination: products.length > 1,
+			arrows: false,
+			drag: true,
+			perMove: 1,
+			autoWidth: true,
+			padding: { right: '1rem' },
+			classes: {
+				pagination: 'splide__pagination chatbot-carousel-pagination',
+				page: 'splide__pagination__page chatbot-carousel-page',
+			},
+		});
+
+		splide.on('mounted', scrollMessagesToBottom);
+		splide.mount();
+
+		if (products.length > 1) {
+			let lastWheelAt = 0;
+			root.addEventListener('wheel', (event) => {
+				if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+					return;
+				}
+
+				event.preventDefault();
+
+				const now = Date.now();
+				if (now - lastWheelAt < 250) {
+					return;
+				}
+
+				lastWheelAt = now;
+				splide.go(event.deltaY > 0 ? '>' : '<');
+			}, { passive: false });
+		}
+
+		scrollMessagesToBottom();
+		root.scrollIntoView({ block: 'nearest' });
 	};
 
 	const setOpenState = (open) => {
@@ -95,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			panel.setAttribute('aria-hidden', 'false');
 			toggleButton.setAttribute('aria-expanded', 'true');
 			input.focus();
+			if (historyEndpoint && !historyLoaded) loadHistory();
 		} else {
 			panel.classList.remove('is-open');
 			panel.setAttribute('aria-hidden', 'true');
@@ -110,22 +267,67 @@ document.addEventListener('DOMContentLoaded', () => {
 		setOpenState(false);
 	});
 
-	addMessage('გამარჯობა! MyTechnic ასისტენტიႠ სიამოვნებით დაგეხმარებთ. რა გაინტერესებთ?', 'bot');
+	// ── Load conversation history on open ──
+	const loadHistory = async () => {
+		if (historyLoaded || !historyEndpoint) return;
+		historyLoaded = true;
+
+		try {
+			const res = await fetch(historyEndpoint, {
+				headers: {
+					'Accept': 'application/json',
+					'X-CSRF-TOKEN': csrfToken || '',
+				},
+			});
+			if (!res.ok) return;
+			const data = await res.json();
+			if (data.conversation_id) conversationId = data.conversation_id;
+
+			if (Array.isArray(data.messages) && data.messages.length > 0) {
+				messages.innerHTML = '';
+				data.messages.forEach((msg) => {
+					const role = msg.sender_type === 'customer' ? 'user' : 'bot';
+					addMessage(msg.content, role);
+				});
+				return;
+			}
+		} catch {
+			// ignore — fall through to greeting
+		}
+
+		showGreeting();
+	};
+
+	const showGreeting = () => {
+		addMessage('გამარჯობა! MyTechnic ასისტენტი ვარ 👋 სიამოვნებით დაგეხმარებით. რა გაინტერესებთ?', 'bot');
+		addQuickReplies([
+			'🎯 რას გირჩევთ?',
+			'💰 რა ფასები გაქვთ?',
+			'📍 სად ხართ?',
+			'📞 საკონტაქტო',
+		]);
+	};
+
+	if (!historyEndpoint) {
+		showGreeting();
+	}
 
 	form?.addEventListener('submit', async (event) => {
 		event.preventDefault();
+		if (isSending) return;
 
 		const message = input.value.trim();
-		if (!message) {
-			return;
-		}
+		if (!message) return;
+
+		// Remove any existing quick replies
+		const qr = messages.querySelector('.chatbot-quick-replies');
+		if (qr) qr.remove();
 
 		addMessage(message, 'user');
 		input.value = '';
+		isSending = true;
 
-		const typingBubble = document.createElement('div');
-		typingBubble.className = 'chatbot-message bot';
-		typingBubble.textContent = 'ერთი წამით...';
+		const typingBubble = createTypingIndicator();
 		messages.appendChild(typingBubble);
 		messages.scrollTop = messages.scrollHeight;
 
@@ -147,10 +349,24 @@ document.addEventListener('DOMContentLoaded', () => {
 				return;
 			}
 
+			if (data.conversation_id) conversationId = data.conversation_id;
+
 			addMessage(data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+
+			// Show product carousel if backend provides products
+			if (Array.isArray(data.products) && data.products.length > 0) {
+				addCarousel(data.products);
+			}
+
+			// Show quick replies if backend provides them
+			if (Array.isArray(data.quick_replies) && data.quick_replies.length > 0) {
+				addQuickReplies(data.quick_replies);
+			}
 		} catch (error) {
 			typingBubble.remove();
 			addMessage('ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+		} finally {
+			isSending = false;
 		}
 	});
 });

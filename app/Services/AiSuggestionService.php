@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Conversation;
 use App\Models\ContactSetting;
 use App\Models\Message;
+use App\Services\Chatbot\ConversationMemoryService;
+use App\Services\Chatbot\EmbeddingService;
+use App\Services\Chatbot\PineconeService;
 use App\Services\Chatbot\UnifiedAiPolicyService;
 use Exception;
 use Illuminate\Support\Facades\Cache;
@@ -16,22 +19,27 @@ class AiSuggestionService
     protected ?string $openaiApiKey;
     protected ?string $openaiOrgId;
     protected string $openaiModel;
-    protected ?string $pineconeApiKey;
-    protected ?string $pineconeHost;
-    protected ?string $pineconeNamespace;
-    protected string $pineconeIndex;
+    protected string $openaiBaseUrl;
     protected UnifiedAiPolicyService $policy;
+    protected ConversationMemoryService $memoryService;
+    protected EmbeddingService $embeddingService;
+    protected PineconeService $pineconeService;
 
-    public function __construct(UnifiedAiPolicyService $policy)
+    public function __construct(
+        UnifiedAiPolicyService $policy,
+        ConversationMemoryService $memoryService,
+        EmbeddingService $embeddingService,
+        PineconeService $pineconeService
+    )
     {
         $this->policy = $policy;
-        $this->openaiApiKey = config('ai.openai.api_key');
-        $this->openaiOrgId = config('ai.openai.org_id');
-        $this->openaiModel = config('ai.openai.model', 'gpt-4-turbo');
-        $this->pineconeApiKey = config('ai.pinecone.api_key');
-        $this->pineconeHost = config('ai.pinecone.host');
-        $this->pineconeNamespace = config('ai.pinecone.namespace', 'mytechnic');
-        $this->pineconeIndex = config('ai.pinecone.index', 'products');
+        $this->memoryService = $memoryService;
+        $this->embeddingService = $embeddingService;
+        $this->pineconeService = $pineconeService;
+        $this->openaiApiKey = config('services.openai.key');
+        $this->openaiOrgId = config('services.openai.org_id');
+        $this->openaiModel = config('services.openai.model', 'gpt-4.1-mini');
+        $this->openaiBaseUrl = rtrim(config('services.openai.base_url', 'https://api.openai.com/v1'), '/');
     }
 
     /**
@@ -59,6 +67,8 @@ class AiSuggestionService
 
             // Get conversation context (last 3 messages)
             $context = $this->getConversationContext($conversation);
+            $memoryContext = $this->memoryService->getContext($conversation->id);
+            $preferences = is_array($memoryContext['preferences'] ?? null) ? $memoryContext['preferences'] : [];
 
             // Get product knowledge from Pinecone
             $normalizedMessage = $this->policy->normalizeIncomingMessage($message->content);
@@ -67,7 +77,7 @@ class AiSuggestionService
             $contactInfo = $this->getContactContext();
 
             // Build the prompt
-            $prompt = $this->buildPrompt($normalizedMessage, $context, $productInfo, $contactInfo);
+            $prompt = $this->buildPrompt($normalizedMessage, $context, $productInfo, $contactInfo, $preferences);
 
             // Call OpenAI API
             $openaiResponse = $this->callOpenAiApi($prompt, $maxSuggestions);
@@ -104,11 +114,8 @@ class AiSuggestionService
     {
         try {
             // Validate API credentials
-            if (!$this->pineconeApiKey || !$this->pineconeHost) {
-                Log::debug('Pinecone credentials not configured', [
-                    'has_api_key' => !empty($this->pineconeApiKey),
-                    'has_host' => !empty($this->pineconeHost)
-                ]);
+            if (!$this->embeddingService->isConfigured() || !$this->pineconeService->isConfigured()) {
+                Log::debug('Pinecone/Embedding services are not configured');
                 return '';
             }
 
@@ -168,33 +175,7 @@ class AiSuggestionService
                 return [];
             }
 
-            // Query Pinecone
-            $queryData = [
-                'vector' => $embedding,
-                'topK' => 5,
-                'includeMetadata' => true,
-            ];
-
-            // Add namespace if configured
-            if ($this->pineconeNamespace) {
-                $queryData['namespace'] = $this->pineconeNamespace;
-            }
-
-            $response = Http::withHeaders([
-                'Api-Key' => $this->pineconeApiKey,
-                'Content-Type' => 'application/json',
-            ])->post("{$this->pineconeHost}/query", $queryData);
-
-            if ($response->successful()) {
-                return $response->json('matches', []);
-            }
-
-            Log::warning('Pinecone query failed', [
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-
-            return [];
+            return $this->pineconeService->query($embedding, 5);
         } catch (Exception $e) {
             Log::warning('Exception querying Pinecone', [
                 'exception' => $e->getMessage(),
@@ -212,27 +193,9 @@ class AiSuggestionService
     protected function getEmbedding(string $text): ?array
     {
         try {
-            if (!$this->openaiApiKey) {
-                return null;
-            }
+            $embedding = $this->embeddingService->embed($text);
 
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->openaiApiKey}",
-                'Content-Type' => 'application/json',
-            ])->post('https://api.openai.com/v1/embeddings', [
-                'model' => config('ai.openai.embedding_model', 'text-embedding-3-small'),
-                'input' => $text,
-            ]);
-
-            if ($response->successful()) {
-                return $response->json('data.0.embedding');
-            }
-
-            Log::warning('Failed to get embedding from OpenAI', [
-                'status' => $response->status(),
-            ]);
-
-            return null;
+            return $embedding !== [] ? $embedding : null;
         } catch (Exception $e) {
             Log::warning('Exception getting embedding', [
                 'exception' => $e->getMessage(),
@@ -253,7 +216,7 @@ class AiSuggestionService
             return '';
         }
 
-        $formatted = "**Relevant Product Information:**\n";
+        $formatted = "**რელევანტური პროდუქტის ინფორმაცია:**\n";
         $count = 0;
 
         foreach ($documents as $doc) {
@@ -301,10 +264,10 @@ class AiSuggestionService
             ->take(3)
             ->reverse();
 
-        $context = "**Recent Conversation Context:**\n";
+        $context = "**ბოლო საუბრის კონტექსტი:**\n";
 
         foreach ($lastMessages as $msg) {
-            $sender = $msg->isFromCustomer() ? $conversation->customer->name : 'Support Agent';
+            $sender = $msg->isFromCustomer() ? $conversation->customer->name : 'კონსულტანტი';
             $context .= "{$sender}: " . substr($msg->content, 0, 150) . "\n";
         }
 
@@ -319,37 +282,49 @@ class AiSuggestionService
      * @param string $productInfo Product knowledge
      * @return string Complete prompt
      */
-    public function buildPrompt(string $messageText, string $context, string $productInfo, string $contactInfo): string
+    public function buildPrompt(string $messageText, string $context, string $productInfo, string $contactInfo, array $preferences = []): string
     {
+        $preferenceLines = [];
+
+        if (isset($preferences['budget_max_gel'])) {
+            $preferenceLines[] = '- ბიუჯეტი: ' . $preferences['budget_max_gel'] . ' ₾-მდე';
+        }
+
+        if (!empty($preferences['color'])) {
+            $preferenceLines[] = '- სასურველი ფერი: ' . $preferences['color'];
+        }
+
+        if (!empty($preferences['size'])) {
+            $preferenceLines[] = '- სასურველი ზომა: ' . $preferences['size'];
+        }
+
+        if (!empty($preferences['features']) && is_array($preferences['features'])) {
+            $preferenceLines[] = '- საინტერესო ფუნქციები: ' . implode(', ', $preferences['features']);
+        }
+
+        $preferencesSection = $preferenceLines !== []
+            ? implode("\n", $preferenceLines)
+            : '- არ არის აღმოჩენილი';
+
         $systemPrompt = <<<PROMPT
-You are a helpful and professional customer support representative for MyTechnic, a premium smartwatch for kids.
-
-Your role is to:
-- Provide courteous, professional responses
-- Use the product knowledge provided to answer questions accurately
-- Reply in natural Georgian language
-- If the input uses Latin transliteration for Georgian words, interpret it correctly and still answer in Georgian script
-- Be concise (1-3 sentences max per response)
-- Maintain a friendly, helpful tone
-- Offer solutions or next steps when appropriate
-- Answer the customer's latest message directly; avoid generic greetings
-- Do not repeat previous assistant messages verbatim
-
-Product Knowledge:
+პროდუქტის ცოდნა (Knowledge Base):
 {$productInfo}
 
-Contact Information:
+საკონტაქტო ინფორმაცია:
 {$contactInfo}
 
-Conversation Context:
+საუბრის კონტექსტი:
 {$context}
 
-Customer's Latest Message:
+მომხმარებლის პრეფერენციები:
+{$preferencesSection}
+
+მომხმარებლის ბოლო შეტყობინება:
 {$messageText}
 
 ---
 
-Generate exactly 3 professional, concise Georgian response suggestions that the support agent could send. Make them diverse in approach (e.g., one empathetic, one solution-focused, one informational). Format each on a new line starting with a number (1. 2. 3.).
+შექმენი ზუსტად 3 პროფესიონალური, მოკლე ქართული პასუხის ვარიანტი. გააკეთე მრავალფეროვანი (1. თანამგრძნობი, 2. გადაწყვეტაზე ორიენტირებული, 3. ინფორმაციული). თითოეული ახალ ხაზზე, ნუმერაციით (1. 2. 3.).
 
 PROMPT;
 
@@ -361,11 +336,11 @@ PROMPT;
         $settings = ContactSetting::allKeyed();
 
         $lines = array_filter([
-            'Phone: ' . ($settings['phone_display'] ?? ''),
+            'ტელეფონი: ' . ($settings['phone_display'] ?? ''),
             'WhatsApp: ' . ($settings['whatsapp_url'] ?? ''),
-            'Email: ' . ($settings['email'] ?? ''),
-            'Location: ' . ($settings['location'] ?? ''),
-            'Working Hours: ' . ($settings['hours'] ?? ''),
+            'ელფოსტა: ' . ($settings['email'] ?? ''),
+            'მისამართი: ' . ($settings['location'] ?? ''),
+            'სამუშაო საათები: ' . ($settings['hours'] ?? ''),
         ]);
 
         return implode("\n", $lines);
@@ -396,7 +371,7 @@ PROMPT;
             }
 
             $response = Http::withHeaders($headers)->timeout(30)->post(
-                'https://api.openai.com/v1/chat/completions',
+                $this->openaiBaseUrl . '/chat/completions',
                 [
                     'model' => $this->openaiModel,
                     'messages' => [

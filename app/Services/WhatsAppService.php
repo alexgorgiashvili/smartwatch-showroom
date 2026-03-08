@@ -2,8 +2,71 @@
 
 namespace App\Services;
 
+use App\Services\Chatbot\CarouselBuilderService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
 class WhatsAppService
 {
+    /**
+     * @param array<int, array<string, string>> $products
+     */
+    public function sendCarousel(string $senderId, string $conversationId, array $products): array
+    {
+        $accessToken = (string) config('services.whatsapp.access_token');
+        $phoneNumberId = (string) config('services.whatsapp.phone_number_id');
+        $catalogId = (string) config('services.whatsapp.business_id');
+
+        if ($accessToken === '' || $phoneNumberId === '' || $catalogId === '' || count($products) < 2) {
+            return [
+                'success' => false,
+                'error' => 'whatsapp_carousel_config_or_products_missing',
+            ];
+        }
+
+        $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $senderId,
+        ] + app(CarouselBuilderService::class)->buildWhatsAppCarousel($products);
+
+        try {
+            $endpoint = 'https://graph.facebook.com/v18.0/' . $phoneNumberId . '/messages';
+            $response = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(20)
+                ->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'error' => 'whatsapp_carousel_send_failed',
+                    'status' => $response->status(),
+                    'payload' => $payload,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'payload' => $payload,
+            ];
+        } catch (\Throwable $exception) {
+            Log::error('WhatsApp send carousel exception', [
+                'error' => $exception->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'whatsapp_carousel_send_exception',
+                'message' => $exception->getMessage(),
+            ];
+        }
+    }
+
     /**
      * Parse webhook payload from WhatsApp Cloud API
      *
@@ -73,6 +136,7 @@ class WhatsAppService
             'message_text' => $messageData['text'],
             'attachments' => $messageData['attachments'],
             'timestamp' => (int) $timestamp,
+            'platform_message_id' => $message['id'] ?? null,
         ];
     }
 
@@ -95,39 +159,43 @@ class WhatsAppService
 
             case 'image':
                 $imageData = $message['image'] ?? [];
+                $mediaId = $imageData['id'] ?? null;
                 $attachments[] = [
                     'type' => 'image',
-                    'url' => $imageData['link'] ?? null,
-                    'media_id' => $imageData['id'] ?? null,
+                    'url' => $imageData['link'] ?? ($mediaId ? $this->downloadMedia($mediaId) : null),
+                    'media_id' => $mediaId,
                 ];
                 $text = $imageData['caption'] ?? '';
                 break;
 
             case 'video':
                 $videoData = $message['video'] ?? [];
+                $mediaId = $videoData['id'] ?? null;
                 $attachments[] = [
                     'type' => 'video',
-                    'url' => $videoData['link'] ?? null,
-                    'media_id' => $videoData['id'] ?? null,
+                    'url' => $videoData['link'] ?? ($mediaId ? $this->downloadMedia($mediaId) : null),
+                    'media_id' => $mediaId,
                 ];
                 $text = $videoData['caption'] ?? '';
                 break;
 
             case 'audio':
                 $audioData = $message['audio'] ?? [];
+                $mediaId = $audioData['id'] ?? null;
                 $attachments[] = [
                     'type' => 'audio',
-                    'url' => $audioData['link'] ?? null,
-                    'media_id' => $audioData['id'] ?? null,
+                    'url' => $audioData['link'] ?? ($mediaId ? $this->downloadMedia($mediaId) : null),
+                    'media_id' => $mediaId,
                 ];
                 break;
 
             case 'document':
                 $documentData = $message['document'] ?? [];
+                $mediaId = $documentData['id'] ?? null;
                 $attachments[] = [
                     'type' => 'file',
-                    'url' => $documentData['link'] ?? null,
-                    'media_id' => $documentData['id'] ?? null,
+                    'url' => $documentData['link'] ?? ($mediaId ? $this->downloadMedia($mediaId) : null),
+                    'media_id' => $mediaId,
                     'filename' => $documentData['filename'] ?? null,
                 ];
                 $text = $documentData['caption'] ?? '';
@@ -168,6 +236,21 @@ class WhatsAppService
      */
     public function sendMessage(string $senderId, string $conversationId, string $message, ?string $mediaUrl = null): array
     {
+        $accessToken = (string) config('services.whatsapp.access_token');
+        $phoneNumberId = (string) config('services.whatsapp.phone_number_id');
+
+        if ($accessToken === '' || $phoneNumberId === '') {
+            Log::warning('WhatsApp sendMessage missing config', [
+                'has_access_token' => $accessToken !== '',
+                'has_phone_number_id' => $phoneNumberId !== '',
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'whatsapp_config_missing',
+            ];
+        }
+
         // Determine message type and structure
         $messageType = 'text';
         $payload = [
@@ -206,14 +289,46 @@ class WhatsAppService
             }
         }
 
-        return [
-            'platform' => 'whatsapp',
-            'payload' => $payload,
-            'headers' => [
-                'Authorization' => 'Bearer ' . config('services.whatsapp.access_token'),
-                'Content-Type' => 'application/json',
-            ],
-        ];
+        try {
+            $endpoint = 'https://graph.facebook.com/v18.0/' . $phoneNumberId . '/messages';
+
+            $response = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(20)
+                ->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                Log::warning('WhatsApp send message failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => 'whatsapp_send_failed',
+                    'status' => $response->status(),
+                    'payload' => $payload,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'payload' => $payload,
+            ];
+        } catch (\Throwable $exception) {
+            Log::error('WhatsApp send message exception', [
+                'error' => $exception->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'whatsapp_send_exception',
+                'message' => $exception->getMessage(),
+                'payload' => $payload,
+            ];
+        }
     }
 
     /**
@@ -258,5 +373,68 @@ class WhatsAppService
             'access_token' => $accessToken,
             'email' => null,
         ];
+    }
+
+    private function downloadMedia(string $mediaId): ?string
+    {
+        $accessToken = (string) config('services.whatsapp.access_token');
+
+        if ($accessToken === '') {
+            return null;
+        }
+
+        try {
+            $metadataResponse = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(20)
+                ->get('https://graph.facebook.com/v18.0/' . $mediaId);
+
+            if (!$metadataResponse->successful()) {
+                return null;
+            }
+
+            $downloadUrl = (string) data_get($metadataResponse->json(), 'url', '');
+            $mimeType = (string) data_get($metadataResponse->json(), 'mime_type', 'application/octet-stream');
+
+            if ($downloadUrl === '') {
+                return null;
+            }
+
+            $binaryResponse = Http::withToken($accessToken)
+                ->timeout(30)
+                ->get($downloadUrl);
+
+            if (!$binaryResponse->successful()) {
+                return null;
+            }
+
+            $extension = $this->extensionFromMime($mimeType);
+            $relativePath = 'whatsapp-media/' . date('Y/m') . '/' . $mediaId . '-' . Str::random(6) . '.' . $extension;
+
+            Storage::disk('public')->put($relativePath, $binaryResponse->body());
+
+            return url('/storage/' . $relativePath);
+        } catch (\Throwable $exception) {
+            Log::warning('WhatsApp media download failed', [
+                'media_id' => $mediaId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function extensionFromMime(string $mimeType): string
+    {
+        return match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'video/mp4' => 'mp4',
+            'audio/mpeg' => 'mp3',
+            'audio/ogg' => 'ogg',
+            'application/pdf' => 'pdf',
+            default => 'bin',
+        };
     }
 }

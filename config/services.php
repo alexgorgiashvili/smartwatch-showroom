@@ -33,23 +33,59 @@ return [
 
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
+        'org_id' => env('OPENAI_ORG_ID'),
         'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
+        'intent_model' => env('OPENAI_INTENT_MODEL', 'gpt-4.1-nano'),
+        'intent_enabled' => env('INTENT_ANALYZER_ENABLED', true),
+        'judge_model' => env('OPENAI_JUDGE_MODEL', 'gpt-4.1-mini'),
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
     ],
+
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'judge_model' => env('ANTHROPIC_JUDGE_MODEL', 'claude-sonnet-4-20250514'),
+        'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com/v1'),
+    ],
+
+    'llm_judge_provider' => env('LLM_JUDGE_PROVIDER', 'openai'),
 
     'pinecone' => [
         'api_key' => env('PINECONE_API_KEY'),
         'host' => env('PINECONE_HOST'),
         'namespace' => env('PINECONE_NAMESPACE'),
+        'index' => env('PINECONE_INDEX_NAME', 'products'),
+    ],
+
+    'cohere' => [
+        'enabled' => env('COHERE_ENABLED', true),
+        'api_key' => env('COHERE_API_KEY'),
+        'model' => env('COHERE_RERANK_MODEL', 'rerank-english-v3.0'),
+        'verify' => env('COHERE_SSL_VERIFY', true),
+        'connect_timeout' => env('COHERE_CONNECT_TIMEOUT', 3),
+        'timeout' => env('COHERE_TIMEOUT', 8),
+        'circuit_cooldown_seconds' => env('COHERE_CIRCUIT_COOLDOWN_SECONDS', 900),
     ],
 
     'facebook' => [
         'app_id' => env('FACEBOOK_APP_ID'),
         'app_secret' => env('FACEBOOK_APP_SECRET'),
         'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'instagram_access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
         'page_id' => env('FACEBOOK_PAGE_ID'),
         'webhook_verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
+    'meta' => [
+        'app_secret' => env('META_APP_SECRET', env('FACEBOOK_APP_SECRET')),
+        'verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
+    'whatsapp' => [
+        'api_key' => env('WHATSAPP_API_KEY'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_id' => env('WHATSAPP_BUSINESS_ID'),
     ],
 
     'telegram' => [

@@ -2,8 +2,74 @@
 
 namespace App\Services;
 
+use App\Services\Chatbot\CarouselBuilderService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 class MetaApiService
 {
+    /**
+     * @param array<int, array<string, string>> $products
+     */
+    public function sendCarousel(string $senderId, array $products, ?string $platform = null): array
+    {
+        $platform = $platform ?: 'facebook';
+
+        $accessToken = $platform === 'instagram'
+            ? (string) config('services.facebook.instagram_access_token', config('services.facebook.page_access_token'))
+            : (string) config('services.facebook.page_access_token');
+
+        if ($accessToken === '' || count($products) < 2) {
+            return [
+                'success' => false,
+                'error' => 'meta_carousel_config_or_products_missing',
+            ];
+        }
+
+        $payload = [
+            'recipient' => ['id' => $senderId],
+            'messaging_type' => 'RESPONSE',
+            'message' => [
+                'attachment' => app(CarouselBuilderService::class)->buildMetaGenericCarousel($products)['attachment'],
+            ],
+        ];
+
+        try {
+            $endpoint = 'https://graph.facebook.com/v18.0/me/messages';
+            $response = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(20)
+                ->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'error' => 'meta_carousel_send_failed',
+                    'status' => $response->status(),
+                    'payload' => $payload,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'payload' => $payload,
+            ];
+        } catch (\Throwable $exception) {
+            Log::error('Meta send carousel exception', [
+                'platform' => $platform,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'meta_carousel_send_exception',
+                'message' => $exception->getMessage(),
+            ];
+        }
+    }
+
     /**
      * Parse webhook payload from Meta (Facebook Messenger or Instagram DM)
      *
@@ -77,6 +143,7 @@ class MetaApiService
             'message_text' => $messageText,
             'attachments' => $attachments,
             'timestamp' => $timestamp,
+            'platform_message_id' => $message['mid'] ?? null,
         ];
     }
 
@@ -129,6 +196,7 @@ class MetaApiService
             'message_text' => $messageText,
             'attachments' => $attachments,
             'timestamp' => $timestamp,
+            'platform_message_id' => $message['mid'] ?? null,
         ];
     }
 
@@ -176,54 +244,80 @@ class MetaApiService
      * @param string|null $mediaUrl
      * @return array Formatted array with 'platform', 'payload', 'headers'
      */
-    public function sendMessage(string $senderId, string $conversationId, string $message, ?string $mediaUrl = null): array
+    public function sendMessage(string $senderId, string $conversationId, string $message, ?string $mediaUrl = null, ?string $platform = null): array
     {
-        // Determine message type and structure
-        $messageType = 'text';
+        $platform = $platform ?: 'facebook';
+
+        $accessToken = $platform === 'instagram'
+            ? (string) config('services.facebook.instagram_access_token', config('services.facebook.page_access_token'))
+            : (string) config('services.facebook.page_access_token');
+
+        if ($accessToken === '') {
+            return [
+                'success' => false,
+                'error' => 'meta_config_missing',
+            ];
+        }
+
         $payload = [
-            'messaging_product' => 'whatsapp',
-            'recipient_type' => 'individual',
-            'to' => $senderId,
-            'type' => 'text',
-            'text' => [
-                'preview_url' => false,
-                'body' => $message,
-            ],
+            'recipient' => ['id' => $senderId],
+            'messaging_type' => 'RESPONSE',
+            'message' => ['text' => $message],
         ];
 
         // Add media if provided
         if ($mediaUrl) {
             $messageType = $this->detectMediaType($mediaUrl);
-            $payload['type'] = $messageType;
-
-            // Remove text field for media messages
-            unset($payload['text']);
-
-            // Add media payload based on type
-            if ($messageType === 'image') {
-                $payload['image'] = [
-                    'link' => $mediaUrl,
-                ];
-            } elseif ($messageType === 'video') {
-                $payload['video'] = [
-                    'link' => $mediaUrl,
-                ];
-            } else {
-                // Default to image for other types
-                $payload['image'] = [
-                    'link' => $mediaUrl,
-                ];
-            }
+            $attachmentType = $messageType === 'video' ? 'video' : 'image';
+            $payload['message'] = [
+                'attachment' => [
+                    'type' => $attachmentType,
+                    'payload' => ['url' => $mediaUrl, 'is_reusable' => false],
+                ],
+            ];
         }
 
-        return [
-            'platform' => 'facebook',
-            'payload' => $payload,
-            'headers' => [
-                'Authorization' => 'Bearer ' . config('services.meta.page_access_token'),
-                'Content-Type' => 'application/json',
-            ],
-        ];
+        try {
+            $endpoint = 'https://graph.facebook.com/v18.0/me/messages';
+            $response = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(20)
+                ->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                Log::warning('Meta send message failed', [
+                    'platform' => $platform,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => 'meta_send_failed',
+                    'status' => $response->status(),
+                    'payload' => $payload,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'payload' => $payload,
+            ];
+        } catch (\Throwable $exception) {
+            Log::error('Meta send message exception', [
+                'platform' => $platform,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'meta_send_exception',
+                'message' => $exception->getMessage(),
+                'payload' => $payload,
+            ];
+        }
     }
 
     /**
