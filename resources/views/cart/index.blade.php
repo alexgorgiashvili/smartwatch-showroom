@@ -141,7 +141,7 @@
                             </dl>
 
                             <a href="{{ route('checkout.index') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
-                                <i class="fa-solid fa-lock text-xs"></i>შეკვეთის გაფორმება
+                                <i class="fa-solid fa-lock text-xs"></i>გაგრძელება
                             </a>
 
                             <form method="POST" action="{{ route('cart.clear') }}" class="mt-3">

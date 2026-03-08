@@ -37,6 +37,7 @@ class CartController extends Controller
         $data = $request->validate([
             'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'post_add_action' => ['nullable', 'in:cart,checkout'],
         ]);
 
         $variant = ProductVariant::query()
@@ -54,6 +55,7 @@ class CartController extends Controller
         }
 
         $quantityToAdd = (int) ($data['quantity'] ?? 1);
+        $postAddAction = $data['post_add_action'] ?? 'cart';
         $cart = $request->session()->get('cart', []);
 
         $existingQuantity = (int) ($cart[$variant->id]['quantity'] ?? 0);
@@ -87,7 +89,12 @@ class CartController extends Controller
                 'success' => true,
                 'message' => 'პროდუქტი დაემატა კალათაში.',
                 'cart_count' => $newCount,
+                'redirect_url' => $postAddAction === 'checkout' ? route('checkout.index') : null,
             ]);
+        }
+
+        if ($postAddAction === 'checkout') {
+            return redirect()->route('checkout.index');
         }
 
         return redirect()->back()->with('cart_status', 'პროდუქტი დაემატა კალათაში.');

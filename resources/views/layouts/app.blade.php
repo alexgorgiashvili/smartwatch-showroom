@@ -368,13 +368,18 @@
             if (!form.hasAttribute('data-cart-form')) return;
             e.preventDefault();
 
-            var btn = form.querySelector('button[type="submit"]');
+          var btn = e.submitter || form.querySelector('button[type="submit"]');
             if (btn) { btn.disabled = true; }
+
+          var formData = new FormData(form);
+          if (btn && btn.name) {
+            formData.set(btn.name, btn.value);
+          }
 
             fetch(form.action, {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                body: new FormData(form),
+            body: formData,
             })
             .then(function (res) {
               return res.json().then(function (data) {
@@ -386,6 +391,12 @@
             .then(function (result) {
               if (result.ok && result.data.success) {
                 updateCartBadges(result.data.cart_count || 0);
+
+                if (result.data.redirect_url) {
+                  window.location.href = result.data.redirect_url;
+                  return;
+                }
+
                 showCartToast(result.data.message || 'პროდუქტი დაემატა კალათაში.', false);
                 var qty = form.querySelector('input[name="quantity"][type="number"]');
                 if (qty) { qty.value = 1; }

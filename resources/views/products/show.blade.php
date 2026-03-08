@@ -142,9 +142,9 @@ $_productSchema = [
             </nav>
 
             <div class="grid gap-6 lg:grid-cols-12 lg:gap-8">
-                <div class="lg:col-span-7">
+                <div class="contents lg:block lg:space-y-6 lg:col-span-7">
                     @if ($galleryImages->isNotEmpty())
-                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="order-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:order-none">
                             <div id="product-splide" class="splide" aria-label="Product images">
                                 <div class="splide__track">
                                     <ul class="splide__list">
@@ -158,17 +158,135 @@ $_productSchema = [
                             </div>
                         </div>
                     @else
-                        <div class="flex h-[340px] w-full items-center justify-center rounded-2xl border border-slate-200 bg-white sm:h-[460px]">
+                        <div class="order-1 flex h-[340px] w-full items-center justify-center rounded-2xl border border-slate-200 bg-white sm:h-[460px] lg:order-none">
                             <div class="text-center text-gray-500">
                                 <i class="fa-solid fa-image mb-2 text-4xl"></i>
                                 <p class="text-sm">{{ __('ui.no_image') }}</p>
                             </div>
                         </div>
                     @endif
+
+                    <div class="order-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-none">
+                        <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_specs') }}</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <tbody>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_sim') }}</td>
+                                        <td class="px-2 py-3 text-gray-700">{{ $product->sim_support ? __('ui.yes') : __('ui.no') }}</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_gps') }}</td>
+                                        <td class="px-2 py-3 text-gray-700">{{ $product->gps_features ? __('ui.yes') : __('ui.no') }}</td>
+                                    </tr>
+                                    @if ($product->water_resistant)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_water') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ __('ui.yes') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->battery_life_hours)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_hours }} {{ __('ui.hours') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->warranty_months)
+                                        <tr>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_warranty') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->warranty_months }} {{ __('ui.months') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->operating_system)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_os') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->operating_system }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->screen_size)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_size }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->display_type)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->display_type }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->screen_resolution)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_resolution') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_resolution }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->battery_capacity_mah)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_battery_cap') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_capacity_mah }} mAh</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->charging_time_hours)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_charging') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->charging_time_hours }} h</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->case_material)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_case') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->case_material }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->band_material)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_band') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->band_material }}</td>
+                                        </tr>
+                                    @endif
+                                    @if ($product->camera)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_camera') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->camera }}</td>
+                                        </tr>
+                                    @endif
+                                    @if (is_array($product->functions) && $product->functions !== [])
+                                        <tr>
+                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_functions') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ implode(', ', $product->functions) }}</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    @if($product->sim_support)
+                    <div class="order-4 flex flex-wrap gap-2 lg:order-none">
+                        <a href="{{ route('landing.sim-guide') }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100 transition">
+                            <i class="fa-solid fa-sim-card text-[10px]"></i>
+                            {{ app()->getLocale() === 'ka' ? 'SIM ბარათის გზამკვლევი →' : 'SIM Card Guide →' }}
+                        </a>
+                        <a href="{{ route('blog.index') }}"
+                           class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-newspaper text-[10px]"></i>
+                            {{ app()->getLocale() === 'ka' ? 'სტატიები და რჩევები →' : 'Articles & Tips →' }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if ($product->description)
+                        <div class="order-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-none">
+                            <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_description') }}</h2>
+                            <div class="prose prose-sm max-w-none text-gray-700">{!! nl2br(e($product->description)) !!}</div>
+                        </div>
+                    @endif
                 </div>
 
-                <div class="lg:col-span-5">
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-24">
+                <div class="contents lg:block lg:space-y-6 lg:col-span-5">
+                    <div class="order-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-none lg:sticky lg:top-24">
                         @if ($product->featured)
                             <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-600">
                                 <i class="fa-solid fa-star"></i>{{ __('ui.sort_featured') }}
@@ -290,12 +408,24 @@ $_productSchema = [
                                         >
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
-                                    >
-                                        <i class="fa-solid fa-cart-shopping text-xs"></i>კალათაში დამატება
-                                    </button>
+                                    <div class="space-y-2">
+                                        <button
+                                            type="submit"
+                                            name="post_add_action"
+                                            value="cart"
+                                            class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+                                        >
+                                            <i class="fa-solid fa-cart-shopping text-xs"></i>კალათაში დამატება
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            name="post_add_action"
+                                            value="checkout"
+                                            class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
+                                        >
+                                            <i class="fa-solid fa-bag-shopping text-xs"></i>შეკვეთის გაფორმება
+                                        </button>
+                                    </div>
                                 </form>
                             @endif
                             <button
@@ -310,132 +440,7 @@ $_productSchema = [
                             </a>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="mt-8 grid gap-6 lg:grid-cols-12">
-                <div class="lg:col-span-7">
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_specs') }}</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <tbody>
-                                    <tr class="border-b border-gray-100">
-                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_sim') }}</td>
-                                        <td class="px-2 py-3 text-gray-700">{{ $product->sim_support ? __('ui.yes') : __('ui.no') }}</td>
-                                    </tr>
-                                    <tr class="border-b border-gray-100">
-                                        <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_gps') }}</td>
-                                        <td class="px-2 py-3 text-gray-700">{{ $product->gps_features ? __('ui.yes') : __('ui.no') }}</td>
-                                    </tr>
-                                    @if ($product->water_resistant)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_water') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ __('ui.yes') }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->battery_life_hours)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_hours }} {{ __('ui.hours') }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->warranty_months)
-                                        <tr>
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_warranty') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->warranty_months }} {{ __('ui.months') }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->operating_system)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_os') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->operating_system }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->screen_size)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_size }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->display_type)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->display_type }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->screen_resolution)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_resolution') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_resolution }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->battery_capacity_mah)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_battery_cap') }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->charging_time_hours)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_charging') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->charging_time_hours }} h</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->case_material)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_case') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->case_material }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->band_material)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_band') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->band_material }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($product->camera)
-                                        <tr class="border-b border-gray-100">
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_camera') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->camera }}</td>
-                                        </tr>
-                                    @endif
-                                    @if (is_array($product->functions) && $product->functions !== [])
-                                        <tr>
-                                            <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_functions') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ implode(', ', $product->functions) }}</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- Contextual guide links --}}
-                    @if($product->sim_support)
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ route('landing.sim-guide') }}"
-                                    class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100 transition">
-                            <i class="fa-solid fa-sim-card text-[10px]"></i>
-                            {{ app()->getLocale() === 'ka' ? 'SIM ბარათის გზამკვლევი →' : 'SIM Card Guide →' }}
-                        </a>
-                        <a href="{{ route('blog.index') }}"
-                           class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
-                            <i class="fa-solid fa-newspaper text-[10px]"></i>
-                            {{ app()->getLocale() === 'ka' ? 'სტატიები და რჩევები →' : 'Articles & Tips →' }}
-                        </a>
-                    </div>
-                    @endif
-
-                    @if ($product->description)
-                        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                            <h2 class="mb-4 text-xl font-bold text-gray-900">{{ __('ui.product_description') }}</h2>
-                            <div class="prose prose-sm max-w-none text-gray-700">{!! nl2br(e($product->description)) !!}</div>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="lg:col-span-5">
-                    <div id="inquiry-form-section" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div id="inquiry-form-section" class="order-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-none">
                         <h2 class="text-xl font-bold text-gray-900">{{ __('ui.section_contact') }}</h2>
                         <p class="mt-2 text-sm text-gray-600">{{ __('ui.section_contact_sub') }}</p>
 

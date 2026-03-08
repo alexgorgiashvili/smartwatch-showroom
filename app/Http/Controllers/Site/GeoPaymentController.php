@@ -10,6 +10,7 @@ use App\Models\PaymentLog;
 use App\Models\ProductVariant;
 use App\Services\BogPayService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,16 @@ class GeoPaymentController extends Controller
 {
     public function __construct(private readonly BogPayService $bogPayService)
     {
+    }
+
+    private function shouldReturnJson(Request $request): bool
+    {
+        return $request->expectsJson()
+            || $request->wantsJson()
+            || $request->ajax()
+            || $request->isXmlHttpRequest()
+            || str_contains((string) $request->header('Accept'), 'application/json')
+            || strtolower((string) $request->header('X-Requested-With')) === 'xmlhttprequest';
     }
 
     public function validatePaymentOrder(Request $request): JsonResponse
@@ -164,9 +175,10 @@ class GeoPaymentController extends Controller
         }
     }
 
-    public function bogPayRedirect(Request $request): JsonResponse
+    public function bogPayRedirect(Request $request): RedirectResponse|JsonResponse
     {
         $orderId = $request->integer('order_id');
+        $returnJson = $this->shouldReturnJson($request);
 
         $order = Order::query()
             ->with('items')
@@ -174,12 +186,47 @@ class GeoPaymentController extends Controller
             ->firstOrFail();
 
         if ($order->payment_type !== 1) {
-            return response()->json([
-                'message' => 'Unsupported payment type for this route.',
-            ], 422);
+            if ($returnJson) {
+                return response()->json([
+                    'message' => 'Unsupported payment type for this route.',
+                ], 422);
+            }
+
+            return redirect()->route('payment.fail', ['order' => $order->order_number])
+                ->with('retry_error', 'ამ შეკვეთაზე ბარათით გადახდის თავიდან დაწყება შეუძლებელია.');
         }
 
-        $redirectData = $this->createBogOrder($order);
+        try {
+            $redirectData = $this->createBogOrder($order);
+        } catch (RuntimeException $exception) {
+            if ($returnJson) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
+
+            return redirect()->route('payment.fail', ['order' => $order->order_number])
+                ->with('retry_error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            Log::error('BOG bogPayRedirect failed', [
+                'exception' => get_class($exception),
+                'error' => $exception->getMessage(),
+                'order_id' => $order->id,
+            ]);
+
+            if ($returnJson) {
+                return response()->json([
+                    'message' => 'Payment initialization failed.',
+                ], 500);
+            }
+
+            return redirect()->route('payment.fail', ['order' => $order->order_number])
+                ->with('retry_error', 'ბარათით გადახდის თავიდან დაწყება ვერ შესრულდა.');
+        }
+
+        if (! $returnJson) {
+            return redirect()->away($redirectData['redirect_url']);
+        }
 
         return response()->json([
             'redirect_url' => $redirectData['redirect_url'],
@@ -255,7 +302,15 @@ class GeoPaymentController extends Controller
     private function createBogOrder(Order $order): array
     {
         if ($order->bog_order_id) {
-            throw new RuntimeException('BOG order already initialized.');
+            if (! $this->canRetryBogOrder($order)) {
+                throw new RuntimeException('BOG order already initialized.');
+            }
+
+            $order->update([
+                'bog_order_id' => null,
+                'bog_external_order_id' => null,
+                'payment_status' => 'pending',
+            ]);
         }
 
         $externalOrderId = 'IPAY-' . strtoupper(substr((string) Str::uuid(), 0, 8));
@@ -278,5 +333,12 @@ class GeoPaymentController extends Controller
         return [
             'redirect_url' => $response['redirect_url'],
         ];
+    }
+
+    private function canRetryBogOrder(Order $order): bool
+    {
+        return (int) $order->payment_type === 1
+            && $order->status === 'pending'
+            && $order->payment_status !== 'completed';
     }
 }

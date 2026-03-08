@@ -10,7 +10,7 @@
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                     <i class="fa-solid fa-check text-xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900">გადახდა წარმატებით დასრულდა</h1>
+                <h1 class="text-2xl font-bold text-gray-900">{{ ($paymentMethod ?? '') === 'cod' ? 'თქვენი შეკვეთა წარმატებით გაფორმდა' : 'გადახდა წარმატებით დასრულდა' }}</h1>
                 @if(($paymentMethod ?? '') === 'cod')
                     <p class="mt-2 text-sm text-gray-600">თქვენი შეკვეთა მიღებულია. გადახდა განხორციელდება მიტანისას.</p>
                 @else
