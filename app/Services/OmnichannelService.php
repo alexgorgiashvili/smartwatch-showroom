@@ -242,6 +242,26 @@ class OmnichannelService
                     $mediaUrl
                 );
 
+                $requiresExternalDelivery = in_array($conversation->platform, [
+                    self::PLATFORM_FACEBOOK,
+                    self::PLATFORM_INSTAGRAM,
+                    self::PLATFORM_WHATSAPP,
+                ], true);
+
+                if ($requiresExternalDelivery && (!is_array($apiPayload) || !($apiPayload['success'] ?? false))) {
+                    $replyMessage->delete();
+
+                    Log::warning('Admin reply delivery failed', [
+                        'message_id' => $replyMessage->id,
+                        'conversation_id' => $conversation->id,
+                        'admin_id' => $adminUserId,
+                        'platform' => $conversation->platform,
+                        'error' => $apiPayload['error'] ?? 'missing_platform_recipient_or_delivery_failed',
+                    ]);
+
+                    return null;
+                }
+
                 Log::info('Admin reply prepared', [
                     'message_id' => $replyMessage->id,
                     'conversation_id' => $conversation->id,
@@ -315,7 +335,12 @@ class OmnichannelService
         ?string $mediaUrl = null
     ): array {
         $platformIds = $customer->platform_user_ids ?? [];
-        $senderId = $platformIds[$platform] ?? null;
+        $senderId = match ($platform) {
+            self::PLATFORM_FACEBOOK => $platformIds[self::PLATFORM_FACEBOOK] ?? $platformIds['messenger'] ?? null,
+            self::PLATFORM_INSTAGRAM => $platformIds[self::PLATFORM_INSTAGRAM] ?? null,
+            self::PLATFORM_WHATSAPP => $platformIds[self::PLATFORM_WHATSAPP] ?? null,
+            default => $platformIds[$platform] ?? null,
+        };
 
         if (!$senderId) {
             Log::warning('No platform ID for customer', [

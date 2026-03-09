@@ -4,15 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
-use App\Models\Message;
 use App\Events\MessageReceived;
-use App\Services\FacebookMessengerService;
+use App\Services\OmnichannelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class ConversationController extends Controller
 {
+    public function __construct(
+        protected OmnichannelService $omnichannelService
+    ) {
+    }
+
     /**
      * Get all conversations for authenticated user
      */
@@ -59,46 +63,17 @@ class ConversationController extends Controller
 
         $conversation = Conversation::with('customer')->findOrFail($conversationId);
 
-        // Create message in database
-        $message = Message::create([
-            'conversation_id' => $conversationId,
-            'customer_id' => $conversation->customer_id,
-            'sender_type' => 'admin',
-            'sender_id' => Auth::id(),
-            'sender_name' => Auth::user()->name,
-            'content' => $validated['content'],
-            'platform_message_id' => 'admin_' . uniqid(),
-        ]);
+        $message = $this->omnichannelService->sendReply(
+            $conversation->id,
+            (int) Auth::id(),
+            $validated['content']
+        );
 
-        // If this is a Facebook Messenger conversation, send via Facebook API
-        if (in_array($conversation->platform, ['messenger', 'facebook'])) {
-            $customer = $conversation->customer;
-            $platformUserIds = $customer->platform_user_ids ?? [];
-
-            $messengerUserId = $platformUserIds['messenger'] ?? null;
-
-            if ($messengerUserId) {
-                $fbService = new FacebookMessengerService();
-
-                // Send typing indicator first
-                $fbService->sendTypingIndicator($messengerUserId, 'typing_on');
-
-                // Send the actual message
-                $result = $fbService->sendMessage($messengerUserId, $validated['content']);
-
-                if (!$result['success']) {
-                    Log::error('Failed to send message via Facebook', [
-                        'conversation_id' => $conversationId,
-                        'error' => $result['error']
-                    ]);
-                    // Don't fail the request, message is already saved in DB
-                }
-            } else {
-                Log::warning('No messenger user ID found for customer', [
-                    'customer_id' => $customer->id,
-                    'conversation_id' => $conversationId
-                ]);
-            }
+        if (!$message) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send message to the platform.',
+            ], 422);
         }
 
         // Update conversation

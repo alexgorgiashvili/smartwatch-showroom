@@ -272,7 +272,7 @@ class AiConversationService
             if (in_array($conversation->platform, ['messenger', 'facebook'])) {
                 $customer = $conversation->customer;
                 $platformUserIds = $customer->platform_user_ids ?? [];
-                $messengerUserId = $platformUserIds['messenger'] ?? null;
+                $messengerUserId = $platformUserIds['facebook'] ?? $platformUserIds['messenger'] ?? null;
 
                 if ($messengerUserId) {
                     $fbService = new FacebookMessengerService();
