@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ProductImageController as AdminProductImageContro
 use App\Http\Controllers\Admin\StockAdjustmentController as AdminStockAdjustmentController;
 use App\Http\Controllers\Admin\ChatbotContentController as AdminChatbotContentController;
 use App\Http\Controllers\Admin\ChatbotLabController as AdminChatbotLabController;
+use App\Http\Controllers\Admin\FacebookPostController as AdminFacebookPostController;
 use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
@@ -239,6 +240,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
 			->name('chatbot-lab.results.promote');
 		Route::post('/chatbot-lab/results/{result}/promote-rerun', [AdminChatbotLabController::class, 'promoteAndRerunResult'])
 			->name('chatbot-lab.results.promote-rerun');
+
+		// Facebook Posts
+		Route::get('/facebook-posts', [AdminFacebookPostController::class, 'index'])
+			->name('facebook-posts.index');
+		Route::get('/facebook-posts/create', [AdminFacebookPostController::class, 'create'])
+			->name('facebook-posts.create');
+		Route::post('/facebook-posts', [AdminFacebookPostController::class, 'store'])
+			->name('facebook-posts.store');
+		Route::get('/facebook-posts/{facebookPost}/edit', [AdminFacebookPostController::class, 'edit'])
+			->name('facebook-posts.edit');
+		Route::put('/facebook-posts/{facebookPost}', [AdminFacebookPostController::class, 'update'])
+			->name('facebook-posts.update');
+		Route::delete('/facebook-posts/{facebookPost}', [AdminFacebookPostController::class, 'destroy'])
+			->name('facebook-posts.destroy');
+		Route::post('/facebook-posts/{facebookPost}/publish', [AdminFacebookPostController::class, 'publish'])
+			->name('facebook-posts.publish');
+		Route::post('/facebook-posts/generate', [AdminFacebookPostController::class, 'generate'])
+			->name('facebook-posts.generate');
 	});
 });
 

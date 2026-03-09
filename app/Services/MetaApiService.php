@@ -8,6 +8,21 @@ use Illuminate\Support\Facades\Log;
 
 class MetaApiService
 {
+    protected function resolveAccessToken(?string $platform = null): string
+    {
+        $platform = $platform ?: 'facebook';
+
+        if ($platform === 'instagram') {
+            $instagramAccessToken = (string) config('services.facebook.instagram_access_token', '');
+
+            if ($instagramAccessToken !== '') {
+                return $instagramAccessToken;
+            }
+        }
+
+        return (string) config('services.facebook.page_access_token', '');
+    }
+
     /**
      * @param array<int, array<string, string>> $products
      */
@@ -15,9 +30,7 @@ class MetaApiService
     {
         $platform = $platform ?: 'facebook';
 
-        $accessToken = $platform === 'instagram'
-            ? (string) config('services.facebook.instagram_access_token', config('services.facebook.page_access_token'))
-            : (string) config('services.facebook.page_access_token');
+        $accessToken = $this->resolveAccessToken($platform);
 
         if ($accessToken === '' || count($products) < 2) {
             return [
@@ -248,9 +261,7 @@ class MetaApiService
     {
         $platform = $platform ?: 'facebook';
 
-        $accessToken = $platform === 'instagram'
-            ? (string) config('services.facebook.instagram_access_token', config('services.facebook.page_access_token'))
-            : (string) config('services.facebook.page_access_token');
+        $accessToken = $this->resolveAccessToken($platform);
 
         if ($accessToken === '') {
             return [

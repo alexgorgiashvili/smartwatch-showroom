@@ -73,6 +73,7 @@ return [
         'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
         'instagram_access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
         'page_id' => env('FACEBOOK_PAGE_ID'),
+        'instagram_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),
         'webhook_verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
     ],
 

@@ -85,6 +85,12 @@
                     <span class="link-title">ჩატბოტ ლაბი</span>
                 </a>
             </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.facebook-posts.*')])>
+                <a href="{{ route('admin.facebook-posts.index') }}" class="nav-link">
+                    <i class="link-icon" data-feather="facebook"></i>
+                    <span class="link-title">Facebook Posts</span>
+                </a>
+            </li>
             <li @class(['nav-item', 'active' => request()->routeIs('admin.users.*')])>
                 <a href="{{ route('admin.users.index') }}" class="nav-link">
                     <i class="link-icon" data-feather="users"></i>
