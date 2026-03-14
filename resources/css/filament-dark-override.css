@@ -1,0 +1,13 @@
+/* Override Filament section backgrounds for dark mode */
+.dark .fi-section {
+    background-color: transparent !important;
+}
+
+.dark .fi-section-content-ctn {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix white backgrounds in dark mode */
+.dark [class*="bg-white"]:not(.text-white):not([class*="bg-white/"]) {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}

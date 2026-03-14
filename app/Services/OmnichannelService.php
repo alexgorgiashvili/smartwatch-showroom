@@ -238,6 +238,7 @@ class OmnichannelService
                 $apiPayload = $this->prepareOutgoingMessage(
                     $conversation->platform,
                     $customer,
+                    $conversation,
                     $message,
                     $mediaUrl
                 );
@@ -268,6 +269,10 @@ class OmnichannelService
                     'admin_id' => $adminUserId,
                     'platform' => $conversation->platform,
                     'has_api_payload' => !empty($apiPayload),
+                ]);
+
+                $conversation->update([
+                    'last_message_at' => now(),
                 ]);
 
                 return $replyMessage;
@@ -331,29 +336,20 @@ class OmnichannelService
     protected function prepareOutgoingMessage(
         string $platform,
         Customer $customer,
+        Conversation $conversation,
         string $message,
         ?string $mediaUrl = null
     ): array {
-        $platformIds = $customer->platform_user_ids ?? [];
-        $senderId = match ($platform) {
-            self::PLATFORM_FACEBOOK => $platformIds[self::PLATFORM_FACEBOOK] ?? $platformIds['messenger'] ?? null,
-            self::PLATFORM_INSTAGRAM => $platformIds[self::PLATFORM_INSTAGRAM] ?? null,
-            self::PLATFORM_WHATSAPP => $platformIds[self::PLATFORM_WHATSAPP] ?? null,
-            default => $platformIds[$platform] ?? null,
-        };
+        $senderId = $this->resolveOutgoingRecipientId($platform, $customer, $conversation);
 
         if (!$senderId) {
             Log::warning('No platform ID for customer', [
                 'customer_id' => $customer->id,
+                'conversation_id' => $conversation->id,
                 'platform' => $platform,
             ]);
             return [];
         }
-
-        // Determine conversation ID based on platform
-        $conversation = $customer->conversations()
-            ->where('platform', $platform)
-            ->first();
 
         $conversationId = $conversation->platform_conversation_id ?? '';
 
@@ -372,6 +368,29 @@ class OmnichannelService
                 $mediaUrl
             ),
             default => [],
+        };
+    }
+
+    protected function resolveOutgoingRecipientId(string $platform, Customer $customer, Conversation $conversation): ?string
+    {
+        $lastCustomerMessage = $conversation->messages()
+            ->where('sender_type', 'customer')
+            ->latest('id')
+            ->first();
+
+        $lastCustomerMessagePlatformId = data_get($lastCustomerMessage?->metadata, 'sender_platform_id');
+
+        if (is_string($lastCustomerMessagePlatformId) && $lastCustomerMessagePlatformId !== '') {
+            return $lastCustomerMessagePlatformId;
+        }
+
+        $platformIds = $customer->platform_user_ids ?? [];
+
+        return match ($platform) {
+            self::PLATFORM_FACEBOOK => $platformIds[self::PLATFORM_FACEBOOK] ?? $platformIds['messenger'] ?? null,
+            self::PLATFORM_INSTAGRAM => $platformIds[self::PLATFORM_INSTAGRAM] ?? null,
+            self::PLATFORM_WHATSAPP => $platformIds[self::PLATFORM_WHATSAPP] ?? null,
+            default => $platformIds[$platform] ?? null,
         };
     }
 

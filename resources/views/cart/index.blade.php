@@ -55,6 +55,8 @@
                                         <img
                                             src="{{ $item['image'] }}"
                                             alt="{{ $item['product']->name }}"
+                                            loading="lazy"
+                                            decoding="async"
                                             class="h-16 w-16 rounded-xl border border-slate-100 object-cover sm:h-20 sm:w-20"
                                         >
                                     </a>

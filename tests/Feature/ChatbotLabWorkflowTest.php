@@ -142,7 +142,7 @@ class ChatbotLabWorkflowTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($this->admin)->get(route('admin.chatbot-lab.cases.index', [
+        $response = $this->actingAs($this->admin)->followingRedirects()->get(route('admin.chatbot-lab.cases.index', [
             'search' => 'ქეისი',
             'status' => 'active',
             'tag' => 'budget',
@@ -205,6 +205,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.cases.index'));
 
         $response->assertOk();
@@ -248,6 +249,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.cases.index'));
 
         $response->assertOk();
@@ -326,7 +328,7 @@ class ChatbotLabWorkflowTest extends TestCase
 
     public function testAdminCanOpenLabAndRunManualTest(): void
     {
-        $indexResponse = $this->actingAs($this->admin)->get(route('admin.chatbot-lab.index'));
+        $indexResponse = $this->actingAs($this->admin)->followingRedirects()->get(route('admin.chatbot-lab.index'));
 
         $indexResponse->assertOk();
         $indexResponse->assertSee('ჩატბოტ ლაბი');
@@ -731,6 +733,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.runs.index'));
 
         $response->assertOk();
@@ -754,6 +757,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.runs.index'));
 
         $response->assertOk();
@@ -837,6 +841,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.runs.index'));
 
         $response->assertOk();
@@ -1327,7 +1332,7 @@ class ChatbotLabWorkflowTest extends TestCase
             ->assertRedirect(route('admin.login'));
 
         $this->actingAs($user)
-            ->get(route('admin.chatbot-lab.runs.export', $run))
+            ->get(route('filament.admin.chatbot-lab-runs.export', $run))
             ->assertRedirect(route('admin.login'));
 
         $this->actingAs($user)
@@ -1420,6 +1425,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get(route('admin.chatbot-lab.runs.show', $run));
 
         $response->assertOk();
@@ -1670,7 +1676,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.chatbot-lab.runs.export', $run));
+            ->get(route('filament.admin.chatbot-lab-runs.export', $run));
 
         $response->assertOk();
         $response->assertDownload('chatbot-lab-run-' . $run->id . '.csv');

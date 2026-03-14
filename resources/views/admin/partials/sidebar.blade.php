@@ -19,8 +19,8 @@
                 </a>
             </li>
             <li class="nav-item nav-category">Management</li>
-            <li @class(['nav-item', 'active' => request()->routeIs('admin.inbox.*')])>
-                <a href="{{ route('admin.inbox.index') }}" class="nav-link">
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.inbox.*', 'filament.admin.pages.inbox')])>
+                <a href="{{ route('filament.admin.pages.inbox') }}" class="nav-link">
                     <i class="link-icon" data-feather="message-circle"></i>
                     <span class="link-title">Inbox</span>
                     @php $unreadCount = \App\Models\Conversation::where('unread_count', '>', 0)->sum('unread_count'); @endphp

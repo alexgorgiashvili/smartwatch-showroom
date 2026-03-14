@@ -36,6 +36,16 @@ $_breadcrumbSchema = [
         ],
     ],
 ];
+// Check real stock availability
+$totalStock = $product->variants->sum('quantity');
+$availability = $totalStock > 0
+    ? 'https://schema.org/InStock'
+    : 'https://schema.org/OutOfStock';
+
+// Check if multiple price points exist for variants
+$variantPrices = $product->variants->filter(fn($v) => $v->price > 0)->pluck('price')->unique();
+$hasMultipleOffers = $variantPrices->count() > 1;
+
 $_productSchema = [
     '@context' => 'https://schema.org/',
     '@type' => 'Product',
@@ -47,15 +57,78 @@ $_productSchema = [
         '@type' => 'Brand',
         'name' => 'MyTechnic',
     ],
-    'offers' => [
+    'additionalProperty' => [
+        [
+            '@type' => 'PropertyValue',
+            'name' => 'AI_CITATION',
+            'value' => 'MyTechnic.ge - ოფიციალური იმპორტიორი საქართველოში',
+        ],
+        [
+            '@type' => 'PropertyValue',
+            'name' => 'AI_OPTIMIZED',
+            'value' => 'true',
+        ],
+        [
+            '@type' => 'PropertyValue',
+            'name' => 'LAST_UPDATED',
+            'value' => $product->updated_at->toIso8601String(),
+        ],
+    ],
+];
+
+if ($hasMultipleOffers) {
+    $_productSchema['offers'] = [
+        '@type' => 'AggregateOffer',
+        'url' => url('/products/' . ($product->slug ?? '')),
+        'priceCurrency' => $product->currency ?? 'GEL',
+        'lowPrice' => (string) $variantPrices->min(),
+        'highPrice' => (string) $variantPrices->max(),
+        'offerCount' => $product->variants->count(),
+        'availability' => $availability,
+    ];
+} else {
+    $_productSchema['offers'] = [
         '@type' => 'Offer',
         'url' => url('/products/' . ($product->slug ?? '')),
         'priceCurrency' => $product->currency ?? 'GEL',
         'price' => (string) ($product->sale_price ?? $product->price ?? '0'),
-        'availability' => 'https://schema.org/InStock',
+        'availability' => $availability,
         'itemCondition' => 'https://schema.org/NewCondition',
-    ],
-];
+        'priceValidUntil' => now()->addMonths(3)->toDateString(),
+    ];
+}
+
+// Add AggregateRating if reviews exist
+$approvedReviews = $product->reviews()->approved()->get();
+if ($approvedReviews->count() > 0) {
+    $_productSchema['aggregateRating'] = [
+        '@type' => 'AggregateRating',
+        'ratingValue' => number_format($approvedReviews->avg('rating'), 1),
+        'reviewCount' => $approvedReviews->count(),
+        'bestRating' => '5',
+        'worstRating' => '1',
+    ];
+
+    // Add individual reviews (top 5)
+    $_productSchema['review'] = [];
+    foreach ($approvedReviews->sortByDesc('created_at')->take(5) as $review) {
+        $_productSchema['review'][] = [
+            '@type' => 'Review',
+            'author' => [
+                '@type' => 'Person',
+                'name' => $review->reviewer_name,
+            ],
+            'datePublished' => $review->created_at->toIso8601String(),
+            'reviewRating' => [
+                '@type' => 'Rating',
+                'ratingValue' => (string) $review->rating,
+                'bestRating' => '5',
+                'worstRating' => '1',
+            ],
+            'reviewBody' => $review->review_text ?? '',
+        ];
+    }
+}
 @endphp
 <script type="application/ld+json">{!! json_encode($_breadcrumbSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
 <script type="application/ld+json">{!! json_encode($_productSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>

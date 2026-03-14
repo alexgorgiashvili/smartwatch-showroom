@@ -1,0 +1,108 @@
+{
+    "collected_at": "2026-03-14T02:41:15+04:00",
+    "total_questions": 10,
+    "successful_responses": 10,
+    "cache_hits": 0,
+    "responses": [
+        {
+            "question_id": 1,
+            "question": "10 ლარში ჩავეტევი?",
+            "category": "budget_query",
+            "response": "დიახ, 10 ლარის ფარგლებში შეგიძლიათ მოიძიოთ რამდენიმე ვარიანტი:\n\n1. **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი). [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n\n2. **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით, ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი). [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n\nთუ რომელიმე მოდელი გაინტერესებთ, გთხოვთ, მომწერეთ!",
+            "intent": "price_query",
+            "cache_hit": false,
+            "duration_ms": 20993,
+            "timestamp": "2026-03-14T02:39:47+04:00"
+        },
+        {
+            "question_id": 2,
+            "question": "რა ფასად მაქვს Q19?",
+            "category": "price_query",
+            "response": "**Q19** — 2G საბავშვო სმარტ საათი კამერითა და GPS-ით, ფასი **24.00 ₾**. ✅ მარაგშია 6 ცალი. [Q19](http:\/\/localhost\/products\/2g-network-kids-smart-watch-anti-lost-sos-gps-video-call)",
+            "intent": "price_query",
+            "cache_hit": false,
+            "duration_ms": 9599,
+            "timestamp": "2026-03-14T02:39:57+04:00"
+        },
+        {
+            "question_id": 3,
+            "question": "იაფიანი სმარტსაათი რო მირჩევ?",
+            "category": "recommendation",
+            "response": "თქვენი ბიუჯეტის ფარგლებში, გირჩევთ შემდეგ მოდელებს:\n\n• **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი) [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n\n• **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით, ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი) [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n\nთუ დამატებითი კითხვა გაქვთ, სიამოვნებით დაგეხმარებით!",
+            "intent": "recommendation",
+            "cache_hit": false,
+            "duration_ms": 10983,
+            "timestamp": "2026-03-14T02:40:08+04:00"
+        },
+        {
+            "question_id": 4,
+            "question": "GPS-იანი მოდელები რა გაქვთ?",
+            "category": "feature_query",
+            "response": "თქვენს ბიუჯეტში (11 ₾-მდე) GPS-იანი მოდელები:\n\n• **A49** — 4G საბავშვო სმარტ საათი GPS ტრეკერით | **ფასი:** 13.00 ₾ | ✅ მარაგშია (9 ცალი) | [A49](http:\/\/localhost\/products\/smart-watch-for-kids-gps-tracker)\n\nმიუხედავად ამისა, 11 ₾-მდე სხვა GPS-იანი მოდელები არ გვაქვს. თუ გსურთ, შემიძლია სხვა ვარიანტები შემოგთავაზოთ.",
+            "intent": "stock_query",
+            "cache_hit": false,
+            "duration_ms": 9793,
+            "timestamp": "2026-03-14T02:40:17+04:00"
+        },
+        {
+            "question_id": 5,
+            "question": "ბავშვისთვის რომელი საათი არის საუკეთესო?",
+            "category": "recommendation",
+            "response": "ბავშვებისათვის რამდენიმე კარგი ვარიანტი გვაქვს:\n\n1. **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით, ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი). [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n\n2. **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი). [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n\n3. **A49** — 4G საბავშვო სმარტ საათი GPS ტრეკერით, ფასი: **13.00 ₾**. ✅ მარაგშია (9 ცალი). [A49](http:\/\/localhost\/products\/smart-watch-for-kids-gps-tracker)\n\n4. **T46** — 4G საბავშვო სმარტ საათი ვიდეო ზარით, ფასით: **13.98 ₾**. ✅ მარაგშია (9 ცალი). [T46](http:\/\/localhost\/products\/video-call-hot-selling-cheap-kids",
+            "intent": "recommendation",
+            "cache_hit": false,
+            "duration_ms": 11558,
+            "timestamp": "2026-03-14T02:40:29+04:00"
+        },
+        {
+            "question_id": 6,
+            "question": "200 ლარამდე რა ვარიანტები მაქვს?",
+            "category": "budget_query",
+            "response": "თქვენი ბიუჯეტის ფარგლებში (200 ₾-მდე) გირჩევთ შემდეგ მოდელებს:\n\n- **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით | **ფასი**: 10.73 ₾ | ✅ მარაგშია (12 ცალი) | [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n  \n- **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით | **ფასი**: 4.99 ₾ | ✅ მარაგშია (6 ცალი) | [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n  \n- **A49** — 4",
+            "intent": "price_query",
+            "cache_hit": false,
+            "duration_ms": 7139,
+            "timestamp": "2026-03-14T02:40:36+04:00"
+        },
+        {
+            "question_id": 7,
+            "question": "ეს მოდელი მარაგშია?",
+            "category": "stock_query",
+            "response": "დიახ, რამდენიმე მოდელი მარაგში გვაქვს:\n\n- **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით, ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი). [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n  \n- **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი). [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n  \n- **A49** — 4G საბავშვო სმარტ საათი GPS ტრეკერით, ფასი",
+            "intent": "stock_query",
+            "cache_hit": false,
+            "duration_ms": 9508,
+            "timestamp": "2026-03-14T02:40:46+04:00"
+        },
+        {
+            "question_id": 8,
+            "question": "კამერიანი და GPS-იანი საათები რა გაქვთ?",
+            "category": "feature_query",
+            "response": "თქვენს მოთხოვნას შესაბამისი რამდენიმე მოდელი გვაქვს:\n\n1. **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით. \n   - ფასი: **10.73 ₾**\n   - ✅ მარაგშია (12 ცალი)\n   - [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock)\n\n2. **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით.\n   - ფასი: **4.99 ₾**\n   - ✅ მარაგშია (6 ცალი)\n   - [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n\n3. **A49** — 4G საბავშვო სმარტ საათი GPS ტრეკერით.\n   - ფასი: **13.00 ₾**\n   - ✅ მარაგშია (9 ცალი)\n   - [A49](http:\/\/localhost\/products\/smart-watch-for-kids-gps-tracker)\n\n4. **T46** — 4G საბავშვო სმარტ საათი ვიდეო ზარით.\n   - ფასი: **13.98 ₾**\n   - ✅ მარაგშია (9 ცალი)\n   - [T46](",
+            "intent": "general",
+            "cache_hit": false,
+            "duration_ms": 15069,
+            "timestamp": "2026-03-14T02:41:01+04:00"
+        },
+        {
+            "question_id": 9,
+            "question": "შავი ფერის სმარტსაათი მინდა, რა გირჩევთ?",
+            "category": "recommendation",
+            "response": "შავი ფერის სმარტსაათებიდან გირჩევთ:\n\n- **[X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით, ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი).\n\n- **[Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი).\n\nთუ შეკითხვა გაქვთ ან დამატებითი ინფორმაცია გჭირდებათ, გთხოვთ, მომწეროთ! 😊",
+            "intent": "recommendation",
+            "cache_hit": false,
+            "duration_ms": 8133,
+            "timestamp": "2026-03-14T02:41:09+04:00"
+        },
+        {
+            "question_id": 10,
+            "question": "ყველაზე იაფი მოდელი რომელია?",
+            "category": "price_query",
+            "response": "ყველაზე იაფი მოდელი არის **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით, რომლის ფასი **4.99 ₾**-ია. ✅ მარაგშია (6 ცალი). [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)",
+            "intent": "price_query",
+            "cache_hit": false,
+            "duration_ms": 6370,
+            "timestamp": "2026-03-14T02:41:15+04:00"
+        }
+    ]
+}

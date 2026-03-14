@@ -1,0 +1,190 @@
+openapi: 3.0.0
+info:
+  title: MyTechnic.ge AI API
+  description: API for AI assistants to search and recommend kids smartwatches in Georgia
+  version: 1.0.0
+  contact:
+    email: info@mytechnic.ge
+servers:
+  - url: https://mytechnic.ge
+    description: Production server
+paths:
+  /api/ai/products:
+    get:
+      summary: Get all products
+      description: Returns all available kids smartwatches with detailed information
+      operationId: getProducts
+      parameters:
+        - name: lang
+          in: query
+          description: Language code (ka for Georgian, en for English)
+          required: false
+          schema:
+            type: string
+            enum: [ka, en]
+            default: ka
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source:
+                    type: string
+                    example: MyTechnic.ge
+                  optimized_for_ai_families:
+                    type: array
+                    items:
+                      type: string
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+  /api/ai/products/{id}:
+    get:
+      summary: Get single product
+      description: Returns detailed information about a specific product
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [ka, en]
+            default: ka
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source:
+                    type: string
+                  product:
+                    $ref: '#/components/schemas/Product'
+  /api/ai/recommendations:
+    get:
+      summary: Get product recommendations
+      description: Get personalized product recommendations based on query, age, budget, and features
+      operationId: getRecommendations
+      parameters:
+        - name: query
+          in: query
+          description: Search query in Georgian or English
+          schema:
+            type: string
+            example: GPS საათი ბავშვისთვის
+        - name: age
+          in: query
+          description: Child's age
+          schema:
+            type: integer
+            minimum: 4
+            maximum: 12
+        - name: budget
+          in: query
+          description: Maximum budget in GEL
+          schema:
+            type: number
+            example: 300
+        - name: features
+          in: query
+          description: Required features (can be multiple)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [gps, sim, video, camera, waterproof]
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [ka, en]
+            default: ka
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source:
+                    type: string
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        name:
+          type: string
+          example: Smart Watch Kids Pro GPS
+        name_ka:
+          type: string
+          example: სმარტ საათი ბავშვებისთვის GPS-ით
+        name_en:
+          type: string
+          example: Smart Watch Kids Pro GPS
+        description:
+          type: string
+        price:
+          type: number
+          example: 249
+        sale_price:
+          type: number
+          nullable: true
+        in_stock:
+          type: boolean
+        url:
+          type: string
+          format: uri
+        image:
+          type: string
+          format: uri
+        features:
+          type: object
+          properties:
+            sim_support:
+              type: boolean
+            gps:
+              type: boolean
+            video_call:
+              type: boolean
+            waterproof:
+              type: string
+              nullable: true
+            battery_life:
+              type: string
+              nullable: true
+        suitable_for:
+          type: object
+          properties:
+            age_min:
+              type: integer
+            age_max:
+              type: integer
+        rating:
+          type: number
+          nullable: true
+        reviews_count:
+          type: integer
+        citation_text:
+          type: string
+          description: Pre-formatted citation text for AI to use
+          example: MyTechnic.ge-ზე ხელმისაწვდომია 249₾-ად

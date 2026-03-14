@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Message extends Model
 {
     protected $fillable = [
         'conversation_id',
         'customer_id',
+        'reply_to_id',
         'sender_type',
         'sender_id',
         'sender_name',
@@ -19,6 +21,7 @@ class Message extends Model
         'platform_message_id',
         'metadata',
         'read_at',
+        'delivery_status',
         'encrypted',
         'confidential',
     ];
@@ -30,6 +33,10 @@ class Message extends Model
         'confidential' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    protected $attributes = [
+        'delivery_status' => 'sent',
     ];
 
     /**
@@ -57,6 +64,22 @@ class Message extends Model
             return $this->belongsTo(User::class, 'sender_id');
         }
         return $this->belongsTo(Customer::class, 'sender_id');
+    }
+
+    /**
+     * Get the message this is replying to
+     */
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'reply_to_id');
+    }
+
+    /**
+     * Get all replies to this message
+     */
+    public function replies(): HasMany
+    {
+        return $this->hasMany(Message::class, 'reply_to_id');
     }
 
     /**
@@ -111,6 +134,66 @@ class Message extends Model
     public function isFromAdmin(): bool
     {
         return $this->sender_type === 'admin';
+    }
+
+    /**
+     * Check if message is from bot
+     */
+    public function isFromBot(): bool
+    {
+        return $this->sender_type === 'bot';
+    }
+
+    /**
+     * Check if message is system message
+     */
+    public function isSystemMessage(): bool
+    {
+        return $this->sender_type === 'system';
+    }
+
+    /**
+     * Update delivery status
+     */
+    public function updateDeliveryStatus(string $status): void
+    {
+        if (!in_array($status, ['pending', 'sent', 'delivered', 'failed'], true)) {
+            return;
+        }
+
+        $this->update(['delivery_status' => $status]);
+    }
+
+    /**
+     * Mark as delivered
+     */
+    public function markAsDelivered(): void
+    {
+        $this->updateDeliveryStatus('delivered');
+    }
+
+    /**
+     * Mark as failed
+     */
+    public function markAsFailed(): void
+    {
+        $this->updateDeliveryStatus('failed');
+    }
+
+    /**
+     * Check if message has been delivered
+     */
+    public function isDelivered(): bool
+    {
+        return $this->delivery_status === 'delivered';
+    }
+
+    /**
+     * Check if message failed to send
+     */
+    public function hasFailed(): bool
+    {
+        return $this->delivery_status === 'failed';
     }
 
     /**

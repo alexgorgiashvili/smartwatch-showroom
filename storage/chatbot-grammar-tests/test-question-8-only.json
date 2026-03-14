@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "created_at": "2026-03-14",
+  "description": "Single test question #8 for stock quantity fix verification",
+  "questions": [
+    {
+      "id": 8,
+      "question": "კამერიანი და GPS-იანი საათები რა გაქვთ?",
+      "category": "feature_query",
+      "expected_themes": ["features", "camera", "GPS", "multiple_features"]
+    }
+  ]
+}

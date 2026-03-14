@@ -18,27 +18,29 @@ PAYLOAD='{
   "object": "instagram",
   "entry": [
     {
-      "id": "17841407866175038",
+      "id": "17841468956943989",
       "time": 1645180154,
       "changes": [
         {
           "field": "messages",
           "value": {
-            "from": {
-              "id": "12345678901234",
-              "name": "Andrew Smith"
-            },
-            "to": [
-              {
-                "data": [
-                  {
-                    "id": "987654321"
+            "data": {
+              "messaging": [
+                {
+                  "sender": {
+                    "id": "17841400000000001"
+                  },
+                  "conversation": {
+                    "id": "t_1234567890123456789"
+                  },
+                  "timestamp": 1645180154000,
+                  "message": {
+                    "mid": "ig_mid_123",
+                    "text": "Hi! I saw your post about the new smartwatch. Is it waterproof? How long does the battery last?"
                   }
-                ]
-              }
-            ],
-            "message": "Hi! I saw your post about the new smartwatch. Is it waterproof? How long does the battery last?",
-            "timestamp": 1645180154
+                }
+              ]
+            }
           }
         }
       ]
@@ -47,7 +49,7 @@ PAYLOAD='{
 }'
 
 # App Secret for signature
-APP_SECRET="your_app_secret"
+APP_SECRET="${APP_SECRET:-your_app_secret}"
 
 # Calculate signature the same way Meta does
 SIGNATURE="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$APP_SECRET" | sed 's/.*= //')"

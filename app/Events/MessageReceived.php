@@ -55,6 +55,7 @@ class MessageReceived implements ShouldBroadcastNow
     {
         return [
             new PrivateChannel('inbox'),
+            new PrivateChannel("inbox.conversation.{$this->conversation->id}"),
         ];
     }
 

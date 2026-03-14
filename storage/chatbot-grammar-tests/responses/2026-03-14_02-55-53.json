@@ -1,0 +1,18 @@
+{
+    "collected_at": "2026-03-14T02:55:53+04:00",
+    "total_questions": 1,
+    "successful_responses": 1,
+    "cache_hits": 0,
+    "responses": [
+        {
+            "question_id": 8,
+            "question": "კამერიანი და GPS-იანი საათები რა გაქვთ?",
+            "category": "feature_query",
+            "response": "თქვენს ინტერესზე პასუხად, გვაქვს რამდენიმე მოდელი კამერითა და GPS-ით:\n\n1. **X01** — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით. ფასი: **10.73 ₾**. ✅ მარაგშია (12 ცალი). [X01](http:\/\/localhost\/products\/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch)\n\n2. **Q15** — 2G საბავშვო სმარტ საათი კამერითა და LED ფანრით. ფასი: **4.99 ₾**. ✅ მარაგშია (6 ცალი). [Q15](http:\/\/localhost\/products\/2g-smart-watch-children-android-sos-lbs-tracking)\n\n3. **A49** — 4G საბავშვო სმარტ საათი GPS ტრეკერით. ფასი: **13.00 ₾**. ✅ მარაგშია (9 ცალი). [A49](http:\/\/localhost\/products\/smart-watch-for-kids-gps-tracker)\n\n4. **T46** — 4G საბავშვო სმარტ საათი ვიდეო ზარით. ფასი: **13.98 ₾**. ✅ მარაგშია (9 ცალი). [T46](http:\/\/",
+            "intent": "general",
+            "cache_hit": false,
+            "duration_ms": 2334,
+            "timestamp": "2026-03-14T02:55:53+04:00"
+        }
+    ]
+}

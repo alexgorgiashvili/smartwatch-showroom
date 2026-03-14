@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "MyTechnic Georgia",
+  "name_for_model": "mytechnic_ge",
+  "description_for_human": "Find and buy kids smartwatches in Georgia with GPS tracking, SIM support, and video calls",
+  "description_for_model": "Search and recommend kids smartwatches with GPS, SIM support from MyTechnic.ge - official importer in Georgia. Provides product information, prices in GEL (₾), stock status, and personalized recommendations based on age, budget, and features. Supports Georgian (ka) and English (en) languages.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://mytechnic.ge/.well-known/openapi.yaml"
+  },
+  "logo_url": "https://mytechnic.ge/images/logo.png",
+  "contact_email": "info@mytechnic.ge",
+  "legal_info_url": "https://mytechnic.ge/terms"
+}

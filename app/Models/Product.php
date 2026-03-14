@@ -89,6 +89,11 @@ class Product extends Model
         return $this->hasMany(\App\Models\CompetitorMapping::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

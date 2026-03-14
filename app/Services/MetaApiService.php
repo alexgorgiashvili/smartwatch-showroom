@@ -138,8 +138,8 @@ class MetaApiService
             return null;
         }
 
-        // Use recipient ID (page ID) as conversation ID
-        $conversationId = $recipientId;
+        // Messenger threads are scoped to the sender PSID for page inbox use cases.
+        $conversationId = $senderId;
 
         // Extract message text
         $messageText = $message['text'] ?? '';
@@ -169,9 +169,10 @@ class MetaApiService
     protected function parseInstagramDirect(array $change): ?array
     {
         // Instagram DM format differs from Facebook Messenger
+        $field = $change['field'] ?? null;
         $value = $change['value'] ?? [];
 
-        if ($value['field'] !== 'messages') {
+        if ($field !== 'messages') {
             return null;
         }
 

@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "created_at": "2026-03-14",
+  "description": "Test questions for chatbot grammar validation",
+  "questions": [
+    {
+      "id": 1,
+      "question": "10 ლარში ჩავეტევი?",
+      "category": "budget_query",
+      "expected_themes": ["price", "budget", "recommendation"]
+    },
+    {
+      "id": 2,
+      "question": "რა ფასად მაქვს Q19?",
+      "category": "price_query",
+      "expected_themes": ["price", "specific_model"]
+    },
+    {
+      "id": 3,
+      "question": "იაფიანი სმარტსაათი რო მირჩევ?",
+      "category": "recommendation",
+      "expected_themes": ["recommendation", "budget", "affordable"]
+    },
+    {
+      "id": 4,
+      "question": "GPS-იანი მოდელები რა გაქვთ?",
+      "category": "feature_query",
+      "expected_themes": ["features", "GPS", "inventory"]
+    },
+    {
+      "id": 5,
+      "question": "ბავშვისთვის რომელი საათი არის საუკეთესო?",
+      "category": "recommendation",
+      "expected_themes": ["recommendation", "kids", "best_choice"]
+    },
+    {
+      "id": 6,
+      "question": "200 ლარამდე რა ვარიანტები მაქვს?",
+      "category": "budget_query",
+      "expected_themes": ["budget", "price_range", "options"]
+    },
+    {
+      "id": 7,
+      "question": "ეს მოდელი მარაგშია?",
+      "category": "stock_query",
+      "expected_themes": ["stock", "availability"]
+    },
+    {
+      "id": 8,
+      "question": "კამერიანი და GPS-იანი საათები რა გაქვთ?",
+      "category": "feature_query",
+      "expected_themes": ["features", "camera", "GPS", "multiple_features"]
+    },
+    {
+      "id": 9,
+      "question": "შავი ფერის სმარტსაათი მინდა, რა გირჩევთ?",
+      "category": "recommendation",
+      "expected_themes": ["color_preference", "recommendation", "black"]
+    },
+    {
+      "id": 10,
+      "question": "ყველაზე იაფი მოდელი რომელია?",
+      "category": "price_query",
+      "expected_themes": ["price", "cheapest", "comparison"]
+    }
+  ]
+}

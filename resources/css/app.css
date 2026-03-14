@@ -527,3 +527,164 @@
 	max-height: var(--accordion-max-height, 0px);
 }
 
+@media (max-width: 1023px) {
+	.fi-sidebar {
+		transform: translateX(-100%);
+		z-index: 80;
+	}
+
+	.fi-sidebar.fi-sidebar-open {
+		transform: translateX(0);
+	}
+
+	.fi-sidebar-close-overlay {
+		z-index: 70;
+	}
+}
+
+.fi-fo-select .choices__list--dropdown,
+.fi-fo-select .choices__list[aria-expanded] {
+	z-index: 90 !important;
+}
+
+.fi-fo-field-wrp input,
+.fi-fo-field-wrp textarea,
+.fi-fo-field-wrp select,
+.fi-fo-select .choices__inner,
+.fi-fo-select .choices__input,
+.fi-fo-select .choices__item {
+	color: #111827;
+}
+
+.fi-fo-field-wrp input::placeholder,
+.fi-fo-field-wrp textarea::placeholder {
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.fi-ta-table tbody td {
+	color: #1f2937;
+}
+
+.fi-ta-table tbody tr:hover {
+	background-color: #f8fafc;
+}
+
+.dark .fi-ta-table tbody td {
+	color: #e5e7eb;
+}
+
+.dark .fi-ta-table tbody tr:hover {
+	background-color: rgba(30, 41, 59, 0.7);
+}
+
+.dark .fi-fo-field-wrp input,
+.dark .fi-fo-field-wrp textarea,
+.dark .fi-fo-field-wrp select,
+.dark .fi-fo-select .choices__inner,
+.dark .fi-fo-select .choices__input,
+.dark .fi-fo-select .choices__item {
+	color: #e5e7eb;
+}
+
+.fi-body {
+	background-color: #0f172a;
+}
+
+/* Inbox Chat Animations */
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-fade-in {
+	animation: fade-in 0.3s ease-out;
+}
+
+/* Smooth scrolling for chat */
+.chat-scroll {
+	scroll-behavior: smooth;
+	overflow-x: hidden;
+}
+
+.chat-message-content {
+	display: block;
+	max-width: 100%;
+	white-space: pre-wrap !important;
+	overflow-wrap: anywhere !important;
+	word-break: break-word !important;
+}
+
+.chat-scroll::-webkit-scrollbar {
+	width: 6px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+	background: rgba(156, 163, 175, 0.4);
+	border-radius: 3px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+	background: rgba(156, 163, 175, 0.6);
+}
+
+/* Dark mode scrollbar */
+.dark .chat-scroll::-webkit-scrollbar-thumb {
+	background: rgba(75, 85, 99, 0.4);
+}
+
+.dark .chat-scroll::-webkit-scrollbar-thumb:hover {
+	background: rgba(75, 85, 99, 0.6);
+}
+
+/* Lazy Loading Image Styles */
+img.lazy {
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out;
+}
+
+img.lazy-loading {
+	opacity: 0.5;
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s infinite;
+}
+
+img.lazy-loaded {
+	opacity: 1;
+}
+
+img.lazy-error {
+	opacity: 0.3;
+	filter: grayscale(100%);
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+/* Responsive image optimization */
+picture {
+	display: block;
+}
+
+picture img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+

@@ -3,16 +3,12 @@
 namespace Tests\Feature;
 
 use App\Events\MessageReceived;
-use App\Models\Conversation;
 use App\Models\Customer;
-use App\Models\Message;
-use App\Models\WebhookLog;
-use App\Services\MetaApiService;
 use App\Services\OmnichannelService;
 use App\Services\WebhookVerificationService;
-use App\Services\WhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class OmnichannelWebhookTest extends TestCase
@@ -137,6 +133,124 @@ class OmnichannelWebhookTest extends TestCase
 
         // Assert: Event not dispatched
         Event::assertNotDispatched(MessageReceived::class);
+    }
+
+    public function testValidInstagramWebhookProcessing(): void
+    {
+        $appSecret = config('services.meta.app_secret', 'test-secret');
+
+        $payload = [
+            'object' => 'instagram',
+            'entry' => [
+                [
+                    'id' => '17841468956943989',
+                    'time' => time(),
+                    'changes' => [
+                        [
+                            'field' => 'messages',
+                            'value' => [
+                                'data' => [
+                                    'messaging' => [
+                                        [
+                                            'sender' => ['id' => '17841400000000001'],
+                                            'conversation' => ['id' => 't_1234567890123456789'],
+                                            'timestamp' => time() * 1000,
+                                            'message' => [
+                                                'mid' => 'ig_mid_123',
+                                                'text' => 'Instagram feature test message',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $rawPayload = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
+
+        $response = $this->postJson('/api/webhooks/messages', $payload, [
+            'X-Hub-Signature-256' => $signature,
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('messages', [
+            'content' => 'Instagram feature test message',
+        ]);
+
+        $this->assertDatabaseHas('conversations', [
+            'platform' => 'instagram',
+        ]);
+
+        $this->assertDatabaseHas('webhook_logs', [
+            'platform' => 'instagram',
+            'verified' => true,
+            'event_type' => 'messages',
+        ]);
+
+        Event::assertDispatched(MessageReceived::class);
+    }
+
+    public function testVerifiedFacebookWebhookRouteTargetsFilamentInboxDeeplink(): void
+    {
+        $appSecret = config('services.meta.app_secret', 'test-secret');
+
+        $payload = [
+            'object' => 'page',
+            'entry' => [
+                [
+                    'messaging' => [
+                        [
+                            'sender' => ['id' => '555666777'],
+                            'recipient' => ['id' => '999888777'],
+                            'timestamp' => time() * 1000,
+                            'message' => [
+                                'mid' => 'msg_filament_123',
+                                'text' => 'Hello from the public webhook route',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $rawPayload = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $rawPayload, $appSecret);
+
+        $this->mock(\App\Services\PushNotificationService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('sendToAdmins')
+                ->once()
+                ->withArgs(function (string $title, string $body, string $url, array $payload): bool {
+                    return str_starts_with($title, 'New message from ')
+                        && $body === 'Hello from the public webhook route'
+                        && preg_match('#/admin/inbox\?conversation=\d+$#', $url) === 1
+                        && ($payload['platform'] ?? null) === 'facebook'
+                        && isset($payload['conversation_id'], $payload['message_id']);
+                })
+                ->andReturn(true);
+        });
+
+        $response = $this->postJson('/webhook/facebook', $payload, [
+            'X-Hub-Signature-256' => $signature,
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('messages', [
+            'content' => 'Hello from the public webhook route',
+        ]);
+
+        $this->assertDatabaseHas('webhook_logs', [
+            'platform' => 'facebook',
+            'verified' => true,
+            'event_type' => 'message',
+        ]);
+
+        Event::assertDispatched(MessageReceived::class);
     }
 
     /** Test Meta verification challenge */

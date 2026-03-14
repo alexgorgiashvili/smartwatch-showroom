@@ -1,4 +1,8 @@
 {
+  "_vendor-C0Zqfgkc.js": {
+    "file": "assets/vendor-C0Zqfgkc.js",
+    "name": "vendor"
+  },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
     "file": "assets/fa-brands-400-BP5tdqmh.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2"
@@ -16,23 +20,20 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-D_aNa8Il.css",
+    "file": "assets/app-mYnBrgxl.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BP-j-72k.js",
+    "file": "assets/app-DRS1q1Hd.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "_vendor-C0Zqfgkc.js"
+    ],
     "css": [
       "assets/app-D7wrQ6zr.css"
     ]
-  },
-  "resources/js/nobleui-inbox.js": {
-    "file": "assets/nobleui-inbox-Bbi22bzB.js",
-    "name": "nobleui-inbox",
-    "src": "resources/js/nobleui-inbox.js",
-    "isEntry": true
   }
 }

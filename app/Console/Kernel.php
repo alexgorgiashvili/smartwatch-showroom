@@ -12,6 +12,19 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Process queue jobs every minute (for database queue without Supervisor)
+        $schedule->command('queue:work --stop-when-empty --max-time=50')
+                 ->everyMinute()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Cleanup failed jobs older than 48 hours
+        $schedule->command('queue:prune-failed --hours=48')
+                 ->daily();
+
+        // Cleanup old queue jobs (if any stuck)
+        $schedule->command('queue:prune-batches --hours=48')
+                 ->daily();
     }
 
     /**

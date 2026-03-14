@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\Customer;
 use App\Models\Message;
+use App\Models\Conversation;
 use App\Services\MetaApiService;
 use App\Services\OmnichannelService;
 use App\Services\WhatsAppService;
@@ -112,6 +113,77 @@ class OmnichannelServiceTest extends TestCase
 
         // Assert: media_type = 'image'
         $this->assertEquals('https://example.com/image.jpg', $parsed['attachments'][0]['url']);
+    }
+
+    public function testFacebookWebhookUsesSenderIdAsConversationId(): void
+    {
+        $payload = [
+            'object' => 'page',
+            'entry' => [
+                [
+                    'messaging' => [
+                        [
+                            'sender' => ['id' => '25446744021623143'],
+                            'recipient' => ['id' => '417018998164571'],
+                            'timestamp' => time() * 1000,
+                            'message' => [
+                                'mid' => 'mid_fb_123',
+                                'text' => 'Hello from Facebook',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $metaService = new MetaApiService();
+        $parsed = $metaService->parseWebhookPayload($payload);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame('25446744021623143', $parsed['sender_id']);
+        $this->assertSame('25446744021623143', $parsed['conversation_id']);
+    }
+
+    public function testInstagramDirectPayloadParsing(): void
+    {
+        $payload = [
+            'object' => 'instagram',
+            'entry' => [
+                [
+                    'id' => '17841468956943989',
+                    'time' => time(),
+                    'changes' => [
+                        [
+                            'field' => 'messages',
+                            'value' => [
+                                'data' => [
+                                    'messaging' => [
+                                        [
+                                            'sender' => ['id' => '17841400000000001'],
+                                            'conversation' => ['id' => 't_1234567890123456789'],
+                                            'timestamp' => time() * 1000,
+                                            'message' => [
+                                                'mid' => 'ig_mid_123',
+                                                'text' => 'Instagram DM test',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $metaService = new MetaApiService();
+        $parsed = $metaService->parseWebhookPayload($payload);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame('17841400000000001', $parsed['sender_id']);
+        $this->assertSame('t_1234567890123456789', $parsed['conversation_id']);
+        $this->assertSame('Instagram DM test', $parsed['message_text']);
+        $this->assertSame('ig_mid_123', $parsed['platform_message_id']);
     }
 
     /** Test WhatsApp parsing */
@@ -232,6 +304,63 @@ class OmnichannelServiceTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertSame($expected['attachment'], $result['payload']['message']['attachment']);
         $this->assertSame('user-456', data_get($result['payload'], 'recipient.id'));
+    }
+
+    public function testMetaSendMessageUsesMessengerTokenAlias(): void
+    {
+        config()->set('services.facebook.page_access_token', 'messenger-token');
+        config()->set('services.facebook.messenger_access_token', 'messenger-token');
+
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::response(['message_id' => 'mid.alias.123'], 200),
+        ]);
+
+        $service = new MetaApiService();
+        $result = $service->sendMessage('user-456', 'conv-456', 'Alias token test', null, 'facebook');
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://graph.facebook.com/v18.0/me/messages'
+                && $request->hasHeader('Authorization', 'Bearer messenger-token');
+        });
+
+        $this->assertTrue($result['success']);
+    }
+
+    public function testResolveOutgoingRecipientIdUsesLatestIncomingSenderPlatformId(): void
+    {
+        $customer = Customer::create([
+            'name' => 'Legacy Customer',
+            'platform_user_ids' => ['facebook' => '123456789012345'],
+        ]);
+
+        $conversation = Conversation::create([
+            'customer_id' => $customer->id,
+            'platform' => 'facebook',
+            'platform_conversation_id' => '417018998164571',
+            'status' => 'active',
+            'unread_count' => 0,
+        ]);
+
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'customer_id' => $customer->id,
+            'sender_type' => 'customer',
+            'sender_id' => $customer->id,
+            'sender_name' => $customer->name,
+            'content' => 'Newest incoming customer message',
+            'platform_message_id' => 'mid.customer.123',
+            'metadata' => [
+                'platform' => 'facebook',
+                'sender_platform_id' => '25446744021623143',
+            ],
+        ]);
+
+        $method = new \ReflectionMethod($this->service, 'resolveOutgoingRecipientId');
+        $method->setAccessible(true);
+
+        $recipientId = $method->invoke($this->service, 'facebook', $customer, $conversation);
+
+        $this->assertSame('25446744021623143', $recipientId);
     }
 
     /** Test invalid message data returns null */

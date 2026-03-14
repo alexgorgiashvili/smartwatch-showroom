@@ -1,4 +1,5 @@
 import './bootstrap';
+import './lazy-load';
 import Splide from '@splidejs/splide';
 import '@splidejs/splide/css';
 import { marked } from 'marked';
@@ -74,9 +75,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const widget = document.getElementById('chatbot-widget');
 	if (!widget) {
-		const sidebarBadge = document.getElementById('sidebar-inbox-badge');
+		const getInboxBadgeElement = () => {
+			const legacyBadge = document.getElementById('sidebar-inbox-badge');
+			if (legacyBadge) {
+				return legacyBadge;
+			}
+
+			const inboxLink = document.querySelector('a[href*="/admin/inbox"], a[href*="/inbox"]');
+			if (!inboxLink) {
+				return null;
+			}
+
+			let badge = inboxLink.querySelector('[data-inbox-badge]');
+			if (!badge) {
+				badge = document.createElement('span');
+				badge.setAttribute('data-inbox-badge', '1');
+				badge.setAttribute('data-unread-count', '0');
+				badge.className = 'fi-badge fi-color-danger ms-2 d-none';
+				badge.textContent = '0';
+				inboxLink.appendChild(badge);
+			}
+
+			return badge;
+		};
+
+		const sidebarBadge = getInboxBadgeElement();
 		const conversationList = document.getElementById('conversation-list');
-		if (sidebarBadge && !conversationList && window.Echo) {
+		// Only set up Echo listener if NOT on inbox page (sidebar badge updates handled by inbox.blade.php)
+		if (sidebarBadge && !conversationList && !window.location.href.includes('/admin/inbox') && window.Echo) {
+			console.log('Setting up Echo listener for sidebar badge (non-inbox pages)');
 			window.Echo.private('inbox')
 				.listen('.MessageReceived', (event) => {
 					if (event?.message?.sender_type === 'admin') {
@@ -87,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					sidebarBadge.textContent = next;
 					sidebarBadge.dataset.unreadCount = next;
 					sidebarBadge.classList.toggle('d-none', next === 0);
+					console.log('Sidebar badge updated on non-inbox page:', next);
 				});
 		}
 		return;

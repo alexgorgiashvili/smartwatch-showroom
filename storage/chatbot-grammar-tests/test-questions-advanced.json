@@ -1,0 +1,112 @@
+{
+  "version": "2.0",
+  "created_at": "2026-03-14",
+  "description": "Advanced test questions with complex grammar scenarios for chatbot validation",
+  "questions": [
+    {
+      "id": 11,
+      "question": "ამ საათს რა ფუნქციები აქვს და იმ მოდელთან შედარებით რით განსხვავდება?",
+      "category": "comparison",
+      "expected_themes": ["features", "comparison", "demonstrative_pronouns"],
+      "grammar_focus": "ნაცილობელები (ამ/იმ), ბრუნვები, შედარებითი კონსტრუქციები"
+    },
+    {
+      "id": 12,
+      "question": "თუ ეს საათი ჩემს შვილს მივცემ, მას ყველა ფუნქცია გამოადგება?",
+      "category": "recommendation",
+      "expected_themes": ["kids", "features", "suitability"],
+      "grammar_focus": "პირობითი კილო, ნაცილობელი 'ეს', მიცემითი ბრუნვა"
+    },
+    {
+      "id": 13,
+      "question": "რომელი მოდელები არის წყალგამძლე და ცურვისთვის გამოდგება?",
+      "category": "feature_query",
+      "expected_themes": ["waterproof", "swimming", "IP rating"],
+      "grammar_focus": "ზმნის ფორმები, მრავლობითი რიცხვი"
+    },
+    {
+      "id": 14,
+      "question": "ამ ორ საათს შორის რომელი უფრო ძვირია და რატომ?",
+      "category": "comparison",
+      "expected_themes": ["price", "comparison", "reasoning"],
+      "grammar_focus": "შედარებითი ხარისხი, მიზეზობრივი კავშირი"
+    },
+    {
+      "id": 15,
+      "question": "თუ ბავშვს GPS ფუნქცია სჭირდება, მაგრამ კამერა არ უნდა, რას მირჩევთ?",
+      "category": "recommendation",
+      "expected_themes": ["GPS", "no_camera", "kids"],
+      "grammar_focus": "პირობითი კონსტრუქცია, უარყოფითი ფორმა, მიცემითი ბრუნვა"
+    },
+    {
+      "id": 16,
+      "question": "ეს მოდელი იმაზე უკეთესია თუ ცუდი?",
+      "category": "comparison",
+      "expected_themes": ["comparison", "quality"],
+      "grammar_focus": "ნაცილობელები, შედარებითი ხარისხი, ალტერნატივა"
+    },
+    {
+      "id": 17,
+      "question": "რამდენ ხანს გაძლებს ბატარეა და როგორ უნდა დავამუხტო?",
+      "category": "feature_query",
+      "expected_themes": ["battery", "charging", "duration"],
+      "grammar_focus": "დროის გამოხატვა, ინსტრუქციული ფორმა"
+    },
+    {
+      "id": 18,
+      "question": "ამ საათის ფასი იმ მაღაზიაში უფრო იაფია თუ თქვენთან?",
+      "category": "price_query",
+      "expected_themes": ["price", "comparison", "store"],
+      "grammar_focus": "ადგილობრივი ბრუნვა, შედარებითი კონსტრუქცია"
+    },
+    {
+      "id": 19,
+      "question": "თუ ახლა შევიძენ, როდის მომივა და რა ფასად?",
+      "category": "general",
+      "expected_themes": ["delivery", "price", "timing"],
+      "grammar_focus": "დროის კითხვა, პირობითი კილო, მრავალი კითხვა ერთში"
+    },
+    {
+      "id": 20,
+      "question": "ეს საათები ბავშვებისთვისაა თუ მოზრდილებისთვის?",
+      "category": "general",
+      "expected_themes": ["target_audience", "age_group"],
+      "grammar_focus": "ნათესაობითი ბრუნვა, ალტერნატივა"
+    },
+    {
+      "id": 21,
+      "question": "რომელ მოდელს ყველაზე დიდი ეკრანი აქვს და რა ზომისაა?",
+      "category": "feature_query",
+      "expected_themes": ["screen_size", "display"],
+      "grammar_focus": "აღმატებითი ხარისხი, ზომის გამოხატვა"
+    },
+    {
+      "id": 22,
+      "question": "ამ საათს SIM ბარათი სჭირდება თუ WiFi-თი მუშაობს?",
+      "category": "feature_query",
+      "expected_themes": ["SIM", "WiFi", "connectivity"],
+      "grammar_focus": "მოთხოვნის გამოხატვა, ალტერნატივა, მოქმედებითი ბრუნვა"
+    },
+    {
+      "id": 23,
+      "question": "თუ საათი გაფუჭდა, გარანტია მოქმედებს და სად უნდა მივიტანო?",
+      "category": "general",
+      "expected_themes": ["warranty", "repair", "service"],
+      "grammar_focus": "პირობითი კილო (აორისტი), ადგილის კითხვა"
+    },
+    {
+      "id": 24,
+      "question": "ამ ორიდან რომელი უფრო ხანგრძლივად მუშაობს ერთ დამუხტვაზე?",
+      "category": "comparison",
+      "expected_themes": ["battery", "comparison", "duration"],
+      "grammar_focus": "შედარებითი ხარისხი, დროის ხანგრძლივობა"
+    },
+    {
+      "id": 25,
+      "question": "ეს მოდელი იმ ფუნქციებს რომ ვნახე სხვა საათზე, ყველას აქვს?",
+      "category": "feature_query",
+      "expected_themes": ["features", "comparison"],
+      "grammar_focus": "რთული დამოკიდებული წინადადება, ნაცილობელები, მრავლობითი"
+    }
+  ]
+}

@@ -6,10 +6,20 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/js/app.js',
-                'resources/js/nobleui-inbox.js'
+                'resources/js/app.js'
             ],
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor': ['axios'],
+                },
+            },
+        },
+        chunkSizeWarningLimit: 1000,
+        minify: true,
+    },
 });

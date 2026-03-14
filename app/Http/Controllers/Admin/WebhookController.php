@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Events\MessageReceived;
-use App\Services\MetaApiService;
-use App\Services\OmnichannelService;
+use App\Services\Business\MessageDispatcher;
+use App\Services\Business\WebhookNormalizer;
 use App\Services\PushNotificationService;
 use App\Services\WebhookVerificationService;
-use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -16,16 +15,19 @@ use Illuminate\Support\Facades\Log;
 class WebhookController extends Controller
 {
     protected WebhookVerificationService $verificationService;
-    protected OmnichannelService $omnichannelService;
+    protected WebhookNormalizer $webhookNormalizer;
+    protected MessageDispatcher $messageDispatcher;
     protected PushNotificationService $pushNotificationService;
 
     public function __construct(
         WebhookVerificationService $verificationService,
-        OmnichannelService $omnichannelService,
+        WebhookNormalizer $webhookNormalizer,
+        MessageDispatcher $messageDispatcher,
         PushNotificationService $pushNotificationService
     ) {
         $this->verificationService = $verificationService;
-        $this->omnichannelService = $omnichannelService;
+        $this->webhookNormalizer = $webhookNormalizer;
+        $this->messageDispatcher = $messageDispatcher;
         $this->pushNotificationService = $pushNotificationService;
     }
 
@@ -44,6 +46,11 @@ class WebhookController extends Controller
         // Extract event type and entry details
         $object = $request->input('object', 'unknown');
         $entries = $request->input('entry', []);
+
+        // Detect Instagram webhooks by object type
+        if ($object === 'instagram') {
+            $platform = 'instagram';
+        }
 
         // Determine event type from entries if available
         $eventType = $this->extractEventType($entries, $object);
@@ -89,21 +96,36 @@ class WebhookController extends Controller
     protected function processMessage(string $platform, array $payload): void
     {
         try {
-            // Parse the webhook payload based on platform
-            $parsedMessage = match ($platform) {
-                'whatsapp' => app(WhatsAppService::class)->parseWebhookPayload($payload),
-                'facebook', 'instagram' => app(MetaApiService::class)->parseWebhookPayload($payload),
-                default => null,
-            };
+            Log::info('Processing webhook message', [
+                'platform' => $platform,
+                'payload_keys' => array_keys($payload),
+            ]);
 
-            // Skip if parsing failed
-            if (!$parsedMessage) {
-                Log::warning('Failed to parse webhook message', ['platform' => $platform]);
+            // Normalize the webhook payload to standard format
+            $normalized = $this->webhookNormalizer->normalize($platform, $payload);
+
+            // Skip if normalization failed
+            if (!$normalized) {
+                Log::warning('Failed to normalize webhook message', [
+                    'platform' => $platform,
+                    'payload' => $payload,
+                ]);
                 return;
             }
 
-            // Process the message through omnichannel service
-            $message = $this->omnichannelService->processWebhookMessage($platform, $parsedMessage);
+            Log::info('Webhook message normalized successfully', [
+                'platform' => $platform,
+                'normalized_keys' => array_keys($normalized),
+            ]);
+
+            // Process the message through message dispatcher
+            $message = $this->messageDispatcher->processIncomingMessage($platform, $normalized);
+
+            Log::info('Message dispatcher result', [
+                'platform' => $platform,
+                'message_created' => $message !== null,
+                'message_id' => $message?->id,
+            ]);
 
             // Broadcast event if message was created successfully
             if ($message) {

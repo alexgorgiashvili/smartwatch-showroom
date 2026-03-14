@@ -31,6 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'search_console_credentials' => env('GOOGLE_SEARCH_CONSOLE_CREDENTIALS'),
+        'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://mytechnic.ge'),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'org_id' => env('OPENAI_ORG_ID'),
@@ -40,6 +45,11 @@ return [
         'judge_model' => env('OPENAI_JUDGE_MODEL', 'gpt-4.1-mini'),
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        'multi_agent_enabled' => env('CHATBOT_MULTI_AGENT_ENABLED', false),
+        'multi_agent_rollout' => env('CHATBOT_MULTI_AGENT_ROLLOUT', 0),
+        'multi_agent_context_model' => env('OPENAI_MULTI_AGENT_CONTEXT_MODEL', 'gpt-4o-mini'),
+        'multi_agent_response_model' => env('OPENAI_MULTI_AGENT_RESPONSE_MODEL', 'gpt-4o-mini'),
+        'multi_agent_qa_model' => env('OPENAI_MULTI_AGENT_QA_MODEL', 'gpt-4.1-nano'),
     ],
 
     'anthropic' => [
@@ -70,7 +80,8 @@ return [
     'facebook' => [
         'app_id' => env('FACEBOOK_APP_ID'),
         'app_secret' => env('FACEBOOK_APP_SECRET'),
-        'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'page_access_token' => env('FACEBOOK_MESSENGER_ACCESS_TOKEN', env('FACEBOOK_PAGE_ACCESS_TOKEN')),
+        'messenger_access_token' => env('FACEBOOK_MESSENGER_ACCESS_TOKEN', env('FACEBOOK_PAGE_ACCESS_TOKEN')),
         'instagram_access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
         'page_id' => env('FACEBOOK_PAGE_ID'),
         'instagram_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),

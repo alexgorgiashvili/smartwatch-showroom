@@ -25,12 +25,20 @@
   - `sfull`
 - Full DB sync local -> server (backup + import + migrate):
   - `sdbsync`
+- Meta local server + tunnel start:
+  - `smeta`
+- Meta local server + tunnel stop:
+  - `smetaoff`
+- Meta local server + tunnel logs:
+  - `smetalog`
 
 ## 3) სასარგებლო დამატებები
 
 - Show saved default server:
   - `sget`
 - If shortcut არ მუშაობს ახალ ტერმინალში:
+  - `. $PROFILE`
+- If `smeta` ახალი დამატებულია და ჯერ არ ჩანს:
   - `. $PROFILE`
 
 ## 4) Current configured values
@@ -45,6 +53,12 @@
   - `gpush "your message"`
 - production deploy + smoke-check:
   - `sfull`
+- Meta local webhook test start:
+  - `smeta`
+- Meta local webhook test stop:
+  - `smetaoff`
+- Meta callback URL after `smeta`:
+  - `https://kidsim.loca.lt/api/webhooks/messages`
 
 ## 6) DB quick flow (local -> server)
 
@@ -60,3 +74,22 @@
 
 თუ defaults-ის შეცვლა გინდა (მაგალითად სხვა DB):
 - `sdbsync -LocalDb "my_local_db" -RemoteDb "my_remote_db"`
+
+## 7) Meta local tunnel
+
+- Start Laravel + localtunnel in current VS Code terminal session:
+  - `smeta`
+- Stop background jobs:
+  - `smetaoff`
+- Read job output:
+  - `smetalog`
+- Different subdomain if needed:
+  - `smeta -Subdomain "anothername"`
+- Different port if needed:
+  - `smeta -Port 8001`
+
+რას აკეთებს `smeta`:
+- ამოწმებს `8000` port-ზე Laravel უკვე უსმენს თუ არა
+- თუ არა, ამავე PowerShell session-ში რთავს background job-ს `php artisan serve`-ისთვის
+- ამავე PowerShell session-ში რთავს background job-ს `lt --port 8000 --subdomain kidsim`-ისთვის
+- გიჩვენებს Meta callback URL-ს: `https://kidsim.loca.lt/api/webhooks/messages`

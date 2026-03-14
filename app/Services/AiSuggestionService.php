@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Services;
 
@@ -56,13 +56,19 @@ class AiSuggestionService
         int $maxSuggestions = 3
     ): ?array {
         try {
+            Log::info('AI Suggestion: Starting generation', [
+                'conversation_id' => $conversation->id,
+                'message_id' => $message->id,
+                'customer_id' => $conversation->customer_id,
+            ]);
+
             // Validate inputs
             if (!$message->isFromCustomer()) {
-                Log::warning('Attempted to generate suggestions for non-customer message', [
+                Log::warning('AI Suggestion: Not a customer message', [
                     'message_id' => $message->id,
                     'conversation_id' => $conversation->id,
                 ]);
-                return null;
+                return [];
             }
 
             // Get conversation context (last 3 messages)
@@ -83,7 +89,8 @@ class AiSuggestionService
             $openaiResponse = $this->callOpenAiApi($prompt, $maxSuggestions);
 
             if (!$openaiResponse) {
-                return null;
+                Log::warning('AI Suggestion: OpenAI API returned no response');
+                return [];
             }
 
             // Parse and format suggestions
@@ -92,14 +99,20 @@ class AiSuggestionService
             // Log token usage for cost monitoring
             $this->logTokenUsage($openaiResponse);
 
+            Log::info('AI Suggestion: Successfully generated', [
+                'conversation_id' => $conversation->id,
+                'suggestion_count' => count($suggestions),
+            ]);
+
             return $suggestions;
         } catch (Exception $e) {
-            Log::warning('Failed to generate AI suggestions', [
+            Log::error('AI Suggestion: Failed to generate', [
                 'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'conversation_id' => $conversation->id,
                 'message_id' => $message->id,
             ]);
-            return null;
+            return [];
         }
     }
 
@@ -356,8 +369,14 @@ PROMPT;
     protected function callOpenAiApi(string $prompt, int $maxSuggestions): ?array
     {
         try {
+            Log::info('AI Suggestion: Calling OpenAI API', [
+                'model' => $this->openaiModel,
+                'has_api_key' => !empty($this->openaiApiKey),
+                'has_org_id' => !empty($this->openaiOrgId),
+            ]);
+
             if (!$this->openaiApiKey) {
-                Log::warning('OpenAI API key not configured');
+                Log::error('AI Suggestion: OpenAI API key not configured');
                 return null;
             }
 
@@ -366,8 +385,10 @@ PROMPT;
                 'Content-Type' => 'application/json',
             ];
 
-            if ($this->openaiOrgId) {
+            // Only add org header if it's actually set and not empty
+            if ($this->openaiOrgId && trim($this->openaiOrgId) !== '') {
                 $headers['OpenAI-Organization'] = $this->openaiOrgId;
+                Log::debug('AI Suggestion: Using OpenAI organization', ['org_id' => substr($this->openaiOrgId, 0, 10) . '...']);
             }
 
             $response = Http::withHeaders($headers)->timeout(30)->post(
@@ -391,10 +412,11 @@ PROMPT;
             );
 
             if ($response->successful()) {
+                Log::info('AI Suggestion: OpenAI API call successful');
                 return $response->json();
             }
 
-            Log::warning('OpenAI API error', [
+            Log::error('AI Suggestion: OpenAI API error', [
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);

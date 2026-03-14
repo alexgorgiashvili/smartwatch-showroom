@@ -57,6 +57,23 @@ class Customer extends Model
         return $this->conversations()->sum('unread_count');
     }
 
+    public function getAvatarUrlAttribute(?string $value): ?string
+    {
+        $url = is_string($value) ? trim($value) : null;
+
+        if (!$url) {
+            return null;
+        }
+
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        if ($host !== '' && str_contains($host, 'cdninstagram.com')) {
+            return null;
+        }
+
+        return $url;
+    }
+
     /**
      * Find or create customer by platform identifier
      */

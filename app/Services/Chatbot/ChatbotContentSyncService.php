@@ -170,7 +170,7 @@ class ChatbotContentSyncService
                 $qty = max(0, (int) $variant->quantity);
                 $status = $qty > 0 ? 'მარაგშია' : 'ამოწურულია';
 
-                return $variant->name . ': ' . $status . ' (' . $qty . ' ცალი)';
+                return $variant->name . ': ' . $status;
             })
             ->values()
             ->all();
@@ -185,7 +185,8 @@ class ChatbotContentSyncService
         $totalStock = $product->variants->sum('quantity');
         $category = $this->resolveProductCategory($product);
         $isInStock = max(0, (int) $totalStock) > 0;
-        $lines[] = 'საერთო მარაგი: ' . max(0, (int) $totalStock) . ' ცალი';
+        $stockStatus = $isInStock ? 'მარაგშია' : 'ამოწურულია';
+        $lines[] = 'საერთო მარაგი: ' . $stockStatus;
 
         $content = implode("\n", $lines);
 

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+
+    <meta name="google-site-verification" content="bPaaNUFXoKn6cHz1mi_-I8lIWApH8S1Z0gKV8LliMlI" />
     {{-- ═══ SEO: Title ═══ --}}
     <title>@yield('title', 'MyTechnic')</title>
 
@@ -43,6 +45,11 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
+
+    {{-- ═══ Resource Hints for Performance ═══ --}}
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     {{-- ═══ Per-page JSON-LD structured data ═══ --}}
     @stack('json_ld')

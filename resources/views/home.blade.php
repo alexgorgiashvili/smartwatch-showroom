@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი — GPS, 4G, მშობლის კონტროლი | MyTechnic' : 'Kids SIM Smartwatch — GPS, 4G, Parental Control | MyTechnic')
+@section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — GPS ტრეკინგი, 4G ზარები | MyTechnic თბილისი' : 'Kids SIM Smartwatch in Georgia — GPS Tracking, 4G Calls | MyTechnic Tbilisi')
 
-@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic — ბავშვის სმარტ საათი SIM ბარათით. 4G LTE, GPS ტრეკინგი, SOS ღილაკი, ზარები — ტელეფონის გარეშე. ოფიციალური იმპორტიორი საქართველოში. უფასო მიტანა.' : 'MyTechnic — kids SIM smartwatch with 4G GPS tracking, SOS button, calls without a phone. Official importer in Georgia. Free delivery.')
+@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic — ბავშვის სმარტ საათი SIM ბარათით თბილისში და საქართველოს მასშტაბით. 4G LTE, GPS მდებარეობის კონტროლი, SOS ღილაკი, ზარები ტელეფონის გარეშე. უფასო მიტანა საქართველოში. ოფიციალური იმპორტიორი.' : 'MyTechnic — kids SIM smartwatch in Tbilisi and across Georgia. 4G LTE, GPS location tracking, SOS button, calls without phone. Free delivery in Georgia. Official importer.')
 @section('canonical', url('/'))
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — MyTechnic' : 'Kids SIM Smartwatch in Georgia — MyTechnic')
 @section('og_description', app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათი 4G GPS-ით. მდებარეობის კონტროლი, პირდაპირი ზარი, SOS — ტელეფონის გარეშე. ოფიციალური იმპორტიორი.' : 'Kids SIM smartwatch with 4G GPS tracking. Location control, direct calls, SOS — no phone needed. Official importer.')
@@ -36,6 +36,52 @@ $_homeSchema = [
             'logo' => [
                 '@type' => 'ImageObject',
                 'url' => asset('images/og-default.jpg'),
+            ],
+        ],
+        [
+            '@type' => 'LocalBusiness',
+            '@id' => url('/') . '/#localbusiness',
+            'name' => 'MyTechnic',
+            'image' => asset('images/og-default.jpg'),
+            'description' => app()->getLocale() === 'ka'
+                ? 'SIM-იანი სმარტ საათები ბავშვებისთვის საქართველოში. GPS ტრეკინგი, 4G LTE, ოფიციალური იმპორტიორი.'
+                : 'SIM smartwatches for kids in Georgia. GPS tracking, 4G LTE, official importer.',
+            'url' => url('/'),
+            'telephone' => $contactSettings['phone'] ?? '+995-XXX-XXX-XXX',
+            'priceRange' => '₾₾',
+            'address' => [
+                '@type' => 'PostalAddress',
+                'addressLocality' => 'თბილისი',
+                'addressRegion' => 'თბილისი',
+                'addressCountry' => 'GE',
+            ],
+            'geo' => [
+                '@type' => 'GeoCoordinates',
+                'latitude' => 41.7151,
+                'longitude' => 44.8271,
+            ],
+            'openingHoursSpecification' => [
+                [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                    'opens' => '10:00',
+                    'closes' => '19:00',
+                ],
+                [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => 'Saturday',
+                    'opens' => '11:00',
+                    'closes' => '17:00',
+                ],
+            ],
+            'sameAs' => array_filter([
+                $contactSettings['instagram_url'] ?? null,
+                $contactSettings['facebook_url'] ?? null,
+                $contactSettings['whatsapp_url'] ?? null,
+            ]),
+            'areaServed' => [
+                '@type' => 'Country',
+                'name' => 'Georgia',
             ],
         ],
     ],
@@ -114,6 +160,8 @@ $_homeSchema = [
                     <div class="absolute inset-0 -z-10 scale-90 rounded-full bg-primary-100/60 blur-3xl"></div>
                     <img src="{{ asset('storage/images/home/smart-watch3.jpg') }}"
                         alt="{{ app()->getLocale() === 'ka' ? 'MyTechnic სმარტ საათი ბავშვებისთვის' : 'MyTechnic smartwatch for kids' }}"
+                        loading="eager"
+                        decoding="async"
                         class="relative mx-auto max-h-[400px] w-full max-w-[340px] object-contain drop-shadow-[0_32px_48px_rgba(15,23,42,0.18)] transition-transform duration-700 hover:scale-[1.02] lg:max-w-[420px]" />
                 </div>
             </div>
@@ -234,6 +282,8 @@ $_homeSchema = [
                                                     class="absolute right-2.5 top-2.5 z-10 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 ring-1 ring-rose-200">-{{ $discountPct }}%</span>
                                             @endif
                                             <img src="{{ $imageUrl }}" alt="{{ $image?->alt ?: $product->name }}"
+                                                loading="lazy"
+                                                decoding="async"
                                                 class="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.06]" />
                                         </div>
 

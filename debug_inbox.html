@@ -1,0 +1,1226 @@
+<div
+    class="kw-inbox-manager"
+    data-inbox-url="http://localhost/admin/inbox"
+    data-push-store-url="http://localhost/admin/push-subscriptions"
+    data-webpush-public-key="BOVTKx-w-F6iBzIPDtwmU_Bg51NY0PzJQIkV6g4wBo_IyKnNbGb-p5f6buouEIkeeGfIPbvewUV-CJOwN8kjF0k"
+>
+    <style>
+        .kw-inbox-layout {
+            --kw-surface: #ffffff;
+            --kw-surface-muted: #f8fafc;
+            --kw-border: #e2e8f0;
+            --kw-text: #0f172a;
+            --kw-text-muted: #64748b;
+            --kw-bot: #10b981;
+            --kw-admin: #7c3aed;
+            --kw-customer: #f3f4f6;
+            --kw-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        .kw-inbox-shell {
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            border: 1px solid var(--kw-border);
+            border-radius: 1.5rem;
+            box-shadow: var(--kw-shadow);
+            overflow: hidden;
+        }
+
+        .kw-inbox-panel {
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(12px);
+        }
+
+        .kw-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .kw-scroll::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.35);
+            border-radius: 999px;
+        }
+    </style>
+
+    <div class="kw-inbox-shell kw-inbox-layout">
+        <div class="grid min-h-[78vh] lg:grid-cols-[22rem_minmax(0,1fr)_20rem]">
+            <div class="kw-inbox-panel border-b border-slate-200 lg:border-b-0 lg:border-r block">
+                <div class="flex h-full min-h-[78vh] flex-col">
+    <div class="border-b border-slate-200 px-5 py-5">
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">Inbox</h2>
+                <p class="text-sm text-slate-500">Omnichannel conversations</p>
+            </div>
+            <div class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                348 total
+            </div>
+        </div>
+
+        <div class="mt-4 space-y-3">
+            <label class="relative block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-slot="icon">
+  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/>
+</svg>                </span>
+                <input
+                    type="text"
+                    placeholder="Search customer or message"
+                    class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                >
+            </label>
+
+            <div class="grid grid-cols-2 gap-3">
+                <select class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                    <option value="all">All platforms</option>
+                    <option value="home">Home</option>
+                    <option value="messenger">Messenger</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="facebook">Facebook</option>
+                </select>
+
+                <select class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                    <option value="all">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-5 gap-2 rounded-2xl bg-slate-100 p-1 text-xs font-medium text-slate-500">
+                                    <button
+                        type="button"
+                        class="rounded-xl px-2 py-2 transition bg-white text-slate-900 shadow-sm"
+                    >
+                        All
+                    </button>
+                                    <button
+                        type="button"
+                        class="rounded-xl px-2 py-2 transition bg-white text-slate-900 shadow-sm"
+                    >
+                        Home
+                    </button>
+                                    <button
+                        type="button"
+                        class="rounded-xl px-2 py-2 transition bg-white text-slate-900 shadow-sm"
+                    >
+                        Messenger
+                    </button>
+                                    <button
+                        type="button"
+                        class="rounded-xl px-2 py-2 transition bg-white text-slate-900 shadow-sm"
+                    >
+                        WhatsApp
+                    </button>
+                                    <button
+                        type="button"
+                        class="rounded-xl px-2 py-2 transition bg-white text-slate-900 shadow-sm"
+                    >
+                        Instagram
+                    </button>
+                            </div>
+        </div>
+    </div>
+
+    <div class="kw-scroll flex-1 overflow-y-auto px-3 py-3">
+                    <div class="space-y-2">
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 352)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_W)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        9 საათის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 351)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    C
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Customer 914421398086346</h3>
+                                    <span class="platform-badge platform-facebook rounded-full px-2 py-1">
+                                        facebook
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        20 საათის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 350)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    C
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Customer 25446744021623143</h3>
+                                    <span class="platform-badge platform-facebook rounded-full px-2 py-1">
+                                        facebook
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        20 საათის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 348)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    C
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Customer 123456789012345</h3>
+                                    <span class="platform-badge platform-facebook rounded-full px-2 py-1">
+                                        facebook
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        21 საათის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 349)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    C
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Customer 17841400000000001</h3>
+                                    <span class="platform-badge platform-instagram rounded-full px-2 py-1">
+                                        instagram
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        21 საათის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 347)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_I)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        2 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 346)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_r)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 345)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_I)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 344)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_l)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 343)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_O)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 342)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_T)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 341)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_v)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 340)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_q)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 339)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_t)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 338)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_U)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 337)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_h)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 336)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_s)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 335)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_r)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 334)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_C)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                                    
+                    <button
+                        wire:click="$dispatch('conversation-selected', 333)"
+                        class="w-full rounded-2xl border p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 border-slate-200 bg-white"
+                    >
+                        <div class="flex items-start gap-3">
+                            <div class="relative">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                                    W
+                                </div>
+                                                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="truncate text-sm font-semibold text-slate-900">Widget User (widget_n)</h3>
+                                    <span class="platform-badge platform-home rounded-full px-2 py-1">
+                                        home
+                                    </span>
+                                                                    </div>
+
+                                <p class="mt-1 truncate text-sm text-slate-500">
+                                    No messages yet
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide
+                                        bg-emerald-100 text-emerald-700
+                                        
+                                        
+                                    ">
+                                        active
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        3 დღის წინ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                            </div>
+
+                            <div class="mt-4 flex justify-center">
+                    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-between">
+        <div class="flex justify-between flex-1 sm:hidden">
+                            <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md dark:text-gray-600 dark:bg-gray-800 dark:border-gray-600">
+                    &laquo; Previous
+                </span>
+            
+                            <a href="http://localhost?page=2" class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300">
+                    Next &raquo;
+                </a>
+                    </div>
+
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700 leading-5 dark:text-gray-400">
+                    Showing
+                                            <span class="font-medium">1</span>
+                        to
+                        <span class="font-medium">20</span>
+                                        of
+                    <span class="font-medium">348</span>
+                    results
+                </p>
+            </div>
+
+            <div>
+                <span class="relative z-0 inline-flex rtl:flex-row-reverse shadow-sm rounded-md">
+                    
+                                            <span aria-disabled="true" aria-label="&amp;laquo; Previous">
+                            <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default rounded-l-md leading-5 dark:bg-gray-800 dark:border-gray-600" aria-hidden="true">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </span>
+                    
+                    
+                                            
+                        
+                        
+                                                                                                                        <span aria-current="page">
+                                        <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 dark:bg-gray-800 dark:border-gray-600">1</span>
+                                    </span>
+                                                                                                                                <a href="http://localhost?page=2" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 2">
+                                        2
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=3" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 3">
+                                        3
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=4" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 4">
+                                        4
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=5" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 5">
+                                        5
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=6" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 6">
+                                        6
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=7" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 7">
+                                        7
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=8" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 8">
+                                        8
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=9" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 9">
+                                        9
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=10" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 10">
+                                        10
+                                    </a>
+                                                                                                                                
+                                                    <span aria-disabled="true">
+                                <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 cursor-default leading-5 dark:bg-gray-800 dark:border-gray-600">...</span>
+                            </span>
+                        
+                        
+                                                                    
+                        
+                        
+                                                                                                                        <a href="http://localhost?page=17" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 17">
+                                        17
+                                    </a>
+                                                                                                                                <a href="http://localhost?page=18" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Go to page 18">
+                                        18
+                                    </a>
+                                                                                                        
+                    
+                                            <a href="http://localhost?page=2" rel="next" class="relative inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md leading-5 hover:text-gray-400 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-500 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:active:bg-gray-700 dark:focus:border-blue-800" aria-label="Next &amp;raquo;">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                                    </span>
+            </div>
+        </div>
+    </nav>
+
+                </div>
+                        </div>
+</div>
+            </div>
+
+            <div class="kw-inbox-panel border-b border-slate-200 lg:border-b-0 hidden lg:block">
+                <div wire:snapshot="{&quot;data&quot;:{&quot;conversationId&quot;:null,&quot;typingAgent&quot;:null},&quot;memo&quot;:{&quot;id&quot;:&quot;nlwrWHeTMlgSu81JTVkl&quot;,&quot;name&quot;:&quot;inbox.chat-panel&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;ka&quot;},&quot;checksum&quot;:&quot;cd74495aed5ad3d1be3db411d7f26eda01f5e6f3aa74b2b552640608e5c7085f&quot;}" wire:effects="{&quot;listeners&quot;:[&quot;echo-private:inbox,.MessageReceived&quot;,&quot;echo-private:inbox,.ConversationStatusChanged&quot;,&quot;message-sent&quot;,&quot;agent.typing&quot;]}" wire:id="nlwrWHeTMlgSu81JTVkl" class="flex h-full min-h-[78vh] flex-col">
+    <style>
+        .platform-badge {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .platform-home { background: #7c3aed; color: white; }
+        .platform-messenger { background: #0084ff; color: white; }
+        .platform-whatsapp { background: #25d366; color: white; }
+        .platform-instagram { background: #e4405f; color: white; }
+        .platform-facebook { background: #1877f2; color: white; }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+    </style>
+    <!--[if BLOCK]><![endif]-->        <div class="flex h-full flex-1 items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.12),_transparent_38%),linear-gradient(180deg,_#ffffff,_#f8fafc)] px-6 text-center">
+            <div>
+                <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-violet-100 text-violet-700">
+                    <!--[if BLOCK]><![endif]-->    <svg class="h-10 w-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
+</svg><!--[if ENDBLOCK]><![endif]-->                </div>
+                <h3 class="mt-6 text-xl font-semibold text-slate-900">Select a conversation</h3>
+                <p class="mt-2 max-w-md text-sm text-slate-500">
+                    Keep the current inbox workflow, but manage replies, AI suggestions, and status changes inside Filament.
+                </p>
+            </div>
+        </div>
+    <!--[if ENDBLOCK]><![endif]--></div>
+            </div>
+
+            <div class="kw-inbox-panel border-l border-slate-200 hidden lg:block">
+                <div wire:snapshot="{&quot;data&quot;:{&quot;conversationId&quot;:null,&quot;internalNotes&quot;:&quot;&quot;,&quot;isEditingNotes&quot;:false},&quot;memo&quot;:{&quot;id&quot;:&quot;YbyHrl8h6bGnJprIqI1s&quot;,&quot;name&quot;:&quot;inbox.customer-info-panel&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;props&quot;:[&quot;conversationId&quot;],&quot;errors&quot;:[],&quot;locale&quot;:&quot;ka&quot;},&quot;checksum&quot;:&quot;3893882569a9ce4ae01c08ce35fc184ac2852c7d90ec5ea7294159b240f36ebd&quot;}" wire:effects="[]" wire:id="YbyHrl8h6bGnJprIqI1s" class="flex h-full flex-col" wire:key="customer-panel-">
+    <!--[if BLOCK]><![endif]-->        <!-- Empty State -->
+        <div class="flex h-full items-center justify-center p-8">
+            <div class="text-center">
+                <!--[if BLOCK]><![endif]-->    <svg class="mx-auto h-12 w-12 text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-slot="icon">
+  <path d="M3.505 2.365A41.369 41.369 0 0 1 9 2c1.863 0 3.697.124 5.495.365 1.247.167 2.18 1.108 2.435 2.268a4.45 4.45 0 0 0-.577-.069 43.141 43.141 0 0 0-4.706 0C9.229 4.696 7.5 6.727 7.5 8.998v2.24c0 1.413.67 2.735 1.76 3.562l-2.98 2.98A.75.75 0 0 1 5 17.25v-3.443c-.501-.048-1-.106-1.495-.172C2.033 13.438 1 12.162 1 10.72V5.28c0-1.441 1.033-2.717 2.505-2.914Z"/>
+  <path d="M14 6c-.762 0-1.52.02-2.271.062C10.157 6.148 9 7.472 9 8.998v2.24c0 1.519 1.147 2.839 2.71 2.935.214.013.428.024.642.034.2.009.385.09.518.224l2.35 2.35a.75.75 0 0 0 1.28-.531v-2.07c1.453-.195 2.5-1.463 2.5-2.915V8.998c0-1.526-1.157-2.85-2.729-2.936A41.645 41.645 0 0 0 14 6Z"/>
+</svg><!--[if ENDBLOCK]><![endif]-->                <h3 class="mt-4 text-sm font-semibold text-slate-900">No conversation selected</h3>
+                <p class="mt-2 text-xs text-slate-500">Select a conversation to view customer details</p>
+            </div>
+        </div>
+    <!--[if ENDBLOCK]><![endif]--></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            const container = document.querySelector('.kw-inbox-manager');
+
+            if (!container) {
+                return;
+            }
+
+            // Initialize Echo if available
+            if (typeof window.Echo !== 'undefined') {
+                console.log('Echo initialized');
+            } else {
+                console.warn('Echo not found - real-time features will not work');
+            }
+
+            const inboxUrl = container.dataset.inboxUrl || '/admin/inbox';
+            const pushStoreUrl = container.dataset.pushStoreUrl || '';
+            const vapidPublicKey = container.dataset.webpushPublicKey || '';
+            let gestureBound = false;
+            let subscriptionAttempted = false;
+
+            const supportsNotifications = () => 'Notification' in window;
+            const supportsWebPush = () => (
+                'serviceWorker' in navigator &&
+                'PushManager' in window &&
+                window.isSecureContext
+            );
+
+            const urlBase64ToUint8Array = (base64String) => {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding)
+                    .replace(/-/g, '+')
+                    .replace(/_/g, '/');
+
+                const rawData = window.atob(base64);
+                return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+            };
+
+            const ensurePushSubscription = async () => {
+                if (
+                    subscriptionAttempted ||
+                    !pushStoreUrl ||
+                    !vapidPublicKey ||
+                    !supportsNotifications() ||
+                    !supportsWebPush() ||
+                    Notification.permission !== 'granted'
+                ) {
+                    return;
+                }
+
+                subscriptionAttempted = true;
+
+                try {
+                    const registration = await navigator.serviceWorker.register('/admin-sw.js', {
+                        scope: '/admin/',
+                    });
+
+                    let subscription = await registration.pushManager.getSubscription();
+
+                    if (!subscription) {
+                        subscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+                        });
+                    }
+
+                    await fetch(pushStoreUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        body: JSON.stringify(subscription.toJSON()),
+                    });
+                } catch (error) {
+                    console.warn('Failed to initialize push subscription.', error);
+                }
+            };
+
+            const requestNotificationPermission = async () => {
+                if (!supportsNotifications()) {
+                    return;
+                }
+
+                try {
+                    if (Notification.permission === 'default') {
+                        const permission = await Notification.requestPermission();
+
+                        if (permission === 'granted') {
+                            await ensurePushSubscription();
+                        }
+
+                        return;
+                    }
+
+                    if (Notification.permission === 'granted') {
+                        await ensurePushSubscription();
+                    }
+                } catch (error) {
+                    console.warn('Notification permission request failed.', error);
+                }
+            };
+
+            const bindPermissionGesture = () => {
+                if (gestureBound || !supportsNotifications()) {
+                    return;
+                }
+
+                gestureBound = true;
+
+                document.addEventListener('click', () => {
+                    requestNotificationPermission();
+                }, { once: true });
+            };
+
+            if (supportsNotifications() && Notification.permission === 'granted') {
+                ensurePushSubscription();
+            } else {
+                bindPermissionGesture();
+            }
+
+            Livewire.on('inbox-browser-notification', (payload) => {
+                const event = Array.isArray(payload) ? payload[0] : payload;
+
+                if (!supportsNotifications()) {
+                    return;
+                }
+
+                if (document.hidden && Notification.permission === 'granted') {
+                    const notification = new Notification(event.title || 'New inbox message', {
+                        body: event.body || 'You have a new message.',
+                        icon: '/assets/images/favicon.png',
+                    });
+
+                    notification.onclick = () => {
+                        window.location.href = inboxUrl;
+                        window.focus();
+                    };
+                }
+
+                ensurePushSubscription();
+            });
+        });
+    </script>
+</div>

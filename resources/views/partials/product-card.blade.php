@@ -6,7 +6,7 @@
     <a href="{{ route('products.show', $product) }}" class="text-decoration-none">
         <div class="card h-100">
             @if ($image)
-                <img src="{{ $image->url }}" alt="{{ $image->alt ?? $product->name }}" class="card-img-top" style="height: 240px; object-fit: cover;">
+                <img src="{{ $image->url }}" alt="{{ $image->alt ?? $product->name }}" loading="lazy" decoding="async" class="card-img-top" style="height: 240px; object-fit: cover;">
             @else
                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 240px;">
                     <small class="text-muted text-uppercase">{{ __('ui.catalog_title') }}</small>

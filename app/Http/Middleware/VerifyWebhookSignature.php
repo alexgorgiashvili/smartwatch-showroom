@@ -223,6 +223,11 @@ class VerifyWebhookSignature
             return (int) $entryTimestamp;
         }
 
+        $instagramTimestamp = $request->input('entry.0.changes.0.value.data.messaging.0.timestamp');
+        if (is_numeric($instagramTimestamp)) {
+            return (int) $instagramTimestamp;
+        }
+
         $statusTimestamp = $request->input('entry.0.changes.0.value.statuses.0.timestamp');
         if (is_numeric($statusTimestamp)) {
             return (int) $statusTimestamp;
@@ -246,6 +251,17 @@ class VerifyWebhookSignature
                 foreach ($entry['messaging'] as $message) {
                     if (isset($message['sender']['id'])) {
                         $senderId = $message['sender']['id'];
+                        break 2;
+                    }
+                }
+            }
+
+            if (isset($entry['changes']) && is_array($entry['changes'])) {
+                foreach ($entry['changes'] as $change) {
+                    $instagramSenderId = data_get($change, 'value.data.messaging.0.sender.id');
+
+                    if ($instagramSenderId) {
+                        $senderId = $instagramSenderId;
                         break 2;
                     }
                 }

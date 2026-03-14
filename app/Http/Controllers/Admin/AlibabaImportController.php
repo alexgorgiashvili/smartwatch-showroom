@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\AlibabaApifyLiveScraperService;
+use App\Services\AlibabaApifyPayloadAdapterService;
 use App\Services\AlibabaDataProcessorService;
 use App\Services\AlibabaScraperService;
 use App\Services\Chatbot\ChatbotContentSyncService;
@@ -18,6 +20,8 @@ class AlibabaImportController extends Controller
     public function __construct(
         private readonly AlibabaScraperService $scraper,
         private readonly AlibabaDataProcessorService $processor,
+        private readonly AlibabaApifyLiveScraperService $apifyScraper,
+        private readonly AlibabaApifyPayloadAdapterService $apifyPayloadAdapter,
     ) {
     }
 
@@ -29,18 +33,42 @@ class AlibabaImportController extends Controller
     public function parse(Request $request): JsonResponse
     {
         $data = $request->validate([
+            'import_source' => ['nullable', 'in:direct,apify'],
+            'apify_json' => ['nullable', 'string'],
             'url' => ['nullable', 'url'],
             'raw_html' => ['nullable', 'string', 'min:1000'],
         ]);
 
-        if (trim((string) ($data['url'] ?? '')) === '' && trim((string) ($data['raw_html'] ?? '')) === '') {
+        $importSource = (string) ($data['import_source'] ?? 'direct');
+        $apifyJson = trim((string) ($data['apify_json'] ?? ''));
+        $url = trim((string) ($data['url'] ?? ''));
+        $rawHtml = trim((string) ($data['raw_html'] ?? ''));
+
+        if ($importSource === 'apify' && $apifyJson === '' && $url === '') {
+            return response()->json([
+                'message' => 'Apify JSON or Alibaba product URL is required.',
+            ], 422);
+        }
+
+        if ($importSource !== 'apify' && $url === '' && $rawHtml === '') {
             return response()->json([
                 'message' => 'Alibaba product URL or full page source is required.',
             ], 422);
         }
 
         try {
-            $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
+            if ($rawHtml !== '') {
+                $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
+            } elseif ($importSource === 'apify') {
+                if ($apifyJson !== '') {
+                    $raw = $this->apifyPayloadAdapter->adaptFromJson($apifyJson);
+                } else {
+                    $livePayload = $this->apifyScraper->scrapeProductUrl($url);
+                    $raw = $this->apifyPayloadAdapter->adapt($livePayload);
+                }
+            } else {
+                $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
+            }
 
             $processed = $this->processor->process($raw);
         } catch (\InvalidArgumentException $exception) {

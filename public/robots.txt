@@ -1,13 +1,191 @@
+# ═══════════════════════════════════════════════════════
+# Standard Web Crawlers
+# ═══════════════════════════════════════════════════════
+
 User-agent: *
 Disallow: /admin/
+Disallow: /admin-legacy/
 Disallow: /cart
 Disallow: /checkout
 Disallow: /payment/
 Disallow: /lang/
-Disallow: /api/
 Disallow: /bog/
 Disallow: /webhook/
+Disallow: /test/
 
 Allow: /
+Allow: /products
+Allow: /blog
+Allow: /smartwatches/
+Allow: /api/ai/
 
+Crawl-delay: 1
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /storage/images/
+
+# ═══════════════════════════════════════════════════════
+# AI Crawlers & LLM Bots (Future-Proof Generic Names)
+# ═══════════════════════════════════════════════════════
+
+# OpenAI (ChatGPT, GPT-4, GPT-5, all future versions)
+User-agent: GPTBot
+User-agent: ChatGPT-User
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Anthropic (Claude 3, Claude 4, all future versions)
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: Claude-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Google (Gemini, Bard, all future versions)
+User-agent: Google-Extended
+User-agent: GoogleOther
+User-agent: Gemini-Bot
+User-agent: Bard-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Perplexity AI
+User-agent: PerplexityBot
+User-agent: Perplexity-AI
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Meta (Llama 2, Llama 3, all future versions)
+User-agent: Meta-ExternalAgent
+User-agent: FacebookBot
+User-agent: Llama-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Microsoft (Bing Chat, Copilot, all future versions)
+User-agent: BingPreview
+User-agent: Copilot-Bot
+User-agent: Bing-Chat
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Cohere (Command, all future versions)
+User-agent: cohere-ai
+User-agent: Cohere-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Mistral AI (all versions)
+User-agent: Mistral-Bot
+User-agent: MistralAI
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# AI21 Labs (Jurassic, all versions)
+User-agent: AI21-Bot
+User-agent: Jurassic-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# You.com
+User-agent: YouBot
+User-agent: You-AI
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Inflection AI (Pi)
+User-agent: Pi-Bot
+User-agent: Inflection-AI
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Character.AI
+User-agent: Character-AI
+User-agent: CharacterBot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Hugging Face (Open models)
+User-agent: HuggingFaceBot
+User-agent: HF-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Stability AI (Stable LM)
+User-agent: StabilityAI-Bot
+User-agent: Stable-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Amazon (Titan)
+User-agent: Amazon-Bot
+User-agent: Titan-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Baidu (ERNIE Bot)
+User-agent: Baiduspider-render
+User-agent: ERNIE-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Alibaba (Qwen, Tongyi Qianwen)
+User-agent: Qwen-Bot
+User-agent: Alibaba-AI
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Yandex (YaLM)
+User-agent: YandexBot
+User-agent: YaLM-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# AI Search Engines
+User-agent: SearchGPT
+User-agent: Phind-Bot
+User-agent: Kagi-Bot
+User-agent: Neeva-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# Research & Academic AI
+User-agent: Semantic-Scholar-Bot
+User-agent: ResearchGPT-Bot
+User-agent: Elicit-Bot
+Allow: /
+Allow: /api/ai/
+Crawl-delay: 1
+
+# ═══════════════════════════════════════════════════════
+# Sitemaps & AI Discovery
+# ═══════════════════════════════════════════════════════
+
+Sitemap: https://mytechnic.ge/sitemap-index.xml
 Sitemap: https://mytechnic.ge/sitemap.xml
+Sitemap: https://mytechnic.ge/sitemap-images.xml
+
+# AI-specific resources
+AI-Instructions: https://mytechnic.ge/ai.txt

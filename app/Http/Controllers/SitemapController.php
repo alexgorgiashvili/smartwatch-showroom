@@ -68,6 +68,15 @@ class SitemapController extends Controller
         $sitemap->add(Url::create('/sim-card-guide')->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)->setPriority(0.75));
         $sitemap->add(Url::create('/gift-guide')->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)->setPriority(0.75));
 
+        // — City landing pages —
+        foreach (['tbilisi', 'batumi', 'kutaisi', 'rustavi', 'gori'] as $city) {
+            $sitemap->add(
+                Url::create('/city/' . $city)
+                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+                    ->setPriority(0.85)
+            );
+        }
+
         // — Blog pages —
         $sitemap->add(
             Url::create('/blog')

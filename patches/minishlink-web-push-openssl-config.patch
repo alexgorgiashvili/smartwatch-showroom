@@ -1,0 +1,25 @@
+diff --git a/src/Encryption.php b/src/Encryption.php
+index 7875904..b6f4959 100644
+--- a/src/Encryption.php
++++ b/src/Encryption.php
+@@ -235,10 +235,18 @@ class Encryption
+ 
+     private static function createLocalKeyObject(): array
+     {
+-        $keyResource = openssl_pkey_new([
++        $keyOptions = [
+             'curve_name'       => 'prime256v1',
+             'private_key_type' => OPENSSL_KEYTYPE_EC,
+-        ]);
++        ];
++
++        $openSslConfig = getenv('OPENSSL_CONF') ?: ini_get('openssl.default_config');
++        if (is_string($openSslConfig) && $openSslConfig !== '' && is_file($openSslConfig)) {
++            $keyOptions['config'] = $openSslConfig;
++        }
++
++        $keyResource = openssl_pkey_new($keyOptions);
++
+         if (!$keyResource) {
+             throw new \RuntimeException('Unable to create the local key.');
+         }

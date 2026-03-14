@@ -16,7 +16,7 @@
             </form>
         @endif
         <a href="{{ route('admin.chatbot-lab.runs.index') }}" class="btn btn-outline-secondary">← Back to Runs</a>
-        <a href="{{ route('admin.chatbot-lab.runs.export', $run) }}" class="btn btn-outline-primary">Export CSV</a>
+        <a href="{{ route('filament.admin.chatbot-lab-runs.export', $run) }}" class="btn btn-outline-primary">Export CSV</a>
     </div>
 </div>
 

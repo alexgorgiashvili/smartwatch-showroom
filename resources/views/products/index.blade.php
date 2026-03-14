@@ -261,6 +261,8 @@
                                         <img
                                             src="{{ $imageUrl }}"
                                             alt="{{ $image?->alt ?: $product->name }}"
+                                            loading="lazy"
+                                            decoding="async"
                                             class="h-44 w-full object-contain transition duration-500 group-hover:scale-[1.06] {{ $secondaryImageUrl ? 'group-hover:opacity-0' : '' }}"
                                         />
 
@@ -268,6 +270,8 @@
                                             <img
                                                 src="{{ $secondaryImageUrl }}"
                                                 alt="{{ $secondaryImage?->alt ?: $product->name }}"
+                                                loading="lazy"
+                                                decoding="async"
                                                 class="absolute inset-0 h-44 w-full object-contain opacity-0 transition duration-500 group-hover:opacity-100"
                                             />
                                         @endif

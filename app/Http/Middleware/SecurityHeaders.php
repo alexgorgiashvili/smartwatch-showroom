@@ -76,16 +76,16 @@ class SecurityHeaders
             "default-src 'self'",
 
             // Script policy
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
 
             // Style policy
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
 
             // Image policy
             "img-src 'self' data: https:",
 
             // Font policy
-            "font-src 'self' data: https://fonts.gstatic.com",
+            "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
 
             // Connect policy (AJAX, WebSocket, etc.)
             "connect-src 'self' https: ws: wss:",
