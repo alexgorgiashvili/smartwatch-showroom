@@ -17,6 +17,7 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "minishlink/web-push": "9.0",
+        "openspout/openspout": "4.24",
         "predis/predis": "^3.4",
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-sitemap": "^7.3"
