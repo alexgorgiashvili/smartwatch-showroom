@@ -10,7 +10,7 @@ git pull origin main
 
 # Install/update Composer dependencies
 echo "📦 Installing PHP dependencies..."
-composer install --optimize-autoloader --no-dev
+composer install --optimize-autoloader --no-dev --ignore-platform-req=ext-intl
 
 # Install/update NPM dependencies and build assets
 echo "🎨 Building frontend assets..."
