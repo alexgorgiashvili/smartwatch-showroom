@@ -21,8 +21,12 @@
   - `sd`
 - Local git push shortcut (`add + commit + push`):
   - `gpush "commit message"`
-- Server to local pull (სერვერიდან ლოკალზე კოდის გადმოტანა):
+- Server git push shortcut (სერვერიდან GitHub-ზე):
+  - `spush "commit message"`
+- Pull latest code from GitHub to local:
   - `spull`
+- Pull latest code from GitHub to server:
+  - `spullserver`
 - Full deploy + smoke-check (ერთ ბრძანებაში):
   - `sfull`
 - Full DB sync local -> server (backup + import + migrate):
@@ -53,8 +57,12 @@
 
 - კოდის ატვირთვა ლოკალიდან GitHub-ზე:
   - `gpush "your message"`
-- კოდის გადმოტანა სერვერიდან ლოკალზე:
+- კოდის ატვირთვა სერვერიდან GitHub-ზე:
+  - `spush "your message"`
+- GitHub-დან ლოკალზე pull:
   - `spull`
+- GitHub-დან სერვერზე pull:
+  - `spullserver`
 - production deploy + smoke-check:
   - `sfull`
 - Meta local webhook test start:
@@ -98,21 +106,58 @@
 - ამავე PowerShell session-ში რთავს background job-ს `lt --port 8000 --subdomain kidsim`-ისთვის
 - გიჩვენებს Meta callback URL-ს: `https://kidsim.loca.lt/api/webhooks/messages`
 
-## 8) Server to Local pull (spull)
+## 8) Git shortcuts (push & pull)
 
-- სერვერიდან ლოკალზე კოდის გადმოტანა ერთი ბრძანებით:
-  - `spull`
+### spush - Push from server to GitHub
+- სერვერიდან GitHub-ზე კოდის ატვირთვა (როგორც `gpush` ლოკალზე):
+  - `spush "commit message"`
+  - `spush "fix bug" -Branch "develop"` (სხვა branch-ისთვის)
 
-რას აკეთებს `spull` ავტომატურად:
-1. სერვერზე აკეთებს `git add .` და `git commit` (თუ არის ცვლილებები)
-2. სერვერიდან აკეთებს `git push origin main` GitHub-ზე
-3. ლოკალურად აკეთებს `git pull origin main` და იღებს ცვლილებებს
+რას აკეთებს `spush`:
+1. სერვერზე აკონფიგურებს git user-ს (თუ არ არის)
+2. აკეთებს `git add .`
+3. აკეთებს `git commit -m "your message"`
+4. აკეთებს `git push origin main`
 
 **გამოყენება:**
-- Default server-ით: `spull`
-- სხვა branch-ით: `spull -Branch "develop"`
-- სხვა server-ით: `spull -Server "user@ip"`
+```powershell
+spush "server hotfix applied"
+```
 
-**როდის გამოიყენო:**
-- როცა სერვერზე პირდაპირ შეცვალე რამე და გინდა ლოკალზე გადმოიტანო
-- როცა სერვერზე hotfix გააკეთე და გინდა ლოკალურ კოდთან სინქრონიზაცია
+### spull - Pull from GitHub to local
+- GitHub-დან ლოკალზე კოდის გადმოტანა:
+  - `spull`
+  - `spull -Branch "develop"` (სხვა branch-ისთვის)
+
+რას აკეთებს `spull`:
+- აკეთებს `git pull origin main` ლოკალურად
+- მარტივი და სწრაფი გზა GitHub-დან ბოლო ცვლილებების მისაღებად
+
+### spullserver - Pull from GitHub to server
+- GitHub-დან სერვერზე კოდის გადმოტანა:
+  - `spullserver`
+  - `spullserver -Branch "develop"` (სხვა branch-ისთვის)
+
+რას აკეთებს `spullserver`:
+- სერვერზე აკეთებს `git stash` (დროებით ინახავს ცვლილებებს)
+- აკეთებს `git pull origin main`
+- აბრუნებს stash-ს თუ იყო ცვლილებები
+
+---
+
+### 🔄 სრული workflow მაგალითი:
+
+**სცენარი 1: სერვერზე ცვლილება → ლოკალზე გადმოტანა**
+```powershell
+# სერვერზე რამე შეცვალე და გინდა ლოკალზე გადმოიტანო
+spush "server changes"           # სერვერიდან GitHub-ზე
+spull                             # GitHub-დან ლოკალზე
+```
+
+**სცენარი 2: ლოკალზე ცვლილება → სერვერზე გადატანა**
+```powershell
+gpush "local changes"             # ლოკალიდან GitHub-ზე
+spullserver                       # GitHub-დან სერვერზე
+# ან
+sfull                             # full deploy + smoke-check
+```
