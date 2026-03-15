@@ -21,6 +21,8 @@
   - `sd`
 - Local git push shortcut (`add + commit + push`):
   - `gpush "commit message"`
+- Server to local pull (სერვერიდან ლოკალზე კოდის გადმოტანა):
+  - `spull`
 - Full deploy + smoke-check (ერთ ბრძანებაში):
   - `sfull`
 - Full DB sync local -> server (backup + import + migrate):
@@ -49,8 +51,10 @@
 
 ## 5) Quick flow
 
-- კოდის ატვირთვა GitHub-ზე:
+- კოდის ატვირთვა ლოკალიდან GitHub-ზე:
   - `gpush "your message"`
+- კოდის გადმოტანა სერვერიდან ლოკალზე:
+  - `spull`
 - production deploy + smoke-check:
   - `sfull`
 - Meta local webhook test start:
@@ -93,3 +97,22 @@
 - თუ არა, ამავე PowerShell session-ში რთავს background job-ს `php artisan serve`-ისთვის
 - ამავე PowerShell session-ში რთავს background job-ს `lt --port 8000 --subdomain kidsim`-ისთვის
 - გიჩვენებს Meta callback URL-ს: `https://kidsim.loca.lt/api/webhooks/messages`
+
+## 8) Server to Local pull (spull)
+
+- სერვერიდან ლოკალზე კოდის გადმოტანა ერთი ბრძანებით:
+  - `spull`
+
+რას აკეთებს `spull` ავტომატურად:
+1. სერვერზე აკეთებს `git add .` და `git commit` (თუ არის ცვლილებები)
+2. სერვერიდან აკეთებს `git push origin main` GitHub-ზე
+3. ლოკალურად აკეთებს `git pull origin main` და იღებს ცვლილებებს
+
+**გამოყენება:**
+- Default server-ით: `spull`
+- სხვა branch-ით: `spull -Branch "develop"`
+- სხვა server-ით: `spull -Server "user@ip"`
+
+**როდის გამოიყენო:**
+- როცა სერვერზე პირდაპირ შეცვალე რამე და გინდა ლოკალზე გადმოიტანო
+- როცა სერვერზე hotfix გააკეთე და გინდა ლოკალურ კოდთან სინქრონიზაცია
