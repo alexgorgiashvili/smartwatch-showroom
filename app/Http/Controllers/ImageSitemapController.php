@@ -40,19 +40,19 @@ class ImageSitemapController extends Controller
 
             $xml .= '<url>';
             $xml .= '<loc>' . htmlspecialchars(route('products.show', $product)) . '</loc>';
-            
+
             foreach ($product->images as $image) {
                 $xml .= '<image:image>';
-                $xml .= '<image:loc>' . htmlspecialchars($image->url) . '</image:loc>';
-                
+                $xml .= '<image:loc>' . htmlspecialchars(url($image->url)) . '</image:loc>';
+
                 if ($image->alt) {
                     $xml .= '<image:caption>' . htmlspecialchars($image->alt) . '</image:caption>';
                 }
-                
+
                 $xml .= '<image:title>' . htmlspecialchars($product->name) . '</image:title>';
                 $xml .= '</image:image>';
             }
-            
+
             $xml .= '</url>';
         }
 

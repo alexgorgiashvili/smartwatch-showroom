@@ -30,7 +30,7 @@
     <meta property="og:url" content="@yield('og_url', url()->current())">
     <meta property="og:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
     <meta property="og:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის. ოფიციალური იმპორტიორი.')@endif">
-    <meta property="og:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+    <meta property="og:image" content="@yield('og_image', asset('images/og-default.webp'))">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="@yield('og_image_alt', 'MyTechnic სმარტ საათები')">
@@ -39,7 +39,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
     <meta name="twitter:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის.')@endif">
-    <meta name="twitter:image" content="@yield('og_image', asset('images/og-default.jpg'))">
+    <meta name="twitter:image" content="@yield('og_image', asset('images/og-default.webp'))">
 
     {{-- ═══ Favicon ═══ --}}
     <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
@@ -69,10 +69,8 @@
         <div class="flex h-16 items-center justify-between">
           <!-- Logo -->
           <div class="md:flex md:items-center md:gap-12">
-            <a class="flex items-center gap-1" href="{{ route('home') }}" aria-label="MyTechnic">
-              <span class="rounded-full bg-gray-900 px-3 py-1 text-sm font-extrabold tracking-tight">
-                <span class="text-primary-400">My</span><span class="text-white">Technic</span>
-              </span>
+            <a class="flex items-center" href="{{ route('home') }}" aria-label="MyTechnic">
+              <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] md:h-[100px] w-auto object-contain">
             </a>
           </div>
 
@@ -122,8 +120,8 @@
           <nav id="mobile-menu" class="fixed inset-y-0 right-0 z-50 flex h-screen w-[85vw] max-w-[320px] translate-x-full transform flex-col bg-gray-950 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden">
             <!-- Mobile Menu Header with Logo + Close -->
             <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
-              <a class="flex items-center gap-1" href="{{ route('home') }}">
-                <span class="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs font-extrabold"><span class="text-primary-400">My</span><span class="text-white">Technic</span></span>
+              <a class="flex items-center" href="{{ route('home') }}">
+                <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] w-auto object-contain">
               </a>
               <button id="mobile-menu-close" aria-label="Close menu" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

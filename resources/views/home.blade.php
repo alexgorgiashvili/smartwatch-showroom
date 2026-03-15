@@ -177,7 +177,7 @@ $_homeSchema = [
                 {{ app()->getLocale() === 'ka' ? 'რატომ MyTechnic' : 'Why MyTechnic' }}
             </p>
 
-            <div class="grid grid-cols-2 gap-4 lg:grid-cols-5 lg:gap-6">
+            <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
                 @php
                     $trustTiles = [
                         [
