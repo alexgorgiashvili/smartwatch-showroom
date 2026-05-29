@@ -28,11 +28,14 @@ class Order extends Model
         'total_amount',
         'currency',
         'notes',
+        'sms_sent_at',
+        'sms_reference',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
         'payment_type' => 'integer',
+        'sms_sent_at' => 'datetime',
     ];
 
     public function items(): HasMany
@@ -75,5 +78,18 @@ class Order extends Model
     public function canBeCancelled(): bool
     {
         return in_array($this->status, ['pending', 'shipped']);
+    }
+
+    public function isSmsSent(): bool
+    {
+        return !is_null($this->sms_sent_at);
+    }
+
+    public function markSmsSent(string $reference = null): void
+    {
+        $this->update([
+            'sms_sent_at' => now(),
+            'sms_reference' => $reference,
+        ]);
     }
 }

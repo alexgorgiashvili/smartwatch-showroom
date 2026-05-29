@@ -17,6 +17,7 @@
     },
     "dependencies": {
         "@splidejs/splide": "^4.1.4",
+        "cropperjs": "^2.1.0",
         "dompurify": "^3.3.2",
         "laravel-echo": "^2.3.0",
         "marked": "^17.0.4",

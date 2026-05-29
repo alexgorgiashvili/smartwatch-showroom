@@ -13,7 +13,11 @@ use App\Services\Chatbot\Agents\SupervisorAgent;
 use App\Services\Chatbot\ChatbotProductSelectionService;
 use App\Services\Chatbot\IntentAnalyzerService;
 use App\Services\Chatbot\BifurcatedMemoryService;
+use App\Services\Chatbot\ChatbotFallbackStrategyService;
+use App\Services\Chatbot\ChatbotQualityMetricsService;
 use App\Services\Chatbot\InputGuardService;
+use App\Services\Chatbot\LangfuseService;
+use App\Services\Chatbot\UnifiedAiPolicyService;
 use App\Services\Chatbot\WidgetTraceLogger;
 use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -79,16 +83,20 @@ class ChatController extends Controller
         IntentAnalyzerService $intentAnalyzer,
         BifurcatedMemoryService $memory,
         ChatbotProductSelectionService $productSelection,
-        WidgetTraceLogger $widgetTrace
-    ): JsonResponse
-    {
+        WidgetTraceLogger $widgetTrace,
+        LangfuseService $langfuse,
+        ChatbotQualityMetricsService $qualityMetrics,
+        ChatbotFallbackStrategyService $fallbackStrategy,
+        UnifiedAiPolicyService $policy
+    ) {
         $request->validate([
             'message' => ['required', 'string', 'max:1000'],
         ]);
 
         $traceId = $widgetTrace->enabled() ? $widgetTrace->newTraceId() : null;
         $incomingMessage = (string) $request->input('message');
-        $safeIncomingMessage = trim($inputGuard->sanitize($incomingMessage));
+        $guardResult = $inputGuard->inspect($incomingMessage);
+        $safeIncomingMessage = $guardResult->sanitizedInput();
 
         $widgetTrace->logStep('widget.respond.request_received', array_filter([
             'trace_id' => $traceId,
@@ -113,6 +121,20 @@ class ChatController extends Controller
             'sanitized_message' => $safeIncomingMessage,
             'next_step' => 'persist_customer_message',
         ], fn ($value) => $value !== null));
+
+        $langfuse->startTrace(
+            'chatbot.widget.response',
+            ['message' => $safeIncomingMessage],
+            [
+                'conversation_id' => $conversation->id,
+                'customer_id' => $customer->id,
+                'channel' => 'widget',
+            ],
+            (string) $customer->id,
+            (string) $conversation->id,
+            $traceId,
+            ['chatbot', 'widget']
+        );
 
         $customerMessage = DB::transaction(function () use ($conversation, $customer, $safeIncomingMessage) {
             $message = Message::create([
@@ -174,12 +196,102 @@ class ChatController extends Controller
             'next_step' => 'run_chat_pipeline',
         ], fn ($value) => $value !== null));
 
+        if (!$guardResult->allowed()) {
+            $blockedReply = $guardResult->safeReply() ?? 'ბოდიში, ამ შინაარსზე ვერ გავაგრძელებ.';
+
+            $widgetTrace->logStep('widget.respond.guard_blocked', array_filter([
+                'trace_id' => $traceId,
+                'conversation_id' => $conversation->id,
+                'customer_id' => $customer->id,
+                'guard_reason' => $guardResult->reason(),
+            ], fn ($value) => $value !== null));
+
+            $botMessage = DB::transaction(function () use ($conversation, $customer, $blockedReply, $guardResult): Message {
+                $message = Message::create([
+                    'conversation_id' => $conversation->id,
+                    'customer_id' => $customer->id,
+                    'sender_type' => 'bot',
+                    'sender_id' => 0,
+                    'sender_name' => 'MyTechnic Assistant',
+                    'content' => $blockedReply,
+                    'platform_message_id' => 'home_' . Str::uuid(),
+                    'metadata' => [
+                        'chatbot_failure' => false,
+                        'fallback_reason' => ChatbotOutcomeReason::INPUT_GUARD,
+                        'guard_blocked' => true,
+                        'guard_reason' => $guardResult->reason(),
+                    ],
+                ]);
+                $conversation->update(['last_message_at' => now()]);
+                return $message;
+            });
+
+            event(new MessageReceived($botMessage, $conversation->fresh('customer'), $customer, 'home'));
+
+            $qualityMetrics->recordWidgetResponseQuality(
+                $conversation->id,
+                $customer->id,
+                fallbackUsed: true,
+                nonGeorgianModelOutput: false,
+                fallbackReason: ChatbotOutcomeReason::INPUT_GUARD,
+            );
+
+            $guardResponseData = [
+                'conversation_id' => $conversation->id,
+                'message' => $blockedReply,
+            ];
+
+            if ($this->shouldExposeWidgetDebug()) {
+                $guardResponseData['debug'] = [
+                    'intent' => null,
+                    'intent_confidence' => null,
+                    'intent_fallback' => false,
+                    'validation_passed' => true,
+                    'validation_violations' => [],
+                    'georgian_passed' => true,
+                    'fallback_reason' => ChatbotOutcomeReason::INPUT_GUARD,
+                    'regeneration_attempted' => false,
+                    'regeneration_succeeded' => false,
+                    'products_found' => 0,
+                    'products_attached' => 0,
+                    'carousel_suppressed' => false,
+                    'trace_id' => $traceId,
+                ];
+            }
+
+            $langfuse->updateTrace([
+                'conversation_id' => $conversation->id,
+                'customer_id' => $customer->id,
+                'fallback_reason' => ChatbotOutcomeReason::INPUT_GUARD,
+                'guard_reason' => $guardResult->reason(),
+            ], $blockedReply);
+            $langfuse->clearContext();
+
+            return response()->json($guardResponseData);
+        }
+
         $pipelineResult = null;
         $responseData = [
             'conversation_id' => $conversation->id,
         ];
 
-        try {
+        return response()->stream(function () use (
+            $safeIncomingMessage,
+            $conversation,
+            $customer,
+            $traceId,
+            $widgetTrace,
+            $memory,
+            $intentAnalyzer,
+            $supervisor,
+            $policy,
+            $langfuse,
+            $fallbackStrategy,
+            $qualityMetrics,
+            $responseData
+        ) {
+            $pipelineResult = null;
+            try {
             $widgetTrace->logStep('widget.respond.pipeline_handoff', array_filter([
                 'trace_id' => $traceId,
                 'conversation_id' => $conversation->id,
@@ -188,14 +300,27 @@ class ChatController extends Controller
                 'next_step' => 'intent_analysis_and_supervisor',
             ], fn ($value) => $value !== null));
 
-            // Analyze intent
-            $intentResult = $intentAnalyzer->analyze($safeIncomingMessage, $conversation->id);
-
-            // Append user message to memory
-            $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
+            // Get conversation history from memory
+            $sessionContext = $memory->getSessionContext($conversation->id);
+            $history = $sessionContext['recent'] ?? [];
 
             // Get user preferences
             $preferences = $memory->getUserPreferences($customer->id);
+
+            // Analyze intent
+            $intentResult = $intentAnalyzer->analyze(
+                $safeIncomingMessage,
+                $history,
+                $preferences,
+                [
+                    'trace_id' => $traceId,
+                    'conversation_id' => $conversation->id,
+                    'customer_id' => $customer->id,
+                ]
+            );
+
+            // Append user message to memory
+            $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
 
             // Orchestrate with SupervisorAgent
             $supervisorResult = $supervisor->orchestrate(
@@ -206,9 +331,18 @@ class ChatController extends Controller
                 $preferences,
                 [
                     'trace_id' => $traceId,
+                    'conversation_id' => $conversation->id,
                     'customer_id' => $customer->id,
                 ]
             );
+
+            $extractedPreferences = is_array($supervisorResult['extracted_preferences'] ?? null)
+                ? $supervisorResult['extracted_preferences']
+                : [];
+
+            if ($extractedPreferences !== []) {
+                $memory->updateUserPreferences($customer->id, $extractedPreferences);
+            }
 
             // Append assistant response to memory
             if ($supervisorResult['success'] ?? false) {
@@ -216,9 +350,24 @@ class ChatController extends Controller
             }
 
             // Create compatible result object
+            $agentResponse = $supervisorResult['response'] ?? '';
+            $agentReason   = $supervisorResult['reason'] ?? null;
+
+            // If agent returned empty response with a known failure reason, resolve proper Georgian message
+            if ($agentResponse === '' && $agentReason !== null) {
+                $agentResponse = $fallbackStrategy->resolveStaticReason($agentReason)->reply();
+            }
+
+            // Georgian QA gate: if model replied in non-Georgian, replace with safe fallback
+            $georgianPassed = $agentResponse === '' || $policy->passesStrictGeorgianQa($agentResponse);
+            if (!$georgianPassed) {
+                $agentResponse = $policy->strictGeorgianFallback();
+                $agentReason   = ChatbotOutcomeReason::STRICT_GEORGIAN;
+            }
+
             $pipelineResult = (object) [
-                'response' => $supervisorResult['response'] ?? '',
-                'fallbackReason' => $supervisorResult['reason'] ?? null,
+                'response' => $agentResponse,
+                'fallbackReason' => $agentReason,
                 'validationPassed' => $supervisorResult['validation_passed'] ?? false,
                 'validationViolations' => $supervisorResult['violations'] ?? [],
                 'responseTimeMs' => 0,
@@ -226,7 +375,7 @@ class ChatController extends Controller
                 'regenerationSucceeded' => $supervisorResult['success'] ?? false,
                 'intentResult' => $intentResult,
                 'validationContext' => [],
-                'georgianPassed' => true,
+                'georgianPassed' => $georgianPassed,
             ];
 
             $widgetTrace->logStep('widget.respond.supervisor_completed', array_filter([
@@ -241,8 +390,8 @@ class ChatController extends Controller
                 'next_step' => 'persist_bot_message',
             ], fn ($value) => $value !== null));
 
-            DB::transaction(function () use ($conversation, $customer, $pipelineResult): void {
-                Message::create([
+            $botMessage = DB::transaction(function () use ($conversation, $customer, $pipelineResult): Message {
+                $message = Message::create([
                     'conversation_id' => $conversation->id,
                     'customer_id' => $customer->id,
                     'sender_type' => 'bot',
@@ -261,7 +410,10 @@ class ChatController extends Controller
                 $conversation->update([
                     'last_message_at' => now(),
                 ]);
+                return $message;
             });
+
+            event(new MessageReceived($botMessage, $conversation->fresh('customer'), $customer, 'home'));
 
             $widgetTrace->logStep('widget.respond.bot_message_persisted', array_filter([
                 'trace_id' => $traceId,
@@ -272,6 +424,16 @@ class ChatController extends Controller
             ], fn ($value) => $value !== null));
 
             $responseData['message'] = $pipelineResult->response;
+
+            $qualityMetrics->recordWidgetResponseQuality(
+                $conversation->id,
+                $customer->id,
+                fallbackUsed: $pipelineResult->fallbackReason !== null,
+                nonGeorgianModelOutput: !$pipelineResult->georgianPassed,
+                fallbackReason: $pipelineResult->fallbackReason,
+                regenerationAttempted: $pipelineResult->regenerationAttempted,
+                regenerationSucceeded: $pipelineResult->regenerationSucceeded,
+            );
         } catch (\Throwable $exception) {
             $widgetTrace->logStep('widget.respond.pipeline_failed', array_filter([
                 'trace_id' => $traceId,
@@ -290,8 +452,8 @@ class ChatController extends Controller
 
             $failureMessage = 'ბოდიში, დროებით პრობლემა გვაქვს. სცადეთ მოგვიანებით.';
 
-            DB::transaction(function () use ($conversation, $customer, $failureMessage, $exception): void {
-                Message::create([
+            $botMessage = DB::transaction(function () use ($conversation, $customer, $failureMessage, $exception): Message {
+                $message = Message::create([
                     'conversation_id' => $conversation->id,
                     'customer_id' => $customer->id,
                     'sender_type' => 'bot',
@@ -310,9 +472,27 @@ class ChatController extends Controller
                 $conversation->update([
                     'last_message_at' => now(),
                 ]);
+                return $message;
             });
 
+            event(new MessageReceived($botMessage, $conversation->fresh('customer'), $customer, 'home'));
+
             $responseData['message'] = $failureMessage;
+
+            $qualityMetrics->recordWidgetResponseQuality(
+                $conversation->id,
+                $customer->id,
+                fallbackUsed: true,
+                nonGeorgianModelOutput: false,
+                fallbackReason: ChatbotOutcomeReason::RUNTIME_EXCEPTION,
+            );
+
+            $langfuse->updateTrace([
+                'conversation_id' => $conversation->id,
+                'customer_id' => $customer->id,
+                'fallback_reason' => ChatbotOutcomeReason::RUNTIME_EXCEPTION,
+                'error' => $exception->getMessage(),
+            ], $failureMessage);
         }
 
         // Attach product cards for carousel if RAG found products
@@ -397,6 +577,19 @@ class ChatController extends Controller
             'response_products_count' => isset($responseData['products']) ? count($responseData['products']) : 0,
             'next_step' => 'widget_receives_payload',
         ], fn ($value) => $value !== null));
+
+        $langfuse->updateTrace([
+            'conversation_id' => $conversation->id,
+            'customer_id' => $customer->id,
+            'intent' => $pipelineResult?->intentResult?->intent(),
+            'intent_confidence' => $pipelineResult?->intentResult?->confidence(),
+            'fallback_reason' => $pipelineResult?->fallbackReason,
+            'validation_passed' => $pipelineResult?->validationPassed,
+            'regeneration_attempted' => $pipelineResult?->regenerationAttempted,
+            'regeneration_succeeded' => $pipelineResult?->regenerationSucceeded,
+            'products_attached' => isset($responseData['products']) ? count($responseData['products']) : 0,
+        ], $responseData['message'] ?? null);
+        $langfuse->clearContext();
 
         return response()->json($responseData);
     }

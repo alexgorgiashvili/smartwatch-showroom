@@ -10,15 +10,17 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index(): View
+    public function index(Request $request)
     {
         $users = User::query()
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return view('admin.users.index', [
+        $view = view('admin.users.index', [
             'users' => $users,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function create(): View

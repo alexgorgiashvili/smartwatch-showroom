@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
+        'webhook.meta' => \App\Http\Middleware\VerifyMetaWebhookSignature::class,
         'validate.inbox' => \App\Http\Middleware\ValidateInboxInput::class,
     ];
 }

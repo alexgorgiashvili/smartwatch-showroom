@@ -24,16 +24,16 @@ class InboxPWA {
     }
 
     setupNotificationListeners() {
-        // Listen for browser notification events from Livewire
         window.addEventListener('inbox-browser-notification', (event) => {
             const { title, body, conversationId } = event.detail;
             this.showBrowserNotification(title, body, conversationId);
         });
 
-        // Listen for Livewire dispatched events
-        Livewire.on('inbox-browser-notification', (data) => {
-            this.showBrowserNotification(data.title, data.body, data.conversationId);
-        });
+        if (window.Livewire && typeof window.Livewire.on === 'function') {
+            window.Livewire.on('inbox-browser-notification', (data) => {
+                this.showBrowserNotification(data.title, data.body, data.conversationId);
+            });
+        }
     }
 
     async requestNotificationPermission() {
@@ -71,8 +71,8 @@ class InboxPWA {
 
         const options = {
             body: body,
-            icon: '/images/notification-icon.png',
-            badge: '/images/notification-badge.png',
+            icon: '/assets/images/favicon.png',
+            badge: '/assets/images/favicon.png',
             tag: `conversation-${conversationId}`,
             renotify: true,
             requireInteraction: false,

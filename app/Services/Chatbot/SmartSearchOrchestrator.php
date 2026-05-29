@@ -141,10 +141,7 @@ class SmartSearchOrchestrator
             }
         }
 
-        return $this->baseProductQuery()
-            ->orderByDesc('updated_at')
-            ->limit($limit)
-            ->get();
+        return collect();
     }
 
     private function augmentComparisonProducts(Collection $seedProducts, IntentResult $intent, int $limit): Collection

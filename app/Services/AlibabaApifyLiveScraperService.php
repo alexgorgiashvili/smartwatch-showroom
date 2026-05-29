@@ -9,7 +9,7 @@ class AlibabaApifyLiveScraperService
     public function scrapeProductUrl(string $url): array
     {
         $token = (string) config('services.apify.token', '');
-        $actorId = $this->normalizeActorId((string) config('services.apify.actor_id', 'apify/web-scraper'));
+        $actorId = $this->resolveActorId();
         $baseUrl = rtrim((string) config('services.apify.base_url', 'https://api.apify.com/v2'), '/');
         $timeoutSeconds = (int) config('services.apify.timeout', 180);
 
@@ -17,26 +17,16 @@ class AlibabaApifyLiveScraperService
             throw new \RuntimeException('Apify token is missing. Configure APIFY_API_TOKEN in .env.');
         }
 
-        $firstItem = $this->runAndGetFirstItem($baseUrl, $actorId, $token, $timeoutSeconds, $this->buildInput($url));
+        $firstItem = $this->runAndGetFirstItem($baseUrl, $actorId, $token, $timeoutSeconds, $this->buildInput($url, $actorId));
 
         if ($this->isClearlyBlocked($firstItem) && (bool) config('services.apify.retry_with_residential', true)) {
-            $residentialInput = $this->buildInput($url);
-            $residentialInput['proxyConfiguration'] = [
-                'useApifyProxy' => true,
-                'apifyProxyGroups' => ['RESIDENTIAL'],
-            ];
-
-            $countryCode = strtoupper(trim((string) config('services.apify.proxy_country', '')));
-            if ($countryCode !== '') {
-                $residentialInput['proxyConfiguration']['apifyProxyCountry'] = $countryCode;
-            }
-
+            $residentialInput = $this->buildInput($url, $actorId, true);
             $firstItem = $this->runAndGetFirstItem($baseUrl, $actorId, $token, $timeoutSeconds, $residentialInput);
         }
 
         if ($this->isClearlyBlocked($firstItem)) {
             throw new \RuntimeException(
-                'Alibaba blocked crawler access (captcha/interception). Try APIFY_PROXY_COUNTRY, enable residential proxy, or import using manual JSON/Page Source fallback.'
+                'Alibaba blocked crawler access (captcha/interception). Try APIFY_PROXY_COUNTRY, set APIFY_ALIBABA_ACTOR_ID to a dedicated Alibaba actor, or import using manual JSON/Page Source fallback.'
             );
         }
 
@@ -100,6 +90,11 @@ class AlibabaApifyLiveScraperService
         return false;
     }
 
+    private function resolveActorId(): string
+    {
+        return $this->normalizeActorId((string) config('services.apify.alibaba_actor_id', config('services.apify.actor_id', 'apify/web-scraper')));
+    }
+
     private function isTooEmpty(array $item): bool
     {
         $title = trim((string) ($item['title'] ?? $item['pageTitle'] ?? ''));
@@ -134,7 +129,16 @@ class AlibabaApifyLiveScraperService
         return str_replace('/', '~', $trimmed);
     }
 
-    private function buildInput(string $url): array
+    private function buildInput(string $url, string $actorId, bool $useResidential = false): array
+    {
+        if ($this->isDedicatedAlibabaActor($actorId)) {
+            return $this->buildDedicatedAlibabaActorInput($url, $useResidential);
+        }
+
+        return $this->buildGenericWebScraperInput($url, $useResidential);
+    }
+
+    private function buildGenericWebScraperInput(string $url, bool $useResidential = false): array
     {
         $input = $this->inputTemplateFromConfig() ?? [];
 
@@ -152,9 +156,7 @@ class AlibabaApifyLiveScraperService
         $input['globs'] = [];
         $input['pseudoUrls'] = [];
         $input['respectRobotsTxtFile'] = (bool) config('services.apify.respect_robots', false);
-        $input['proxyConfiguration'] = [
-            'useApifyProxy' => (bool) config('services.apify.use_proxy', true),
-        ];
+        $input['proxyConfiguration'] = $this->buildProxyConfig($useResidential);
 
         $useTemplatePageFunction = (bool) config('services.apify.use_template_page_function', false);
         if ($useTemplatePageFunction) {
@@ -169,6 +171,43 @@ class AlibabaApifyLiveScraperService
         }
 
         return $input;
+    }
+
+    private function buildDedicatedAlibabaActorInput(string $url, bool $useResidential = false): array
+    {
+        return [
+            'startUrls' => [
+                ['url' => $url],
+            ],
+            'maxProductsPerQuery' => 1,
+            'maxConcurrency' => 1,
+            'timeoutSecs' => (int) config('services.apify.timeout', 180),
+            'debugLog' => true,
+            'proxyConfig' => $this->buildProxyConfig($useResidential),
+        ];
+    }
+
+    private function buildProxyConfig(bool $useResidential = false): array
+    {
+        $proxy = [
+            'useApifyProxy' => (bool) config('services.apify.use_proxy', true),
+        ];
+
+        if ($useResidential) {
+            $proxy['apifyProxyGroups'] = ['RESIDENTIAL'];
+
+            $countryCode = strtoupper(trim((string) config('services.apify.proxy_country', '')));
+            if ($countryCode !== '') {
+                $proxy['apifyProxyCountry'] = $countryCode;
+            }
+        }
+
+        return $proxy;
+    }
+
+    private function isDedicatedAlibabaActor(string $actorId): bool
+    {
+        return str_contains($actorId, 'alibaba-product-scraper');
     }
 
     private function inputTemplateFromConfig(): ?array

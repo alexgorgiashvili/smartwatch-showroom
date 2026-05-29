@@ -2,6 +2,7 @@
 
 namespace App\Services\Chatbot;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -32,16 +33,27 @@ class ModelCompletionService
         $timeout = $options['timeout'] ?? 20;
         $temperature = $options['temperature'] ?? 0.4;
         $maxTokens = $options['max_tokens'] ?? 400;
+        $startedAt = microtime(true);
+        $langfuseName = (string) ($options['langfuse_name'] ?? 'chatbot.model_completion');
+        $langfuseMetadata = is_array($options['langfuse_metadata'] ?? null)
+            ? $options['langfuse_metadata']
+            : [];
 
         try {
+            $payload = [
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ];
+
+            if (isset($options['tools'])) {
+                $payload['tools'] = $options['tools'];
+            }
+
             $response = Http::withToken($apiKey)
                 ->timeout($timeout)
-                ->post($baseUrl . '/chat/completions', [
-                    'model' => $model,
-                    'messages' => $messages,
-                    'temperature' => $temperature,
-                    'max_tokens' => $maxTokens,
-                ]);
+                ->post($baseUrl . '/chat/completions', $payload);
 
             if (!$response->successful()) {
                 Log::warning('Model completion request failed', [
@@ -50,6 +62,25 @@ class ModelCompletionService
                     'body' => $response->body(),
                 ]);
 
+                $this->langfuse()->recordGeneration(
+                    $langfuseName,
+                    $model,
+                    $messages,
+                    '',
+                    [],
+                    array_merge($langfuseMetadata, [
+                        'provider' => 'openai',
+                        'provider_status' => $response->status(),
+                        'reason' => ChatbotOutcomeReason::PROVIDER_UNAVAILABLE,
+                    ]),
+                    [
+                        'temperature' => $temperature,
+                        'max_tokens' => $maxTokens,
+                    ],
+                    $startedAt,
+                    microtime(true)
+                );
+
                 return [
                     'reply' => '',
                     'reason' => ChatbotOutcomeReason::PROVIDER_UNAVAILABLE,
@@ -57,9 +88,29 @@ class ModelCompletionService
                 ];
             }
 
-            $reply = trim((string) data_get($response->json(), 'choices.0.message.content', ''));
+            $message = data_get($response->json(), 'choices.0.message');
+            $reply = trim((string) data_get($message, 'content', ''));
+            $toolCalls = data_get($message, 'tool_calls', []);
 
-            if ($reply === '') {
+            if ($reply === '' && empty($toolCalls)) {
+                $this->langfuse()->recordGeneration(
+                    $langfuseName,
+                    $model,
+                    $messages,
+                    '',
+                    data_get($response->json(), 'usage', []),
+                    array_merge($langfuseMetadata, [
+                        'provider' => 'openai',
+                        'reason' => ChatbotOutcomeReason::EMPTY_MODEL_OUTPUT,
+                    ]),
+                    [
+                        'temperature' => $temperature,
+                        'max_tokens' => $maxTokens,
+                    ],
+                    $startedAt,
+                    microtime(true)
+                );
+
                 return [
                     'reply' => '',
                     'reason' => ChatbotOutcomeReason::EMPTY_MODEL_OUTPUT,
@@ -67,16 +118,56 @@ class ModelCompletionService
                 ];
             }
 
+            $usage = data_get($response->json(), 'usage', []);
+
+            $this->langfuse()->recordGeneration(
+                $langfuseName,
+                $model,
+                $messages,
+                $reply,
+                $usage,
+                array_merge($langfuseMetadata, [
+                    'provider' => 'openai',
+                    'finish_reason' => data_get($response->json(), 'choices.0.finish_reason'),
+                ]),
+                [
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                ],
+                $startedAt,
+                microtime(true)
+            );
+
             return [
                 'reply' => $reply,
+                'tool_calls' => $toolCalls,
                 'reason' => null,
-                'usage' => data_get($response->json(), 'usage', []),
+                'usage' => $usage,
             ];
         } catch (\Throwable $exception) {
             Log::warning('Model completion exception', [
                 'model' => $model,
                 'error' => $exception->getMessage(),
             ]);
+
+            $this->langfuse()->recordGeneration(
+                $langfuseName,
+                $model,
+                $messages,
+                '',
+                [],
+                array_merge($langfuseMetadata, [
+                    'provider' => 'openai',
+                    'reason' => ChatbotOutcomeReason::PROVIDER_EXCEPTION,
+                    'error' => $exception->getMessage(),
+                ]),
+                [
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                ],
+                $startedAt,
+                microtime(true)
+            );
 
             return [
                 'reply' => '',
@@ -204,7 +295,7 @@ class ModelCompletionService
     {
         if (str_starts_with($chunk, 'data: ')) {
             $data = substr($chunk, 6);
-            
+
             if ($data === '[DONE]') {
                 return null;
             }
@@ -214,5 +305,14 @@ class ModelCompletionService
         }
 
         return null;
+    }
+
+    private function langfuse(): LangfuseService
+    {
+        try {
+            return app(LangfuseService::class);
+        } catch (BindingResolutionException) {
+            return new LangfuseService();
+        }
     }
 }

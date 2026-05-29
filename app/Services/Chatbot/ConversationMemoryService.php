@@ -51,16 +51,12 @@ class ConversationMemoryService
             $preferences = $this->mergePreferences($preferences, $this->extractPreferencesFromMessage($content));
         }
 
-        $key = $this->sessionKey($conversationId);
-
-        Redis::hmset($key, [
+        $this->storeContext($conversationId, [
             'history' => json_encode($history, JSON_UNESCAPED_UNICODE),
             'preferences' => json_encode($preferences, JSON_UNESCAPED_UNICODE),
             'intent_state' => $context['intent_state'] ?? '',
             'last_active' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::SESSION_TTL_SECONDS);
     }
 
     public function updatePreferences(int $conversationId, array $preferences): void
@@ -70,16 +66,12 @@ class ConversationMemoryService
         $existing = is_array($context['preferences']) ? $context['preferences'] : [];
         $merged = $this->mergePreferences($existing, $preferences);
 
-        $key = $this->sessionKey($conversationId);
-
-        Redis::hmset($key, [
+        $this->storeContext($conversationId, [
             'history' => json_encode($context['history'] ?? [], JSON_UNESCAPED_UNICODE),
             'preferences' => json_encode($merged, JSON_UNESCAPED_UNICODE),
             'intent_state' => $context['intent_state'] ?? '',
             'last_active' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::SESSION_TTL_SECONDS);
     }
 
     public function shouldUseConversationContext(string $message): bool
@@ -115,6 +107,14 @@ class ConversationMemoryService
     private function sessionKey(int $conversationId): string
     {
         return 'chat_session:' . $conversationId;
+    }
+
+    private function storeContext(int $conversationId, array $payload): void
+    {
+        $key = $this->sessionKey($conversationId);
+
+        Redis::hMSet($key, $payload);
+        Redis::expire($key, self::SESSION_TTL_SECONDS);
     }
 
     private function decodeArray(string $json): array

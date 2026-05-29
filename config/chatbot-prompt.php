@@ -380,6 +380,24 @@ PROMPT,
 - User history: "Samsung Galaxy Watch 6"; Last: "შავი მარაგშია?"
     -> standalone_query: "Samsung Galaxy Watch 6 შავი ფერი მარაგშია?", intent: "stock_query"
 
+- Last: "Q12 ჯობია თუ CT23?"
+    -> standalone_query: "Q12 და CT23 შედარება", intent: "comparison"
+
+- Last: "200 ლარამდე GPS და SOS საათი მირჩიეთ"
+    -> standalone_query: "200 ლარამდე GPS და SOS ფუნქციიანი საათი", intent: "recommendation"
+
+- User history: "Wonlex KT34"; Last: "კამერა აქვს?"
+    -> standalone_query: "Wonlex KT34-ს კამერა აქვს?", intent: "features"
+
+- Last: "მიტანა რამდენ ხანშია?"
+    -> standalone_query: "მიტანის პირობები და დრო", intent: "general"
+
+- Last: "არჩევნებზე რას ფიქრობ?"
+    -> standalone_query: "არჩევნებზე რას ფიქრობ?", intent: "out_of_domain"
+
+- User history: "რამე საათი მინდა"; Last: "რომელი ჯობია?"
+    -> standalone_query: "რომელი საათი ჯობია?", intent: "clarification_needed"
+
 - Last: "გამარჯობა"
     -> standalone_query: "გამარჯობა", intent: "general", needs_product_data: false
 PROMPT,

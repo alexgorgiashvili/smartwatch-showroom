@@ -23,5 +23,25 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  * Only authenticated users can listen
  */
 Broadcast::channel('inbox', function ($user) {
+    if (app()->environment('local')) {
+        return true;
+    }
+
+    return Auth::check();
+});
+
+Broadcast::channel('inbox.conversation.{id}', function ($user, $id) {
+    if (app()->environment('local')) {
+        return true;
+    }
+
+    return Auth::check();
+});
+
+Broadcast::channel('social.comments', function ($user) {
+    if (app()->environment('local')) {
+        return true;
+    }
+
     return Auth::check();
 });

@@ -35,6 +35,9 @@ Route::middleware('webhook.verify')->group(function () {
 // Meta webhook verification GET endpoint (unguarded)
 Route::get('/webhooks/messages', [WebhookController::class, 'verify']);
 
+// Grizzly SMS webhook (unauthenticated — no signature verification from provider)
+Route::post('/webhooks/grizzly-sms', [\App\Http\Controllers\GrizzlySmsWebhookController::class, 'handle']);
+
 /*
 |--------------------------------------------------------------------------
 | Conversation API Routes (Protected)

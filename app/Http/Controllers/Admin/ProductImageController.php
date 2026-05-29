@@ -16,7 +16,7 @@ class ProductImageController extends Controller
     {
         $data = $request->validate([
             'images' => ['required', 'array', 'max:8'],
-            'images.*' => ['file', 'image', 'max:4096'],
+            'images.*' => ['file', 'image', 'mimetypes:image/jpeg,image/png,image/webp', 'max:5120'],
             'alt_en' => ['nullable', 'string', 'max:160'],
             'alt_ka' => ['nullable', 'string', 'max:160'],
         ]);
@@ -44,6 +44,101 @@ class ProductImageController extends Controller
 
         return redirect()->route('admin.products.edit', $product)
             ->with('status', 'Images uploaded.');
+    }
+
+    /**
+     * Get images for a specific product as JSON (used by Image Manager)
+     */
+    public function getImagesJson(Product $product): JsonResponse
+    {
+        return response()->json([
+            'images' => $this->imagePayload($product)
+        ]);
+    }
+
+    /**
+     * Get all images across all products with filtering options (used by Image Manager)
+     */
+    public function getAllImagesJson(Request $request): JsonResponse
+    {
+        $query = ProductImage::with('product');
+
+        // Filter by specific product if requested
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        // Filter by time (recent)
+        if ($request->filled('time_filter')) {
+            switch ($request->time_filter) {
+                case 'today':
+                    $query->where('created_at', '>=', now()->startOfDay());
+                    break;
+                case 'week':
+                    $query->where('created_at', '>=', now()->subWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', now()->subMonth());
+                    break;
+            }
+        }
+
+        $images = $query->orderByDesc('created_at')->paginate(50);
+
+        $payload = $images->map(function (ProductImage $image) {
+            return [
+                'id' => $image->id,
+                'product_id' => $image->product_id,
+                'product_name' => $image->product ? ($image->product->name_en ?: $image->product->name_ka) : 'Unknown',
+                'url' => $image->url,
+                'thumbnail_url' => $image->thumbnail_url,
+                'created_at' => $image->created_at->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'images' => $payload,
+            'current_page' => $images->currentPage(),
+            'last_page' => $images->lastPage(),
+            'total' => $images->total()
+        ]);
+    }
+
+    /**
+     * Upload a standalone image (e.g. from Cropper)
+     */
+    public function uploadStandalone(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'file', 'image', 'mimetypes:image/jpeg,image/png,image/webp', 'max:5120'],
+        ]);
+
+        $upload = $request->file('image');
+        $path = $upload->store('images/standalone', 'public');
+        $thumbnailPath = $this->createThumbnailForUpload($upload, $path);
+
+        $url = asset('storage/' . $path);
+        $thumbnailUrl = $thumbnailPath ? asset('storage/' . $thumbnailPath) : $url;
+
+        // If a product_id is provided, attach it to the product
+        if ($request->filled('product_id')) {
+            $product = Product::find($request->product_id);
+            if ($product) {
+                $product->images()->create([
+                    'path' => 'storage/' . $path,
+                    'thumbnail_path' => $thumbnailPath ? 'storage/' . $thumbnailPath : null,
+                    'sort_order' => $product->images()->count(),
+                    'is_primary' => $product->images()->count() === 0,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'thumbnail_url' => $thumbnailUrl,
+            'path' => $path
+        ]);
     }
 
     public function setPrimary(Product $product, ProductImage $image): RedirectResponse|JsonResponse

@@ -223,7 +223,27 @@ if ($approvedReviews->count() > 0) {
                                     <ul class="splide__list">
                                         @foreach ($galleryImages as $image)
                                             <li class="splide__slide">
-                                                <img src="{{ $image->url }}" alt="{{ $image->alt ?: $product->name }}" class="h-[340px] w-full object-contain sm:h-[460px]" />
+												<button
+													type="button"
+													class="group relative block w-full"
+													data-product-lightbox
+													data-index="{{ $loop->index }}"
+													data-src="{{ $image->url }}"
+													data-alt="{{ $image->alt ?: $product->name }}"
+													aria-label="სურათის გადიდება"
+												>
+													<img
+														src="{{ $image->url }}"
+														alt="{{ $image->alt ?: $product->name }}"
+														class="h-[340px] w-full cursor-zoom-in object-contain sm:h-[460px]"
+														decoding="async"
+														loading="{{ $loop->first ? 'eager' : 'lazy' }}"
+														@if($loop->first) fetchpriority="high" @endif
+													/>
+													<span class="pointer-events-none absolute bottom-3 right-3 inline-flex size-10 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition group-hover:opacity-100 group-focus-visible:opacity-100">
+														<i class="fa-solid fa-up-right-and-down-left-from-center text-sm"></i>
+													</span>
+												</button>
                                             </li>
                                         @endforeach
                                     </ul>

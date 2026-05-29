@@ -53,6 +53,13 @@ class MessageReceived implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
+        if (app()->environment('local')) {
+            return [
+                new Channel('inbox'),
+                new Channel("inbox.conversation.{$this->conversation->id}"),
+            ];
+        }
+
         return [
             new PrivateChannel('inbox'),
             new PrivateChannel("inbox.conversation.{$this->conversation->id}"),

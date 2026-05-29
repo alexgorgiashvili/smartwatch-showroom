@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\ContactSetting;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -18,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\Chatbot\ProductContextService::class);
         $this->app->singleton(\App\Services\Chatbot\PromptBuilderService::class);
         $this->app->singleton(\App\Services\Chatbot\ModelCompletionService::class);
+        $this->app->singleton(\App\Services\Chatbot\LangfuseService::class);
+        $this->app->scoped(\App\Services\Chatbot\LangfuseTraceContext::class);
 
         // Infrastructure Services
         $this->app->singleton(\App\Services\Chatbot\MultiLayerCacheService::class);
@@ -39,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('local')) {
+            Vite::createAssetPathsUsing(fn (string $path) => '/'.ltrim($path, '/'));
+        }
+
         if (!app()->runningInConsole()) {
             session(['locale' => 'ka']);
             app()->setLocale('ka');

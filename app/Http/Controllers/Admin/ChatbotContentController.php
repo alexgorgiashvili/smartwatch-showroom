@@ -12,12 +12,14 @@ use Illuminate\View\View;
 
 class ChatbotContentController extends Controller
 {
-    public function index(): View
+    public function index(Request $request)
     {
-        return view('admin.chatbot-content.index', [
+        $view = view('admin.chatbot-content.index', [
             'faqs' => Faq::query()->orderBy('sort_order')->orderBy('id')->get(),
             'contactSettings' => ContactSetting::allKeyed(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function storeFaq(Request $request, ChatbotContentSyncService $syncService): RedirectResponse

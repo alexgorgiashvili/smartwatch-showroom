@@ -75,6 +75,11 @@ class ChatbotTestResult extends Model
         return $this->belongsTo(ChatbotTestRun::class, 'test_run_id');
     }
 
+    public function trainingCase(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ChatbotTrainingCase::class, 'training_case_id');
+    }
+
     public function scopePassed(Builder $query): Builder
     {
         return $query->where('status', 'pass');

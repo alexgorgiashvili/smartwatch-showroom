@@ -3,6 +3,7 @@
 @section('title', 'ჩატბოტ ლაბი')
 
 @section('content')
+@fragment('content')
 @if (session('status'))
     <div class="alert alert-success" role="alert">{{ session('status') }}</div>
 @endif
@@ -390,4 +391,5 @@
         </div>
     </div>
 </div>
+@endfragment
 @endsection

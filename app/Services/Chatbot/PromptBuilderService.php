@@ -20,7 +20,7 @@ class PromptBuilderService
     {
         $systemPrompt = $this->policy->websiteSystemPrompt();
 
-        $learningLessons = $this->adaptiveLearning->buildLessonsText();
+        $learningLessons = $this->adaptiveLearning->buildLessonsText($intentResult->intent());
         if ($learningLessons !== '') {
             $systemPrompt .= "\n\n" . $learningLessons;
         }

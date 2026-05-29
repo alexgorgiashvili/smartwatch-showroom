@@ -13,7 +13,8 @@ class HybridSearchService
     public function __construct(
         private EmbeddingService $embedding,
         private PineconeService $pinecone,
-        private UnifiedAiPolicyService $policy
+        private UnifiedAiPolicyService $policy,
+        private MultiLayerCacheService $cache
     ) {
     }
 
@@ -69,7 +70,7 @@ class HybridSearchService
         $normalized = trim($this->policy->normalizeIncomingMessage($query));
         $searchQuery = $normalized !== '' ? $normalized : $query;
 
-        $denseVector = $this->embedding->embed($searchQuery);
+        $denseVector = $this->cache->getOrCacheEmbedding($searchQuery);
 
         if ($denseVector === []) {
             return [];
@@ -139,8 +140,9 @@ class HybridSearchService
     {
         $contextVersion = (int) Cache::get('product_context_version', 1);
         $cacheKey = 'chatbot:bm25:stats:v1:' . $contextVersion;
+        $ttl = max(60, (int) config('chatbot.bm25.corpus_cache_ttl', 3600));
 
-        return Cache::remember($cacheKey, now()->addMinutes(10), function (): array {
+        return Cache::remember($cacheKey, now()->addSeconds($ttl), function (): array {
             $docCount = 0;
             $totalLength = 0;
             $documentFrequency = [];

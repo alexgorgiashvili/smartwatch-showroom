@@ -8,7 +8,7 @@ return [
     */
     'supervisor' => [
         'enabled' => env('CHATBOT_SUPERVISOR_ENABLED', true),
-        'model' => env('CHATBOT_SUPERVISOR_MODEL', 'gpt-4o-mini'),
+        'model' => env('CHATBOT_SUPERVISOR_MODEL', 'gpt-4.1-mini'),
     ],
 
     /*
@@ -73,7 +73,7 @@ return [
         'enabled' => env('CHATBOT_REFLECTION_ENABLED', true),
         'max_retries' => env('CHATBOT_REFLECTION_MAX_RETRIES', 3),
         'confidence_threshold' => env('CHATBOT_REFLECTION_CONFIDENCE_THRESHOLD', 0.7),
-        'critique_model' => env('CHATBOT_REFLECTION_CRITIQUE_MODEL', 'gpt-4o-mini'),
+        'critique_model' => env('CHATBOT_REFLECTION_CRITIQUE_MODEL', 'gpt-4.1-mini'),
     ],
 
     /*
@@ -87,11 +87,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | RAG
+    |--------------------------------------------------------------------------
+    */
+    'rag' => [
+        'max_chars' => env('CHATBOT_RAG_MAX_CHARS', 3000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | BM25
+    |--------------------------------------------------------------------------
+    */
+    'bm25' => [
+        'corpus_cache_ttl' => env('CHATBOT_BM25_CACHE_TTL', 3600),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Memory Management
     |--------------------------------------------------------------------------
     */
     'memory' => [
         'session_window' => env('CHATBOT_MEMORY_SESSION_WINDOW', 4),
         'summarization_enabled' => env('CHATBOT_MEMORY_SUMMARIZATION_ENABLED', true),
+        'summarization_model' => env('CHATBOT_MEMORY_SUMMARIZATION_MODEL', 'gpt-4.1-nano'),
     ],
 ];

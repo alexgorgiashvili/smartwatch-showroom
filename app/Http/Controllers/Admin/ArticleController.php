@@ -9,11 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class ArticleController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $articles = Article::query()
             ->when(
@@ -46,18 +45,22 @@ class ArticleController extends Controller
             ->paginate(20)
             ->appends($request->query());
 
-        return view('admin.articles.index', [
+        $view = view('admin.articles.index', [
             'articles' => $articles,
             'q' => $request->string('q')->value(),
             'status' => $request->string('status')->value(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
-    public function create(): View
+    public function create(Request $request)
     {
-        return view('admin.articles.create', [
+        $view = view('admin.articles.create', [
             'article' => new Article(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function store(Request $request): RedirectResponse
@@ -66,8 +69,9 @@ class ArticleController extends Controller
         $data['slug'] = $this->ensureSlug($data['slug'] ?? null, $data['title_en'] ?? $data['title_ka']);
         $this->applyPublishState($request, $data);
 
-        if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = $request->file('cover_image')->store('images/articles', 'public');
+        // The cover_image field is now a URL/path string directly from the input
+        if ($request->filled('cover_image')) {
+            $data['cover_image'] = $request->input('cover_image');
         }
 
         $article = Article::create($data);
@@ -76,11 +80,13 @@ class ArticleController extends Controller
             ->with('status', 'Article created.');
     }
 
-    public function edit(Article $article): View
+    public function edit(Request $request, Article $article)
     {
-        return view('admin.articles.edit', [
+        $view = view('admin.articles.edit', [
             'article' => $article,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function update(Request $request, Article $article): RedirectResponse
@@ -94,12 +100,14 @@ class ArticleController extends Controller
             $data['cover_image'] = null;
         }
 
-        if ($request->hasFile('cover_image')) {
-            if ($article->cover_image) {
+        // The cover_image field is now a URL/path string directly from the input
+        if ($request->filled('cover_image')) {
+            $data['cover_image'] = $request->input('cover_image');
+
+            // Clean up old image if a new one is provided and it's different
+            if ($article->cover_image && $article->cover_image !== $data['cover_image'] && !str_starts_with($article->cover_image, 'http')) {
                 $this->deleteCoverIfExists($article->cover_image);
             }
-
-            $data['cover_image'] = $request->file('cover_image')->store('images/articles', 'public');
         }
 
         $article->update($data);
@@ -154,7 +162,7 @@ class ArticleController extends Controller
             'meta_description_en' => ['nullable', 'string', 'max:160'],
             'schema_type' => ['required', Rule::in(['Article', 'HowTo', 'ItemList'])],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'max:4096'],
+            'cover_image' => ['nullable', 'string', 'max:2000'],
             'is_published' => ['nullable', 'boolean'],
             'remove_cover' => ['nullable', 'boolean'],
         ]);

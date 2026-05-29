@@ -21,7 +21,9 @@ class SecurityHeaders
         // X-Frame-Options: DENY
         // Prevents the page from being displayed in a frame, combating clickjacking attacks
         // Use SAMEORIGIN if you need to allow framing from same origin
-        $this->setHeader($response, 'X-Frame-Options', 'DENY');
+        if (config('app.env') !== 'local') {
+            $this->setHeader($response, 'X-Frame-Options', 'DENY');
+        }
 
         // Content-Security-Policy
         // Restricts script sources and prevents XSS attacks
@@ -71,24 +73,32 @@ class SecurityHeaders
      */
     protected function getContentSecurityPolicy(): string
     {
+        $localHttpSources = config('app.env') === 'local'
+            ? " http://127.0.0.1:* http://localhost:*"
+            : '';
+
+        $localSocketSources = config('app.env') === 'local'
+            ? " http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*"
+            : '';
+
         $policies = [
             // Default policy for all resource types not explicitly specified
             "default-src 'self'",
 
             // Script policy
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com{$localSocketSources}",
 
             // Style policy
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net https://cdnjs.cloudflare.com{$localHttpSources}",
 
             // Image policy
-            "img-src 'self' data: https:",
+            "img-src 'self' data: https:{$localHttpSources}",
 
             // Font policy
-            "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
+            "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net{$localHttpSources}",
 
             // Connect policy (AJAX, WebSocket, etc.)
-            "connect-src 'self' https: ws: wss:",
+            "connect-src 'self' https: ws: wss:{$localSocketSources}",
 
             // Frame/iframe policy
             "frame-src 'self'",
@@ -109,7 +119,7 @@ class SecurityHeaders
             "form-action 'self'",
 
             // Frame ancestors (who can frame this page)
-            "frame-ancestors 'none'",
+            config('app.env') === 'local' ? "frame-ancestors *" : "frame-ancestors 'none'",
 
             // Upgrade insecure requests
             "upgrade-insecure-requests",

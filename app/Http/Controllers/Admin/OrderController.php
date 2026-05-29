@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\OrderCreated;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Order;
@@ -16,7 +17,7 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $orders = Order::query()
             ->with('items')
@@ -28,33 +29,38 @@ class OrderController extends Controller
             ->paginate(20)
             ->appends($request->query());
 
-        return view('admin.orders.index', [
+        $view = view('admin.orders.index', [
             'orders' => $orders,
             'paymentStatus' => $request->string('payment_status')->value(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
-    public function create(): View
+    public function create(Request $request)
     {
         $products = Product::with('variants')->where('is_active', true)->get();
         $cities = City::query()->orderBy('name')->get(['id', 'name']);
 
-        return view('admin.orders.create', [
+        $view = view('admin.orders.create', [
             'order' => new Order(),
             'products' => $products,
             'cities' => $cities,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:160'],
-            'customer_phone' => ['required', 'string', 'max:50'],
+            'customer_phone' => ['required', 'string', 'max:50', 'regex:/^(995[0-9]{9}|5[0-9]{8})$/'],
             'personal_number' => ['required', 'regex:/^\d{11}$/'],
             'city_id' => ['required', 'integer', 'exists:cities,id'],
             'exact_address' => ['required', 'string'],
             'order_source' => ['required', 'in:Facebook,Instagram,Direct,Other'],
+            'payment_type' => ['required', 'integer', 'in:1,2'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.variant_id' => ['required', 'exists:product_variants,id'],
@@ -67,8 +73,16 @@ class OrderController extends Controller
             // Generate order number
             $city = City::query()->findOrFail((int) $data['city_id']);
 
+            // Format phone number
+            $phone = $data['customer_phone'];
+            if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
+                $data['customer_phone'] = '995' . $phone;
+            }
+
             $data['order_number'] = Order::generateOrderNumber();
             $data['status'] = 'pending';
+            $data['payment_type'] = (int) $data['payment_type'];
+            $data['payment_status'] = 'pending';
             $data['currency'] = 'GEL';
             $data['total_amount'] = 0;
             $data['city'] = $city->name;
@@ -121,6 +135,11 @@ class OrderController extends Controller
             // Update order total
             $order->update(['total_amount' => $totalAmount]);
 
+            // Trigger SMS for courier payments
+            if ((int) $data['payment_type'] === 2) {
+                event(new OrderCreated($order));
+            }
+
             DB::commit();
 
             return redirect()->route('admin.orders.show', $order)
@@ -135,7 +154,7 @@ class OrderController extends Controller
         }
     }
 
-    public function show(Order $order): View
+    public function show(Request $request, Order $order)
     {
         $order->load([
             'items.variant.product',
@@ -143,9 +162,11 @@ class OrderController extends Controller
             'paymentLogs' => fn ($query) => $query->latest(),
         ]);
 
-        return view('admin.orders.show', [
+        $view = view('admin.orders.show', [
             'order' => $order,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function updateStatus(Request $request, Order $order): RedirectResponse

@@ -283,6 +283,33 @@
       </section>
     </div>
 
+    <div id="site-lightbox" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-hidden="true">
+      <div data-site-lightbox-overlay class="absolute inset-0 bg-black/80"></div>
+      <div class="relative flex h-full w-full items-center justify-center p-3 sm:p-6">
+        <button type="button" data-site-lightbox-close class="absolute right-3 top-3 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="დახურვა">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <button type="button" data-site-lightbox-prev class="absolute left-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="წინა სურათი">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <button type="button" data-site-lightbox-next class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="შემდეგი სურათი">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <figure class="relative w-full max-w-5xl">
+          <div class="flex items-center justify-center">
+            <img data-site-lightbox-image src="" alt="" class="max-h-[80vh] w-auto max-w-full select-none rounded-xl shadow-2xl" draggable="false" />
+          </div>
+          <figcaption class="mt-3 flex items-center justify-between gap-3 text-sm text-white/80">
+            <span data-site-lightbox-caption class="min-w-0 truncate"></span>
+            <span data-site-lightbox-counter class="shrink-0"></span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+
     <script>
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');

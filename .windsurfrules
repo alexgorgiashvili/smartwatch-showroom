@@ -1,0 +1,37 @@
+# Windsurf Rules — smartwatch-showroom
+
+## /prompt command
+When I type `/prompt` followed by any text, transform that text into a well-structured, detailed prompt optimized for Cascade/AI agents. Consider the full project context below. Output only the final prompt, ready to use — no explanations, no preamble.
+
+### Project context
+- **Framework**: Laravel 10, PHP 8.1
+- **Admin panel**: Custom NobleUI (Bootstrap 5, PJAX navigation via admin-router.js, no Filament)
+- **Frontend**: Blade templates, TailwindCSS, Vite, Splide slider, Font Awesome
+- **Real-time**: Pusher + Laravel Echo, Web Push notifications (minishlink/web-push)
+- **AI / Chatbot**: OpenAI GPT models, Pinecone vector search, multi-agent pipeline (SupervisorAgent, ComparisonAgent, GeneralAgent, InventoryAgent, VectorSqlReconciliationAgent), hybrid search, circuit breaker, bifurcated memory, chatbot lab (testing/evaluation), adaptive learning
+- **Integrations**: Meta Graph API (Facebook/Instagram), Apify scrapers (Alibaba, Facebook competitors), Grizzly SMS activation, BOG payment gateway, WooCommerce
+- **Services**: AlibabaScraperService, FacebookApifyScraperService, FacebookCompetitorAiService, AiPostGeneratorService, AiSuggestionService, BogPayService, SocialCommentService, GrizzlySmsService, EmbeddingService, PineconeService
+- **Data**: MySQL, Redis (predis), Spatie sitemap
+- **Inbox**: Custom real-time inbox (Pusher), no Livewire
+- **Language**: Georgian UI (ka locale), Georgian prompts
+
+### Coding conventions
+- Controllers return views or JSON — no Livewire, no Filament resources
+- Admin controllers live in `app/Http/Controllers/Admin/`, use `['auth', 'admin']` middleware
+- PJAX-aware responses: check `$request->header('X-PJAX')` and return `->fragment('content')` for partial swaps
+- Blade views: `resources/views/admin/` for admin, `resources/views/` for public; layouts extend `admin.layout` or `layouts.app`
+- Services are injected via constructor DI; chatbot services live in `app/Services/Chatbot/`
+- All OpenAI calls go through `ModelCompletionService`; use `gpt-4.1-nano` for cheap tasks, `gpt-4.1-mini` for reasoning, `gpt-4.1` for critical
+- Redis used for caching (Cache facade + predis driver); queue driver is also Redis
+- Georgian strings go directly in Blade — no translation files needed for admin UI
+
+### Key DB tables
+`users`, `products`, `product_variants`, `product_images`, `orders`, `order_items`, `conversations`, `messages`, `customers`, `facebook_posts`, `social_comments`, `facebook_competitor_pages`, `facebook_competitor_posts`, `chatbot_training_cases`, `chatbot_test_runs`, `chatbot_test_results`, `articles`, `push_subscriptions`, `payment_logs`
+
+### Admin panel patterns
+- Sidebar nav: `resources/views/admin/partials/sidebar.blade.php` — links use `route()` + `data-pjax`
+- Page content swapped into `<div id="page-content">` via PJAX
+- JS page initializers registered via `AdminRouter.registerPage(pattern, fn)` in `resources/js/admin.js`
+- Toast notifications: `showToast(message, type)` from `admin-helpers.js`
+- Confirm dialogs: `confirmDelete(url, csrfToken)` from `admin-helpers.js`
+- DataTables initialized per-page in registered page init functions

@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Log;
 
 class LlmJudgeService
 {
+    public function __construct(
+        private ModelCompletionService $modelCompletion
+    ) {
+    }
+
     public function judge(string $question, string $criteria, string $response, ?string $ragContext): ?array
     {
         $provider = (string) config('services.llm_judge_provider', 'openai');
@@ -19,36 +24,32 @@ class LlmJudgeService
 
     private function judgeWithGpt(string $question, string $criteria, string $response, ?string $ragContext): ?array
     {
-        $apiKey = (string) config('services.openai.key');
-        $baseUrl = rtrim((string) config('services.openai.base_url', 'https://api.openai.com/v1'), '/');
         $model = (string) config('services.openai.judge_model', 'gpt-4.1-mini');
 
-        if ($apiKey === '') {
-            return null;
-        }
-
         try {
-            $httpResponse = Http::withToken($apiKey)
-                ->timeout(20)
-                ->post($baseUrl . '/chat/completions', [
-                    'model' => $model,
+            $completion = $this->modelCompletion->complete(
+                $model,
+                [
+                    ['role' => 'system', 'content' => $this->buildSystemPrompt()],
+                    ['role' => 'user', 'content' => $this->buildUserPrompt($question, $criteria, $response, $ragContext)],
+                ],
+                [
                     'temperature' => 0.0,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $this->buildSystemPrompt()],
-                        ['role' => 'user', 'content' => $this->buildUserPrompt($question, $criteria, $response, $ragContext)],
-                    ],
-                ]);
+                    'max_tokens' => 300,
+                    'timeout' => 20,
+                ]
+            );
 
-            if (!$httpResponse->successful()) {
+            if (($completion['reason'] ?? null) !== null) {
                 Log::warning('LLM judge OpenAI call failed', [
-                    'status' => $httpResponse->status(),
-                    'body' => $httpResponse->body(),
+                    'reason' => $completion['reason'],
+                    'model' => $model,
                 ]);
 
                 return null;
             }
 
-            $text = (string) data_get($httpResponse->json(), 'choices.0.message.content', '');
+            $text = (string) ($completion['reply'] ?? '');
 
             return $this->parseScores($text);
         } catch (\Throwable $exception) {

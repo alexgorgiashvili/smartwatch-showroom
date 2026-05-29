@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class CompetitorMonitorController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $this->ensureDefaultSourceExists();
 
@@ -46,12 +46,14 @@ class CompetitorMonitorController extends Controller
             ->limit(1000)
             ->get();
 
-        return view('admin.products.competitor-monitor', [
+        $view = view('admin.products.competitor-monitor', [
             'sources' => $sources,
             'source' => $source,
             'products' => $products,
             'localProducts' => $localProducts,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function storeSource(Request $request): RedirectResponse

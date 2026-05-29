@@ -15,23 +15,28 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request)
     {
         $products = Product::query()
-            ->with(['primaryImage', 'images'])
+            ->with(['primaryImage', 'images', 'variants'])
+            ->withCount('variants')
             ->orderByDesc('updated_at')
             ->get();
 
-        return view('admin.products.index', [
+        $view = view('admin.products.index', [
             'products' => $products,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
-    public function create(): View
+    public function create(Request $request)
     {
-        return view('admin.products.create', [
+        $view = view('admin.products.create', [
             'product' => new Product(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function store(Request $request, ChatbotContentSyncService $contentSync): RedirectResponse|JsonResponse
@@ -78,13 +83,15 @@ class ProductController extends Controller
             ->with('status', 'Product created.');
     }
 
-    public function edit(Product $product): View
+    public function edit(Request $request, Product $product)
     {
         $product->load(['images', 'variants']);
 
-        return view('admin.products.edit', [
+        $view = view('admin.products.edit', [
             'product' => $product,
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function update(Request $request, Product $product, ChatbotContentSyncService $contentSync): RedirectResponse|JsonResponse

@@ -2,6 +2,8 @@
 
 namespace App\Services\Chatbot\Agents;
 
+use App\Services\Chatbot\LangfuseService;
+use App\Services\Chatbot\ChatbotOutcomeReason;
 use App\Services\Chatbot\CircuitBreakerService;
 use App\Services\Chatbot\IntentResult;
 use App\Services\Chatbot\MultiLayerCacheService;
@@ -9,6 +11,7 @@ use App\Services\Chatbot\ParallelExecutionService;
 use App\Services\Chatbot\SmartSearchOrchestrator;
 use App\Services\Chatbot\BifurcatedMemoryService;
 use App\Services\Chatbot\WidgetTraceLogger;
+use Illuminate\Support\Collection;
 
 class SupervisorAgent
 {
@@ -35,17 +38,41 @@ class SupervisorAgent
         int $customerId,
         IntentResult $intent,
         array $preferences,
-        array $trace = []
+        array $trace = [],
+        string $executionMode = 'single_agent'
     ): array {
+        $this->langfuse()->updateTrace([
+            'conversation_id' => $conversationId,
+            'customer_id' => $customerId,
+            'intent' => $intent->intent(),
+            'intent_confidence' => $intent->confidence(),
+            'execution_mode' => $executionMode,
+        ], null, 'chatbot.widget.response');
+
+        $spanId = $this->langfuse()->startSpan('supervisor.orchestrate', [
+            'message' => $message,
+        ], [
+            'conversation_id' => $conversationId,
+            'customer_id' => $customerId,
+            'intent' => $intent->intent(),
+        ]);
+
         $this->traceWidget('supervisor.started', [
             'intent' => $intent->intent(),
             'confidence' => $intent->confidence(),
         ], $trace);
 
+        $extractedPreferences = $this->memory->scopePreferencesForMessage($preferences, $message);
+
         if (!$this->circuitBreaker->shouldAttemptMultiAgent()) {
             $this->traceWidget('supervisor.circuit_open', [
                 'state' => $this->circuitBreaker->getState(),
             ], $trace);
+
+            $this->langfuse()->endSpan($spanId, [
+                'state' => $this->circuitBreaker->getState(),
+                'reason' => 'circuit_open',
+            ], null, 'Circuit breaker is open');
 
             throw new \RuntimeException('Circuit breaker is open');
         }
@@ -56,35 +83,49 @@ class SupervisorAgent
                 'cache_layer' => $cachedResponse['cache_layer'],
             ], $trace);
 
+            $this->langfuse()->endSpan($spanId, [
+                'cached' => true,
+                'cache_layer' => $cachedResponse['cache_layer'],
+            ], $cachedResponse['response']);
+
             return [
+                'success' => true,
                 'response' => $cachedResponse['response'],
                 'cached' => true,
                 'cache_layer' => $cachedResponse['cache_layer'],
+                'agent_used' => 'cache',
+                'execution_mode' => 'cache',
+                'extracted_preferences' => $extractedPreferences,
             ];
         }
 
         $this->traceWidget('supervisor.cache_miss', [], $trace);
+        $searchContext = null;
 
         $this->traceWidget('supervisor.parallel_fanout_started', [], $trace);
 
         $parallelResult = $this->parallelExecution->execute([
-            'search' => fn() => $intent->requiresSearch() 
+            'search' => fn() => $intent->requiresSearch()
                 ? $this->searchOrchestrator->search($intent)
                 : null,
             'session' => fn() => $this->memory->getSessionContext($conversationId),
             'profile' => fn() => $this->memory->getUserPreferences($customerId),
         ]);
 
-        $this->traceWidget('supervisor.parallel_fanout_completed', [
-            'duration_ms' => $parallelResult['total_duration_ms'],
-            'stats' => $this->parallelExecution->getStats($parallelResult),
-        ], $trace);
-
         $results = $this->parallelExecution->getSuccessfulResults($parallelResult);
 
         $searchContext = $results['search'] ?? null;
         $sessionContext = $results['session'] ?? ['recent' => [], 'summary' => null];
         $userPreferences = array_merge($preferences, $results['profile'] ?? []);
+        $extractedPreferences = $this->memory->scopePreferencesForMessage($userPreferences, $message);
+
+        $this->traceWidget('supervisor.parallel_fanout_completed', [
+            'duration_ms' => $parallelResult['total_duration_ms'],
+            'stats' => $this->parallelExecution->getStats($parallelResult),
+            'search_product_count' => $searchContext?->products()->count() ?? 0,
+            'has_rag_context' => trim((string) ($searchContext?->ragContext() ?? '')) !== '',
+            'search_not_found_message' => $searchContext?->productNotFoundMessage(),
+        ], $trace);
 
         if ($searchContext && $searchContext->products()->isNotEmpty()) {
             $this->traceWidget('supervisor.reconciliation_started', [
@@ -111,33 +152,79 @@ class SupervisorAgent
 
         $this->traceWidget('supervisor.routing', [
             'agent' => get_class($agent),
+            'agent_basename' => class_basename($agent),
             'intent' => $intent->intent(),
+            'routing_reason' => $this->routingReason($intent),
+            'routing_rules' => [
+                'price_query|stock_query -> InventoryAgent',
+                'comparison -> ComparisonAgent',
+                'default -> GeneralAgent',
+            ],
+            'selected_products' => $this->productSnapshot($reconciled['products']),
         ], $trace);
 
-        $agentResult = $agent->handle(
-            $message,
-            $conversationId,
-            $intent,
-            $searchContext,
-            $reconciled['products'],
-            $sessionContext,
-            $userPreferences,
-            $trace
-        );
+        try {
+            $agentResult = $agent->handle(
+                $message,
+                $conversationId,
+                $intent,
+                $searchContext,
+                $reconciled['products'],
+                $sessionContext,
+                $userPreferences,
+                $trace
+            );
 
-        if ($agentResult['success']) {
-            $this->cache->cacheResponse($message, $intent, $agentResult['response'], [
+            // Mocked generation of alternative suggestions when in suggestion_generation mode
+            if ($executionMode === 'suggestion_generation' && $agentResult['success']) {
+                $agentResult['response'] = [$agentResult['response'], "Alternative response 1", "Alternative response 2"];
+            }
+
+            $providerFailure = in_array(
+                $agentResult['reason'] ?? null,
+                [ChatbotOutcomeReason::PROVIDER_UNAVAILABLE, ChatbotOutcomeReason::PROVIDER_EXCEPTION],
+                true
+            );
+
+            if ($providerFailure) {
+                $this->circuitBreaker->recordFailure((string) ($agentResult['reason'] ?? ''));
+            } else {
+                $this->circuitBreaker->recordSuccess();
+            }
+
+            if ($agentResult['success']) {
+                $this->cache->cacheResponse($message, $intent, $agentResult['response'], [
+                    'agent' => get_class($agent),
+                    'validation_passed' => $agentResult['validation_passed'] ?? false,
+                ]);
+            }
+
+            $this->traceWidget('supervisor.completed', [
                 'agent' => get_class($agent),
+                'success' => $agentResult['success'],
+            ], $trace);
+
+            $this->langfuse()->endSpan($spanId, [
+                'agent' => class_basename($agent),
+                'success' => $agentResult['success'],
                 'validation_passed' => $agentResult['validation_passed'] ?? false,
+                'reflection_attempts' => $agentResult['reflection_attempts'] ?? 0,
+                'reason' => $agentResult['reason'] ?? null,
+            ], $agentResult['response'] ?? null);
+
+            return array_merge($agentResult, [
+                'agent_used' => class_basename($agent),
+                'execution_mode' => 'single_agent',
+                'extracted_preferences' => $extractedPreferences,
             ]);
+        } catch (\Throwable $e) {
+            $this->circuitBreaker->recordFailure($e->getMessage());
+            $this->langfuse()->endSpan($spanId, [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], null, $e->getMessage());
+            throw $e;
         }
-
-        $this->traceWidget('supervisor.completed', [
-            'agent' => get_class($agent),
-            'success' => $agentResult['success'],
-        ], $trace);
-
-        return $agentResult;
     }
 
     /**
@@ -152,6 +239,32 @@ class SupervisorAgent
         };
     }
 
+    private function routingReason(IntentResult $intent): string
+    {
+        return match ($intent->intent()) {
+            'price_query', 'stock_query' => 'Inventory კითხვები გადადის InventoryAgent-ზე',
+            'comparison' => 'შედარების კითხვები გადადის ComparisonAgent-ზე',
+            default => 'დანარჩენი მოთხოვნები გადადის GeneralAgent-ზე',
+        };
+    }
+
+    private function productSnapshot(Collection $products): array
+    {
+        return $products
+            ->take(5)
+            ->map(static function ($product): array {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->sale_price ?: $product->price,
+                    'stock' => (int) ($product->total_stock ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     private function traceWidget(string $step, array $context, array $trace): void
     {
         if (!$this->widgetTrace->enabled()) {
@@ -159,5 +272,10 @@ class SupervisorAgent
         }
 
         $this->widgetTrace->logStep($step, array_merge($trace, $context));
+    }
+
+    private function langfuse(): LangfuseService
+    {
+        return app(LangfuseService::class);
     }
 }

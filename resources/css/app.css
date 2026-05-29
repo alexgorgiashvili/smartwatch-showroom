@@ -542,6 +542,7 @@
 	}
 }
 
+/* Filament dark-mode overrides (safe, scoped) */
 .fi-fo-select .choices__list--dropdown,
 .fi-fo-select .choices__list[aria-expanded] {
 	z-index: 90 !important;
@@ -688,3 +689,157 @@ picture img {
 	display: block;
 }
 
+/* Fix Filament modal overlay issue - simple approach */
+.fi-modal[x-show="isOpen"] {
+	pointer-events: auto;
+}
+
+.fi-modal[x-show="isOpen"] .fi-modal-close-overlay {
+	pointer-events: auto;
+}
+
+/* Hide modal completely when not open */
+.fi-modal:not([x-show="isOpen"]) {
+	display: none !important;
+	pointer-events: none !important;
+}
+
+/* Fix Filament select dropdowns */
+select.fi-select-input,
+select.fi-input {
+	background-image: none !important;
+	cursor: pointer !important;
+}
+
+/* Dark background for select options */
+select.fi-select-input option,
+select.fi-select-input optgroup,
+select.fi-input option,
+select.fi-input optgroup {
+	background-color: rgb(31 41 55) !important;
+	color: white !important;
+	cursor: pointer !important;
+}
+
+/* Prevent horizontal overflow in Filament dashboard */
+.fi-main-ctn {
+	max-width: 100vw;
+	box-sizing: border-box;
+	overflow-x: hidden;
+}
+
+.fi-page {
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow-x: hidden;
+}
+
+/* Fix Filament grid with CSS variables */
+.fi-wi.grid {
+	max-width: 100%;
+	min-width: 0;
+    padding: 5px;
+}
+
+.fi-wi.grid > * {
+	min-width: 0;
+	max-width: 100%;
+}
+
+/* Prevent stats cards from overflowing */
+.fi-wi-stats-overview-stat {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.fi-wi-stats-overview-stats-ctn {
+	max-width: 100%;
+	min-width: 0;
+}
+
+.fi-wi-stats-overview-stats-ctn > * {
+	min-width: 0;
+}
+
+/* Make Filament tables responsive with scroll */
+.fi-ta-table-container {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	max-width: 100%;
+}
+
+/* Fix grid container widths */
+.fi-page > div[class*="grid"] {
+	max-width: 100%;
+	box-sizing: border-box;
+	min-width: 0;
+}
+
+/* Fix dark mode borders for better visibility */
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-section,
+.dark .fi-ta-ctn {
+	border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* Fix inbox conversation text wrapping - only for conversation cards */
+.chat-scroll .truncate {
+	white-space: normal;
+	word-wrap: break-word;
+	overflow-wrap: anywhere;
+}
+
+/* Ensure grid layouts don't overflow on mobile */
+@media (max-width: 640px) {
+	.fi-page [class*="grid-cols-"],
+	[class*="sm:grid-cols-"],
+	[class*="md:grid-cols-"],
+	[class*="lg:grid-cols-"],
+	[class*="xl:grid-cols-"] {
+		grid-template-columns: 1fr !important;
+	}
+
+	/* Force single column for widget grids on mobile */
+	.fi-wi.grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+select {
+    background-image: none !important;
+}
+select option{
+    background-color: #423c3c !important;
+}
+
+/* Darker hover states for Filament buttons and sidebar */
+.fi-btn:hover,
+button:hover:not(.fi-pagination-item) {
+    filter: brightness(0.7) !important;
+}
+
+.fi-sidebar-item:hover,
+.fi-sidebar-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.fi-sidebar-item-button:hover {
+        background-color: rgb(78 36 153) !important ;
+    }
+
+.fi-ac button:hover,
+.fi-ac a:hover {
+    background-color: rgb(78 36 153) !important ;
+}
+
+/* Center text in dashboard stat cards */
+/* .fi-wi-stats-overview-stat {
+    text-align: center;
+}
+
+.fi-wi-stats-overview-stat .grid {
+    justify-items: center;
+}
+
+.fi-wi-stats-overview-stat .flex {
+    justify-content: center;
+} */

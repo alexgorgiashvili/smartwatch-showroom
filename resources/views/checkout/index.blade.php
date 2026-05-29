@@ -52,7 +52,7 @@
 
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <input type="text" name="customer_name" required placeholder="სახელი და გვარი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
-                                <input type="text" name="customer_phone" required placeholder="ტელეფონი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
+                                <input type="tel" name="customer_phone" required inputmode="tel" pattern="(995[0-9]{9}|5[0-9]{8})" maxlength="12" placeholder="ტელეფონი (5XXXXXXX ან 9955XXXXXXX) *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
                             </div>
 
                             <input type="text" name="personal_number" required inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="პირადი ნომერი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
@@ -114,6 +114,44 @@
             return;
         }
 
+        // Phone number formatting
+        const phoneInput = form.querySelector('input[name="customer_phone"]');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+
+                // Format as 995XXXXXXX or 5XXXXXXX
+                if (value.length > 0) {
+                    if (value.startsWith('995')) {
+                        value = value.substring(0, 12);
+                    } else if (value.startsWith('5')) {
+                        value = value.substring(0, 9);
+                    } else if (value.startsWith('0') && value.length > 1) {
+                        value = value.substring(1, 10);
+                    } else {
+                        value = value;
+                    }
+                }
+
+                e.target.value = value;
+            });
+
+            phoneInput.addEventListener('blur', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+
+                // Format on blur
+                if (value.length === 9 && value.startsWith('5')) {
+                    value = '995' + value;
+                } else if (value.length === 12 && value.startsWith('995')) {
+                    value = value;
+                } else {
+                    value = '';
+                }
+
+                e.target.value = value;
+            });
+        }
+
         function renderCityResults(query) {
             const normalized = (query || '').trim().toLowerCase();
             if (normalized.length === 0) {
@@ -169,6 +207,19 @@
                 citySearchInput.setCustomValidity('აირჩიეთ ქალაქი სიიდან');
                 citySearchInput.reportValidity();
                 return;
+            }
+
+            // Format phone number before submission
+            const phoneInput = form.querySelector('input[name="customer_phone"]');
+            if (phoneInput) {
+                let phone = phoneInput.value.replace(/\D/g, '');
+
+                // If starts with 5, add 995
+                if (phone.length === 9 && phone.startsWith('5')) {
+                    phone = '995' + phone;
+                }
+
+                phoneInput.value = phone;
             }
 
             event.preventDefault();

@@ -12,9 +12,9 @@ use App\Services\Chatbot\ChatbotTrainingCaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\View\View;
 
 class ChatbotLabController extends Controller
 {
@@ -24,9 +24,9 @@ class ChatbotLabController extends Controller
         Request $request,
         ChatbotTrainingCaseService $trainingCaseService,
         ChatbotLabService $labService
-    ): View
+    )
     {
-        return view('admin.chatbot-lab.index', $this->manualPageData($trainingCaseService, null, [
+        $view = view('admin.chatbot-lab.index', $this->manualPageData($trainingCaseService, null, [
             'result' => null,
             'formData' => [
                 'prompt' => '',
@@ -34,13 +34,15 @@ class ChatbotLabController extends Controller
                 'continue_session' => '',
             ],
         ], $labService->getSessionState((int) $request->session()->get(self::MANUAL_SESSION_KEY))));
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function runManualTest(
         Request $request,
         ChatbotLabService $labService,
         ChatbotTrainingCaseService $trainingCaseService
-    ): View
+    )
     {
         $data = $request->validate([
             'prompt' => ['required', 'string', 'max:2000'],
@@ -81,7 +83,7 @@ class ChatbotLabController extends Controller
         Request $request,
         ChatbotLabService $labService,
         ChatbotTrainingCaseService $trainingCaseService
-    ): View
+    )
     {
         $data = $request->validate([
             'prompt' => ['required', 'string', 'max:2000'],
@@ -138,7 +140,7 @@ class ChatbotLabController extends Controller
             ->with('status', 'ლაბის მიმდინარე სესია გასუფთავდა.');
     }
 
-    public function cases(Request $request, ChatbotTrainingCaseService $trainingCaseService): View
+    public function cases(Request $request, ChatbotTrainingCaseService $trainingCaseService)
     {
         $filters = [
             'search' => (string) $request->query('search', ''),
@@ -148,13 +150,15 @@ class ChatbotLabController extends Controller
 
         $cases = $trainingCaseService->listCases($filters);
 
-        return view('admin.chatbot-lab.cases.index', [
+        $view = view('admin.chatbot-lab.cases.index', [
             'cases' => $cases,
             'caseDiagnostics' => $trainingCaseService->diagnosticsForCases($cases->items()),
             'filters' => $filters,
             'labStats' => $trainingCaseService->stats(),
             'casesReady' => $trainingCaseService->isReady(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function storeCase(Request $request, ChatbotTrainingCaseService $trainingCaseService): RedirectResponse
@@ -213,11 +217,11 @@ class ChatbotLabController extends Controller
             ->with('status', 'სატესტო ქეისი წაიშალა.');
     }
 
-    public function runs(ChatbotTrainingCaseService $trainingCaseService, ChatbotLabRunService $runService): View
+    public function runs(Request $request, ChatbotTrainingCaseService $trainingCaseService, ChatbotLabRunService $runService)
     {
         $selectableCases = $runService->selectableCases();
 
-        return view('admin.chatbot-lab.runs.index', [
+        $view = view('admin.chatbot-lab.runs.index', [
             'labStats' => $trainingCaseService->stats(),
             'casesReady' => $trainingCaseService->isReady(),
             'runStorageReady' => $runService->runsReady(),
@@ -228,6 +232,8 @@ class ChatbotLabController extends Controller
             'recentRuns' => $runService->recentRuns(),
             'observabilitySummary' => $runService->observabilitySummary(),
         ]);
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function startRun(

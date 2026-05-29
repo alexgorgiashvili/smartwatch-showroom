@@ -3,112 +3,83 @@
 namespace Tests\Unit;
 
 use App\Models\Product;
-use App\Services\Chatbot\AdaptiveLearningService;
-use App\Services\Chatbot\ChatPipelineService;
-use App\Services\Chatbot\ChatbotFallbackStrategyService;
-use App\Services\Chatbot\ChatbotQualityMetricsService;
-use App\Services\Chatbot\ConversationMemoryService;
-use App\Services\Chatbot\InputGuardService;
-use App\Services\Chatbot\IntentAnalyzerService;
+use App\Services\Chatbot\ChatbotProductSelectionService;
 use App\Services\Chatbot\IntentResult;
-use App\Services\Chatbot\ResponseValidatorService;
-use App\Services\Chatbot\SearchContext;
-use App\Services\Chatbot\SmartSearchOrchestrator;
-use App\Services\Chatbot\UnifiedAiPolicyService;
-use App\Services\Chatbot\WidgetTraceLogger;
+use App\Services\Chatbot\PipelineResult;
+use App\Services\Chatbot\ProductContextService;
 use Illuminate\Support\Collection;
-use Mockery;
-use ReflectionMethod;
 use Tests\TestCase;
 
 class ChatPipelineServiceContextTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
-    }
-
-    public function testRecommendationPromptSkipsRagWhenProductsAreAvailable(): void
-    {
-        $service = $this->makeService();
-        $intent = $this->intent('recommendation');
-        $products = new Collection([$this->product('wonlex-ct23')]);
-        $searchContext = new SearchContext(str_repeat('RAG ', 500), $products, null, null);
-
-        $resolved = $this->invokeResolvePromptRagContext($service, $intent, $searchContext, $products, null);
-
-        $this->assertSame('', $resolved);
-    }
-
-    public function testGeneralPromptKeepsTrimmedRagWhenNoProductsAreAvailable(): void
-    {
-        $service = $this->makeService();
-        $intent = $this->intent('general');
-        $products = new Collection();
-        $searchContext = new SearchContext(str_repeat('RAG ', 500), $products, null, null);
-
-        $resolved = $this->invokeResolvePromptRagContext($service, $intent, $searchContext, $products, null);
-
-        $this->assertNotSame('', $resolved);
-        $this->assertLessThanOrEqual(1212, mb_strlen($resolved));
-    }
-
-    public function testAdultOutOfDomainShortcutMentionsKidFocusedCatalog(): void
-    {
-        $service = $this->makeService();
-        $intent = new IntentResult(
-            'ზრდასრულისთვის მინდა',
-            'out_of_domain',
-            null,
-            null,
-            null,
-            null,
-            'adult_smartwatch',
-            false,
-            [],
-            true,
-            0.94,
-            0,
-            false
-        );
-
-        $method = new ReflectionMethod(ChatPipelineService::class, 'routeNonSearchIntent');
-        $method->setAccessible(true);
-        $reply = $method->invoke($service, $intent);
-
-        $this->assertIsString($reply);
-        $this->assertStringContainsString('ძირითადად საბავშვო', $reply);
-        $this->assertStringContainsString('ზრდასრულის მოდელი არ გვაქვს', $reply);
-    }
-
     public function testBudgetPromptContextPrefersWithinBudgetProductsFirst(): void
     {
-        $service = $this->makeService();
+        $service = new ProductContextService();
         $intent = $this->intent('recommendation');
         $products = new Collection([$this->pricedProduct(1, 'ct27', 20.50), $this->pricedProduct(2, 'ct23', 16.50)]);
 
-        $method = new ReflectionMethod(ChatPipelineService::class, 'selectProductsForPromptContext');
-        $method->setAccessible(true);
-        $resolved = $method->invoke($service, $products, $intent, null, ['budget_max_gel' => 20]);
+        $resolved = $service->selectForPrompt($products, $intent, ['budget_max_gel' => 20]);
 
         $this->assertSame('ct23', $resolved->first()->slug);
     }
 
-    private function makeService(): ChatPipelineService
+    public function testComparisonPromptContextIsLimitedToFourProducts(): void
     {
-        return new ChatPipelineService(
-            Mockery::mock(IntentAnalyzerService::class),
-            Mockery::mock(SmartSearchOrchestrator::class),
-            Mockery::mock(InputGuardService::class),
-            Mockery::mock(ConversationMemoryService::class),
-            Mockery::mock(UnifiedAiPolicyService::class),
-            Mockery::mock(AdaptiveLearningService::class),
-            Mockery::mock(ResponseValidatorService::class),
-            Mockery::mock(ChatbotQualityMetricsService::class),
-            Mockery::mock(ChatbotFallbackStrategyService::class),
-            new WidgetTraceLogger()
+        $service = new ProductContextService();
+        $intent = $this->intent('comparison');
+        $products = new Collection([
+            $this->pricedProduct(1, 'p1', 10),
+            $this->pricedProduct(2, 'p2', 12),
+            $this->pricedProduct(3, 'p3', 14),
+            $this->pricedProduct(4, 'p4', 16),
+            $this->pricedProduct(5, 'p5', 18),
+        ]);
+
+        $resolved = $service->selectForPrompt($products, $intent);
+
+        $this->assertCount(4, $resolved);
+        $this->assertSame(['p1', 'p2', 'p3', 'p4'], $resolved->pluck('slug')->all());
+    }
+
+    public function testRecommendationIntentDoesNotReturnWidgetCards(): void
+    {
+        $service = new ChatbotProductSelectionService();
+
+        $selected = $service->selectWidgetProductsForResponse([
+            $this->widgetProduct('Wonlex CT23', 'wonlex-ct23', 199),
+            $this->widgetProduct('Wonlex KT34', 'wonlex-kt34', 219),
+        ], $this->pipelineResult(
+            'თქვენი ბიუჯეტისთვის რამდენიმე კარგი ვარიანტი გვაქვს.',
+            $this->intent('recommendation')
+        ));
+
+        $this->assertSame([], $selected);
+    }
+
+    public function testAdultCatalogFallbackSuppressesWidgetProducts(): void
+    {
+        $service = new ChatbotProductSelectionService();
+
+        $result = $this->pipelineResult(
+            'ჩვენი კატალოგი ამ ეტაპზე ძირითადად საბავშვო სმარტსაათებზეა ფოკუსირებული. ზრდასრულის სმარტსაათები არ გვაქვს.',
+            new IntentResult(
+                'ზრდასრულისთვის მინდა',
+                'out_of_domain',
+                null,
+                null,
+                null,
+                null,
+                'adult_smartwatch',
+                false,
+                [],
+                true,
+                0.94,
+                0,
+                false
+            )
         );
+
+        $this->assertFalse($service->shouldIncludeWidgetProducts($result));
     }
 
     private function intent(string $intent): IntentResult
@@ -150,16 +121,30 @@ class ChatPipelineServiceContextTest extends TestCase
         return $product;
     }
 
-    private function invokeResolvePromptRagContext(
-        ChatPipelineService $service,
-        IntentResult $intent,
-        SearchContext $searchContext,
-        Collection $products,
-        ?Product $requestedProduct
-    ): string {
-        $method = new ReflectionMethod(ChatPipelineService::class, 'resolvePromptRagContext');
-        $method->setAccessible(true);
+    private function widgetProduct(string $name, string $slug, float $price): array
+    {
+        return [
+            'name' => $name,
+            'slug' => $slug,
+            'price' => $price,
+            'sale_price' => null,
+        ];
+    }
 
-        return $method->invoke($service, $intent, $searchContext, $products, $requestedProduct);
+    private function pipelineResult(string $response, IntentResult $intent): PipelineResult
+    {
+        return new PipelineResult(
+            $response,
+            1,
+            '',
+            $intent,
+            [],
+            true,
+            null,
+            true,
+            [],
+            true,
+            10
+        );
     }
 }

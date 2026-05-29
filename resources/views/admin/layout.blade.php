@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="webpush-public-key" content="{{ config('services.webpush.public_key') }}">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="MyTechnic Admin">
     <meta name="theme-color" content="#ffffff">
@@ -20,21 +20,27 @@
     <link rel="stylesheet" href="{{ asset('assets/fonts/feather-font/css/iconfont.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendors/flag-icon-css/css/flag-icon.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/demo1/style.css') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('assets/images/favicon.png') }}">
-    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.png') }}" />
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/assets/images/favicon.png">
+    <link rel="shortcut icon" href="/assets/images/favicon.png" />
 
+    <link rel="stylesheet" href="{{ asset('assets/vendors/sweetalert2/sweetalert2.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
     @stack('styles')
 </head>
 <body>
+    <div id="pjax-progress" class="pjax-progress"></div>
     <div class="main-wrapper">
-        @auth
+        @if(auth()->check() && ! request()->routeIs('admin.login'))
             @include('admin.partials.sidebar')
             <div class="page-wrapper">
                 @include('admin.partials.navbar')
                 <div class="page-content">
-                    @include('admin.partials.alerts')
-                    @yield('content')
+                    <div id="page-content">
+                        @include('admin.partials.alerts')
+                        @yield('content')
+                    </div>
                 </div>
                 @include('admin.partials.footer')
             </div>
@@ -47,7 +53,7 @@
                     </div>
                 </div>
             </div>
-        @endauth
+        @endif
     </div>
 
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
@@ -62,8 +68,30 @@
     <script src="{{ asset('assets/vendors/core/core.js') }}"></script>
     <script src="{{ asset('assets/vendors/feather-icons/feather.min.js') }}"></script>
     <script src="{{ asset('assets/js/template.js') }}"></script>
-    @vite(['resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ asset('assets/vendors/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="{{ asset('assets/vendors/datatables.net/jquery.dataTables.js') }}"></script>
+    <script src="{{ asset('assets/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
+    @vite(['resources/js/admin.js', 'resources/css/admin.css'])
     @stack('scripts')
+
+    <!-- Global Lightbox Modal -->
+    <div id="global-lightbox" class="lightbox-modal">
+        <div class="lightbox-header">
+            <button class="lightbox-close" id="lightbox-close" aria-label="Close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <div class="lightbox-content">
+            <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">
+                <i data-feather="chevron-left"></i>
+            </button>
+            <img src="" alt="Gallery Image" class="lightbox-img" id="lightbox-main-img">
+            <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">
+                <i data-feather="chevron-right"></i>
+            </button>
+        </div>
+        <div class="lightbox-thumbnails" id="lightbox-thumbnails"></div>
+    </div>
 </body>
 </html>

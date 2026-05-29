@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Site;
 
+use App\Events\OrderCreated;
+use App\Events\PaymentCompleted;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Order;
@@ -9,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\PaymentLog;
 use App\Models\ProductVariant;
 use App\Services\BogPayService;
+use App\Services\SmsOfficeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +23,7 @@ use Throwable;
 
 class GeoPaymentController extends Controller
 {
-    public function __construct(private readonly BogPayService $bogPayService)
+    public function __construct(private readonly BogPayService $bogPayService, private readonly SmsOfficeService $smsService)
     {
     }
 
@@ -38,7 +41,7 @@ class GeoPaymentController extends Controller
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:160'],
-            'customer_phone' => ['required', 'string', 'max:50'],
+            'customer_phone' => ['required', 'string', 'max:50', 'regex:/^(995[0-9]{9}|5[0-9]{8})$/'],
             'personal_number' => ['required', 'regex:/^\d{11}$/'],
             'city_id' => ['required', 'integer', 'exists:cities,id'],
             'exact_address' => ['required', 'string'],
@@ -104,6 +107,12 @@ class GeoPaymentController extends Controller
                 throw new RuntimeException('Selected city is invalid.');
             }
 
+            // Format phone number
+            $phone = $data['customer_phone'];
+            if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
+                $data['customer_phone'] = '995' . $phone;
+            }
+
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
                 'customer_name' => $data['customer_name'],
@@ -142,6 +151,8 @@ class GeoPaymentController extends Controller
             if ((int) $data['payment_type'] === 1) {
                 $redirectData = $this->createBogOrder($order->fresh('items'));
             } else {
+                // Courier payment - trigger SMS notification
+                event(new OrderCreated($order));
                 $redirectData = [
                     'redirect_url' => route('payment.success', ['order' => $order->order_number, 'method' => 'cod']),
                 ];
@@ -264,6 +275,11 @@ class GeoPaymentController extends Controller
             $order->update([
                 'payment_status' => 'completed',
             ]);
+
+            // Trigger SMS notification for card payments
+            if ($order->payment_type === 1) {
+                event(new PaymentCompleted($order));
+            }
 
             PaymentLog::create([
                 'order_id' => $order->id,

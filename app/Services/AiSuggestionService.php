@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Conversation;
 use App\Models\ContactSetting;
 use App\Models\Message;
+use App\Models\SocialComment;
 use App\Services\Chatbot\ConversationMemoryService;
 use App\Services\Chatbot\EmbeddingService;
 use App\Services\Chatbot\PineconeService;
@@ -499,6 +500,217 @@ PROMPT;
             Log::debug('Could not log token usage', [
                 'exception' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Generate an AI reply suggestion for a social media comment.
+     *
+     * @param SocialComment $comment
+     * @param string $tonePreference warm|formal|neutral
+     * @return array{success: bool, reply?: string, detected_tone?: string, suggested_tone?: string, error?: string}
+     */
+    public function generateCommentReply(SocialComment $comment, string $tonePreference = 'warm'): array
+    {
+        try {
+            $postText = $comment->facebookPost?->message ?? '';
+            $commentText = $comment->message;
+
+            // Get product context via Pinecone if available
+            $searchQuery = $commentText . ' ' . $postText;
+            $productInfo = '';
+
+            if ($this->embeddingService->isConfigured() && $this->pineconeService->isConfigured()) {
+                $productInfo = $this->getProductContext(0, $searchQuery);
+            }
+
+            $contactInfo = $this->getContactContext();
+
+            $toneLabel = match ($tonePreference) {
+                'warm' => 'თბილი, მეგობრული',
+                'formal' => 'ოფიციალური, პროფესიონალური',
+                default => 'ნეიტრალური',
+            };
+
+            $prompt = <<<PROMPT
+სოციალური მედიის კომენტარზე პასუხის გენერაცია.
+
+ორიგინალი პოსტი:
+{$postText}
+
+მომხმარებლის კომენტარი:
+{$commentText}
+
+პროდუქტის ცოდნა:
+{$productInfo}
+
+საკონტაქტო ინფორმაცია:
+{$contactInfo}
+
+ინსტრუქცია:
+1. გააანალიზე კომენტარის ტონი (positive, negative, neutral, question)
+2. შექმენი ერთი პასუხი {$toneLabel} ტონით
+3. პასუხი უნდა იყოს ქართულ ენაზე, მოკლე (1-3 წინადადება)
+4. თუ კომენტარი პროდუქტის შესახებ შეკითხვაა, გამოიყენე პროდუქტის ცოდნა
+5. თუ კომენტარი უარყოფითია, იყავი თანამგრძნობი და გადაწყვეტაზე ორიენტირებული
+6. დაამატე call-to-action თუ შესაბამისია
+
+დააბრუნე JSON ფორმატით (მხოლოდ JSON):
+{"detected_tone": "positive|negative|neutral|question", "reply": "..."}
+PROMPT;
+
+            if (!$this->openaiApiKey) {
+                return ['success' => false, 'error' => 'OpenAI API key not configured'];
+            }
+
+            $headers = [
+                'Authorization' => "Bearer {$this->openaiApiKey}",
+                'Content-Type' => 'application/json',
+            ];
+
+            if ($this->openaiOrgId && trim($this->openaiOrgId) !== '') {
+                $headers['OpenAI-Organization'] = $this->openaiOrgId;
+            }
+
+            $response = Http::withHeaders($headers)->timeout(30)->post(
+                $this->openaiBaseUrl . '/chat/completions',
+                [
+                    'model' => $this->openaiModel,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'შენ ხარ MyTechnic.ge-ს სოციალური მედიის მენეჯერი. პასუხობ კომენტარებს პროფესიონალურად. ყოველთვის დააბრუნე ვალიდური JSON.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $prompt,
+                        ],
+                    ],
+                    'temperature' => 0.7,
+                    'max_tokens' => 300,
+                ]
+            );
+
+            if (!$response->successful()) {
+                Log::warning('Comment reply generation failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return ['success' => false, 'error' => 'AI service unavailable'];
+            }
+
+            $this->logTokenUsage($response->json());
+
+            $content = trim($response->json('choices.0.message.content', ''));
+            $content = preg_replace('/^```(?:json)?\s*/i', '', $content);
+            $content = preg_replace('/\s*```$/', '', $content);
+
+            $parsed = json_decode($content, true);
+
+            if (!is_array($parsed) || !isset($parsed['reply'])) {
+                Log::warning('Comment reply: unexpected AI format', ['content' => $content]);
+                return ['success' => false, 'error' => 'Unexpected AI response format'];
+            }
+
+            // Save suggestion on the comment
+            $comment->update(['ai_suggested_reply' => $parsed['reply']]);
+
+            return [
+                'success' => true,
+                'reply' => $parsed['reply'],
+                'detected_tone' => $parsed['detected_tone'] ?? 'neutral',
+                'suggested_tone' => $tonePreference,
+            ];
+        } catch (Exception $e) {
+            Log::error('Comment reply generation exception', [
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
+            return ['success' => false, 'error' => 'Failed to generate reply'];
+        }
+    }
+
+    public function generateAutoReplyFromTemplate(SocialComment $comment, string $template): array
+    {
+        try {
+            if (!$this->openaiApiKey) {
+                return ['success' => false, 'error' => 'OpenAI API key not configured'];
+            }
+
+            $postText = $comment->facebookPost?->message ?? '';
+            $commentText = $comment->message;
+
+            $prompt = <<<PROMPT
+შენ უნდა უპასუხო სოციალურ მედიის კომენტარს.
+
+კონტექსტი:
+პოსტი:
+{$postText}
+
+კომენტარი:
+{$commentText}
+
+ადმინის ინსტრუქცია/შაბლონი:
+{$template}
+
+მოთხოვნები:
+- პასუხი ქართულად
+- 1-3 წინადადება
+- არ ჩაწერო JSON/კოდი/markdown, მხოლოდ საბოლოო ტექსტი
+PROMPT;
+
+            $headers = [
+                'Authorization' => "Bearer {$this->openaiApiKey}",
+                'Content-Type' => 'application/json',
+            ];
+
+            if ($this->openaiOrgId && trim($this->openaiOrgId) !== '') {
+                $headers['OpenAI-Organization'] = $this->openaiOrgId;
+            }
+
+            $response = Http::withHeaders($headers)->timeout(30)->post(
+                $this->openaiBaseUrl . '/chat/completions',
+                [
+                    'model' => $this->openaiModel,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'შენ ხარ MyTechnic.ge-ს სოციალური მედიის მენეჯერი. წერ მოკლე, პროფესიონალურ პასუხებს.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $prompt,
+                        ],
+                    ],
+                    'temperature' => 0.5,
+                    'max_tokens' => 200,
+                ]
+            );
+
+            if (!$response->successful()) {
+                Log::warning('Auto reply generation failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return ['success' => false, 'error' => 'AI service unavailable'];
+            }
+
+            $this->logTokenUsage($response->json());
+
+            $content = trim($response->json('choices.0.message.content', ''));
+            $content = preg_replace('/^```(?:json)?\s*/i', '', $content);
+            $content = preg_replace('/\s*```$/', '', $content);
+
+            return [
+                'success' => true,
+                'reply' => trim((string) $content),
+            ];
+        } catch (Exception $e) {
+            Log::error('Auto reply generation exception', [
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
+            return ['success' => false, 'error' => 'Failed to generate auto reply'];
         }
     }
 }

@@ -1332,7 +1332,7 @@ class ChatbotLabWorkflowTest extends TestCase
             ->assertRedirect(route('admin.login'));
 
         $this->actingAs($user)
-            ->get(route('filament.admin.chatbot-lab-runs.export', $run))
+            ->get(route('admin.chatbot-lab.runs.export', $run))
             ->assertRedirect(route('admin.login'));
 
         $this->actingAs($user)
@@ -1676,7 +1676,7 @@ class ChatbotLabWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('filament.admin.chatbot-lab-runs.export', $run));
+            ->get(route('admin.chatbot-lab.runs.export', $run));
 
         $response->assertOk();
         $response->assertDownload('chatbot-lab-run-' . $run->id . '.csv');

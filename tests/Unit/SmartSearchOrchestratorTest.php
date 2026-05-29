@@ -48,8 +48,8 @@ class SmartSearchOrchestratorTest extends TestCase
 
     public function testRecommendationSearchSkipsRagWhenProductsAlreadyMatch(): void
     {
-        $this->createProduct('wonlex-kt34', 'Wonlex KT34', 'Wonlex', 'KT34');
-        $this->createProduct('wonlex-ct27', 'Wonlex CT27', 'Wonlex', 'CT27');
+        $this->createProduct('wonlex-gps-kt34', 'Wonlex KT34 GPS SOS', 'Wonlex', 'KT34');
+        $this->createProduct('wonlex-gps-ct27', 'Wonlex CT27 GPS SOS', 'Wonlex', 'CT27');
 
         $ragBuilder = Mockery::mock(RagContextBuilder::class);
         $ragBuilder->shouldNotReceive('build');
@@ -101,6 +101,39 @@ class SmartSearchOrchestratorTest extends TestCase
 
         $this->assertSame('faq context', $context->ragContext());
         $this->assertCount(0, $context->products());
+    }
+
+    public function testUnknownProductSearchReturnsEmptyCollectionInsteadOfRecentProducts(): void
+    {
+        $this->createProduct('wonlex-kt34', 'Wonlex KT34', 'Wonlex', 'KT34');
+        $this->createProduct('wonlex-ct27', 'Wonlex CT27', 'Wonlex', 'CT27');
+
+        $ragBuilder = Mockery::mock(RagContextBuilder::class);
+        $ragBuilder->shouldReceive('build')
+            ->once()
+            ->andReturn('fallback faq context');
+
+        $intent = new IntentResult(
+            'აბსოლუტურად უცნობი მოდელი მაჩვენე',
+            'price_query',
+            'UnknownBrand',
+            'UnknownModel',
+            'unknown-brand-unknown-model',
+            null,
+            null,
+            true,
+            ['UnknownBrand', 'UnknownModel'],
+            false,
+            0.9,
+            20,
+            false
+        );
+
+        $context = $this->makeOrchestrator($ragBuilder)->search($intent);
+
+        $this->assertCount(0, $context->products());
+        $this->assertNull($context->requestedProduct());
+        $this->assertSame('fallback faq context', $context->ragContext());
     }
 
     public function testComparisonSearchKeepsSecondaryModelFromKeywords(): void

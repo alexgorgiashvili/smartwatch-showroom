@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Message;
-use App\Services\Chatbot\ChatPipelineService;
+use App\Services\Chatbot\Agents\SupervisorAgent;
 use App\Services\PushNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -21,8 +21,12 @@ class ChatbotWidgetFailurePersistenceTest extends TestCase
 
     public function testWidgetPersistsFailureReplyWhenPipelineThrows(): void
     {
-        $pipelineMock = Mockery::mock(ChatPipelineService::class);
-        $pipelineMock->shouldReceive('process')
+        config()->set('services.openai.key', 'test-key');
+        config()->set('services.pinecone.api_key', null);
+        config()->set('services.pinecone.host', null);
+
+        $supervisorMock = Mockery::mock(SupervisorAgent::class);
+        $supervisorMock->shouldReceive('orchestrate')
             ->once()
             ->andThrow(new \RuntimeException('Simulated pipeline failure'));
 
@@ -31,7 +35,7 @@ class ChatbotWidgetFailurePersistenceTest extends TestCase
             ->once()
             ->andReturn(false);
 
-        $this->app->instance(ChatPipelineService::class, $pipelineMock);
+        $this->app->instance(SupervisorAgent::class, $supervisorMock);
         $this->app->instance(PushNotificationService::class, $pushMock);
 
         $response = $this->postJson('/chatbot', [

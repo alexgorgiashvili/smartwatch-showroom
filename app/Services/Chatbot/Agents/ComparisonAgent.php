@@ -46,7 +46,8 @@ class ComparisonAgent
         $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
-        $systemPrompt .= "\n\nCOMPARISON MODE: Provide a detailed comparison of the products. Highlight key differences in features, prices, and suitability for different use cases.";
+        $modeInstruction = 'შედარების რეჟიმი: გააკეთე დეტალური შედარება პროდუქტებს შორის. გამოკვეთე მთავარი განსხვავებები ფუნქციებში, ფასში და სხვადასხვა გამოყენების შემთხვევისთვის შესაბამისობაში.';
+        $systemPrompt .= "\n\n" . $modeInstruction;
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -79,18 +80,32 @@ class ComparisonAgent
             'content' => $userContext . "\n\nUser question: " . $userQuestion,
         ];
 
+        $this->traceWidget('comparison_agent.handoff_prepared', array_filter([
+            'mode_instruction' => $modeInstruction,
+            'history_count' => count($sessionContext['recent'] ?? []),
+            'selected_products' => $this->productSnapshot($selectedProducts),
+            'system_prompt' => $this->widgetTrace->payloadsEnabled() ? $systemPrompt : null,
+            'user_context' => $this->widgetTrace->payloadsEnabled() ? $userContext : null,
+        ], fn ($value) => $value !== null), $trace);
+
         $this->traceWidget('comparison_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             'message_count' => count($messages),
             'product_count' => $selectedProducts->count(),
         ], $trace);
 
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             $messages,
             [
                 'max_tokens' => 350,
                 'temperature' => 0.7,
+                'langfuse_name' => 'chatbot.comparison_agent',
+                'langfuse_metadata' => [
+                    'agent' => 'comparison',
+                    'intent' => $intent->intent(),
+                    'conversation_id' => $conversationId,
+                ],
             ]
         );
 
@@ -108,6 +123,11 @@ class ComparisonAgent
         }
 
         $response = $completion['reply'];
+
+        $this->traceWidget('comparison_agent.model_completed', array_filter([
+            'model_reply' => $response,
+            'usage' => $completion['usage'] ?? [],
+        ], fn ($value) => $value !== null), $trace);
 
         $this->traceWidget('comparison_agent.reflection_check', [
             'should_reflect' => $this->reflection->shouldReflect($response, 1.0, $intent),
@@ -155,5 +175,22 @@ class ComparisonAgent
         }
 
         $this->widgetTrace->logStep($step, array_merge($trace, $context));
+    }
+
+    private function productSnapshot(Collection $products): array
+    {
+        return $products
+            ->take(5)
+            ->map(static function ($product): array {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->sale_price ?: $product->price,
+                    'stock' => (int) ($product->total_stock ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

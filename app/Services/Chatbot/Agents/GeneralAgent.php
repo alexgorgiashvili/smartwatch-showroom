@@ -46,7 +46,8 @@ class GeneralAgent
         $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
-        $systemPrompt .= "\n\nGENERAL MODE: Provide helpful, conversational responses. Focus on understanding user needs and making personalized recommendations.";
+        $modeInstruction = 'ზოგადი რეჟიმი: მიეცი მომხმარებელს სასარგებლო, ბუნებრივი პასუხები. ფოკუსირდი მისი საჭიროებების გაგებაზე და პერსონალიზებულ რეკომენდაციებზე.';
+        $systemPrompt .= "\n\n" . $modeInstruction;
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -86,18 +87,32 @@ class GeneralAgent
             'content' => $userContext . "\n\nUser question: " . $userQuestion,
         ];
 
+        $this->traceWidget('general_agent.handoff_prepared', array_filter([
+            'mode_instruction' => $modeInstruction,
+            'history_count' => count($sessionContext['recent'] ?? []),
+            'selected_products' => $this->productSnapshot($selectedProducts),
+            'system_prompt' => $this->widgetTrace->payloadsEnabled() ? $systemPrompt : null,
+            'user_context' => $this->widgetTrace->payloadsEnabled() ? $userContext : null,
+        ], fn ($value) => $value !== null), $trace);
+
         $this->traceWidget('general_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             'message_count' => count($messages),
             'has_summary' => isset($sessionContext['summary']),
         ], $trace);
 
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             $messages,
             [
                 'max_tokens' => 300,
                 'temperature' => 0.7,
+                'langfuse_name' => 'chatbot.general_agent',
+                'langfuse_metadata' => [
+                    'agent' => 'general',
+                    'intent' => $intent->intent(),
+                    'conversation_id' => $conversationId,
+                ],
             ]
         );
 
@@ -115,6 +130,11 @@ class GeneralAgent
         }
 
         $response = $completion['reply'];
+
+        $this->traceWidget('general_agent.model_completed', array_filter([
+            'model_reply' => $response,
+            'usage' => $completion['usage'] ?? [],
+        ], fn ($value) => $value !== null), $trace);
 
         $shouldReflect = $this->reflection->shouldReflect($response, 0.8, $intent);
 
@@ -164,5 +184,22 @@ class GeneralAgent
         }
 
         $this->widgetTrace->logStep($step, array_merge($trace, $context));
+    }
+
+    private function productSnapshot(Collection $products): array
+    {
+        return $products
+            ->take(5)
+            ->map(static function ($product): array {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->sale_price ?: $product->price,
+                    'stock' => (int) ($product->total_stock ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

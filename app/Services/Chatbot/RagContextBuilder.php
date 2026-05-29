@@ -3,6 +3,7 @@
 namespace App\Services\Chatbot;
 
 use App\Models\ChatbotDocument;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
 
 class RagContextBuilder
@@ -25,7 +26,18 @@ class RagContextBuilder
 
     public function build(string $question, int $topK = 5, array $filters = [], ?IntentResult $intent = null): ?string
     {
+        $spanId = $this->langfuse()->startSpan('rag.build', [
+            'question' => $question,
+        ], [
+            'top_k' => $topK,
+            'intent' => $intent?->intent(),
+        ]);
+
         if (!$this->hybridSearch->isConfigured()) {
+            $this->langfuse()->endSpan($spanId, [
+                'reason' => 'hybrid_search_not_configured',
+            ]);
+
             return null;
         }
 
@@ -42,6 +54,10 @@ class RagContextBuilder
             $matches = $this->hybridSearch->hybridSearch($searchQuery, 50, $effectiveFilters, $alphaOverride);
 
             if ($matches === []) {
+                $this->langfuse()->endSpan($spanId, [
+                    'match_count' => 0,
+                ]);
+
                 return null;
             }
 
@@ -52,6 +68,11 @@ class RagContextBuilder
                 ->all();
 
             if ($keys === []) {
+                $this->langfuse()->endSpan($spanId, [
+                    'match_count' => count($matches),
+                    'document_key_count' => 0,
+                ]);
+
                 return null;
             }
 
@@ -80,6 +101,12 @@ class RagContextBuilder
             }
 
             if ($candidates === []) {
+                $this->langfuse()->endSpan($spanId, [
+                    'match_count' => count($matches),
+                    'document_count' => $documents->count(),
+                    'candidate_count' => 0,
+                ]);
+
                 return null;
             }
 
@@ -116,14 +143,44 @@ class RagContextBuilder
             }
 
             if ($parts === []) {
+                $this->langfuse()->endSpan($spanId, [
+                    'match_count' => count($matches),
+                    'document_count' => $documents->count(),
+                    'candidate_count' => count($candidates),
+                    'selected_count' => 0,
+                ]);
+
                 return null;
             }
 
-            return implode("\n\n", $parts);
+            $ragContext = implode("\n\n", $parts);
+            $maxChars = max(500, (int) config('chatbot.rag.max_chars', 3000));
+            $wasTruncated = false;
+
+            if (mb_strlen($ragContext) > $maxChars) {
+                $ragContext = rtrim(mb_substr($ragContext, 0, $maxChars));
+                $wasTruncated = true;
+            }
+
+            $this->langfuse()->endSpan($spanId, [
+                'match_count' => count($matches),
+                'document_count' => $documents->count(),
+                'candidate_count' => count($candidates),
+                'selected_count' => count($parts),
+                'used_reranked' => $useReranked,
+                'truncated' => $wasTruncated,
+            ], $ragContext);
+
+            return $ragContext;
         } catch (\Throwable $exception) {
             Log::warning('RAG context build failed', [
                 'error' => $exception->getMessage(),
             ]);
+
+            $this->langfuse()->endSpan($spanId, [
+                'reason' => 'rag_exception',
+                'error' => $exception->getMessage(),
+            ], null, $exception->getMessage());
 
             return null;
         }
@@ -179,5 +236,14 @@ class RagContextBuilder
             'comparison', 'features' => 0.5,
             default => 0.5,
         };
+    }
+
+    private function langfuse(): LangfuseService
+    {
+        try {
+            return app(LangfuseService::class);
+        } catch (BindingResolutionException) {
+            return new LangfuseService();
+        }
     }
 }

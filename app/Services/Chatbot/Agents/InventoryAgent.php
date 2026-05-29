@@ -46,6 +46,8 @@ class InventoryAgent
         $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
+        $modeInstruction = 'ინვენტარის რეჟიმი: უპასუხე ზუსტად ფასზე, მარაგზე და ხელმისაწვდომობაზე. არ მოიგონო ინფორმაცია, რომელიც კონტექსტში არ ჩანს.';
+        $systemPrompt .= "\n\n" . $modeInstruction;
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -78,19 +80,103 @@ class InventoryAgent
             'content' => $userContext . "\n\nUser question: " . $userQuestion,
         ];
 
+        $this->traceWidget('inventory_agent.handoff_prepared', array_filter([
+            'mode_instruction' => $modeInstruction,
+            'history_count' => count($sessionContext['recent'] ?? []),
+            'selected_products' => $this->productSnapshot($selectedProducts),
+            'system_prompt' => $this->widgetTrace->payloadsEnabled() ? $systemPrompt : null,
+            'user_context' => $this->widgetTrace->payloadsEnabled() ? $userContext : null,
+        ], fn ($value) => $value !== null), $trace);
+
         $this->traceWidget('inventory_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             'message_count' => count($messages),
         ], $trace);
 
+        $tools = [
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'search_database',
+                    'description' => 'Search products in database by keywords and criteria',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'query' => ['type' => 'string', 'description' => 'Search query/keywords'],
+                        ],
+                        'required' => ['query'],
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'search_pinecone',
+                    'description' => 'Search related documentation and semantic product features in Pinecone',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'query' => ['type' => 'string', 'description' => 'Semantic search query'],
+                        ],
+                        'required' => ['query'],
+                    ]
+                ]
+            ]
+        ];
+
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4o-mini'),
+            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
             $messages,
             [
-                'max_tokens' => 200,
+                'max_tokens' => 400,
                 'temperature' => 0.5,
+                'langfuse_name' => 'chatbot.inventory_agent',
+                'langfuse_metadata' => [
+                    'agent' => 'inventory',
+                    'intent' => $intent->intent(),
+                    'conversation_id' => $conversationId,
+                ],
+                'tools' => $tools,
             ]
         );
+
+        if (!empty($completion['tool_calls'])) {
+            $this->traceWidget('inventory_agent.tool_calls_received', [
+                'tool_calls' => $completion['tool_calls']
+            ], $trace);
+
+            // Handle tool calls here - dummy loop to handle them later or now
+            // In a real implementation you would call searchOrchestrator or Pinecone
+            foreach ($completion['tool_calls'] as $toolCall) {
+                // To do: Implement tool call execution
+                $messages[] = [
+                    'role' => 'assistant',
+                    'content' => null,
+                    'tool_calls' => [$toolCall]
+                ];
+                $messages[] = [
+                    'role' => 'tool',
+                    'tool_call_id' => $toolCall['id'],
+                    'content' => '{"status": "success", "data": "Tool call executed"}'
+                ];
+            }
+
+            // Fetch the model response after tools
+            $completion = $this->modelCompletion->complete(
+                config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+                $messages,
+                [
+                    'max_tokens' => 400,
+                    'temperature' => 0.5,
+                    'langfuse_name' => 'chatbot.inventory_agent_post_tools',
+                    'langfuse_metadata' => [
+                        'agent' => 'inventory',
+                        'intent' => $intent->intent(),
+                        'conversation_id' => $conversationId,
+                    ],
+                ]
+            );
+        }
 
         if ($completion['reason'] !== null) {
             $this->traceWidget('inventory_agent.model_failed', [
@@ -106,6 +192,11 @@ class InventoryAgent
         }
 
         $response = $completion['reply'];
+
+        $this->traceWidget('inventory_agent.model_completed', array_filter([
+            'model_reply' => $response,
+            'usage' => $completion['usage'] ?? [],
+        ], fn ($value) => $value !== null), $trace);
 
         $this->traceWidget('inventory_agent.reflection_check', [
             'should_reflect' => $this->reflection->shouldReflect($response, 1.0, $intent),
@@ -153,5 +244,22 @@ class InventoryAgent
         }
 
         $this->widgetTrace->logStep($step, array_merge($trace, $context));
+    }
+
+    private function productSnapshot(Collection $products): array
+    {
+        return $products
+            ->take(5)
+            ->map(static function ($product): array {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->sale_price ?: $product->price,
+                    'stock' => (int) ($product->total_stock ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

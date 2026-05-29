@@ -3,6 +3,7 @@
 @section('title', 'ჩატბოტ ლაბი - ქეისები')
 
 @section('content')
+@fragment('content')
 @if (session('status'))
     <div class="alert alert-success" role="alert">{{ session('status') }}</div>
 @endif
@@ -286,6 +287,7 @@
         @endif
     </div>
 </div>
+@endfragment
 @endsection
 
 @push('scripts')

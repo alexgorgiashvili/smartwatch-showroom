@@ -15,11 +15,13 @@ class Customer extends Model
         'phone',
         'avatar_url',
         'metadata',
+        'preferences',
     ];
 
     protected $casts = [
         'platform_user_ids' => 'array',
         'metadata' => 'array',
+        'preferences' => 'array',
         'global_user_id' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

@@ -1,0 +1,94 @@
+﻿
+   PASS  Tests\Unit\AiConversationServiceFallbackTest
+  Γ£ô generate response uses georgian fallback for transliterated customer message                                                                                                                   10.21s  
+  Γ£ô generate response records provider incident when ai returns no suggestions                                                                                                                      0.05s  
+  Γ£ô generate response regenerates once after validator failure                                                                                                                                      0.04s  
+  Γ£ô auto reply persists fallback and regeneration metadata on outgoing message                                                                                                                      0.73s  
+  Γ£ô auto reply persists normalized metadata for discovery carousel                                                                                                                                  0.04s  
+  Γ£ô auto reply suppresses discovery carousel for product specific recommendation query                                                                                                              0.59s  
+
+   PASS  Tests\Unit\CacheTagsInvalidationTest
+  Γ£ô cached embedding is found after write                                                                                                                                                           0.04s  
+  Γ£ô clear all flushes embedding cache                                                                                                                                                               0.03s  
+  Γ£ô clear all flushes response cache                                                                                                                                                                0.03s  
+  Γ£ô invalidate product cache flushes response cache                                                                                                                                                 0.06s  
+
+   FAIL  Tests\Unit\ChatPipelineServiceContextTest
+  Γ¿» recommendation prompt skips rag when products are available                                                                                                                                     0.06s  
+  Γ¿» general prompt keeps trimmed rag when no products are available                                                                                                                                 0.03s  
+  Γ¿» adult out of domain shortcut mentions kid focused catalog                                                                                                                                       0.03s  
+  Γ¿» budget prompt context prefers within budget products first                                                                                                                                      0.03s  
+
+   PASS  Tests\Unit\ChatbotProductSelectionServiceTest
+  Γ£ô recommendation cards require explicit product mention                                                                                                                                           0.04s  
+  Γ£ô feature cards ignore unmentioned noise products                                                                                                                                                 0.02s  
+  Γ£ô recommendation link mention does not match other four g products                                                                                                                                0.03s  
+  Γ£ô alternative follow up drops requested product from attached cards                                                                                                                               0.02s  
+
+   PASS  Tests\Unit\ChatbotQualityMetricsServiceTest
+  Γ£ô record widget response quality increments daily counters                                                                                                                                        0.03s  
+  Γ£ô record auto reply decision tracks accepted and rejected                                                                                                                                         0.03s  
+  Γ£ô record provider incident tracks channel and reason counters                                                                                                                                     0.04s  
+  Γ£ô get daily summary calculates rates                                                                                                                                                              0.03s  
+  Γ£ô thresholds can be configured                                                                                                                                                                    0.03s  
+
+   PASS  Tests\Unit\ConversationMemoryServiceTest
+  Γ£ô standalone message does not reuse stored preferences                                                                                                                                            0.03s  
+  Γ£ô contextual follow up can reuse stored preferences                                                                                                                                               0.03s  
+
+   PASS  Tests\Unit\EmbeddingCacheHitTest
+  Γ£ô second embedding call hits cache                                                                                                                                                                0.03s  
+  Γ£ô hybrid search uses embedding cache                                                                                                                                                              0.04s  
+  Γ£ô different queries call embed separately                                                                                                                                                         0.04s  
+
+   PASS  Tests\Unit\ExampleTest
+  Γ£ô that true is true
+
+   PASS  Tests\Unit\IntentAnalyzerServiceTest
+  Γ£ô budget recommendation message uses local heuristic                                                                                                                                              0.05s  
+  Γ£ô adult catalog request uses out of domain heuristic                                                                                                                                              0.03s  
+  Γ£ô tracking history request uses recommendation heuristic                                                                                                                                          0.03s  
+
+   PASS  Tests\Unit\ModelDefaultsTest
+  Γ£ô supervisor model default                                                                                                                                                                        0.03s  
+  Γ£ô reflection critique model default                                                                                                                                                               0.03s  
+  Γ£ô openai main model default                                                                                                                                                                       0.03s  
+  Γ£ô intent model default                                                                                                                                                                            0.03s  
+  Γ£ô multi agent context model default                                                                                                                                                               0.03s  
+  Γ£ô multi agent response model default                                                                                                                                                              0.03s  
+  Γ£ô multi agent qa model default                                                                                                                                                                    0.03s  
+  Γ£ô cohere rerank model default                                                                                                                                                                     0.03s  
+
+   PASS  Tests\Unit\OmnichannelServiceTest
+  Γ£ô process webhook message creates customer                                                                                                                                                        0.08s  
+  Γ£ô process webhook message creates conversation                                                                                                                                                    0.07s  
+  Γ£ô message parsing extracts attachments                                                                                                                                                            0.03s  
+  Γ£ô facebook webhook uses sender id as conversation id                                                                                                                                              0.03s  
+  Γ£ô instagram direct payload parsing                                                                                                                                                                0.03s  
+  Γ£ô whats app parsing                                                                                                                                                                               0.03s  
+  Γ£ô whats app send carousel uses shared builder payload                                                                                                                                             0.04s  
+  Γ£ô meta send carousel uses shared builder payload                                                                                                                                                  0.04s  
+  Γ£ô meta send message uses messenger token alias                                                                                                                                                    0.03s  
+  Γ£ô resolve outgoing recipient id uses latest incoming sender platform id                                                                                                                           0.04s  
+  Γ£ô process webhook message with invalid data returns null                                                                                                                                          0.03s  
+  Γ£ô customer with multiple platforms                                                                                                                                                                0.06s  
+  Γ£ô message creates with correct metadata                                                                                                                                                           0.04s  
+  Γ£ô idempotent message processing                                                                                                                                                                   0.05s  
+
+   PASS  Tests\Unit\ResponseValidatorServiceTest
+  Γ£ô budget phrase does not trigger price mismatch                                                                                                                                                   0.04s  
+  Γ£ô actual unknown price still triggers mismatch                                                                                                                                                    0.04s  
+  Γ£ô recommendation intent does not fail whole validation on price phrase                                                                                                                            0.03s  
+  Γ£ô price query intent still enforces strict price validation                                                                                                                                       0.03s  
+  Γ£ô product code label cannot point to catalog root                                                                                                                                                 0.03s  
+
+   PASS  Tests\Unit\SmartSearchOrchestratorTest
+  Γ£ô search ranks exact brand model match before looser variants                                                                                                                                     0.05s  
+  Γ£ô search ranks closest fuzzy slug match first when exact slug is missing                                                                                                                          0.04s  
+  Γ£ô recommendation search skips rag when products already match                                                                                                                                     0.04s  
+  Γ£ô recommendation search builds rag when no products match                                                                                                                                         0.03s  
+  Γ£ô comparison search keeps secondary model from keywords                                                                                                                                           0.04s  
+
+   PASS  Tests\Unit\UnifiedAiPolicyServiceTest
+  Γ£ô normalize incoming message converts common transliteration                                                                                                                                      0.03s  
+  Γ£ô looks georgian or transliterated detects latin georgian                                                                                                                                         0.03s  

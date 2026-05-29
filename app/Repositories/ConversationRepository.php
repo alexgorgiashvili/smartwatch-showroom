@@ -291,7 +291,7 @@ class ConversationRepository
 
     public function getUnassignedCount(): int
     {
-        return Cache::remember(self::UNASSIGNED_COUNT_CACHE_KEY, now()->addSeconds(20), function (): int {
+        return Cache::remember(self::UNASSIGNED_COUNT_CACHE_KEY, now()->addMinutes(5), function (): int {
             return (int) Conversation::query()
                 ->whereNull('assigned_agent_id')
                 ->where('status', 'active')
@@ -301,7 +301,7 @@ class ConversationRepository
 
     public function getUnreadCount(): int
     {
-        return Cache::remember(self::UNREAD_COUNT_CACHE_KEY, now()->addSeconds(20), function (): int {
+        return Cache::remember(self::UNREAD_COUNT_CACHE_KEY, now()->addMinutes(5), function (): int {
             return (int) Conversation::query()
                 ->where('unread_count', '>', 0)
                 ->sum('unread_count');

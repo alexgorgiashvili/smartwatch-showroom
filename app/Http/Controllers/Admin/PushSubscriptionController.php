@@ -67,7 +67,7 @@ class PushSubscriptionController extends Controller
             (int) Auth::id(),
             'Inbox Test',
             'Push notifications are configured correctly.',
-            route('filament.admin.pages.inbox'),
+            route('admin.inbox.index'),
             ['type' => 'test']
         );
 

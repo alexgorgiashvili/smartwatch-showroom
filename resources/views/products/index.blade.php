@@ -13,8 +13,8 @@
 
 @section('content')
     {{-- SEO H1 (visible but styled to blend with page intro) --}}
-    <div class="bg-white border-b border-gray-100 py-8 sm:py-10">
-        <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center">
+    <div class="bg-white border-b border-gray-100 py-8 sm:py-10 overflow-hidden">
+        <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center w-full">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
                 @if(app()->getLocale() === 'ka')
                     ბავშვის SIM სმარტ საათები — ყველა მოდელი საქართველოში
@@ -33,8 +33,8 @@
     </div>
 
     <!-- Trust Signals Bar -->
-    <section class="border-b border-gray-100 bg-gradient-to-r from-primary-50 to-white">
-        <div class="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8">
+    <section class="border-b border-gray-100 bg-gradient-to-r from-primary-50 to-white overflow-hidden">
+        <div class="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 w-full">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="flex items-center justify-center gap-3 sm:justify-start">
                     <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
@@ -70,8 +70,8 @@
     </section>
 
     {{-- Guides strip --}}
-    <section class="border-b border-slate-100 bg-white">
-        <div class="mx-auto max-w-screen-xl px-4 py-4 sm:px-6 lg:px-8">
+    <section class="border-b border-slate-100 bg-white overflow-hidden">
+        <div class="mx-auto max-w-screen-xl px-4 py-4 sm:px-6 lg:px-8 w-full">
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('landing.sim-guide') }}"
                    class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700">
@@ -90,10 +90,10 @@
     </section>
 
     <!-- Products Section -->
-    <section class="bg-white">
-        <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <section class="bg-white overflow-hidden">
+        <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 w-full">
             <!-- Search Bar -->
-            <div class="mx-auto mt-8 max-w-2xl">
+            <div class="mx-auto mt-8 max-w-2xl w-full">
                 <form action="{{ route('products.index') }}" method="GET" class="flex gap-2">
                     <div class="relative flex-1">
                         <input
@@ -128,7 +128,7 @@
             </div>
 
             <!-- Category Pills/Tabs -->
-            <div class="mt-6 flex flex-wrap justify-center gap-2">
+            <div class="mt-6 flex flex-wrap justify-center gap-2 w-full">
                 <a
                     href="{{ route('products.index', ['search' => $search, 'sort' => request('sort')]) }}"
                     class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ !$category ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
@@ -200,7 +200,7 @@
                         </div>
                     </div>
                 @else
-                    <ul class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                    <ul class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4 w-full">
                         @foreach ($products as $product)
                             @php
                                 $image = $product->primaryImage ?? $product->images->first();

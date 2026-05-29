@@ -59,6 +59,155 @@ document.addEventListener('DOMContentLoaded', () => {
 		}).mount();
 	}
 
+	const lightboxRoot = document.getElementById('site-lightbox');
+	const productGallery = document.getElementById('product-splide');
+	if (lightboxRoot && productGallery) {
+		const overlay = lightboxRoot.querySelector('[data-site-lightbox-overlay]');
+		const closeBtn = lightboxRoot.querySelector('[data-site-lightbox-close]');
+		const prevBtn = lightboxRoot.querySelector('[data-site-lightbox-prev]');
+		const nextBtn = lightboxRoot.querySelector('[data-site-lightbox-next]');
+		const imageEl = lightboxRoot.querySelector('[data-site-lightbox-image]');
+		const captionEl = lightboxRoot.querySelector('[data-site-lightbox-caption]');
+		const counterEl = lightboxRoot.querySelector('[data-site-lightbox-counter]');
+
+		const triggerEls = Array.from(productGallery.querySelectorAll('[data-product-lightbox]'));
+		const itemsByIndex = new Map();
+		triggerEls.forEach((el) => {
+			const idx = Number.parseInt(el.dataset.index || '', 10);
+			const src = el.dataset.src || '';
+			if (!Number.isFinite(idx) || !src) return;
+			if (itemsByIndex.has(idx)) return;
+			itemsByIndex.set(idx, { src, alt: el.dataset.alt || '' });
+		});
+		const items = Array.from(itemsByIndex.entries())
+			.sort((a, b) => a[0] - b[0])
+			.map(([, item]) => item);
+
+		if (items.length > 0 && overlay && closeBtn && prevBtn && nextBtn && imageEl && captionEl && counterEl) {
+			let activeIndex = 0;
+			let lastFocused = null;
+			let touchStartX = null;
+			let touchStartY = null;
+
+			const normalizeIndex = (idx) => {
+				if (items.length === 0) return 0;
+				const n = idx % items.length;
+				return n < 0 ? n + items.length : n;
+			};
+
+			const preload = (idx) => {
+				if (items.length < 2) return;
+				const normalized = normalizeIndex(idx);
+				const src = items[normalized]?.src;
+				if (!src) return;
+				const img = new Image();
+				img.decoding = 'async';
+				img.src = src;
+			};
+
+			const updateNav = () => {
+				const shouldShow = items.length > 1;
+				prevBtn.classList.toggle('hidden', !shouldShow);
+				nextBtn.classList.toggle('hidden', !shouldShow);
+			};
+
+			const render = () => {
+				const item = items[activeIndex];
+				if (!item) return;
+				imageEl.src = item.src;
+				imageEl.alt = item.alt || '';
+				captionEl.textContent = item.alt || '';
+				counterEl.textContent = `${activeIndex + 1} / ${items.length}`;
+				updateNav();
+				preload(activeIndex + 1);
+				preload(activeIndex - 1);
+			};
+
+			const open = (idx, focusEl = null) => {
+				activeIndex = normalizeIndex(idx);
+				lastFocused = focusEl;
+				lightboxRoot.classList.remove('hidden');
+				lightboxRoot.setAttribute('aria-hidden', 'false');
+				document.body.classList.add('overflow-hidden');
+				render();
+				closeBtn.focus();
+				document.addEventListener('keydown', onKeydown);
+			};
+
+			const close = () => {
+				lightboxRoot.classList.add('hidden');
+				lightboxRoot.setAttribute('aria-hidden', 'true');
+				document.body.classList.remove('overflow-hidden');
+				imageEl.src = '';
+				imageEl.alt = '';
+				captionEl.textContent = '';
+				counterEl.textContent = '';
+				document.removeEventListener('keydown', onKeydown);
+				if (lastFocused && typeof lastFocused.focus === 'function') {
+					lastFocused.focus();
+				}
+				lastFocused = null;
+			};
+
+			const prev = () => {
+				activeIndex = normalizeIndex(activeIndex - 1);
+				render();
+			};
+
+			const next = () => {
+				activeIndex = normalizeIndex(activeIndex + 1);
+				render();
+			};
+
+			const onKeydown = (e) => {
+				if (e.key === 'Escape') {
+					e.preventDefault();
+					close();
+					return;
+				}
+				if (items.length > 1 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+					e.preventDefault();
+					if (e.key === 'ArrowLeft') prev();
+					else next();
+				}
+			};
+
+			productGallery.addEventListener('click', (e) => {
+				const trigger = e.target.closest('[data-product-lightbox]');
+				if (!trigger) return;
+				const idx = Number.parseInt(trigger.dataset.index || '', 10);
+				if (!Number.isFinite(idx)) return;
+				e.preventDefault();
+				open(idx, trigger);
+			});
+
+			overlay.addEventListener('click', close);
+			closeBtn.addEventListener('click', close);
+			prevBtn.addEventListener('click', prev);
+			nextBtn.addEventListener('click', next);
+
+			imageEl.addEventListener('touchstart', (e) => {
+				if (!e.touches || e.touches.length !== 1) return;
+				touchStartX = e.touches[0].clientX;
+				touchStartY = e.touches[0].clientY;
+			}, { passive: true });
+
+			imageEl.addEventListener('touchend', (e) => {
+				if (items.length < 2) return;
+				if (touchStartX === null || touchStartY === null) return;
+				const touch = e.changedTouches && e.changedTouches[0];
+				if (!touch) return;
+				const dx = touch.clientX - touchStartX;
+				const dy = touch.clientY - touchStartY;
+				touchStartX = null;
+				touchStartY = null;
+				if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+				if (dx < 0) next();
+				else prev();
+			}, { passive: true });
+		}
+	}
+
 	// ── Configure marked for chatbot ──
 	marked.setOptions({
 		breaks: true,
@@ -75,6 +224,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const widget = document.getElementById('chatbot-widget');
 	if (!widget) {
+		const isLocalhostRuntime = () => ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+		const subscribeToInboxChannel = (name) => {
+			if (!window.Echo) {
+				return null;
+			}
+
+			return isLocalhostRuntime()
+				? window.Echo.channel(name)
+				: window.Echo.private(name);
+		};
+
 		const getInboxBadgeElement = () => {
 			const legacyBadge = document.getElementById('sidebar-inbox-badge');
 			if (legacyBadge) {
@@ -104,7 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Only set up Echo listener if NOT on inbox page (sidebar badge updates handled by inbox.blade.php)
 		if (sidebarBadge && !conversationList && !window.location.href.includes('/admin/inbox') && window.Echo) {
 			console.log('Setting up Echo listener for sidebar badge (non-inbox pages)');
-			window.Echo.private('inbox')
+			subscribeToInboxChannel('inbox')
+				?.stopListening('.MessageReceived')
 				.listen('.MessageReceived', (event) => {
 					if (event?.message?.sender_type === 'admin') {
 						return;
@@ -369,30 +530,68 @@ document.addEventListener('DOMContentLoaded', () => {
 				headers: {
 					'Content-Type': 'application/json',
 					'X-CSRF-TOKEN': csrfToken || '',
+					'Accept': 'text/event-stream'
 				},
 				body: JSON.stringify({ message }),
 			});
 
-			const data = await response.json();
-			typingBubble.remove();
-
 			if (!response.ok) {
-				addMessage(data?.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+				const errorData = await response.json().catch(() => null);
+				typingBubble.remove();
+				addMessage(errorData?.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+				isSending = false;
 				return;
 			}
 
-			if (data.conversation_id) conversationId = data.conversation_id;
+			// Parse SSE response
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			let buffer = '';
 
-			addMessage(data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
 
-			// Show product carousel if backend provides products
-			if (Array.isArray(data.products) && data.products.length > 0) {
-				addCarousel(data.products);
-			}
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split('\n');
+				buffer = lines.pop() || ''; // Keep the last incomplete line in buffer
 
-			// Show quick replies if backend provides them
-			if (Array.isArray(data.quick_replies) && data.quick_replies.length > 0) {
-				addQuickReplies(data.quick_replies);
+				for (const line of lines) {
+					if (line.startsWith('data: ')) {
+						const dataStr = line.substring(6);
+						if (dataStr.trim() === '') continue;
+
+						try {
+							const data = JSON.parse(dataStr);
+
+							if (data.conversation_id) conversationId = data.conversation_id;
+
+							// Update bubble text
+							typingBubble.classList.remove('chatbot-typing');
+							typingBubble.innerHTML = renderMarkdown(data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.');
+
+							// Fix links
+							typingBubble.querySelectorAll('a').forEach((a) => {
+								a.setAttribute('target', '_blank');
+								a.setAttribute('rel', 'noopener noreferrer');
+							});
+
+							// Show product carousel if backend provides products
+							if (Array.isArray(data.products) && data.products.length > 0) {
+								addCarousel(data.products);
+							}
+
+							// Show quick replies if backend provides them
+							if (Array.isArray(data.quick_replies) && data.quick_replies.length > 0) {
+								addQuickReplies(data.quick_replies);
+							}
+
+							messages.scrollTop = messages.scrollHeight;
+						} catch (e) {
+							console.error('Failed to parse SSE data', e);
+						}
+					}
+				}
 			}
 		} catch (error) {
 			typingBubble.remove();

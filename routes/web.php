@@ -1,19 +1,28 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ChatbotMetricsController as AdminChatbotMetricsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductQualityController as AdminProductQualityController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\AlibabaImportController as AdminAlibabaImportController;
 use App\Http\Controllers\Admin\CompetitorMonitorController as AdminCompetitorMonitorController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImageController;
+use App\Http\Controllers\Admin\MediaController as AdminMediaController;
 use App\Http\Controllers\Admin\StockAdjustmentController as AdminStockAdjustmentController;
 use App\Http\Controllers\Admin\ChatbotContentController as AdminChatbotContentController;
 use App\Http\Controllers\Admin\ChatbotLabController as AdminChatbotLabController;
+use App\Http\Controllers\Admin\ChatbotTrainingController as AdminChatbotTrainingController;
+use App\Http\Controllers\Admin\LangfuseDashboardController as AdminLangfuseDashboardController;
+use App\Http\Controllers\Admin\LangfuseController as AdminLangfuseController;
 use App\Http\Controllers\Admin\FacebookPostController as AdminFacebookPostController;
+use App\Http\Controllers\Admin\InboxController as AdminInboxController;
+use App\Http\Controllers\Admin\SocialCommentController as AdminSocialCommentController;
+use App\Http\Controllers\Admin\SocialDashboardController as AdminSocialDashboardController;
 use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
@@ -111,179 +120,285 @@ Route::get('/webhook/facebook', [AdminWebhookController::class, 'verify']);
 Route::post('/webhook/facebook', [AdminWebhookController::class, 'handle'])
 	->middleware('webhook.verify');
 
-// Legacy admin routes (will be removed after Filament migration is complete)
-Route::prefix('admin-legacy')->name('admin.')->group(function () {
-	Route::get('/login', fn () => redirect('/admin/login'))->name('login');
+/*
+|--------------------------------------------------------------------------
+| Admin Auth Routes (outside auth middleware)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->name('admin.')->group(function () {
+	Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
+	Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
 	Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
-
-	Route::middleware(['auth', 'admin'])->group(function () {
-		Route::get('/', fn () => redirect()->route('filament.admin.pages.dashboard'))
-			->name('home');
-		Route::get('/inquiries', fn () => redirect()->route('filament.admin.resources.inquiries.index'))
-			->name('inquiries.index');
-		Route::get('/inquiries/{inquiry}', fn (\App\Models\Inquiry $inquiry) => redirect()->route('filament.admin.resources.inquiries.view', ['record' => $inquiry]))
-			->name('inquiries.show');
-		Route::get('/users', fn () => redirect()->route('filament.admin.resources.users.index'))
-			->name('users.index');
-		Route::get('/users/create', fn () => redirect()->route('filament.admin.resources.users.create'))
-			->name('users.create');
-		Route::get('/orders', fn () => redirect()->route('filament.admin.resources.orders.index'))
-			->name('orders.index');
-		Route::get('/orders/create', fn () => redirect()->route('filament.admin.resources.orders.create'))
-			->name('orders.create');
-		Route::get('/orders/{order}', fn (\App\Models\Order $order) => redirect()->route('filament.admin.resources.orders.view', ['record' => $order]))
-			->name('orders.show');
-		Route::get('/payments', fn () => redirect()->route('filament.admin.resources.payments.index'))
-			->name('payments.index');
-		Route::get('products/import-alibaba', fn () => redirect()->route('filament.admin.pages.alibaba-import'))
-			->name('products.import-alibaba');
-		Route::get('competitors', fn () => redirect()->route('filament.admin.pages.competitor-monitor'))
-			->name('competitors.index');
-		Route::get('products', fn () => redirect()->route('filament.admin.resources.products.index'))
-			->name('products.index');
-		Route::get('products/create', fn () => redirect()->route('filament.admin.resources.products.create'))
-			->name('products.create');
-		Route::get('products/{product}/edit', fn (\App\Models\Product $product) => redirect()->route('filament.admin.resources.products.edit', ['record' => $product]))
-			->name('products.edit');
-		Route::get('articles', fn () => redirect()->route('filament.admin.resources.articles.index'))
-			->name('articles.index');
-		Route::get('articles/create', fn () => redirect()->route('filament.admin.resources.articles.create'))
-			->name('articles.create');
-		Route::get('articles/{article}/edit', fn (\App\Models\Article $article) => redirect()->route('filament.admin.resources.articles.edit', ['record' => $article]))
-			->name('articles.edit');
-		Route::get('/chatbot-content', fn () => redirect()->route('filament.admin.pages.chatbot-content'))
-			->name('chatbot-content.index');
-
-		Route::get('/chatbot-lab', fn (\Illuminate\Http\Request $request) => redirect()->to(route('filament.admin.pages.chatbot-lab') . ($request->getQueryString() ? ('?' . $request->getQueryString()) : '')))
-			->name('chatbot-lab.index');
-		Route::get('/chatbot-lab/cases', fn (\Illuminate\Http\Request $request) => redirect()->to(route('filament.admin.pages.chatbot-lab-cases') . ($request->getQueryString() ? ('?' . $request->getQueryString()) : '')))
-			->name('chatbot-lab.cases.index');
-		Route::get('/chatbot-lab/runs', fn (\Illuminate\Http\Request $request) => redirect()->to(route('filament.admin.pages.chatbot-lab-runs') . ($request->getQueryString() ? ('?' . $request->getQueryString()) : '')))
-			->name('chatbot-lab.runs.index');
-		Route::get('/chatbot-lab/runs/{run}', function (\Illuminate\Http\Request $request, string $run) {
-			$runModel = \App\Models\ChatbotTestRun::query()
-				->with('results')
-				->findOrFail((int) $run);
-
-			if ($request->boolean('filament')) {
-				return redirect()->to(route('filament.admin.pages.chatbot-lab-runs.show', ['run' => $runModel->getKey()]) . ($request->getQueryString() ? ('?' . $request->getQueryString()) : ''));
-			}
-
-			return response()->view('admin.chatbot-lab.run-detail-compat', [
-				'run' => $runModel,
-				'results' => $runModel->results,
-			]);
-		})
-			->name('chatbot-lab.runs.show');
-
-		// Facebook Posts
-		Route::get('/facebook-posts', fn () => redirect()->route('filament.admin.resources.facebook-posts.index'))
-			->name('facebook-posts.index');
-		Route::get('/facebook-posts/create', fn () => redirect()->route('filament.admin.resources.facebook-posts.create'))
-			->name('facebook-posts.create');
-		Route::get('/facebook-posts/{facebookPost}/edit', fn (\App\Models\FacebookPost $facebookPost) => redirect()->route('filament.admin.resources.facebook-posts.edit', ['record' => $facebookPost]))
-			->name('facebook-posts.edit');
-	});
 });
 
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Admin Panel Routes (NobleUI — PJAX-aware view routes + API routes)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+
+	// ── Dashboard ──
+	Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+	// ── Commerce: Orders ──
+	Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+	Route::get('/orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
+	Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+
+	// ── Commerce: Payments ──
+	Route::get('/payments', [\App\Http\Controllers\Admin\PaymentLogController::class, 'index'])->name('payments.index');
+	Route::get('/payments/{paymentLog}', [\App\Http\Controllers\Admin\PaymentLogController::class, 'show'])->name('payments.show');
+
+	// ── Commerce: Inquiries ──
+	Route::get('/inquiries', [\App\Http\Controllers\Admin\InquiryController::class, 'index'])->name('inquiries.index');
+	Route::get('/inquiries/{inquiry}', [\App\Http\Controllers\Admin\InquiryController::class, 'show'])->name('inquiries.show');
+
+	// ── Catalog: Products ──
+	Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+	Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
+	Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+
+	// ── Messaging: Inbox ──
+	Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox.index');
+	Route::get('/inbox/conversations', [AdminInboxController::class, 'conversations'])->name('inbox.conversations');
+	Route::get('/inbox/{conversationId}/messages', [AdminInboxController::class, 'messages'])->name('inbox.messages');
+	Route::post('/inbox/{conversationId}/send', [AdminInboxController::class, 'sendMessage'])->name('inbox.send');
+	Route::post('/inbox/{conversationId}/read', [AdminInboxController::class, 'markRead'])->name('inbox.read');
+	Route::patch('/inbox/{conversationId}/status', [AdminInboxController::class, 'updateStatus'])->name('inbox.status');
+	Route::patch('/inbox/{conversationId}/priority', [AdminInboxController::class, 'updatePriority'])->name('inbox.priority');
+	Route::post('/inbox/{conversationId}/toggle-ai', [AdminInboxController::class, 'toggleAi'])->name('inbox.toggle-ai');
+	Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
+
+	// ── Content: Articles ──
+	Route::get('/articles', [AdminArticleController::class, 'index'])->name('articles.index');
+	Route::get('/articles/create', [AdminArticleController::class, 'create'])->name('articles.create');
+	Route::get('/articles/{article}/edit', [AdminArticleController::class, 'edit'])->name('articles.edit');
+
+	// ── Content: Facebook Posts ──
+	Route::get('/facebook-posts', [AdminFacebookPostController::class, 'index'])->name('facebook-posts.index');
+	Route::get('/facebook-posts/create', [AdminFacebookPostController::class, 'create'])->name('facebook-posts.create');
+	Route::get('/facebook-posts/{facebookPost}/edit', [AdminFacebookPostController::class, 'edit'])->name('facebook-posts.edit');
+
+	// ── AI Lab (placeholders) ──
+	Route::get('/ai-analytics', [\App\Http\Controllers\Admin\AiAnalyticsController::class, 'index'])->name('ai-analytics');
+	Route::get('/product-quality', [AdminProductQualityController::class, 'index'])->name('product-quality.index');
+	Route::get('/product-quality/create', [AdminProductQualityController::class, 'create'])->name('product-quality.create');
+	Route::get('/product-quality/{productQuality}', [AdminProductQualityController::class, 'show'])->name('product-quality.show');
+	Route::get('/chatbot-content', [AdminChatbotContentController::class, 'index'])->name('chatbot-content.index');
+	Route::get('/chatbot-lab', [AdminChatbotLabController::class, 'index'])->name('chatbot-lab.index');
+	Route::get('/chatbot-lab/cases', [AdminChatbotLabController::class, 'cases'])->name('chatbot-lab.cases.index');
+	Route::get('/chatbot-lab/runs', [AdminChatbotLabController::class, 'runs'])->name('chatbot-lab.runs.index');
+	Route::get('/chatbot-lab/runs/{run}', function (\Illuminate\Http\Request $request, string $run) {
+		$runModel = \App\Models\ChatbotTestRun::query()
+			->with('results')
+			->findOrFail((int) $run);
+		return response()->view('admin.chatbot-lab.run-detail-compat', [
+			'run' => $runModel,
+			'results' => $runModel->results,
+		]);
+	})->name('chatbot-lab.runs.show');
+	Route::get('/chatbot-testing', [\App\Http\Controllers\Admin\ChatbotTestingController::class, 'index'])->name('chatbot-testing');
+	Route::post('/chatbot-testing/send', [\App\Http\Controllers\Admin\ChatbotTestingController::class, 'sendMessage'])->name('chatbot-testing.send');
+	Route::post('/chatbot-testing/reset-circuit-breaker', [\App\Http\Controllers\Admin\ChatbotTestingController::class, 'resetCircuitBreaker'])->name('chatbot-testing.reset-circuit-breaker');
+	Route::post('/chatbot-testing/flush-cache', [\App\Http\Controllers\Admin\ChatbotTestingController::class, 'flushCache'])->name('chatbot-testing.flush-cache');
+	Route::post('/chatbot-training/generation-requests', [AdminChatbotTrainingController::class, 'requestGeneration'])
+		->name('chatbot-training.request-generation');
+	Route::post('/chatbot-training/generation-requests/{generationRequest}/import', [AdminChatbotTrainingController::class, 'importGeneratedBatch'])
+		->name('chatbot-training.import-generated-batch');
+	Route::post('/chatbot-training/generate-batch', [AdminChatbotTrainingController::class, 'generateBatch'])
+		->name('chatbot-training.generate-batch');
+	Route::post('/chatbot-training/manual-flow', [AdminChatbotTrainingController::class, 'runManualFlow'])
+		->name('chatbot-training.manual-flow');
+	Route::post('/chatbot-training/{batch}/run', [AdminChatbotTrainingController::class, 'runBatch'])
+		->name('chatbot-training.run-batch');
+	Route::post('/chatbot-training/runs/{run}/review', [AdminChatbotTrainingController::class, 'createReviewRequest'])
+		->name('chatbot-training.create-review');
+	Route::post('/chatbot-training/reviews/{review}/import-analysis', [AdminChatbotTrainingController::class, 'importReviewAnalysis'])
+		->name('chatbot-training.reviews.import-analysis');
+	Route::post('/chatbot-training/reviews/{review}/decision', [AdminChatbotTrainingController::class, 'updateReviewDecision'])
+		->name('chatbot-training.reviews.decision');
+	Route::get('/chatbot-training', [AdminChatbotTrainingController::class, 'index'])->name('chatbot-training');
+	Route::get('/chatbot-traces', [\App\Http\Controllers\Admin\ChatbotTracesController::class, 'index'])->name('chatbot-traces');
+	Route::get('/langfuse-dashboard', [AdminLangfuseDashboardController::class, 'index'])->name('langfuse-dashboard');
+	Route::get('/langfuse-link', [AdminLangfuseController::class, 'index'])->name('langfuse-link');
+
+	// ── Social ──
+	Route::get('/social-dashboard', [AdminSocialDashboardController::class, 'index'])->name('social-dashboard');
+	Route::get('/social-dashboard/stats', [AdminSocialDashboardController::class, 'stats'])->name('social-dashboard.stats');
+	Route::get('/social-dashboard/posts', [AdminSocialDashboardController::class, 'posts'])->name('social-dashboard.posts');
+	Route::get('/social-dashboard/scheduled', [AdminSocialDashboardController::class, 'scheduled'])->name('social-dashboard.scheduled');
+	Route::get('/social-dashboard/compare-facebook', [AdminSocialDashboardController::class, 'compareFacebook'])->name('social-dashboard.compare-facebook');
+	Route::get('/social-dashboard/platform-status', [AdminSocialDashboardController::class, 'platformStatus'])->name('social-dashboard.platform-status');
+	Route::get('/social-comments', [AdminSocialCommentController::class, 'index'])->name('social-comments.index');
+	Route::get('/social-comments/list', [AdminSocialCommentController::class, 'list'])->name('social-comments.list');
+	Route::patch('/social-comments/{id}/status', [AdminSocialCommentController::class, 'updateStatus'])->name('social-comments.update-status');
+	Route::post('/social-comments/bulk-status', [AdminSocialCommentController::class, 'bulkUpdateStatus'])->name('social-comments.bulk-status');
+	Route::post('/social-comments/{id}/generate-reply', [AdminSocialCommentController::class, 'generateReply'])->name('social-comments.generate-reply');
+	Route::post('/social-comments/{id}/reply', [AdminSocialCommentController::class, 'sendReply'])->name('social-comments.reply');
+	Route::post('/social-comments/{id}/hide', [AdminSocialCommentController::class, 'hideComment'])->name('social-comments.hide');
+	Route::post('/social-comments/fetch', [AdminSocialCommentController::class, 'fetchComments'])->name('social-comments.fetch');
+	Route::post('/social-comments/bulk-delete', [AdminSocialCommentController::class, 'bulkDelete'])->name('social-comments.bulk-delete');
+	Route::get('/social-comments/export', [AdminSocialCommentController::class, 'export'])->name('social-comments.export');
+	Route::post('/social-comments/{id}/block-user', [AdminSocialCommentController::class, 'blockUser'])->name('social-comments.block-user');
+	Route::post('/social-comments/bulk-block-users', [AdminSocialCommentController::class, 'bulkBlockUsers'])->name('social-comments.bulk-block-users');
+	Route::get('/social-comments/{id}/replies', [AdminSocialCommentController::class, 'replies'])->name('social-comments.replies');
+
+	Route::get('/social-comments/quick-replies', [AdminSocialCommentController::class, 'listQuickReplies'])->name('social-comments.quick-replies.list');
+	Route::post('/social-comments/quick-replies', [AdminSocialCommentController::class, 'storeQuickReply'])->name('social-comments.quick-replies.store');
+	Route::put('/social-comments/quick-replies/{id}', [AdminSocialCommentController::class, 'updateQuickReply'])->name('social-comments.quick-replies.update');
+	Route::delete('/social-comments/quick-replies/{id}', [AdminSocialCommentController::class, 'deleteQuickReply'])->name('social-comments.quick-replies.delete');
+
+	Route::get('/social-comments/auto-reply-rules/{facebookPostId}', [AdminSocialCommentController::class, 'listAutoReplyRules'])->name('social-comments.auto-reply-rules.list');
+	Route::post('/social-comments/auto-reply-rules', [AdminSocialCommentController::class, 'storeAutoReplyRule'])->name('social-comments.auto-reply-rules.store');
+	Route::put('/social-comments/auto-reply-rules/{id}', [AdminSocialCommentController::class, 'updateAutoReplyRule'])->name('social-comments.auto-reply-rules.update');
+	Route::delete('/social-comments/auto-reply-rules/{id}', [AdminSocialCommentController::class, 'deleteAutoReplyRule'])->name('social-comments.auto-reply-rules.delete');
+
+	// ── Competition ──
+	Route::get('/competitors', [AdminCompetitorMonitorController::class, 'index'])->name('competitors.index');
+
+	// FB Competitors
+	Route::get('/fb-competitors', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'index'])->name('fb-competitors');
+	Route::get('/fb-competitors/charts', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'charts'])->name('fb-competitors.charts');
+	Route::get('/fb-competitors/analytics', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'analytics'])->name('fb-competitors.analytics');
+	Route::get('/fb-competitors/export', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'export'])->name('fb-competitors.export');
+	Route::get('/fb-competitors/{page}', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'show'])->name('fb-competitors.show');
+	Route::post('/fb-competitors', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'store'])->name('fb-competitors.store');
+	Route::put('/fb-competitors/{page}', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'update'])->name('fb-competitors.update');
+	Route::delete('/fb-competitors/{page}', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'destroy'])->name('fb-competitors.destroy');
+	Route::post('/fb-competitors/{page}/scrape', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'scrape'])->name('fb-competitors.scrape');
+	Route::post('/fb-competitors/analyze', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'analyze'])->name('fb-competitors.analyze');
+	Route::post('/fb-competitors/weekly-analysis', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'weeklyAnalysis'])->name('fb-competitors.weekly-analysis');
+	Route::get('/fb-competitors/analysis/{analysis}', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'showAnalysis'])->name('fb-competitors.analysis');
+	Route::put('/fb-competitors/insights/{insight}', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'updateInsight'])->name('fb-competitors.insights.update');
+	Route::get('/fb-competitors/estimate-cost', [\App\Http\Controllers\Admin\FacebookCompetitorController::class, 'estimateCost'])->name('fb-competitors.estimate-cost');
+
+	// ── SEO ──
+	Route::get('/seo', [\App\Http\Controllers\Admin\SeoMonitoringController::class, 'index'])->name('seo');
+
+	// ── Admin ──
+	Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+	Route::get('/users/create', fn (\Illuminate\Http\Request $request) => $request->header('X-PJAX') ? view('admin._placeholder', ['title' => 'Create User'])->fragment('content') : view('admin._placeholder', ['title' => 'Create User']))->name('users.create');
+	Route::get('/sms', [\App\Http\Controllers\Admin\SmsActivationController::class, 'index'])->name('sms');
+	Route::post('/sms/get-services', [\App\Http\Controllers\Admin\SmsActivationController::class, 'getServices'])->name('sms.get-services');
+	Route::post('/sms/get-number', [\App\Http\Controllers\Admin\SmsActivationController::class, 'getNumber'])->name('sms.get-number');
+	Route::post('/sms/{activation}/set-status', [\App\Http\Controllers\Admin\SmsActivationController::class, 'setStatus'])->name('sms.set-status');
+	Route::get('/sms/{activation}/check-status', [\App\Http\Controllers\Admin\SmsActivationController::class, 'checkStatus'])->name('sms.check-status');
+	Route::get('/alibaba-import', [AdminAlibabaImportController::class, 'index'])->name('alibaba-import');
+
+	// ══════════════════════════════════════════════════════
+	// API / Action Routes (POST, PATCH, DELETE — JSON responses)
+	// ══════════════════════════════════════════════════════
 	Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
 	Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
 	Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test']);
 	Route::get('/chatbot-metrics', [AdminChatbotMetricsController::class, 'summary'])
-		->name('admin.chatbot-metrics.summary');
+		->name('chatbot-metrics.summary');
 	Route::post('/users', [AdminUserController::class, 'store'])
-		->name('admin.users.store');
+		->name('users.store');
 	Route::patch('/users/{user}/admin', [AdminUserController::class, 'toggleAdmin'])
-		->name('admin.users.toggle-admin');
+		->name('users.toggle-admin');
 	Route::post('/orders', [AdminOrderController::class, 'store'])
-		->name('admin.orders.store');
+		->name('orders.store');
 	Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
-		->name('admin.orders.update-status');
+		->name('orders.update-status');
 	Route::patch('/orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])
-		->name('admin.orders.update-payment-status');
+		->name('orders.update-payment-status');
 	Route::delete('/orders/{order}', [AdminOrderController::class, 'destroy'])
-		->name('admin.orders.destroy');
+		->name('orders.destroy');
 	Route::post('/products/import-alibaba/parse', [AdminAlibabaImportController::class, 'parse'])
-		->name('admin.products.import-alibaba.parse');
+		->name('products.import-alibaba.parse');
 	Route::post('/products/import-alibaba/confirm', [AdminAlibabaImportController::class, 'confirm'])
-		->name('admin.products.import-alibaba.confirm');
+		->name('products.import-alibaba.confirm');
+	Route::post('/product-quality', [AdminProductQualityController::class, 'store'])->name('product-quality.store');
+	Route::post('/product-quality/{productQuality}/run', [AdminProductQualityController::class, 'run'])->name('product-quality.run');
 	Route::post('/competitors/sources', [AdminCompetitorMonitorController::class, 'storeSource'])
-		->name('admin.competitors.sources.store');
+		->name('competitors.sources.store');
 	Route::post('/competitors/sources/{source}/refresh', [AdminCompetitorMonitorController::class, 'refresh'])
-		->name('admin.competitors.refresh');
+		->name('competitors.refresh');
 	Route::post('/competitors/products/{competitorProduct}/mapping', [AdminCompetitorMonitorController::class, 'saveMapping'])
-		->name('admin.competitors.mapping');
+		->name('competitors.mapping');
 	Route::resource('products', AdminProductController::class)
 		->only(['store', 'update', 'destroy'])
-		->names('admin.products');
+		->names('products');
 	Route::resource('articles', AdminArticleController::class)
 		->only(['store', 'update', 'destroy'])
-		->names('admin.articles');
+		->names('articles');
 	Route::patch('/articles/{article}/toggle-publish', [AdminArticleController::class, 'togglePublish'])
-		->name('admin.articles.toggle-publish');
+		->name('articles.toggle-publish');
 	Route::post('/products/{product}/images', [AdminProductImageController::class, 'store'])
-		->name('admin.products.images.store');
+		->name('products.images.store');
 	Route::post('/products/{product}/images/{image}/primary', [AdminProductImageController::class, 'setPrimary'])
-		->name('admin.products.images.primary');
+		->name('products.images.primary');
 	Route::delete('/products/{product}/images/{image}', [AdminProductImageController::class, 'destroy'])
-		->name('admin.products.images.destroy');
+		->name('products.images.destroy');
 	Route::post('/products/{product}/variants', [AdminProductController::class, 'storeVariant'])
-		->name('admin.products.variants.store');
+		->name('products.variants.store');
 	Route::patch('/products/variants/{variant}', [AdminProductController::class, 'updateVariant'])
-		->name('admin.products.variants.update');
+		->name('products.variants.update');
 	Route::delete('/products/variants/{variant}', [AdminProductController::class, 'deleteVariant'])
-		->name('admin.products.variants.delete');
+		->name('products.variants.delete');
 	Route::post('/variants/{variant}/adjust-stock', [AdminStockAdjustmentController::class, 'store'])
-		->name('admin.variants.adjust-stock');
+		->name('variants.adjust-stock');
 	Route::post('/chatbot-content/faqs', [AdminChatbotContentController::class, 'storeFaq'])
-		->name('admin.chatbot-content.faqs.store');
+		->name('chatbot-content.faqs.store');
 	Route::patch('/chatbot-content/faqs/{faq}', [AdminChatbotContentController::class, 'updateFaq'])
-		->name('admin.chatbot-content.faqs.update');
+		->name('chatbot-content.faqs.update');
 	Route::delete('/chatbot-content/faqs/{faq}', [AdminChatbotContentController::class, 'destroyFaq'])
-		->name('admin.chatbot-content.faqs.destroy');
+		->name('chatbot-content.faqs.destroy');
 	Route::put('/chatbot-content/contacts', [AdminChatbotContentController::class, 'updateContacts'])
-		->name('admin.chatbot-content.contacts.update');
+		->name('chatbot-content.contacts.update');
 	Route::post('/chatbot-lab/manual', [AdminChatbotLabController::class, 'runManualTest'])
-		->name('admin.chatbot-lab.manual.run');
+		->name('chatbot-lab.manual.run');
 	Route::post('/chatbot-lab/manual/retry', [AdminChatbotLabController::class, 'retryManualResult'])
-		->name('admin.chatbot-lab.manual.retry');
+		->name('chatbot-lab.manual.retry');
 	Route::post('/chatbot-lab/manual/reset', [AdminChatbotLabController::class, 'resetManualSession'])
-		->name('admin.chatbot-lab.manual.reset');
+		->name('chatbot-lab.manual.reset');
 	Route::post('/chatbot-lab-cases', [AdminChatbotLabController::class, 'storeCase'])
-		->name('admin.chatbot-lab.cases.store');
+		->name('chatbot-lab.cases.store');
 	Route::post('/chatbot-lab-cases/preview-diagnostics', [AdminChatbotLabController::class, 'previewCaseDiagnostics'])
-		->name('admin.chatbot-lab.cases.preview-diagnostics');
+		->name('chatbot-lab.cases.preview-diagnostics');
 	Route::post('/chatbot-lab-cases/{trainingCase}/preview-diagnostics', [AdminChatbotLabController::class, 'previewCaseDiagnostics'])
-		->name('admin.chatbot-lab.cases.preview-diagnostics-existing');
+		->name('chatbot-lab.cases.preview-diagnostics-existing');
 	Route::patch('/chatbot-lab-cases/{trainingCase}', [AdminChatbotLabController::class, 'updateCase'])
-		->name('admin.chatbot-lab.cases.update');
+		->name('chatbot-lab.cases.update');
 	Route::delete('/chatbot-lab-cases/{trainingCase}', [AdminChatbotLabController::class, 'destroyCase'])
-		->name('admin.chatbot-lab.cases.destroy');
+		->name('chatbot-lab.cases.destroy');
 	Route::post('/chatbot-lab-runs', [AdminChatbotLabController::class, 'startRun'])
-		->name('admin.chatbot-lab.runs.start');
+		->name('chatbot-lab.runs.start');
 	Route::get('/chatbot-lab-runs/{run}/status', [AdminChatbotLabController::class, 'runStatus'])
-		->name('admin.chatbot-lab.runs.status');
+		->name('chatbot-lab.runs.status');
 	Route::post('/chatbot-lab-runs/{run}/cancel', [AdminChatbotLabController::class, 'cancelRunAction'])
-		->name('admin.chatbot-lab.runs.cancel');
+		->name('chatbot-lab.runs.cancel');
 	Route::get('/chatbot-lab-runs/{run}/export', [AdminChatbotLabController::class, 'exportRunCsv'])
-		->name('filament.admin.chatbot-lab-runs.export');
+		->name('chatbot-lab.runs.export');
 	Route::post('/chatbot-lab-results/{result}/observation', [AdminChatbotLabController::class, 'saveObservation'])
-		->name('admin.chatbot-lab.results.observation');
+		->name('chatbot-lab.results.observation');
 	Route::post('/chatbot-lab-results/{result}/rerun', [AdminChatbotLabController::class, 'rerunResult'])
-		->name('admin.chatbot-lab.results.rerun');
+		->name('chatbot-lab.results.rerun');
 	Route::post('/chatbot-lab-results/{result}/promote', [AdminChatbotLabController::class, 'promoteResult'])
-		->name('admin.chatbot-lab.results.promote');
+		->name('chatbot-lab.results.promote');
 	Route::post('/chatbot-lab-results/{result}/promote-rerun', [AdminChatbotLabController::class, 'promoteAndRerunResult'])
-		->name('admin.chatbot-lab.results.promote-rerun');
+		->name('chatbot-lab.results.promote-rerun');
 	Route::resource('facebook-posts', AdminFacebookPostController::class)
 		->only(['store', 'update', 'destroy'])
 		->parameters(['facebook-posts' => 'facebookPost'])
-		->names('admin.facebook-posts');
+		->names('facebook-posts');
 	Route::post('/facebook-posts/{facebookPost}/publish', [AdminFacebookPostController::class, 'publish'])
-		->name('admin.facebook-posts.publish');
+		->name('facebook-posts.publish');
 	Route::post('/facebook-posts/generate', [AdminFacebookPostController::class, 'generate'])
-		->name('admin.facebook-posts.generate');
+		->name('facebook-posts.generate');
+	Route::post('/facebook-posts/enhance-prompt', [AdminFacebookPostController::class, 'enhancePrompt'])
+		->name('facebook-posts.enhance-prompt');
+	Route::post('/facebook-posts/suggest-hashtags', [AdminFacebookPostController::class, 'suggestHashtags'])
+		->name('facebook-posts.suggest-hashtags');
+
+	// Image Manager APIs
+    Route::get('/products/{product}/images-json', [AdminProductImageController::class, 'getImagesJson'])->name('products.images.json');
+    Route::get('/images/all-json', [AdminProductImageController::class, 'getAllImagesJson'])->name('images.all.json');
+    Route::post('/images/upload-standalone', [AdminProductImageController::class, 'uploadStandalone'])->name('images.upload-standalone');
+
+    Route::post('/media/upload-video', [AdminMediaController::class, 'uploadVideo'])->name('media.upload-video');
 });
 
 // Test route for real-time message broadcasting

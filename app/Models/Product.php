@@ -94,6 +94,16 @@ class Product extends Model
         return $this->hasMany(ProductReview::class);
     }
 
+    public function researchTargets(): HasMany
+    {
+        return $this->hasMany(ResearchTarget::class);
+    }
+
+    public function productQualityAnalyses(): HasMany
+    {
+        return $this->hasMany(ProductQualityAnalysis::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

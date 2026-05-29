@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Chatbot\IntentAnalyzerService;
+use App\Services\Chatbot\ModelCompletionService;
 use App\Services\Chatbot\UnifiedAiPolicyService;
 use App\Services\Chatbot\WidgetTraceLogger;
 use Mockery;
@@ -26,7 +27,7 @@ class IntentAnalyzerServiceTest extends TestCase
             ->once()
             ->andReturn('რამე 20 ლარის ფარგლებში გაქვთ?');
 
-        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger());
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
 
         $intent = $service->analyze('რამე 20 ლარის ფარგლებში გაქვთ?', [], ['budget_max_gel' => 20]);
 
@@ -46,7 +47,7 @@ class IntentAnalyzerServiceTest extends TestCase
             ->once()
             ->andReturn('არ მინდა საბავშვო, ზრდასრულის smartwatch გაქვთ?');
 
-        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger());
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
 
         $intent = $service->analyze('არ მინდა საბავშვო, ზრდასრულის smartwatch გაქვთ?');
 
@@ -65,12 +66,53 @@ class IntentAnalyzerServiceTest extends TestCase
             ->once()
             ->andReturn('მხოლოდ ლოკაცია და გადაადგილების ისტორია მინდა, ზარი და კამერა საერთოდ არ არის მნიშვნელოვანი');
 
-        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger());
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
 
         $intent = $service->analyze('მხოლოდ ლოკაცია და გადაადგილების ისტორია მინდა, ზარი და კამერა საერთოდ არ არის მნიშვნელოვანი');
 
         $this->assertSame('recommendation', $intent->intent());
         $this->assertContains('ლოკაცია', $intent->searchKeywords());
         $this->assertContains('გადაადგილების ისტორია', $intent->searchKeywords());
+    }
+
+    public function testModelCompletionResponseIsParsedIntoIntentResult(): void
+    {
+        config()->set('services.openai.intent_enabled', true);
+
+        $policy = Mockery::mock(UnifiedAiPolicyService::class);
+        $policy->shouldReceive('normalizeIncomingMessage')
+            ->once()
+            ->andReturn('Q12 ჯობია თუ CT23?');
+
+        $modelCompletion = Mockery::mock(ModelCompletionService::class);
+        $modelCompletion->shouldReceive('complete')
+            ->once()
+            ->andReturn([
+                'reply' => json_encode([
+                    'standalone_query' => 'Q12 და CT23 შედარება',
+                    'intent' => 'comparison',
+                    'entities' => [
+                        'brand' => null,
+                        'model' => 'Q12',
+                        'product_slug_hint' => null,
+                        'color' => null,
+                        'category' => null,
+                    ],
+                    'needs_product_data' => true,
+                    'search_keywords' => ['Q12', 'CT23'],
+                    'is_out_of_domain' => false,
+                    'confidence' => 0.93,
+                ], JSON_UNESCAPED_UNICODE),
+                'reason' => null,
+                'usage' => [],
+            ]);
+
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), $modelCompletion);
+
+        $intent = $service->analyze('Q12 ჯობია თუ CT23?');
+
+        $this->assertSame('comparison', $intent->intent());
+        $this->assertSame('Q12 და CT23 შედარება', $intent->standaloneQuery());
+        $this->assertContains('CT23', $intent->searchKeywords());
     }
 }

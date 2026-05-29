@@ -47,9 +47,17 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
         'multi_agent_enabled' => env('CHATBOT_MULTI_AGENT_ENABLED', false),
         'multi_agent_rollout' => env('CHATBOT_MULTI_AGENT_ROLLOUT', 0),
-        'multi_agent_context_model' => env('OPENAI_MULTI_AGENT_CONTEXT_MODEL', 'gpt-4o-mini'),
-        'multi_agent_response_model' => env('OPENAI_MULTI_AGENT_RESPONSE_MODEL', 'gpt-4o-mini'),
+        'multi_agent_context_model' => env('OPENAI_MULTI_AGENT_CONTEXT_MODEL', 'gpt-4.1-mini'),
+        'multi_agent_response_model' => env('OPENAI_MULTI_AGENT_RESPONSE_MODEL', 'gpt-4.1-mini'),
         'multi_agent_qa_model' => env('OPENAI_MULTI_AGENT_QA_MODEL', 'gpt-4.1-nano'),
+    ],
+
+    'langfuse' => [
+        'enabled' => env('LANGFUSE_ENABLED', false),
+        'base_url' => env('LANGFUSE_BASE_URL', 'https://cloud.langfuse.com'),
+        'public_key' => env('LANGFUSE_PUBLIC_KEY'),
+        'secret_key' => env('LANGFUSE_SECRET_KEY'),
+        'timeout' => (int) env('LANGFUSE_TIMEOUT', 5),
     ],
 
     'anthropic' => [
@@ -70,7 +78,7 @@ return [
     'cohere' => [
         'enabled' => env('COHERE_ENABLED', true),
         'api_key' => env('COHERE_API_KEY'),
-        'model' => env('COHERE_RERANK_MODEL', 'rerank-english-v3.0'),
+        'model' => env('COHERE_RERANK_MODEL', 'rerank-multilingual-v3.0'),
         'verify' => env('COHERE_SSL_VERIFY', true),
         'connect_timeout' => env('COHERE_CONNECT_TIMEOUT', 3),
         'timeout' => env('COHERE_TIMEOUT', 8),
@@ -114,6 +122,7 @@ return [
     'apify' => [
         'token' => env('APIFY_API_TOKEN'),
         'actor_id' => env('APIFY_ACTOR_ID', 'apify/web-scraper'),
+        'alibaba_actor_id' => env('APIFY_ALIBABA_ACTOR_ID', 'happitap/alibaba-product-scraper'),
         'base_url' => env('APIFY_BASE_URL', 'https://api.apify.com/v2'),
         'timeout' => (int) env('APIFY_TIMEOUT', 180),
         'use_proxy' => filter_var(env('APIFY_USE_PROXY', true), FILTER_VALIDATE_BOOL),
@@ -122,6 +131,15 @@ return [
         'respect_robots' => filter_var(env('APIFY_RESPECT_ROBOTS', false), FILTER_VALIDATE_BOOL),
         'use_template_page_function' => filter_var(env('APIFY_USE_TEMPLATE_PAGE_FUNCTION', false), FILTER_VALIDATE_BOOL),
         'input_template_json' => env('APIFY_INPUT_TEMPLATE_JSON'),
+        'facebook_posts_actor' => env('APIFY_FACEBOOK_POSTS_ACTOR', 'apify/facebook-posts-scraper'),
+        'facebook_pages_actor' => env('APIFY_FACEBOOK_PAGES_ACTOR', 'apify/facebook-pages-scraper'),
+
+        // Optimized for free tier ($5/month = 125 CU)
+        'facebook_max_posts' => (int) env('APIFY_FACEBOOK_MAX_POSTS', 20), // 4 competitors × 20 × 4 weeks = $2.24/month
+        'facebook_scrape_timeout' => (int) env('APIFY_FACEBOOK_SCRAPE_TIMEOUT', 300),
+        'facebook_scrape_interval_hours' => (int) env('APIFY_FACEBOOK_SCRAPE_INTERVAL_HOURS', 168), // Weekly (7 days)
+        'facebook_cache_ttl_hours' => (int) env('APIFY_FACEBOOK_CACHE_TTL_HOURS', 24), // Cache for 24h
+        'facebook_ai_analysis_enabled' => filter_var(env('APIFY_FACEBOOK_AI_ANALYSIS_ENABLED', true), FILTER_VALIDATE_BOOL),
     ],
 
     'scrapingbee' => [
@@ -131,6 +149,18 @@ return [
         'timeout' => (int) env('SCRAPINGBEE_TIMEOUT', 60),
         'premium_proxy' => filter_var(env('SCRAPINGBEE_PREMIUM_PROXY', true), FILTER_VALIDATE_BOOL),
         'country_code' => env('SCRAPINGBEE_COUNTRY_CODE'),
+    ],
+
+    'smsoffice' => [
+        'api_key' => env('SMSOFFICE_API_KEY'),
+        'sender' => env('SMSOFFICE_SENDER', 'smsoffice'),
+        'base_url' => env('SMSOFFICE_BASE_URL', 'https://smsoffice.ge/api/v2/send'),
+        'timeout' => (int) env('SMSOFFICE_TIMEOUT', 10),
+    ],
+
+    'grizzly_sms' => [
+        'key' => env('GRIZZLY_SMS_API_KEY'),
+        'base_url' => env('GRIZZLY_SMS_BASE_URL', 'https://api.grizzlysms.com/stubs/handler_api.php'),
     ],
 
 ];

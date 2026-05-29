@@ -2,8 +2,7 @@
 
 namespace App\Services\Chatbot;
 
-use App\Services\Chatbot\WidgetTraceLogger;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
 
 class IntentAnalyzerService
@@ -21,7 +20,8 @@ class IntentAnalyzerService
 
     public function __construct(
         private UnifiedAiPolicyService $policy,
-        private WidgetTraceLogger $widgetTrace
+        private WidgetTraceLogger $widgetTrace,
+        private ModelCompletionService $modelCompletion
     ) {
     }
 
@@ -29,6 +29,12 @@ class IntentAnalyzerService
     {
         $normalizedMessage = $this->policy->normalizeIncomingMessage($message);
         $traceContext = $this->withTraceContext($trace);
+        $spanId = $this->langfuse()->startSpan('intent.analyze', [
+            'message' => $normalizedMessage !== '' ? $normalizedMessage : $message,
+        ], [
+            'history_count' => count($history),
+            'has_preferences' => $preferences !== [],
+        ]);
 
         $this->traceWidget('intent.analysis_started', [
             'message' => $normalizedMessage !== '' ? $normalizedMessage : $message,
@@ -47,6 +53,13 @@ class IntentAnalyzerService
                 'next_step' => 'return_intent_result_to_pipeline',
             ], $traceContext);
 
+            $this->langfuse()->endSpan($spanId, [
+                'intent' => $heuristicIntent->intent(),
+                'confidence' => $heuristicIntent->confidence(),
+                'fallback' => $heuristicIntent->isFallback(),
+                'resolution' => 'heuristic',
+            ], $heuristicIntent->standaloneQuery());
+
             return $heuristicIntent;
         }
 
@@ -55,20 +68,18 @@ class IntentAnalyzerService
                 'reason' => 'intent_model_disabled',
             ], $traceContext);
 
-            return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
-        }
+            $fallbackIntent = IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+            $this->langfuse()->endSpan($spanId, [
+                'intent' => $fallbackIntent->intent(),
+                'confidence' => $fallbackIntent->confidence(),
+                'fallback' => true,
+                'reason' => 'intent_model_disabled',
+            ], $fallbackIntent->standaloneQuery());
 
-        $apiKey = (string) config('services.openai.key');
-        if ($apiKey === '') {
-            $this->traceWidget('intent.analysis_skipped', [
-                'reason' => 'missing_openai_key',
-            ], $traceContext);
-
-            return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+            return $fallbackIntent;
         }
 
         $model = (string) config('services.openai.intent_model', 'gpt-4.1-nano');
-        $baseUrl = rtrim((string) config('services.openai.base_url', 'https://api.openai.com/v1'), '/');
 
         $start = microtime(true);
 
@@ -77,7 +88,6 @@ class IntentAnalyzerService
 
         $requestContext = [
             'model' => $model,
-            'base_url' => $baseUrl,
             'history_count' => count($history),
             'next_step' => 'call_openai_intent_model',
         ];
@@ -92,41 +102,59 @@ class IntentAnalyzerService
         $this->traceWidget('intent.request_sent', $requestContext, $traceContext);
 
         try {
-            $response = Http::withToken($apiKey)
-                ->timeout(10)
-                ->post($baseUrl . '/chat/completions', [
-                    'model' => $model,
-                    'temperature' => 0,
+            $completion = $this->modelCompletion->complete(
+                $model,
+                [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                [
+                    'temperature' => 0.0,
                     'max_tokens' => 250,
-                    'response_format' => ['type' => 'json_object'],
-                    'messages' => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $prompt],
+                    'timeout' => 10,
+                    'langfuse_name' => 'chatbot.intent_analyzer',
+                    'langfuse_metadata' => [
+                        'component' => 'intent_analyzer',
                     ],
-                ]);
+                ]
+            );
 
-            if (!$response->successful()) {
+            if (($completion['reason'] ?? null) !== null) {
                 $this->traceWidget('intent.request_failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'reason' => $completion['reason'],
                 ], $traceContext);
 
                 Log::warning('Intent analyzer request failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'reason' => $completion['reason'],
+                    'model' => $model,
                 ]);
 
-                return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $fallbackIntent = IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $this->langfuse()->endSpan($spanId, [
+                    'intent' => $fallbackIntent->intent(),
+                    'confidence' => $fallbackIntent->confidence(),
+                    'fallback' => true,
+                    'reason' => $completion['reason'],
+                ], $fallbackIntent->standaloneQuery());
+
+                return $fallbackIntent;
             }
 
-            $content = trim((string) data_get($response->json(), 'choices.0.message.content', ''));
+            $content = trim((string) ($completion['reply'] ?? ''));
             if ($content === '') {
                 $this->traceWidget('intent.request_failed', [
                     'reason' => 'empty_intent_response',
-                    'status' => $response->status(),
                 ], $traceContext);
 
-                return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $fallbackIntent = IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $this->langfuse()->endSpan($spanId, [
+                    'intent' => $fallbackIntent->intent(),
+                    'confidence' => $fallbackIntent->confidence(),
+                    'fallback' => true,
+                    'reason' => 'empty_intent_response',
+                ], $fallbackIntent->standaloneQuery());
+
+                return $fallbackIntent;
             }
 
             $parsed = $this->decodeIntentJson($content);
@@ -136,7 +164,15 @@ class IntentAnalyzerService
                     'raw_content' => $content,
                 ], $traceContext);
 
-                return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $fallbackIntent = IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+                $this->langfuse()->endSpan($spanId, [
+                    'intent' => $fallbackIntent->intent(),
+                    'confidence' => $fallbackIntent->confidence(),
+                    'fallback' => true,
+                    'reason' => 'invalid_intent_json',
+                ], $fallbackIntent->standaloneQuery());
+
+                return $fallbackIntent;
             }
 
             $latencyMs = (int) round((microtime(true) - $start) * 1000);
@@ -154,7 +190,15 @@ class IntentAnalyzerService
 
             $this->traceWidget('intent.response_received', $responseContext, $traceContext);
 
-            return IntentResult::fromArray($sanitized, $latencyMs);
+            $intentResult = IntentResult::fromArray($sanitized, $latencyMs);
+            $this->langfuse()->endSpan($spanId, [
+                'intent' => $intentResult->intent(),
+                'confidence' => $intentResult->confidence(),
+                'fallback' => $intentResult->isFallback(),
+                'latency_ms' => $latencyMs,
+            ], $intentResult->standaloneQuery());
+
+            return $intentResult;
         } catch (\Throwable $exception) {
             $this->traceWidget('intent.request_failed', [
                 'reason' => 'intent_exception',
@@ -165,7 +209,16 @@ class IntentAnalyzerService
                 'error' => $exception->getMessage(),
             ]);
 
-            return IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+            $fallbackIntent = IntentResult::fallback($normalizedMessage !== '' ? $normalizedMessage : $message);
+            $this->langfuse()->endSpan($spanId, [
+                'intent' => $fallbackIntent->intent(),
+                'confidence' => $fallbackIntent->confidence(),
+                'fallback' => true,
+                'reason' => 'intent_exception',
+                'error' => $exception->getMessage(),
+            ], $fallbackIntent->standaloneQuery());
+
+            return $fallbackIntent;
         }
     }
 
@@ -541,5 +594,14 @@ class IntentAnalyzerService
         }
 
         $this->widgetTrace->logStep($step, array_merge($trace, $context));
+    }
+
+    private function langfuse(): LangfuseService
+    {
+        try {
+            return app(LangfuseService::class);
+        } catch (BindingResolutionException) {
+            return new LangfuseService();
+        }
     }
 }

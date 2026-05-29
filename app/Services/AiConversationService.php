@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Services;
 
@@ -18,9 +18,13 @@ use App\Services\Chatbot\ResponseValidatorService;
 use App\Services\Chatbot\UnifiedAiPolicyService;
 use Illuminate\Support\Facades\Log;
 
+use App\Services\Chatbot\Agents\SupervisorAgent;
+use App\Services\Chatbot\IntentAnalyzerService;
+
 class AiConversationService
 {
-    protected $aiSuggestionService;
+    protected SupervisorAgent $supervisorAgent;
+    protected IntentAnalyzerService $intentAnalyzer;
     protected UnifiedAiPolicyService $policy;
     protected ChatbotQualityMetricsService $metrics;
     protected ConversationMemoryService $memoryService;
@@ -34,7 +38,8 @@ class AiConversationService
     protected ChatbotProductSelectionService $productSelection;
 
     public function __construct(
-        AiSuggestionService $aiSuggestionService,
+        SupervisorAgent $supervisorAgent,
+        IntentAnalyzerService $intentAnalyzer,
         UnifiedAiPolicyService $policy,
         ChatbotQualityMetricsService $metrics,
         ConversationMemoryService $memoryService,
@@ -48,7 +53,8 @@ class AiConversationService
         ChatbotProductSelectionService $productSelection
     )
     {
-        $this->aiSuggestionService = $aiSuggestionService;
+        $this->supervisorAgent = $supervisorAgent;
+        $this->intentAnalyzer = $intentAnalyzer;
         $this->policy = $policy;
         $this->metrics = $metrics;
         $this->memoryService = $memoryService;
@@ -118,32 +124,43 @@ class AiConversationService
 
             $lastCustomerMessage->content = $customerInput;
 
-            // Generate suggestions using existing service
+            // Generate suggestions using SupervisorAgent
             $this->memoryService->appendMessage(
                 $conversation->id,
                 'user',
                 $customerInput
             );
 
-            $suggestions = $this->aiSuggestionService->generateSuggestions(
-                $conversation,
-                $lastCustomerMessage,
-                1 // Just need one response
+            // Analyze intent first as required by SupervisorAgent
+            $intent = $this->intentAnalyzer->analyze($customerInput, []);
+
+            $supervisorResult = $this->supervisorAgent->orchestrate(
+                $customerInput,
+                $conversation->id,
+                $conversation->customer_id,
+                $intent,
+                [],
+                [],
+                'suggestion_generation'
             );
 
-            if (!$suggestions || empty($suggestions)) {
-                Log::warning('AI service returned no suggestions', [
+            $suggestions = is_array($supervisorResult['response']) ? $supervisorResult['response'] : [$supervisorResult['response']];
+
+            if (empty($suggestions) || !$supervisorResult['success']) {
+                Log::warning('AI service returned no suggestions or failed', [
                     'conversation_id' => $conversation->id,
-                    'message_id' => $lastCustomerMessage->id
+                    'message_id' => $lastCustomerMessage->id,
+                    'reason' => $supervisorResult['reason'] ?? 'Unknown'
                 ]);
 
                 $this->metrics->recordProviderIncident($conversation->id, 'omnichannel', 'no_suggestions');
-                $resolution = $this->fallbackStrategy->resolveStaticReason(ChatbotOutcomeReason::PROVIDER_UNAVAILABLE);
+                $resolution = $this->fallbackStrategy->resolveStaticReason($supervisorResult['reason'] ?? ChatbotOutcomeReason::PROVIDER_UNAVAILABLE);
                 $this->memoryService->appendMessage($conversation->id, 'assistant', $resolution->reply());
 
                 return $this->finalizeOutcome($conversation, $resolution, $startedAt);
             }
 
+            // In suggestion_generation mode, we still only use the first suggestion to reply for auto-reply
             $response = trim($suggestions[0]);
 
             $lastAiMessage = $conversation->messages()

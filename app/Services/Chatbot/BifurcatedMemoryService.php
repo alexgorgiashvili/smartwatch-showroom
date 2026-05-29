@@ -2,15 +2,20 @@
 
 namespace App\Services\Chatbot;
 
+use App\Models\Customer;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class BifurcatedMemoryService
 {
     private const SESSION_WINDOW = 4;
     private const SUMMARY_THRESHOLD = 10;
+    private const METADATA_PREFERENCES_KEY = 'chatbot_preferences';
+    private ?bool $hasPreferencesColumn = null;
 
     public function __construct(
-        private ConversationMemoryService $conversationMemory
+        private ConversationMemoryService $conversationMemory,
+        private ModelCompletionService $modelCompletion
     ) {
     }
 
@@ -73,9 +78,14 @@ class BifurcatedMemoryService
             return;
         }
 
-        Cache::put("chatbot:user_prefs:{$customerId}", $preferences, 86400);
+        $mergedPreferences = $this->mergePreferences(
+            $this->loadUserPreferences($customerId),
+            $preferences
+        );
 
-        $this->persistUserPreferences($customerId, $preferences);
+        Cache::put("chatbot:user_prefs:{$customerId}", $mergedPreferences, 86400);
+
+        $this->persistUserPreferences($customerId, $mergedPreferences);
     }
 
     /**
@@ -147,7 +157,7 @@ class BifurcatedMemoryService
     private function summarizeContext(array $messages, int $conversationId): ?string
     {
         $cacheKey = "chatbot:session_summary:{$conversationId}";
-        
+
         $cached = Cache::get($cacheKey);
         if ($cached) {
             return $cached;
@@ -166,32 +176,152 @@ class BifurcatedMemoryService
 
     private function generateSummary(array $messages): string
     {
-        $userMessages = array_filter($messages, fn($msg) => ($msg['role'] ?? '') === 'user');
-        $assistantMessages = array_filter($messages, fn($msg) => ($msg['role'] ?? '') === 'assistant');
+        $lines = [];
 
+        foreach ($messages as $message) {
+            $role = ($message['role'] ?? '') === 'assistant' ? 'ასისტენტი' : 'მომხმარებელი';
+            $content = trim((string) ($message['content'] ?? ''));
+
+            if ($content === '') {
+                continue;
+            }
+
+            $lines[] = $role . ': ' . $content;
+        }
+
+        if ($lines === []) {
+            return 'მომხმარებელმა დაუსვა რამდენიმე კითხვა.';
+        }
+
+        $completion = $this->modelCompletion->complete(
+            (string) config('chatbot.memory.summarization_model', 'gpt-4.1-nano'),
+            [
+                [
+                    'role' => 'system',
+                    'content' => 'შეაჯამე ეს საუბარი 2-3 წინადადებით ქართულად. გამოყავი მომხმარებლის ბიუჯეტი, სასურველი ფუნქციები, ფერი და სხვა მნიშვნელოვანი პრეფერენციები. ნუ დააბრუნებ სიას ან JSON-ს.',
+                ],
+                [
+                    'role' => 'user',
+                    'content' => implode("\n", $lines),
+                ],
+            ],
+            [
+                'temperature' => 0.2,
+                'max_tokens' => 160,
+                'timeout' => 15,
+            ]
+        );
+
+        $reply = trim((string) ($completion['reply'] ?? ''));
+
+        if ($reply !== '') {
+            return $reply;
+        }
+
+        return $this->fallbackSummary($messages);
+    }
+
+    private function loadUserPreferences(int $customerId): array
+    {
+        $customer = Customer::query()->find($customerId);
+
+        if (!$customer) {
+            return [];
+        }
+
+        $preferences = $this->customerPreferencesColumnExists()
+            ? $customer->preferences
+            : data_get($customer->metadata, self::METADATA_PREFERENCES_KEY);
+
+        return is_array($preferences) ? $preferences : [];
+    }
+
+    private function persistUserPreferences(int $customerId, array $preferences): void
+    {
+        $customer = Customer::query()->find($customerId);
+
+        if (!$customer) {
+            return;
+        }
+
+        if ($this->customerPreferencesColumnExists()) {
+            $customer->update([
+                'preferences' => $preferences,
+            ]);
+
+            return;
+        }
+
+        $metadata = is_array($customer->metadata) ? $customer->metadata : [];
+        $metadata[self::METADATA_PREFERENCES_KEY] = $preferences;
+
+        $customer->update([
+            'metadata' => $metadata,
+        ]);
+    }
+
+    private function customerPreferencesColumnExists(): bool
+    {
+        if ($this->hasPreferencesColumn === null) {
+            $this->hasPreferencesColumn = Schema::hasColumn('customers', 'preferences');
+        }
+
+        return $this->hasPreferencesColumn;
+    }
+
+    private function mergePreferences(array $existing, array $incoming): array
+    {
+        if ($incoming === []) {
+            return $existing;
+        }
+
+        $merged = array_merge($existing, $incoming);
+
+        $existingFeatures = is_array($existing['features'] ?? null) ? $existing['features'] : [];
+        $incomingFeatures = is_array($incoming['features'] ?? null) ? $incoming['features'] : [];
+        $existingExcluded = is_array($existing['excluded_features'] ?? null) ? $existing['excluded_features'] : [];
+        $incomingExcluded = is_array($incoming['excluded_features'] ?? null) ? $incoming['excluded_features'] : [];
+
+        $features = array_values(array_unique(array_filter([...$existingFeatures, ...$incomingFeatures])));
+        $excluded = array_values(array_unique(array_filter([...$existingExcluded, ...$incomingExcluded])));
+
+        if ($excluded !== []) {
+            $features = array_values(array_diff($features, $excluded));
+            $merged['excluded_features'] = $excluded;
+        }
+
+        if ($features !== []) {
+            $merged['features'] = $features;
+        } else {
+            unset($merged['features']);
+        }
+
+        if ($excluded === []) {
+            unset($merged['excluded_features']);
+        }
+
+        return $merged;
+    }
+
+    private function fallbackSummary(array $messages): string
+    {
         $topics = [];
-        foreach ($userMessages as $msg) {
-            $content = $msg['content'] ?? '';
+
+        foreach ($messages as $message) {
+            if (($message['role'] ?? '') !== 'user') {
+                continue;
+            }
+
+            $content = trim((string) ($message['content'] ?? ''));
             if (mb_strlen($content) > 20) {
                 $topics[] = mb_substr($content, 0, 50);
             }
         }
 
-        if (empty($topics)) {
+        if ($topics === []) {
             return 'მომხმარებელმა დაუსვა რამდენიმე კითხვა.';
         }
 
-        return 'წინა საუბარში განხილული თემები: ' . implode('; ', array_slice($topics, 0, 3)) . '.';
-    }
-
-    private function loadUserPreferences(int $customerId): array
-    {
-        return $this->conversationMemory->getContext($customerId)['preferences'] ?? [];
-    }
-
-    private function persistUserPreferences(int $customerId, array $preferences): void
-    {
-        // This would typically save to database
-        // For now, we rely on cache
+        return 'მომხმარებელთან წინა საუბარში განიხილებოდა: ' . implode('; ', array_slice($topics, 0, 3)) . '.';
     }
 }

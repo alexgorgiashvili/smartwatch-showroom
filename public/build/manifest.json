@@ -1,4 +1,11 @@
 {
+  "_bootstrap-Ti-_9NVk.js": {
+    "file": "assets/bootstrap-Ti-_9NVk.js",
+    "name": "bootstrap",
+    "imports": [
+      "_vendor-C0Zqfgkc.js"
+    ]
+  },
   "_vendor-C0Zqfgkc.js": {
     "file": "assets/vendor-C0Zqfgkc.js",
     "name": "vendor"
@@ -19,17 +26,33 @@
     "file": "assets/fa-v4compatibility-DD84SGiu.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
+  "resources/css/admin.css": {
+    "file": "assets/admin-s9DWKuJB.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CCCuHo94.css",
+    "file": "assets/app-Dwyy6pjS.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
+  "resources/js/admin.js": {
+    "file": "assets/admin-DF1dObAk.js",
+    "name": "admin",
+    "src": "resources/js/admin.js",
+    "isEntry": true,
+    "imports": [
+      "_bootstrap-Ti-_9NVk.js",
+      "_vendor-C0Zqfgkc.js"
+    ]
+  },
   "resources/js/app.js": {
-    "file": "assets/app-DRS1q1Hd.js",
+    "file": "assets/app-Dy4V6Umz.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
+      "_bootstrap-Ti-_9NVk.js",
       "_vendor-C0Zqfgkc.js"
     ],
     "css": [

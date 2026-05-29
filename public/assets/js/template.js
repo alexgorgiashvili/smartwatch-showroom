@@ -11,7 +11,11 @@
 
     // Enable feather-icons with SVG markup
     if (typeof feather !== 'undefined' && feather.replace) {
-      feather.replace();
+      try {
+        feather.replace();
+      } catch (e) {
+        // Ignore feather errors - icons may already be replaced or invalid
+      }
     }
 
 
@@ -192,14 +196,6 @@
           $(header).removeClass('fixed-on-scroll');
         }
       }
-    });
-
-
-    // Prevent body scrolling while sidebar scroll
-    $('.sidebar .sidebar-body').hover(function () {
-      $('body').addClass('overflow-hidden');
-    }, function () {
-      $('body').removeClass('overflow-hidden');
     });
 
 

@@ -25,9 +25,11 @@ class AlibabaImportController extends Controller
     ) {
     }
 
-    public function index(): View
+    public function index(Request $request)
     {
-        return view('admin.products.import-alibaba');
+        $view = view('admin.products.import-alibaba');
+
+        return $this->renderPjaxView($request, $view);
     }
 
     public function parse(Request $request): JsonResponse
