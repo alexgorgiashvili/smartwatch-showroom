@@ -76,6 +76,8 @@
 
 - Run full DB sync in one command:
   - `sdbsync`
+- Run safe catalog-only sync in one command:
+  - `sdbsyncsafe`
 
 რას აკეთებს `sdbsync` ავტომატურად:
 - ქმნის local dump-ს (`--result-file`)
