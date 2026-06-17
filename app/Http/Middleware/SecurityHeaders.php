@@ -101,7 +101,7 @@ class SecurityHeaders
             "connect-src 'self' https: ws: wss:{$localSocketSources}",
 
             // Frame/iframe policy
-            "frame-src 'self' https://www.googletagmanager.com",
+            "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://facebook.com",
 
             // Object/embed policy
             "object-src 'none'",
