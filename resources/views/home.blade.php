@@ -7,7 +7,7 @@
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — MyTechnic' : 'Kids SIM Smartwatch in Georgia — MyTechnic')
 @section('og_description', app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათი 4G GPS-ით. მდებარეობის კონტროლი, პირდაპირი ზარი, SOS — ტელეფონის გარეშე. ოფიციალური იმპორტიორი.' : 'Kids SIM smartwatch with 4G GPS tracking. Location control, direct calls, SOS — no phone needed. Official importer.')
 @section('og_url', url('/'))
-@section('og_image', asset('images/og-default.jpg'))
+@section('og_image', asset('images/og-default.webp'))
 @section('og_image_alt', 'MyTechnic SIM სმარტ საათები — ბავშვთა უსაფრთხოება')
 
 @push('json_ld')
@@ -35,7 +35,7 @@ $_homeSchema = [
             'url' => url('/'),
             'logo' => [
                 '@type' => 'ImageObject',
-                'url' => asset('images/og-default.jpg'),
+                'url' => asset('images/og-default.webp'),
             ],
         ],
         [
@@ -126,7 +126,7 @@ $_homeSchema = [
                     {{-- Sub-copy --}}
                     <p class="hidden lg:block mt-5 text-base leading-relaxed text-gray-500 sm:text-lg">
                         @if (app()->getLocale() === 'ka')
-                            დარეკვა, GPS მონიტორინგი, შეტყობინებები — სმარტ საათი, რომელსაც ტელეფონი არ სჭირდება.
+                            ვიდეო ზარები, GPS მონიტორინგი და შეტყობინებები, ყველაფერი ერთ მოწყობილობაში
                         @else
                             Calls, GPS tracking, messages — a smartwatch that works completely on its own.
                         @endif
@@ -146,9 +146,9 @@ $_homeSchema = [
                     <div class="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-gray-600" data-reveal="fade-up"
                         data-reveal-delay="4">
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'უფასო მიტანა' : 'Free Delivery' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'უფასო მიწოდება' : 'Free Delivery' }}</span>
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'გარანტია' : ' Warranty' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? '6 თვე გარანტია' : '6-Month Warranty' }}</span>
                         <span class="flex items-center gap-1.5"><i
                                 class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'ოფ. იმპორტიორი' : 'Official Importer' }}</span>
                     </div>
@@ -193,8 +193,8 @@ $_homeSchema = [
                             'title' => app()->getLocale() === 'ka' ? 'GPS რეალ-ტაიმ' : 'Real-Time GPS',
                             'body' =>
                                 app()->getLocale() === 'ka'
-                                    ? 'ცოცხალი რუქა MyTechnic აპიდან'
-                                    : 'Live map from the MyTechnic app',
+                                    ? 'ცოცხალი რუქა SetTracker აპიდან'
+                                    : 'Live map from the SetTracker app',
                         ],
                         [
                             'icon' => 'fa-shield-halved',
@@ -294,12 +294,12 @@ $_homeSchema = [
                                                 {{ $product->name }}</h3>
                                             <div class="mt-2">
                                                 @if ($hasDiscount)
-                                                    <div class="flex items-baseline gap-1.5">
+                                                    <div class="flex flex-wrap items-center gap-1.5">
                                                         <span
                                                             class="text-lg font-extrabold tracking-tight text-primary-600 [font-family:'Space_Grotesk',system-ui,sans-serif] sm:text-xl">{{ number_format($salePrice, 2) }}
                                                             {{ $currency }}</span>
                                                         <span
-                                                            class="text-xs text-gray-400 line-through">{{ number_format($basePrice, 2) }}</span>
+                                                            class="text-xs price-compare-old">{{ number_format($basePrice, 2) }}</span>
                                                     </div>
                                                 @else
                                                     <span
@@ -316,10 +316,10 @@ $_homeSchema = [
                                     </a>
 
                                     {{-- Cart button --}}
-                                    @php $firstInStock = $product->variants->firstWhere('quantity', '>', 0); @endphp
+                                    @php $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0); @endphp
                                     <div class="px-3.5 pb-3.5 lg:px-4 lg:pb-4">
                                         @if ($firstInStock)
-                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form>
+                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
                                                 @csrf
                                                 <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
                                                 <input type="hidden" name="quantity" value="1">
@@ -375,7 +375,7 @@ $_homeSchema = [
                     {{ app()->getLocale() === 'ka' ? 'გზამკვლევები და სტატიები' : 'Guides & Articles' }}
                 </h2>
             </div>
-            <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <a href="{{ route('landing.sim-guide') }}"
                    class="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md">
                     <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition group-hover:bg-primary-100">
@@ -395,6 +395,17 @@ $_homeSchema = [
                     <div>
                         <p class="font-semibold text-gray-900">{{ app()->getLocale() === 'ka' ? 'საჩუქრის გზამკვლევი' : 'Gift Guide' }}</p>
                         <p class="mt-0.5 text-xs text-gray-500">{{ app()->getLocale() === 'ka' ? 'ბიუჯეტის მიხედვით — 150₾, 250₾, 250₾+' : 'By budget — 150₾, 250₾, 250₾+' }}</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right ml-auto text-xs text-gray-300 transition group-hover:text-primary-500"></i>
+                </a>
+                <a href="{{ route('gift-builder.show') }}"
+                   class="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md">
+                    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-100">
+                        <i class="fa-solid fa-box-open text-base"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ app()->getLocale() === 'ka' ? 'სასაჩუქრე ყუთის აწყობა' : 'Build a Gift Box' }}</p>
+                        <p class="mt-0.5 text-xs text-gray-500">{{ app()->getLocale() === 'ka' ? 'საათი, დამატებები, შეფუთვა და ბარათი' : 'Watch, add-ons, packaging, and card' }}</p>
                     </div>
                     <i class="fa-solid fa-arrow-right ml-auto text-xs text-gray-300 transition group-hover:text-primary-500"></i>
                 </a>

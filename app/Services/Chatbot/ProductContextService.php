@@ -53,7 +53,7 @@ class ProductContextService
 
         if (in_array($intentResult->intent(), ['price_query', 'stock_query'], true)) {
             if ($intentResult->hasSpecificProduct()) {
-                return $productCollection->take(1)->values();
+                return $productCollection->take(self::PRODUCT_CONTEXT_LIMIT)->values();
             }
             return $productCollection->take(4)->values();
         }
@@ -82,6 +82,7 @@ class ProductContextService
                     'sale_price' => is_numeric($product->sale_price) ? (float) $product->sale_price : null,
                     'is_in_stock' => (int) ($product->total_stock ?? 0) > 0,
                     'url' => url('/products/' . $product->slug),
+                    'image' => $product->primaryImage?->thumbnail_url ?: '',
                 ];
             })
             ->values()

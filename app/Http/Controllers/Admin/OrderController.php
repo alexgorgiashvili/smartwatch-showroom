@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockAdjustment;
+use App\Services\Bridge\BridgeOrderSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,7 @@ class OrderController extends Controller
         return $this->renderPjaxView($request, $view);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:160'],
@@ -100,8 +101,8 @@ class OrderController extends Controller
                 $variant = ProductVariant::with('product')->findOrFail($item['variant_id']);
 
                 // Check stock availability
-                if ($variant->quantity < $item['quantity']) {
-                    throw new \Exception("Insufficient stock for {$variant->name}. Available: {$variant->quantity}");
+                if (! $variant->canFulfillQuantity((int) $item['quantity'])) {
+                    throw new \Exception("Insufficient stock for {$variant->name}. Available: {$variant->available_quantity}");
                 }
 
                 // Calculate price
@@ -118,26 +119,39 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,
+                    'bridge_product_id' => $variant->product->bridge_product_id,
+                    'bridge_variation_id' => $variant->bridge_variation_id,
+                    'fulfillment_mode' => $variant->product->fulfillment_mode,
                 ]);
 
-                // Decrease stock
-                $variant->decrement('quantity', $item['quantity']);
+                if ($variant->product->fulfillment_mode === 'local_stock') {
+                    $variant->decrement('quantity', $item['quantity']);
 
-                // Log stock adjustment
-                StockAdjustment::create([
-                    'product_variant_id' => $variant->id,
-                    'quantity_change' => -$item['quantity'],
-                    'reason' => "Order {$order->order_number}",
-                    'notes' => "Order created for {$order->customer_name}",
-                ]);
+                    StockAdjustment::create([
+                        'product_variant_id' => $variant->id,
+                        'quantity_change' => -$item['quantity'],
+                        'reason' => "Order {$order->order_number}",
+                        'notes' => "Order created for {$order->customer_name}",
+                    ]);
+                }
             }
 
-            // Update order total
-            $order->update(['total_amount' => $totalAmount]);
+            $order->refresh()->load('items');
+
+            $order->update([
+                'total_amount' => $totalAmount,
+                'fulfillment_mode' => $this->determineOrderFulfillmentMode($order),
+                'bridge_sync_status' => $this->determineInitialBridgeStatus($order),
+                'fulfillment_status' => 'unfulfilled',
+            ]);
 
             // Trigger SMS for courier payments
             if ((int) $data['payment_type'] === 2) {
                 event(new OrderCreated($order));
+            }
+
+            if ($order->requiresBridgePush() && $order->isBridgePushAllowed()) {
+                $bridgeOrderSync->pushOrder($order->fresh('items.variant.product'));
             }
 
             DB::commit();
@@ -158,6 +172,7 @@ class OrderController extends Controller
     {
         $order->load([
             'items.variant.product',
+            'adjustments',
             'cityRelation',
             'paymentLogs' => fn ($query) => $query->latest(),
         ]);
@@ -169,10 +184,10 @@ class OrderController extends Controller
         return $this->renderPjaxView($request, $view);
     }
 
-    public function updateStatus(Request $request, Order $order): RedirectResponse
+    public function updateStatus(Request $request, Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:pending,shipped,delivered,cancelled'],
+            'status' => ['required', 'in:pending,confirmed,shipped,delivered,cancelled'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -187,18 +202,25 @@ class OrderController extends Controller
                     $variant = $item->variant;
 
                     // Restore stock
-                    $variant->increment('quantity', $item->quantity);
+                    if ($item->fulfillment_mode === 'local_stock') {
+                        $variant->increment('quantity', $item->quantity);
+                    }
 
-                    // Log stock adjustment
-                    StockAdjustment::create([
-                        'product_variant_id' => $variant->id,
-                        'quantity_change' => $item->quantity,
-                        'reason' => "Order {$order->order_number} Cancelled",
-                        'notes' => $request->notes ?? 'Order cancelled',
-                    ]);
+                    if ($item->fulfillment_mode === 'local_stock') {
+                        StockAdjustment::create([
+                            'product_variant_id' => $variant->id,
+                            'quantity_change' => $item->quantity,
+                            'reason' => "Order {$order->order_number} Cancelled",
+                            'notes' => $request->notes ?? 'Order cancelled',
+                        ]);
+                    }
                 }
 
-                $order->update(['status' => $data['status']]);
+                $order->update([
+                    'status' => $data['status'],
+                    'bridge_sync_status' => $order->requiresBridgePush() ? 'cancelled' : $order->bridge_sync_status,
+                    'fulfillment_status' => 'cancelled',
+                ]);
 
                 DB::commit();
 
@@ -216,11 +238,15 @@ class OrderController extends Controller
         // Regular status update
         $order->update(['status' => $data['status']]);
 
+        if ($order->requiresBridgePush() && $order->isBridgePushAllowed()) {
+            $bridgeOrderSync->pushOrder($order->fresh('items.variant.product'));
+        }
+
         return redirect()->route('admin.orders.show', $order)
             ->with('status', 'Order status updated.');
     }
 
-    public function updatePaymentStatus(Request $request, Order $order): RedirectResponse
+    public function updatePaymentStatus(Request $request, Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
     {
         $data = $request->validate([
             'payment_status' => ['required', 'in:pending,completed,rejected'],
@@ -230,13 +256,17 @@ class OrderController extends Controller
             'payment_status' => $data['payment_status'],
         ]);
 
+        if ($data['payment_status'] === 'completed' && $order->requiresBridgePush() && $order->isBridgePushAllowed()) {
+            $bridgeOrderSync->pushOrder($order->fresh('items.variant.product'));
+        }
+
         return redirect()->route('admin.orders.show', $order)
             ->with('status', 'Payment status updated.');
     }
 
     public function destroy(Order $order): RedirectResponse
     {
-        if (!$order->canBeCancelled()) {
+        if (! $order->isCancelled() && ! $order->canBeCancelled()) {
             return redirect()->back()
                 ->with('error', 'Cannot delete this order.');
         }
@@ -244,14 +274,16 @@ class OrderController extends Controller
         // Restore stock if not cancelled
         if (!$order->isCancelled()) {
             foreach ($order->items as $item) {
-                $item->variant->increment('quantity', $item->quantity);
+                if ($item->fulfillment_mode === 'local_stock') {
+                    $item->variant->increment('quantity', $item->quantity);
 
-                StockAdjustment::create([
-                    'product_variant_id' => $item->variant->id,
-                    'quantity_change' => $item->quantity,
-                    'reason' => "Order {$order->order_number} Deleted",
-                    'notes' => 'Order deleted, stock restored',
-                ]);
+                    StockAdjustment::create([
+                        'product_variant_id' => $item->variant->id,
+                        'quantity_change' => $item->quantity,
+                        'reason' => "Order {$order->order_number} Deleted",
+                        'notes' => 'Order deleted, stock restored',
+                    ]);
+                }
             }
         }
 
@@ -259,5 +291,51 @@ class OrderController extends Controller
 
         return redirect()->route('admin.orders.index')
             ->with('status', 'Order deleted.');
+    }
+
+    public function pushBridgeOrder(Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
+    {
+        try {
+            $result = $bridgeOrderSync->pushOrder($order);
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.orders.show', $order)
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.orders.show', $order)
+            ->with('status', 'Bridge push status: ' . ($result['status'] ?? 'done'));
+    }
+
+    public function refreshBridgeOrder(Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
+    {
+        try {
+            $result = $bridgeOrderSync->refreshOrderStatus($order);
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.orders.show', $order)
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.orders.show', $order)
+            ->with('status', 'Bridge refresh status: ' . ($result['status'] ?? 'done'));
+    }
+
+    private function determineOrderFulfillmentMode(Order $order): string
+    {
+        $modes = $order->items->pluck('fulfillment_mode')->filter()->unique()->values();
+
+        return $modes->count() > 1 ? 'mixed' : ($modes->first() ?: 'local_stock');
+    }
+
+    private function determineInitialBridgeStatus(Order $order): string
+    {
+        if (! $order->requiresBridgePush()) {
+            return 'not_required';
+        }
+
+        if ((int) $order->payment_type === 1) {
+            return $order->payment_status === 'completed' ? 'pending_push' : 'pending_payment';
+        }
+
+        return $order->status === 'confirmed' ? 'pending_push' : 'pending_push';
     }
 }

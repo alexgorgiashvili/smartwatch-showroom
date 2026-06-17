@@ -28,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\Chatbot\ParallelExecutionService::class);
         $this->app->singleton(\App\Services\Chatbot\BifurcatedMemoryService::class);
         $this->app->singleton(\App\Services\Chatbot\ConditionalReflectionService::class);
+        $this->app->scoped(\App\Services\Bridge\WooBridgeService::class);
+        $this->app->scoped(\App\Services\Bridge\BridgeAlertService::class);
 
         // Agents
         $this->app->singleton(\App\Services\Chatbot\Agents\VectorSqlReconciliationAgent::class);

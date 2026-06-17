@@ -4,18 +4,18 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Facebook Posts">
+<div data-page-title="Facebook პოსტები">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
-        <div><h4 class="mb-3 mb-md-0">Facebook Posts</h4></div>
+        <div><h4 class="mb-3 mb-md-0">Facebook პოსტები</h4></div>
         <div class="d-flex gap-2">
             <div class="btn-group btn-group-sm" role="group">
-                <a href="{{ route('admin.facebook-posts.index') }}" class="btn {{ !request('status') ? 'btn-primary' : 'btn-outline-primary' }}" data-pjax>All</a>
-                <a href="{{ route('admin.facebook-posts.index', ['status' => 'draft']) }}" class="btn {{ request('status') === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}" data-pjax>Drafts</a>
-                <a href="{{ route('admin.facebook-posts.index', ['status' => 'published']) }}" class="btn {{ request('status') === 'published' ? 'btn-success' : 'btn-outline-success' }}" data-pjax>Published</a>
-                <a href="{{ route('admin.facebook-posts.index', ['status' => 'failed']) }}" class="btn {{ request('status') === 'failed' ? 'btn-danger' : 'btn-outline-danger' }}" data-pjax>Failed</a>
+                <a href="{{ route('admin.facebook-posts.index') }}" class="btn {{ !request('status') ? 'btn-primary' : 'btn-outline-primary' }}" data-pjax>ყველა</a>
+                <a href="{{ route('admin.facebook-posts.index', ['status' => 'draft']) }}" class="btn {{ request('status') === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}" data-pjax>დრაფტები</a>
+                <a href="{{ route('admin.facebook-posts.index', ['status' => 'published']) }}" class="btn {{ request('status') === 'published' ? 'btn-success' : 'btn-outline-success' }}" data-pjax>გამოქვეყნებული</a>
+                <a href="{{ route('admin.facebook-posts.index', ['status' => 'failed']) }}" class="btn {{ request('status') === 'failed' ? 'btn-danger' : 'btn-outline-danger' }}" data-pjax>ვერ გამოქვეყნდა</a>
             </div>
             <a href="{{ route('admin.facebook-posts.create') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1" data-pjax>
-                <i data-feather="plus" style="width:16px;height:16px;"></i> New Post
+                <i data-feather="plus" style="width:16px;height:16px;"></i> ახალი პოსტი
             </a>
         </div>
     </div>
@@ -33,13 +33,13 @@
                 <table class="table table-hover table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>Message</th>
-                            <th>Product</th>
-                            <th>Platforms</th>
-                            <th>Status</th>
-                            <th>Author</th>
-                            <th>Date</th>
-                            <th style="width:100px;">Actions</th>
+                            <th>ტექსტი</th>
+                            <th>პროდუქტი</th>
+                            <th>პლატფორმები</th>
+                            <th>სტატუსი</th>
+                            <th>ავტორი</th>
+                            <th>თარიღი</th>
+                            <th style="width:100px;">მოქმედებები</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,12 +61,12 @@
                             <td class="text-muted small">{{ $post->created_at->format('M d, Y') }}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('admin.facebook-posts.edit', $post) }}" class="btn btn-outline-primary btn-sm p-1" data-pjax title="Edit">
+                                    <a href="{{ route('admin.facebook-posts.edit', $post) }}" class="btn btn-outline-primary btn-sm p-1" data-pjax title="რედაქტირება">
                                         <i data-feather="edit-2" style="width:14px;height:14px;"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.facebook-posts.destroy', $post) }}" class="d-inline" onsubmit="return confirm('Delete this post?')">
+                                    <form method="POST" action="{{ route('admin.facebook-posts.destroy', $post) }}" class="d-inline" onsubmit="return confirm('წაიშალოს ეს პოსტი?')">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="Delete">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="წაშლა">
                                             <i data-feather="trash-2" style="width:14px;height:14px;"></i>
                                         </button>
                                     </form>
@@ -74,7 +74,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="7" class="text-center text-muted py-3">No posts found</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3">პოსტები ვერ მოიძებნა</td></tr>
                         @endforelse
                     </tbody>
                 </table>

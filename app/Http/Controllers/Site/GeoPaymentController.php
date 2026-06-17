@@ -5,26 +5,33 @@ namespace App\Http\Controllers\Site;
 use App\Events\OrderCreated;
 use App\Events\PaymentCompleted;
 use App\Http\Controllers\Controller;
+use App\Jobs\PushBridgeOrderJob;
 use App\Models\City;
 use App\Models\Order;
+use App\Models\OrderAdjustment;
 use App\Models\OrderItem;
 use App\Models\PaymentLog;
-use App\Models\ProductVariant;
 use App\Services\BogPayService;
+use App\Services\BogPaymentStatusSynchronizer;
+use App\Services\Cart\CartSnapshotService;
 use App\Services\SmsOfficeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
 class GeoPaymentController extends Controller
 {
-    public function __construct(private readonly BogPayService $bogPayService, private readonly SmsOfficeService $smsService)
-    {
+    public function __construct(
+        private readonly BogPayService $bogPayService,
+        private readonly BogPaymentStatusSynchronizer $bogPaymentStatusSynchronizer,
+        private readonly SmsOfficeService $smsService,
+        private readonly CartSnapshotService $cartSnapshotService
+    ) {
     }
 
     private function shouldReturnJson(Request $request): bool
@@ -48,57 +55,18 @@ class GeoPaymentController extends Controller
             'payment_type' => ['required', 'in:1,2'],
         ]);
 
-        $cart = collect($request->session()->get('cart', []));
-        if ($cart->isEmpty()) {
-            return response()->json([
-                'message' => 'Cart is empty.',
-            ], 422);
-        }
-
         DB::beginTransaction();
 
         try {
-            $variantIds = $cart->keys()->map(fn ($id) => (int) $id)->values();
+            $cartSnapshot = $this->cartSnapshotService->build($request, [
+                'lock_for_update' => true,
+                'enforce_stock' => true,
+            ]);
 
-            $variants = ProductVariant::query()
-                ->with('product')
-                ->whereIn('id', $variantIds)
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
+            $summary = $cartSnapshot['summary'];
+            $lineItems = $cartSnapshot['all_items']->values()->all();
 
-            $lineItems = [];
-            $totalAmount = 0.0;
-
-            foreach ($cart as $variantId => $item) {
-                $variant = $variants->get((int) $variantId);
-
-                if (! $variant || ! $variant->product || ! $variant->product->is_active) {
-                    throw new RuntimeException('One or more products are no longer available.');
-                }
-
-                $quantity = max(1, min((int) ($item['quantity'] ?? 1), 10));
-                if ($variant->quantity < $quantity) {
-                    throw new RuntimeException('Insufficient stock for: ' . $variant->name);
-                }
-
-                $unitPrice = (float) ($variant->product->sale_price ?? $variant->product->price ?? 0);
-                if ($unitPrice <= 0) {
-                    throw new RuntimeException('Invalid product price detected.');
-                }
-
-                $subtotal = $unitPrice * $quantity;
-                $totalAmount += $subtotal;
-
-                $lineItems[] = [
-                    'variant' => $variant,
-                    'quantity' => $quantity,
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $subtotal,
-                ];
-            }
-
-            if ($lineItems === []) {
+            if ((int) $summary['count'] <= 0 || $lineItems === []) {
                 throw new RuntimeException('Cart is empty.');
             }
 
@@ -112,6 +80,10 @@ class GeoPaymentController extends Controller
             if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
                 $data['customer_phone'] = '995' . $phone;
             }
+
+            $orderFulfillmentMode = $this->determineOrderFulfillmentMode($lineItems);
+            $hasBridgeItems = in_array($orderFulfillmentMode, ['dropship_bridge', 'mixed'], true);
+            $giftGroups = $cartSnapshot['gift_groups'];
 
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
@@ -128,9 +100,18 @@ class GeoPaymentController extends Controller
                 'status' => 'pending',
                 'payment_type' => (int) $data['payment_type'],
                 'payment_status' => 'pending',
-                'total_amount' => $totalAmount,
+                'fulfillment_mode' => $orderFulfillmentMode,
+                'bridge_sync_status' => $hasBridgeItems
+                    ? ((int) $data['payment_type'] === 1 ? 'pending_payment' : 'pending_push')
+                    : 'not_required',
+                'fulfillment_status' => 'unfulfilled',
+                'total_amount' => (float) $summary['total'],
                 'currency' => config('bog.currency', 'GEL'),
                 'notes' => null,
+                'is_gift_order' => $giftGroups->isNotEmpty(),
+                'gift_groups' => $this->giftGroupMetadata($giftGroups),
+                'gift_packaging_amount' => (float) $summary['packaging_total'],
+                'gift_discount_amount' => (float) $summary['discount_total'],
             ]);
 
             foreach ($lineItems as $lineItem) {
@@ -142,14 +123,24 @@ class GeoPaymentController extends Controller
                     'quantity' => $lineItem['quantity'],
                     'unit_price' => $lineItem['unit_price'],
                     'subtotal' => $lineItem['subtotal'],
+                    'bridge_product_id' => $lineItem['variant']->product->bridge_product_id,
+                    'bridge_variation_id' => $lineItem['variant']->bridge_variation_id,
+                    'fulfillment_mode' => $lineItem['fulfillment_mode'],
+                    'gift_group_id' => $lineItem['gift_group_id'],
+                    'gift_role' => $lineItem['gift_role'],
+                    'gift_sort_order' => $lineItem['gift_sort_order'],
                 ]);
 
-                $lineItem['variant']->decrement('quantity', $lineItem['quantity']);
+                if ($lineItem['fulfillment_mode'] === 'local_stock') {
+                    $lineItem['variant']->decrement('quantity', $lineItem['quantity']);
+                }
             }
+
+            $this->createGiftAdjustments($order, $giftGroups);
 
             $redirectData = null;
             if ((int) $data['payment_type'] === 1) {
-                $redirectData = $this->createBogOrder($order->fresh('items'));
+                $redirectData = $this->createBogOrder($order->fresh(['items', 'adjustments']));
             } else {
                 // Courier payment - trigger SMS notification
                 event(new OrderCreated($order));
@@ -159,7 +150,7 @@ class GeoPaymentController extends Controller
             }
 
             DB::commit();
-            $request->session()->forget('cart');
+            $request->session()->forget(['cart', 'gift_cart_groups']);
 
             return response()->json([
                 'redirect_url' => $redirectData['redirect_url'],
@@ -192,7 +183,7 @@ class GeoPaymentController extends Controller
         $returnJson = $this->shouldReturnJson($request);
 
         $order = Order::query()
-            ->with('items')
+            ->with(['items', 'adjustments'])
             ->whereKey($orderId)
             ->firstOrFail();
 
@@ -260,9 +251,44 @@ class GeoPaymentController extends Controller
             ], 400);
         }
 
+        try {
+            $verifiedPayment = $this->bogPayService->getPaymentDetails((string) $bogOrderId);
+        } catch (Throwable $exception) {
+            Log::warning('BOG callback verification failed.', [
+                'bog_order_id' => $bogOrderId,
+                'external_order_id' => $externalOrderId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Unable to verify callback.',
+            ], 502);
+        }
+
+        $verifiedBogOrderId = (string) ($verifiedPayment['order_id'] ?? $verifiedPayment['id'] ?? '');
+        $verifiedExternalOrderId = (string) ($verifiedPayment['external_order_id'] ?? '');
+        $verifiedStatusKey = $this->bogPaymentStatusSynchronizer->normalizeBogStatus($verifiedPayment);
+
+        if ($verifiedBogOrderId === '' || $verifiedStatusKey === '') {
+            Log::warning('BOG callback verification returned incomplete payload.', [
+                'bog_order_id' => $bogOrderId,
+                'external_order_id' => $externalOrderId,
+                'verified_payload' => $verifiedPayment,
+            ]);
+
+            return response()->json([
+                'message' => 'Unable to verify callback.',
+            ], 502);
+        }
+
         $order = Order::query()
-            ->where('bog_order_id', $bogOrderId)
-            ->orWhere('bog_external_order_id', $externalOrderId)
+            ->where(function ($query) use ($verifiedBogOrderId, $verifiedExternalOrderId) {
+                $query->where('bog_order_id', $verifiedBogOrderId);
+
+                if ($verifiedExternalOrderId !== '') {
+                    $query->orWhere('bog_external_order_id', $verifiedExternalOrderId);
+                }
+            })
             ->first();
 
         if (! $order) {
@@ -271,48 +297,13 @@ class GeoPaymentController extends Controller
             ], 404);
         }
 
-        if ($statusKey === 'completed') {
-            $order->update([
-                'payment_status' => 'completed',
-            ]);
+        $result = $this->bogPaymentStatusSynchronizer->syncOrder($order, $verifiedPayment, $paymentDetail);
 
-            // Trigger SMS notification for card payments
-            if ($order->payment_type === 1) {
-                event(new PaymentCompleted($order));
-            }
-
-            PaymentLog::create([
-                'order_id' => $order->id,
-                'bog_order_id' => $bogOrderId,
-                'external_order_id' => $externalOrderId,
-                'status' => 'PERFORMED',
-                'chveni_statusi' => 'warmatebuli gadaxda',
-                'payment_detail' => $paymentDetail,
-            ]);
-        } elseif ($statusKey === 'rejected') {
-            if ($order->payment_status !== 'rejected') {
-                foreach ($order->items as $item) {
-                    $item->variant?->increment('quantity', (int) $item->quantity);
-                }
-            }
-
-            $order->update([
-                'payment_status' => 'rejected',
-            ]);
-
-            PaymentLog::create([
-                'order_id' => $order->id,
-                'bog_order_id' => $bogOrderId,
-                'external_order_id' => $externalOrderId,
-                'status' => 'REJECTED',
-                'chveni_statusi' => 'gadaxda ver moxerxda',
-                'payment_detail' => $paymentDetail,
-            ]);
-        }
-
-        return response()->json([
-            'message' => 'OK',
-        ]);
+        return match ($result) {
+            'invalid' => response()->json(['message' => 'Callback verification mismatch.'], 422),
+            'ignored' => response()->json(['message' => 'Ignored.']),
+            default => response()->json(['message' => 'OK']),
+        };
     }
 
     private function createBogOrder(Order $order): array
@@ -356,5 +347,73 @@ class GeoPaymentController extends Controller
         return (int) $order->payment_type === 1
             && $order->status === 'pending'
             && $order->payment_status !== 'completed';
+    }
+
+    private function determineOrderFulfillmentMode(array $lineItems): string
+    {
+        $modes = collect($lineItems)
+            ->pluck('fulfillment_mode')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($modes->count() > 1) {
+            return 'mixed';
+        }
+
+        return $modes->first() ?: 'local_stock';
+    }
+
+    private function giftGroupMetadata($giftGroups): array
+    {
+        return $giftGroups
+            ->map(fn (array $group): array => [
+                'id' => $group['id'],
+                'recipient_type' => $group['recipient_type'],
+                'occasion' => $group['occasion'],
+                'budget_band' => $group['budget_band'],
+                'packaging_slug' => $group['packaging_slug'],
+                'packaging_label' => $group['packaging_label'],
+                'packaging_amount' => (float) $group['packaging_amount'],
+                'discount_amount' => (float) $group['discount_amount'],
+                'message' => $group['message'],
+                'items_count' => (int) $group['items_count'],
+                'items_subtotal' => (float) $group['items_subtotal'],
+                'total' => (float) $group['total'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function createGiftAdjustments(Order $order, $giftGroups): void
+    {
+        foreach ($giftGroups as $group) {
+            if ((float) $group['packaging_amount'] > 0) {
+                OrderAdjustment::create([
+                    'order_id' => $order->id,
+                    'gift_group_id' => $group['id'],
+                    'type' => 'gift_packaging',
+                    'title' => $group['packaging_label'] ?: 'Gift packaging',
+                    'amount' => (float) $group['packaging_amount'],
+                    'metadata' => [
+                        'packaging_slug' => $group['packaging_slug'],
+                        'items_count' => (int) $group['items_count'],
+                    ],
+                ]);
+            }
+
+            if ((float) $group['discount_amount'] > 0) {
+                OrderAdjustment::create([
+                    'order_id' => $order->id,
+                    'gift_group_id' => $group['id'],
+                    'type' => 'gift_discount',
+                    'title' => 'Gift box discount',
+                    'amount' => -1 * (float) $group['discount_amount'],
+                    'metadata' => [
+                        'budget_band' => $group['budget_band'],
+                    ],
+                ]);
+            }
+        }
     }
 }

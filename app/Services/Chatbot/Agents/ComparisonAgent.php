@@ -3,6 +3,7 @@
 namespace App\Services\Chatbot\Agents;
 
 use App\Services\Chatbot\ConditionalReflectionService;
+use App\Services\Chatbot\ChatbotFallbackStrategyService;
 use App\Services\Chatbot\IntentResult;
 use App\Services\Chatbot\ModelCompletionService;
 use App\Services\Chatbot\ProductContextService;
@@ -18,6 +19,7 @@ class ComparisonAgent
         private PromptBuilderService $promptBuilder,
         private ModelCompletionService $modelCompletion,
         private ConditionalReflectionService $reflection,
+        private ChatbotFallbackStrategyService $fallbackStrategy,
         private WidgetTraceLogger $widgetTrace
     ) {
     }
@@ -114,11 +116,26 @@ class ComparisonAgent
                 'reason' => $completion['reason'],
             ], $trace);
 
-            return [
-                'success' => false,
-                'response' => '',
+            $fallback = $this->fallbackStrategy->resolveProviderFailureOutcome(
+                $intent,
+                $validationContext,
+                $sessionContext['recent'] ?? [],
+                $preferences
+            );
+
+            $this->traceWidget('comparison_agent.provider_fallback', array_filter([
                 'reason' => $completion['reason'],
-                'validation_passed' => false,
+                'fallback_reply' => $this->widgetTrace->payloadsEnabled() ? $fallback->reply() : null,
+            ], fn ($value) => $value !== null), $trace);
+
+            return [
+                'success' => true,
+                'response' => $fallback->reply(),
+                'reason' => $completion['reason'],
+                'validation_passed' => $fallback->validationPassed(),
+                'reflection_attempts' => 0,
+                'violations' => $fallback->validationViolations(),
+                'validation_context' => $validationContext,
             ];
         }
 
@@ -153,6 +170,7 @@ class ComparisonAgent
                 'validation_passed' => $reflectionResult['success'],
                 'reflection_attempts' => $reflectionResult['attempts'],
                 'violations' => $reflectionResult['violations'],
+                'validation_context' => $validationContext,
             ];
         }
 
@@ -165,6 +183,7 @@ class ComparisonAgent
             'response' => $response,
             'validation_passed' => true,
             'reflection_attempts' => 0,
+            'validation_context' => $validationContext,
         ];
     }
 

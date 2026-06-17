@@ -34,6 +34,7 @@ class BogPayService
     {
         $this->ensurePublicUrlsAreValid();
 
+        $order->loadMissing(['items', 'adjustments']);
         $token = $this->getToken();
 
         $basket = $order->items->map(function ($item) {
@@ -43,7 +44,25 @@ class BogPayService
                 'quantity' => (int) $item->quantity,
                 'unit_price' => (float) $item->unit_price,
             ];
-        })->values()->all();
+        });
+
+        $positiveAdjustments = $order->adjustments
+            ->filter(fn ($adjustment): bool => (float) $adjustment->amount > 0);
+
+        foreach ($positiveAdjustments as $adjustment) {
+            $basket->push([
+                'product_id' => 'adjustment-' . $adjustment->id,
+                'description' => $adjustment->title,
+                'quantity' => 1,
+                'unit_price' => (float) $adjustment->amount,
+            ]);
+        }
+
+        $discountAmount = abs((float) $order->adjustments
+            ->filter(fn ($adjustment): bool => (float) $adjustment->amount < 0)
+            ->sum('amount'));
+
+        $basket = $this->applyDiscountToBasket($basket->values()->all(), $discountAmount);
 
         $payload = [
             'callback_url' => config('bog.callback_url'),
@@ -86,6 +105,67 @@ class BogPayService
             'redirect_url' => $redirectUrl,
             'raw' => $response->json(),
         ];
+    }
+
+    public function getPaymentDetails(string $orderId): array
+    {
+        $token = $this->getToken();
+
+        $response = Http::timeout(config('bog.timeout'))
+            ->withToken($token)
+            ->acceptJson()
+            ->get(rtrim(config('bog.base_url'), '/') . '/payments/v1/receipt/' . rawurlencode($orderId));
+
+        if (! $response->successful()) {
+            throw new RuntimeException(sprintf(
+                'Failed to fetch BOG payment details. HTTP %s. Response: %s',
+                $response->status(),
+                $response->body()
+            ));
+        }
+
+        $details = $response->json();
+        $resolvedOrderId = $details['order_id'] ?? $details['id'] ?? null;
+
+        if (! $resolvedOrderId) {
+            throw new RuntimeException('Invalid BOG payment details response.');
+        }
+
+        return $details;
+    }
+
+    private function applyDiscountToBasket(array $basket, float $discountAmount): array
+    {
+        if ($discountAmount <= 0 || $basket === []) {
+            return $basket;
+        }
+
+        $gross = collect($basket)->sum(fn (array $line): float => (float) $line['unit_price'] * (int) $line['quantity']);
+        if ($gross <= 0) {
+            return $basket;
+        }
+
+        $discountAmount = min($discountAmount, $gross);
+        $discountCents = (int) round($discountAmount * 100);
+        $remainingDiscountCents = $discountCents;
+        $grossCents = max(1, (int) round($gross * 100));
+        $lastIndex = count($basket) - 1;
+
+        foreach ($basket as $index => $line) {
+            $quantity = max(1, (int) $line['quantity']);
+            $lineTotalCents = (int) round((float) $line['unit_price'] * $quantity * 100);
+            $shareCents = $index === $lastIndex
+                ? $remainingDiscountCents
+                : (int) floor($discountCents * ($lineTotalCents / $grossCents));
+
+            $shareCents = max(0, min($shareCents, max(0, $lineTotalCents - $quantity)));
+            $remainingDiscountCents -= $shareCents;
+
+            $netLineCents = max($quantity, $lineTotalCents - $shareCents);
+            $basket[$index]['unit_price'] = round(($netLineCents / $quantity) / 100, 2);
+        }
+
+        return $basket;
     }
 
     private function ensurePublicUrlsAreValid(): void

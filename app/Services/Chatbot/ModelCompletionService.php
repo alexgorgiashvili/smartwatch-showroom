@@ -51,6 +51,10 @@ class ModelCompletionService
                 $payload['tools'] = $options['tools'];
             }
 
+            if (isset($options['response_format']) && is_array($options['response_format'])) {
+                $payload['response_format'] = $options['response_format'];
+            }
+
             $response = Http::withToken($apiKey)
                 ->timeout($timeout)
                 ->post($baseUrl . '/chat/completions', $payload);

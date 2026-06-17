@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'Login - KidsWatch Admin')
+@section('title', 'შესვლა - KidsWatch ადმინი')
 
 @push('styles')
 <style>
@@ -147,7 +147,7 @@
                 </div>
                 <div>
                     <h1 class="admin-login-brand__title">KidsWatch Admin</h1>
-                    <p class="admin-login-brand__text">Sign in to manage the showroom</p>
+                    <p class="admin-login-brand__text">შედით, რომ მართოთ შოურუმი</p>
                 </div>
             </div>
 
@@ -155,7 +155,7 @@
                 @csrf
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email address</label>
+                    <label for="email" class="form-label">ელფოსტის მისამართი</label>
                     <input type="email"
                            class="form-control @error('email') is-invalid @enderror"
                            id="email"
@@ -170,12 +170,12 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
+                    <label for="password" class="form-label">პაროლი</label>
                     <input type="password"
                            class="form-control @error('password') is-invalid @enderror"
                            id="password"
                            name="password"
-                           placeholder="Enter your password"
+                           placeholder="შეიყვანეთ პაროლი"
                            required>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -184,11 +184,11 @@
 
                 <div class="form-check mb-4">
                     <input type="checkbox" class="form-check-input" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
-                    <label class="form-check-label" for="remember">Remember me</label>
+                    <label class="form-check-label" for="remember">დამიმახსოვრე</label>
                 </div>
 
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Sign in</button>
+                    <button type="submit" class="btn btn-primary">შესვლა</button>
                 </div>
             </form>
         </div>

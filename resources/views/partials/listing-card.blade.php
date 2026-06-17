@@ -15,7 +15,7 @@
         $product->water_resistant ?: null,
         $product->battery_capacity_mah ? $product->battery_capacity_mah . 'mAh' : null,
     ]), 0, 3);
-    $firstInStock = $product->variants->firstWhere('quantity', '>', 0) ?? null;
+    $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0) ?? null;
 @endphp
 <div class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
     <a href="{{ route('products.show', $product) }}" class="block">
@@ -34,10 +34,13 @@
                     @foreach($badges as $b)<span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600">{{ $b }}</span>@endforeach
                 </div>
             @endif
+            <div class="text-[11px] font-semibold text-primary-600">{{ $product->fulfillmentLabel() }}</div>
             <div class="border-t border-slate-100 pt-2">
                 @if($disc)
-                    <span class="text-lg font-extrabold text-slate-900">{{ number_format($sale, 2) }} {{ $cur }}</span>
-                    <span class="ml-1 text-xs text-slate-400 line-through">{{ number_format($base, 2) }}</span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-lg font-extrabold text-slate-900">{{ number_format($sale, 2) }} {{ $cur }}</span>
+                        <span class="text-xs price-compare-old">{{ number_format($base, 2) }} {{ $cur }}</span>
+                    </div>
                 @else
                     <span class="text-lg font-extrabold text-slate-900">{{ $base ? number_format($base, 2) . ' ' . $cur : __('ui.price_on_request') }}</span>
                 @endif
@@ -46,7 +49,7 @@
     </a>
     <div class="px-3 pb-3">
         @if($firstInStock)
-            <form method="POST" action="{{ route('cart.add') }}" data-cart-form>
+            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($sale ?? $base ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
                 @csrf
                 <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
                 <input type="hidden" name="quantity" value="1">

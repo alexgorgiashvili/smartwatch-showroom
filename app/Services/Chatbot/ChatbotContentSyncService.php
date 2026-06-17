@@ -117,8 +117,8 @@ class ChatbotContentSyncService
             $lines[] = 'წყალგამძლეობა: ' . $product->water_resistant;
         }
 
-        if ($product->battery_life_hours) {
-            $lines[] = 'ბატარეა: ' . $product->battery_life_hours . ' სთ';
+        if ($batteryLife = $product->batteryLifeLabel('ka')) {
+            $lines[] = 'ბატარეა: ' . $batteryLife;
         }
 
         if ($product->warranty_months) {
@@ -211,6 +211,8 @@ class ChatbotContentSyncService
                     'gps_features' => (bool) $product->gps_features,
                     'water_resistant' => $product->water_resistant,
                     'battery_life_hours' => $product->battery_life_hours,
+                    'battery_life_range' => $product->battery_life_range,
+                    'battery_life_label' => $product->batteryLifeLabel('ka'),
                     'warranty_months' => $product->warranty_months,
                     'operating_system' => $product->operating_system,
                     'screen_size' => $product->screen_size,

@@ -58,7 +58,14 @@ class MultiLayerCacheService
         }
 
         $queryHash = $this->hashQuery($query);
-        $embedding = $this->getOrCacheEmbedding($query);
+        $intentKey = $intent->intent();
+        $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
+        $embedding = [];
+
+        if (!app()->environment('testing') && !empty($semanticIndex)) {
+            $embedding = $this->getOrCacheEmbedding($query);
+            $this->addToSemanticIndex($queryHash, $embedding, $intentKey);
+        }
 
         $cacheData = [
             'query' => $query,
@@ -74,8 +81,6 @@ class MultiLayerCacheService
             $cacheData,
             config('chatbot.caching.layers.response.ttl', self::RESPONSE_CACHE_TTL)
         );
-
-        $this->addToSemanticIndex($queryHash, $embedding, $intent->intent());
     }
 
     /**

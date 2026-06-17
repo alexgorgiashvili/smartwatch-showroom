@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.AdminProducts && window.AdminProducts.initForm();
             initFacebookPostsForm(); // Also init image manager
         });
-        window.AdminRouter.registerPage('/admin/products/', () => {
+        window.AdminRouter.registerPage('/admin/products/*', () => {
             window.AdminProducts && window.AdminProducts.initForm();
             window.AdminProducts && window.AdminProducts.initEdit();
             initFacebookPostsForm(); // Also init image manager

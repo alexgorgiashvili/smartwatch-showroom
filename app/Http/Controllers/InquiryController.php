@@ -41,6 +41,15 @@ class InquiryController extends Controller
 
         return redirect()
             ->back()
-            ->with('status', __('ui.inquiry_success'));
+            ->with('status', __('ui.inquiry_success'))
+            ->with('analytics_event', array_filter([
+                'name' => 'Lead',
+                'payload' => array_filter([
+                    'content_name' => $inquiry->product?->name,
+                    'content_ids' => $inquiry->product ? [(string) $inquiry->product->id] : null,
+                    'content_type' => $inquiry->product ? 'product' : 'inquiry',
+                    'source' => 'inquiry_form',
+                ], fn ($value) => $value !== null),
+            ]));
     }
 }

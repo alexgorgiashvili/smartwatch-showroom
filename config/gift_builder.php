@@ -1,0 +1,123 @@
+<?php
+
+return [
+    'max_items' => 4,
+    'message_max_length' => 300,
+
+    'recipients' => [
+        'child_5_7' => [
+            'label_ka' => 'ბავშვი 5-7',
+            'label_en' => 'Child 5-7',
+        ],
+        'child_8_12' => [
+            'label_ka' => 'ბავშვი 8-12',
+            'label_en' => 'Child 8-12',
+        ],
+        'teen' => [
+            'label_ka' => 'თინეიჯერი',
+            'label_en' => 'Teen',
+        ],
+        'other' => [
+            'label_ka' => 'სხვა',
+            'label_en' => 'Other',
+        ],
+    ],
+
+    'occasions' => [
+        'birthday' => [
+            'label_ka' => 'დაბადების დღე',
+            'label_en' => 'Birthday',
+        ],
+        'new_year' => [
+            'label_ka' => 'ახალი წელი',
+            'label_en' => 'New Year',
+        ],
+        'school' => [
+            'label_ka' => 'სკოლისთვის',
+            'label_en' => 'School',
+        ],
+        'just_because' => [
+            'label_ka' => 'უბრალოდ საჩუქრად',
+            'label_en' => 'Just because',
+        ],
+    ],
+
+    'budget_bands' => [
+        'under_150' => [
+            'label_ka' => '150₾-მდე',
+            'label_en' => 'Under 150₾',
+            'min' => null,
+            'max' => 150,
+        ],
+        '150_250' => [
+            'label_ka' => '150-250₾',
+            'label_en' => '150-250₾',
+            'min' => 150,
+            'max' => 250,
+        ],
+        '250_plus' => [
+            'label_ka' => '250₾+',
+            'label_en' => '250₾+',
+            'min' => 250,
+            'max' => null,
+        ],
+        'all' => [
+            'label_ka' => 'ყველა ბიუჯეტი',
+            'label_en' => 'All budgets',
+            'min' => null,
+            'max' => null,
+        ],
+    ],
+
+    'packaging' => [
+        'standard' => [
+            'label_ka' => 'სტანდარტული სასაჩუქრე ყუთი',
+            'label_en' => 'Standard gift box',
+            'price' => 0,
+            'capacity_units' => 4,
+        ],
+        'premium' => [
+            'label_ka' => 'პრემიუმ ყუთი',
+            'label_en' => 'Premium box',
+            'price' => 12,
+            'capacity_units' => 6,
+        ],
+    ],
+
+    'discount' => [
+        'type' => 'fixed',
+        'amount' => 0,
+        'min_items' => 2,
+    ],
+
+    'presets' => [
+        'safe_start' => [
+            'label_ka' => 'Safe Start Box',
+            'label_en' => 'Safe Start Box',
+            'description_ka' => 'სმარტ საათი, სტანდარტული ყუთი და მისალოცი ბარათი.',
+            'description_en' => 'A smartwatch, standard box, and greeting card.',
+            'recipient_type' => 'child_5_7',
+            'occasion' => 'just_because',
+            'budget_band' => 'all',
+        ],
+        'birthday_ready' => [
+            'label_ka' => 'Birthday Ready Box',
+            'label_en' => 'Birthday Ready Box',
+            'description_ka' => 'დაბადების დღისთვის გამზადებული საჩუქარი.',
+            'description_en' => 'A birthday-ready gift setup.',
+            'recipient_type' => 'child_8_12',
+            'occasion' => 'birthday',
+            'budget_band' => '150_250',
+        ],
+        'premium_care' => [
+            'label_ka' => 'Premium Care Box',
+            'label_en' => 'Premium Care Box',
+            'description_ka' => 'უფრო სრულყოფილი საჩუქარი პრემიუმ შეფუთვით.',
+            'description_en' => 'A more complete gift with premium packaging.',
+            'recipient_type' => 'teen',
+            'occasion' => 'new_year',
+            'budget_band' => '250_plus',
+            'packaging_slug' => 'premium',
+        ],
+    ],
+];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductVariant;
+use App\Services\Cart\CartSnapshotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,18 +22,20 @@ class CartController extends Controller
             || strtolower((string) $request->header('X-Requested-With')) === 'xmlhttprequest';
     }
 
-    public function show(Request $request): View
+    public function show(Request $request, CartSnapshotService $snapshot): View
     {
-        [$cartItems, $summary] = $this->buildCartSummary($request);
+        $cartSnapshot = $snapshot->build($request);
+        $summary = $cartSnapshot['summary'];
 
         return view('cart.index', [
-            'cartItems' => $cartItems,
+            'cartItems' => $cartSnapshot['standard_items'],
+            'giftGroups' => $cartSnapshot['gift_groups'],
             'cartTotal' => $summary['total'],
             'cartCount' => $summary['count'],
         ]);
     }
 
-    public function add(Request $request): RedirectResponse|JsonResponse
+    public function add(Request $request, CartSnapshotService $snapshot): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
@@ -47,7 +50,7 @@ class CartController extends Controller
 
         $returnJson = $this->shouldReturnJson($request);
 
-        if (! $variant->product || ! $variant->product->is_active || $variant->quantity <= 0) {
+        if (! $variant->product || ! $variant->product->is_active || ! $variant->canFulfillQuantity(1)) {
             if ($returnJson) {
                 return response()->json(['success' => false, 'message' => 'არჩეული პროდუქტი დროებით მიუწვდომელია.'], 422);
             }
@@ -68,7 +71,7 @@ class CartController extends Controller
             return redirect()->back()->with('cart_error', 'ერთი ვარიანტისთვის მაქსიმუმ 10 ცალი შეგიძლიათ დაამატოთ.');
         }
 
-        if ($newQuantity > (int) $variant->quantity) {
+        if (! $variant->canFulfillQuantity($newQuantity)) {
             if ($returnJson) {
                 return response()->json(['success' => false, 'message' => 'მარაგში საკმარისი რაოდენობა არ არის.'], 422);
             }
@@ -82,7 +85,7 @@ class CartController extends Controller
 
         $request->session()->put('cart', $cart);
 
-        $newCount = collect($request->session()->get('cart', []))->sum(fn ($i) => (int) ($i['quantity'] ?? 0));
+        $newCount = $snapshot->roughCount($request);
 
         if ($returnJson) {
             return response()->json([
@@ -100,7 +103,7 @@ class CartController extends Controller
         return redirect()->back()->with('cart_status', 'პროდუქტი დაემატა კალათაში.');
     }
 
-    public function update(Request $request): RedirectResponse|JsonResponse
+    public function update(Request $request, CartSnapshotService $snapshot): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
@@ -111,7 +114,7 @@ class CartController extends Controller
 
         $returnJson = $this->shouldReturnJson($request);
 
-        if ((int) $data['quantity'] > (int) $variant->quantity) {
+        if (! $variant->canFulfillQuantity((int) $data['quantity'])) {
             if ($returnJson) {
                 return response()->json(['success' => false, 'message' => 'მარაგში საკმარისი რაოდენობა არ არის.'], 422);
             }
@@ -133,7 +136,9 @@ class CartController extends Controller
         $request->session()->put('cart', $cart);
 
         if ($returnJson) {
-            [$cartItems, $summary] = $this->buildCartSummary($request);
+            $cartSnapshot = $snapshot->build($request);
+            $cartItems = $cartSnapshot['standard_items'];
+            $summary = $cartSnapshot['summary'];
 
             $item = $cartItems->first(fn ($line) => (int) $line['variant']->id === (int) $variant->id);
             $currency = $item['currency'] ?? 'GEL';
@@ -171,67 +176,9 @@ class CartController extends Controller
     public function clear(Request $request): RedirectResponse
     {
         $request->session()->forget('cart');
+        $request->session()->forget('gift_cart_groups');
 
         return redirect()->route('cart.index')->with('cart_status', 'კალათა გასუფთავდა.');
     }
 
-    private function buildCartSummary(Request $request): array
-    {
-        $cart = collect($request->session()->get('cart', []));
-
-        if ($cart->isEmpty()) {
-            return [collect(), ['count' => 0, 'total' => 0.0]];
-        }
-
-        $variantIds = $cart->keys()->map(fn ($id) => (int) $id)->values();
-
-        $variants = ProductVariant::query()
-            ->with(['product.primaryImage'])
-            ->whereIn('id', $variantIds)
-            ->get()
-            ->keyBy('id');
-
-        $cartItems = collect();
-        $validatedCart = [];
-
-        foreach ($cart as $variantId => $item) {
-            $variant = $variants->get((int) $variantId);
-
-            if (! $variant || ! $variant->product || ! $variant->product->is_active) {
-                continue;
-            }
-
-            $quantity = max(1, min((int) ($item['quantity'] ?? 1), 10));
-            $unitPrice = (float) ($variant->product->sale_price ?? $variant->product->price ?? 0);
-
-            if ($unitPrice <= 0) {
-                continue;
-            }
-
-            $validatedCart[(int) $variantId] = [
-                'variant_id' => (int) $variant->id,
-                'quantity' => $quantity,
-            ];
-
-            $cartItems->push([
-                'variant' => $variant,
-                'product' => $variant->product,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'subtotal' => $unitPrice * $quantity,
-                'currency' => $variant->product->currency,
-                'image' => $variant->product->primaryImage?->url ?? asset('storage/images/home/smart-watch3.jpg'),
-            ]);
-        }
-
-        $request->session()->put('cart', $validatedCart);
-
-        return [
-            $cartItems,
-            [
-                'count' => (int) $cartItems->sum('quantity'),
-                'total' => (float) $cartItems->sum('subtotal'),
-            ],
-        ];
-    }
 }

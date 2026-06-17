@@ -53,46 +53,54 @@ $_contactSchema = [
 
 					<div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<a href="tel:{{ $contactSettings['phone_link'] ?? '+995555123456' }}" class="glass-card p-4 hover:bg-white/5">
-							<div class="flex items-center justify-between gap-3">
-								<div>
-									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">CALL</p>
-									<p class="mt-2 font-semibold text-white">{{ $contactSettings['phone_display'] ?? '+995 555 123 456' }}</p>
+							<div class="flex items-start gap-3">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">CALL</p>
+										<i class="fas fa-phone text-white/70"></i>
+									</div>
+									<p class="mt-2 font-semibold text-white break-words">{{ $contactSettings['phone_display'] ?? '+995 555 123 456' }}</p>
 									<p class="mt-1 text-xs text-white/70">სწრაფი კონსულტაცია</p>
 								</div>
-								<i class="fas fa-phone text-white/70"></i>
 							</div>
 						</a>
 
 						<a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="glass-card p-4 hover:bg-white/5">
-							<div class="flex items-center justify-between gap-3">
-								<div>
-									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">WHATSAPP</p>
-									<p class="mt-2 font-semibold text-white">Chat</p>
+							<div class="flex items-start gap-3">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">WHATSAPP</p>
+										<i class="fab fa-whatsapp text-white/70"></i>
+									</div>
+									<p class="mt-2 font-semibold text-white truncate">Chat</p>
 									<p class="mt-1 text-xs text-white/70">ფოტო/ვიდეო + კითხვა</p>
 								</div>
-								<i class="fab fa-whatsapp text-white/70"></i>
 							</div>
 						</a>
 
 						<button type="button" data-open-chat class="glass-card p-4 hover:bg-white/5 tech-pulse">
-							<div class="flex items-center justify-between gap-3">
-								<div>
-									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">LIVE CHAT</p>
-									<p class="mt-2 font-semibold text-white">MyTechnic Assistant</p>
+							<div class="flex items-start gap-3">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">LIVE CHAT</p>
+										<i class="fas fa-comment-dots text-white/70"></i>
+									</div>
+									<p class="mt-2 font-semibold text-white truncate">MyTechnic Assistant</p>
 									<p class="mt-1 text-xs text-white/70">ონლაინ დახმარება</p>
 								</div>
-								<i class="fas fa-comment-dots text-white/70"></i>
 							</div>
 						</button>
 
 						<a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="glass-card p-4 hover:bg-white/5">
-							<div class="flex items-center justify-between gap-3">
-								<div>
-									<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">EMAIL</p>
-									<p class="mt-2 font-semibold text-white">{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}</p>
+							<div class="flex items-start gap-3">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">EMAIL</p>
+										<i class="fas fa-envelope text-white/70"></i>
+									</div>
+									<p class="mt-2 font-semibold text-white break-words">{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}</p>
 									<p class="mt-1 text-xs text-white/70">დეტალური მოთხოვნა</p>
 								</div>
-								<i class="fas fa-envelope text-white/70"></i>
 							</div>
 						</a>
 					</div>

@@ -76,8 +76,8 @@
                             <table class="table table-sm table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th class="small">AI Bot</th>
-                                        <th class="small">Family</th>
+                                        <th class="small">AI ბოტი</th>
+                                        <th class="small">ოჯახი</th>
                                         <th class="small text-end">ვიზიტები</th>
                                     </tr>
                                 </thead>
@@ -143,9 +143,9 @@
                         <thead>
                             <tr>
                                 <th class="small">დრო</th>
-                                <th class="small">AI Bot</th>
-                                <th class="small">Family</th>
-                                <th class="small">Path</th>
+                                <th class="small">AI ბოტი</th>
+                                <th class="small">ოჯახი</th>
+                                <th class="small">მისამართი</th>
                                 <th class="small">IP</th>
                             </tr>
                         </thead>

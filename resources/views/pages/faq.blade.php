@@ -34,7 +34,6 @@ $_faqSchema = [
   <section class="tech-surface overflow-hidden">
     <div class="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
       <header class="text-center">
-        <p class="font-mono text-[11px] sm:text-xs uppercase tracking-[0.26em] text-white/60">[01] SUPPORT • FAQ</p>
         <h1 class="mt-3 text-3xl sm:text-5xl font-semibold tracking-tight text-white">ხშირად დასმული კითხვები</h1>
         <p class="mt-4 text-sm sm:text-base text-white/70 max-w-2xl mx-auto">
           სწრაფი პასუხები MyTechnic სმარტ საათების SIM-კავშირზე, GPS-ზე, მიწოდებასა და გარანტიაზე.
@@ -52,10 +51,12 @@ $_faqSchema = [
                 <i class="fas fa-comment-dots text-white/90"></i>
                 <span>Live Chat</span>
               </button>
-              <a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15">
+              @if (!empty($contactSettings['whatsapp_url']))
+              <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15">
                 <i class="fab fa-whatsapp text-white/90"></i>
                 <span>WhatsApp</span>
               </a>
+              @endif
               <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 rounded-full bg-white text-slate-950 px-4 py-2 text-sm font-semibold hover:bg-white/90">
                 <i class="fas fa-envelope"></i>
                 <span>კონტაქტი</span>
@@ -117,7 +118,7 @@ $_faqSchema = [
                         </div>
                       </button>
 
-                      <div id="faq-panel-{{ $faq->id }}" class="accordion-panel" data-accordion-panel data-open="0">
+                      <div id="faq-panel-{{ $faq->id }}" class="accordion-panel" data-accordion-panel data-open="0" style="display: none; opacity: 0; max-height: 0; overflow: hidden;">
                         <div class="pt-4 text-sm leading-relaxed text-white/75 whitespace-pre-line">
                           {{ $faq->answer }}
                         </div>
@@ -144,13 +145,61 @@ $_faqSchema = [
       const triggers = document.querySelectorAll('[data-accordion-trigger]');
       const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+      const animateOpen = (panel) => {
+        clearTimeout(panel._accordionTimer);
+        panel.style.display = 'block';
+        panel.style.overflow = 'hidden';
+        panel.style.maxHeight = '0px';
+        panel.style.opacity = '0';
+
+        requestAnimationFrame(() => {
+          panel.style.maxHeight = `${panel.scrollHeight}px`;
+          panel.style.opacity = '1';
+        });
+
+        panel._accordionTimer = setTimeout(() => {
+          if (panel.dataset.open === '1') {
+            panel.style.maxHeight = 'none';
+          }
+        }, 240);
+      };
+
+      const animateClose = (panel) => {
+        clearTimeout(panel._accordionTimer);
+        panel.style.overflow = 'hidden';
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+        panel.style.opacity = '1';
+
+        requestAnimationFrame(() => {
+          panel.style.maxHeight = '0px';
+          panel.style.opacity = '0';
+        });
+
+        panel._accordionTimer = setTimeout(() => {
+          if (panel.dataset.open === '0') {
+            panel.style.display = 'none';
+          }
+        }, 220);
+      };
+
       const setOpen = (button, panel, open) => {
         button.setAttribute('aria-expanded', open ? 'true' : 'false');
         const chevron = button.querySelector('[data-accordion-chevron]');
         if (chevron) chevron.classList.toggle('rotate-180', open);
         panel.dataset.open = open ? '1' : '0';
-        const height = open ? panel.scrollHeight : 0;
-        panel.style.setProperty('--accordion-max-height', `${height}px`);
+
+        if (prefersReducedMotion) {
+          panel.style.display = open ? 'block' : 'none';
+          panel.style.maxHeight = open ? 'none' : '0px';
+          panel.style.opacity = open ? '1' : '0';
+          return;
+        }
+
+        if (open) {
+          animateOpen(panel);
+        } else {
+          animateClose(panel);
+        }
       };
 
       const getPanelForTrigger = (button) => {
@@ -173,9 +222,21 @@ $_faqSchema = [
         const panel = getPanelForTrigger(button);
         if (!panel) return;
 
-        if (prefersReducedMotion) {
-          panel.style.transition = 'none';
-        }
+        panel.style.transition = prefersReducedMotion
+          ? 'none'
+          : 'max-height 220ms ease, opacity 160ms ease';
+
+        panel.addEventListener('transitionend', (event) => {
+          if (event.propertyName && event.propertyName !== 'max-height') return;
+
+          const isOpen = panel.dataset.open === '1';
+          if (isOpen) {
+            panel.style.maxHeight = 'none';
+            panel.style.opacity = '1';
+          } else {
+            panel.style.display = 'none';
+          }
+        });
 
         button.addEventListener('click', () => {
           const isOpen = button.getAttribute('aria-expanded') === 'true';
@@ -187,16 +248,6 @@ $_faqSchema = [
           }
 
           setOpen(button, panel, nextOpen);
-        });
-      });
-
-      window.addEventListener('resize', () => {
-        triggers.forEach((button) => {
-          const isOpen = button.getAttribute('aria-expanded') === 'true';
-          if (!isOpen) return;
-          const panel = getPanelForTrigger(button);
-          if (!panel) return;
-          setOpen(button, panel, true);
         });
       });
 

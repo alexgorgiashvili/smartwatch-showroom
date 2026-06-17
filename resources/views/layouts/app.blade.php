@@ -42,7 +42,7 @@
     <meta name="twitter:image" content="@yield('og_image', asset('images/og-default.webp'))">
 
     {{-- ═══ Favicon ═══ --}}
-    <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
 
@@ -57,11 +57,51 @@
     {{-- ═══ Per-page extra head meta ═══ --}}
     @stack('head_meta')
 
+    @php
+        $gtmId = config('storefront_analytics.gtm_id');
+        $metaPixelId = config('storefront_analytics.meta_pixel_id');
+        $analyticsFlashEvent = session('analytics_event');
+    @endphp
+
+    @if ($gtmId)
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer',@js($gtmId));
+    </script>
+    @endif
+
+    @if ($metaPixelId)
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', @js($metaPixelId));
+        fbq('track', 'PageView');
+    </script>
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-x-hidden bg-white text-gray-900">
+  @if ($gtmId)
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode($gtmId) }}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  @endif
+  @if ($metaPixelId)
+  <noscript>
+    <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ urlencode($metaPixelId) }}&ev=PageView&noscript=1" alt="">
+  </noscript>
+  @endif
   @php
-    $cartCount = collect(session('cart', []))->sum(fn ($item) => (int) ($item['quantity'] ?? 0));
+    $cartCount = app(\App\Services\Cart\CartSnapshotService::class)->roughCount(request());
   @endphp
     <!-- HyperUI Header -->
     <header class="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-gray-950/95 backdrop-blur-sm">
@@ -83,6 +123,9 @@
                 </li>
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">კატალოგი</a>
+                </li>
+                <li>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">სასაჩუქრე ყუთის აწყობა</a>
                 </li>
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">კითხვები</a>
@@ -107,6 +150,10 @@
                       <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
                       {{ app()->getLocale() === 'ka' ? 'საჩუქრის გზამკვლევი' : 'Gift Guide' }}
                     </a>
+                    <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
+                      <i class="fa-solid fa-box-open w-4 text-center text-xs text-primary-400"></i>
+                      სასაჩუქრე ყუთის აწყობა
+                    </a>
                   </div>
                 </li>
                 <li>
@@ -123,7 +170,7 @@
               <a class="flex items-center" href="{{ route('home') }}">
                 <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] w-auto object-contain">
               </a>
-              <button id="mobile-menu-close" aria-label="Close menu" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
+              <button id="mobile-menu-close" aria-label="მენიუს დახურვა" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
@@ -138,6 +185,11 @@
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('products.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('products.index') }}">
                   <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>კატალოგი
+                </a>
+              </li>
+              <li class="border-b border-white/10">
+                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('gift-builder.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('gift-builder.show') }}">
+                  <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>სასაჩუქრე ყუთის აწყობა
                 </a>
               </li>
               <li class="border-b border-white/10">
@@ -165,6 +217,7 @@
                   <div class="bg-gray-900/60 pb-1">
                     <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'SIM გზამკვლევი' : 'SIM Guide' }}</a>
                     <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}</a>
+                    <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>სასაჩუქრე ყუთის აწყობა</a>
                   </div>
                 </details>
               </li>
@@ -179,20 +232,23 @@
             <!-- Mobile Menu Footer - Social Icons -->
             <div class="border-t border-white/10 p-6">
               <div class="flex gap-6 justify-center">
-                <!-- WhatsApp -->
-                <a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
+                @if (!empty($contactSettings['whatsapp_url']))
+                <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
                   <i class="fab fa-whatsapp text-3xl"></i>
                 </a>
+                @endif
 
-                <!-- Instagram -->
-                <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
+                @if (!empty($contactSettings['instagram_url']))
+                <a href="{{ $contactSettings['instagram_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
                   <i class="fab fa-instagram text-3xl"></i>
                 </a>
+                @endif
 
-                <!-- Facebook Messenger -->
-                <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
+                @if (!empty($contactSettings['messenger_url']))
+                <a href="{{ $contactSettings['messenger_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
                   <i class="fab fa-facebook-messenger text-3xl"></i>
                 </a>
+                @endif
               </div>
             </div>
           </nav>
@@ -204,26 +260,29 @@
           <div class="flex min-w-0 items-center gap-2 sm:gap-3">
             <!-- Social Media Icons -->
             <div class="hidden lg:flex lg:gap-3 items-center">
-              <!-- WhatsApp -->
-              <a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
+              @if (!empty($contactSettings['whatsapp_url']))
+              <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
                 <i class="fab fa-whatsapp text-xl"></i>
               </a>
+              @endif
 
-              <!-- Instagram -->
-              <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
+              @if (!empty($contactSettings['instagram_url']))
+              <a href="{{ $contactSettings['instagram_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
                 <i class="fab fa-instagram text-xl"></i>
               </a>
+              @endif
 
-              <!-- Facebook Messenger -->
-              <a href="{{ $contactSettings['messenger_url'] ?? 'https://m.me/yourpage' }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
+              @if (!empty($contactSettings['messenger_url']))
+              <a href="{{ $contactSettings['messenger_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
                 <i class="fab fa-facebook-messenger text-xl"></i>
               </a>
+              @endif
             </div>
 
 
 
             <!-- Mobile menu toggle -->
-            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="Cart">
+            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="კალათა">
               <i class="fa-solid fa-cart-shopping text-sm"></i>
               <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
             </a>
@@ -309,6 +368,52 @@
         </figure>
       </div>
     </div>
+
+    <script>
+    (function () {
+        var ga4EventMap = {
+            ViewContent: 'view_item',
+            AddToCart: 'add_to_cart',
+            Lead: 'generate_lead',
+            InitiateCheckout: 'begin_checkout',
+            Purchase: 'purchase'
+        };
+
+        function normalizePayload(payload) {
+            return payload && typeof payload === 'object' ? payload : {};
+        }
+
+        function track(eventName, payload) {
+            var safePayload = normalizePayload(payload);
+            window.dataLayer = window.dataLayer || [];
+
+            window.dataLayer.push(Object.assign({
+                event: eventName,
+                ga4_event_name: ga4EventMap[eventName] || eventName
+            }, safePayload));
+
+            if (typeof window.fbq === 'function') {
+                var metaPayload = {};
+                ['content_ids', 'content_name', 'content_type', 'contents', 'currency', 'num_items', 'transaction_id', 'value'].forEach(function (key) {
+                    if (Object.prototype.hasOwnProperty.call(safePayload, key) && safePayload[key] !== null && typeof safePayload[key] !== 'undefined') {
+                        metaPayload[key] = safePayload[key];
+                    }
+                });
+
+                window.fbq('track', eventName, metaPayload);
+            }
+        }
+
+        window.storefrontAnalytics = {
+            track: track
+        };
+
+        var flashEvent = @json($analyticsFlashEvent);
+        if (flashEvent && flashEvent.name) {
+            track(flashEvent.name, flashEvent.payload || {});
+        }
+    }());
+    </script>
 
     <script>
         // Mobile menu toggle
@@ -423,6 +528,31 @@
             .then(function (result) {
               if (result.ok && result.data.success) {
                 updateCartBadges(result.data.cart_count || 0);
+
+                if (window.storefrontAnalytics) {
+                  var quantity = parseInt(formData.get('quantity') || '1', 10);
+                  var unitPrice = parseFloat(form.getAttribute('data-analytics-price') || '0');
+                  var itemId = String(form.getAttribute('data-analytics-item-id') || formData.get('variant_id') || '');
+                  var itemName = form.getAttribute('data-analytics-item-name') || undefined;
+                  window.storefrontAnalytics.track('AddToCart', {
+                    content_ids: [itemId],
+                    content_name: itemName,
+                    content_type: 'product',
+                    currency: form.getAttribute('data-analytics-currency') || 'GEL',
+                    value: unitPrice > 0 ? unitPrice * (isNaN(quantity) ? 1 : quantity) : undefined,
+                    items: [{
+                      item_id: itemId,
+                      item_name: itemName,
+                      price: unitPrice > 0 ? unitPrice : undefined,
+                      quantity: isNaN(quantity) ? 1 : quantity
+                    }],
+                    contents: [{
+                      id: itemId,
+                      quantity: isNaN(quantity) ? 1 : quantity,
+                      item_price: unitPrice > 0 ? unitPrice : undefined
+                    }]
+                  });
+                }
 
                 if (result.data.redirect_url) {
                   window.location.href = result.data.redirect_url;

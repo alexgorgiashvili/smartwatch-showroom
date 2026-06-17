@@ -516,17 +516,6 @@
 	}
 }
 
-.accordion-panel {
-	overflow: hidden;
-	max-height: 0px;
-	transition: max-height 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
-	will-change: max-height;
-}
-
-.accordion-panel[data-open='1'] {
-	max-height: var(--accordion-max-height, 0px);
-}
-
 @media (max-width: 1023px) {
 	.fi-sidebar {
 		transform: translateX(-100%);
@@ -843,3 +832,39 @@ button:hover:not(.fi-pagination-item) {
 .fi-wi-stats-overview-stat .flex {
     justify-content: center;
 } */
+
+.price-compare-old {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.12rem 0.45rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    background: rgba(248, 250, 252, 0.8);
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration-line: line-through;
+    text-decoration-thickness: 1.2px;
+    text-decoration-color: rgba(100, 116, 139, 0.7);
+    text-decoration-skip-ink: none;
+    opacity: 1;
+    white-space: nowrap;
+}
+
+.price-compare-old:hover,
+.price-compare-old:focus {
+    color: #64748b;
+    border-color: rgba(100, 116, 139, 0.55);
+    background: rgba(248, 250, 252, 0.95);
+}
+
+@media (max-width: 640px) {
+    .price-compare-old {
+        padding: 0.08rem 0.3rem;
+        font-size: 0.7rem;
+        line-height: 1;
+        max-width: 100%;
+        vertical-align: middle;
+    }
+}

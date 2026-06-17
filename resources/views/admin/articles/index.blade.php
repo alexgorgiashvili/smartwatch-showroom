@@ -4,19 +4,19 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Articles">
+<div data-page-title="სტატიები">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
         <div>
-            <h4 class="mb-3 mb-md-0">Articles</h4>
+            <h4 class="mb-3 mb-md-0">სტატიები</h4>
         </div>
         <div class="d-flex gap-2">
             <div class="btn-group btn-group-sm" role="group">
-                <a href="{{ route('admin.articles.index') }}" class="btn {{ !$status ? 'btn-primary' : 'btn-outline-primary' }}" data-pjax>All</a>
-                <a href="{{ route('admin.articles.index', ['status' => 'published']) }}" class="btn {{ $status === 'published' ? 'btn-success' : 'btn-outline-success' }}" data-pjax>Published</a>
-                <a href="{{ route('admin.articles.index', ['status' => 'draft']) }}" class="btn {{ $status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}" data-pjax>Drafts</a>
+                <a href="{{ route('admin.articles.index') }}" class="btn {{ !$status ? 'btn-primary' : 'btn-outline-primary' }}" data-pjax>ყველა</a>
+                <a href="{{ route('admin.articles.index', ['status' => 'published']) }}" class="btn {{ $status === 'published' ? 'btn-success' : 'btn-outline-success' }}" data-pjax>გამოქვეყნებული</a>
+                <a href="{{ route('admin.articles.index', ['status' => 'draft']) }}" class="btn {{ $status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}" data-pjax>დრაფტები</a>
             </div>
             <a href="{{ route('admin.articles.create') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1" data-pjax>
-                <i data-feather="plus" style="width:16px;height:16px;"></i> New Article
+                <i data-feather="plus" style="width:16px;height:16px;"></i> ახალი სტატია
             </a>
         </div>
     </div>
@@ -25,7 +25,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.articles.index') }}" class="mb-3">
                 <div class="input-group input-group-sm" style="max-width:300px;">
-                    <input type="text" class="form-control" name="q" value="{{ $q }}" placeholder="Search articles...">
+                    <input type="text" class="form-control" name="q" value="{{ $q }}" placeholder="სტატიების ძებნა...">
                     <button class="btn btn-outline-primary" type="submit"><i data-feather="search" style="width:14px;height:14px;"></i></button>
                 </div>
             </form>
@@ -33,13 +33,13 @@
                 <table class="table table-hover table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>Title (KA)</th>
-                            <th>Title (EN)</th>
+                            <th>სათაური (KA)</th>
+                            <th>სათაური (EN)</th>
                             <th>Slug</th>
-                            <th>Schema</th>
-                            <th>Status</th>
-                            <th>Published</th>
-                            <th style="width:120px;">Actions</th>
+                            <th>სქემა</th>
+                            <th>სტატუსი</th>
+                            <th>გამოქვეყნება</th>
+                            <th style="width:120px;">მოქმედებები</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -53,28 +53,28 @@
                             <td><span class="badge bg-secondary">{{ $article->schema_type }}</span></td>
                             <td>
                                 @if($article->is_published)
-                                    <span class="badge bg-success">Published</span>
+                                    <span class="badge bg-success">გამოქვეყნდა</span>
                                 @else
-                                    <span class="badge bg-warning text-dark">Draft</span>
+                                    <span class="badge bg-warning text-dark">დრაფტი</span>
                                 @endif
                             </td>
                             <td class="text-muted small">{{ $article->published_at ? $article->published_at->format('M d, Y') : '—' }}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('admin.articles.edit', $article) }}" class="btn btn-outline-primary btn-sm p-1" data-pjax title="Edit">
+                                    <a href="{{ route('admin.articles.edit', $article) }}" class="btn btn-outline-primary btn-sm p-1" data-pjax title="რედაქტირება">
                                         <i data-feather="edit-2" style="width:14px;height:14px;"></i>
                                     </a>
                                     <form method="POST" action="{{ route('admin.articles.toggle-publish', $article) }}" class="d-inline">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-outline-{{ $article->is_published ? 'warning' : 'success' }} btn-sm p-1" title="{{ $article->is_published ? 'Unpublish' : 'Publish' }}">
+                                        <button type="submit" class="btn btn-outline-{{ $article->is_published ? 'warning' : 'success' }} btn-sm p-1" title="{{ $article->is_published ? 'გამოქვეყნების მოხსნა' : 'გამოქვეყნება' }}">
                                             <i data-feather="{{ $article->is_published ? 'eye-off' : 'eye' }}" style="width:14px;height:14px;"></i>
                                         </button>
                                     </form>
-                                    <form method="POST" action="{{ route('admin.articles.destroy', $article) }}" class="d-inline" onsubmit="return confirm('Delete this article?')">
+                                    <form method="POST" action="{{ route('admin.articles.destroy', $article) }}" class="d-inline" onsubmit="return confirm('წაიშალოს ეს სტატია?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="Delete">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="წაშლა">
                                             <i data-feather="trash-2" style="width:14px;height:14px;"></i>
                                         </button>
                                     </form>
@@ -82,7 +82,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="7" class="text-center text-muted py-3">No articles found</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3">სტატიები ვერ მოიძებნა</td></tr>
                         @endforelse
                     </tbody>
                 </table>

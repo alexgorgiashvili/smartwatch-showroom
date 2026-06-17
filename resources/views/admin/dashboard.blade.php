@@ -1,20 +1,43 @@
-@extends('admin.layout')
+﻿@extends('admin.layout')
 
-@section('title', 'Dashboard — Admin')
+@section('title', 'მიმოხილვა — ადმინი')
 
 @section('content')
 @fragment('content')
-<div data-page-title="Dashboard">
+<div data-page-title="მიმოხილვა">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
         <div>
-            <h4 class="mb-3 mb-md-0">Dashboard</h4>
+            <h4 class="mb-3 mb-md-0">მიმოხილვა</h4>
         </div>
         <div>
             <span class="text-muted">{{ now()->format('l, M d Y') }}</span>
         </div>
     </div>
 
-    {{-- ── Row 1: Overview Stats ── --}}
+    @if(isset($bridgeAlerts) && $bridgeAlerts->isNotEmpty())
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="card-title mb-0">Bridge Alerts</h6>
+                        <a href="{{ route('admin.bridge.index') }}" class="btn btn-sm btn-outline-primary" data-pjax>Open Bridge</a>
+                    </div>
+                    <div class="d-grid gap-2">
+                        @foreach($bridgeAlerts as $alert)
+                            <div class="alert alert-{{ $alert['level'] ?? 'info' }} py-2 mb-0">
+                                <strong>{{ $alert['title'] }}</strong>
+                                <div>{{ $alert['message'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- â”€â”€ Row 1: Overview Stats â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-sm-6 col-xl-3 mb-3 mb-xl-0">
             <div class="card stat-card h-100">
@@ -70,12 +93,12 @@
         </div>
     </div>
 
-    {{-- ── Row 2: Orders Chart + Quick Actions ── --}}
+    {{-- â”€â”€ Row 2: Orders Chart + Quick Actions â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-xl-8 mb-3 mb-xl-0">
             <div class="card h-100">
                 <div class="card-body">
-                    <h6 class="card-title">Orders &amp; Revenue — Last 30 Days</h6>
+                    <h6 class="card-title">Orders &amp; Revenue â€” Last 30 Days</h6>
                     <div id="ordersChart"></div>
                 </div>
             </div>
@@ -109,7 +132,7 @@
         </div>
     </div>
 
-    {{-- ── Row 3: Commerce + Inventory Detail Stats ── --}}
+    {{-- â”€â”€ Row 3: Commerce + Inventory Detail Stats â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-xl-6 mb-3 mb-xl-0">
             <div class="card h-100">
@@ -171,12 +194,12 @@
         </div>
     </div>
 
-    {{-- ── Row 4: Chatbot Quality ── --}}
+    {{-- â”€â”€ Row 4: Chatbot Quality â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Chatbot Quality — Today</h6>
+                    <h6 class="card-title mb-3">Chatbot Quality â€” Today</h6>
                     <div class="row g-3">
                         <div class="col-6 col-md">
                             <div class="text-muted small">Responses</div>
@@ -212,7 +235,7 @@
         </div>
     </div>
 
-    {{-- ── Row 5: Recent Orders ── --}}
+    {{-- â”€â”€ Row 5: Recent Orders â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -271,7 +294,7 @@
         </div>
     </div>
 
-    {{-- ── Row 6: Recent Inquiries + Recent Stock Adjustments ── --}}
+    {{-- â”€â”€ Row 6: Recent Inquiries + Recent Stock Adjustments â”€â”€ --}}
     <div class="row mb-4">
         <div class="col-xl-6 mb-3 mb-xl-0">
             <div class="card h-100">
@@ -295,8 +318,8 @@
                                 @forelse($recentInquiries as $inquiry)
                                 <tr>
                                     <td class="fw-bold">{{ $inquiry->name }}</td>
-                                    <td class="text-muted small">{{ $inquiry->product->name ?? '—' }}</td>
-                                    <td><span class="badge bg-info">{{ $inquiry->preferred_contact ?? '—' }}</span></td>
+                                    <td class="text-muted small">{{ $inquiry->product->name ?? 'â€”' }}</td>
+                                    <td><span class="badge bg-info">{{ $inquiry->preferred_contact ?? 'â€”' }}</span></td>
                                     <td class="text-muted small" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $inquiry->message }}</td>
                                     <td class="text-muted small">{{ $inquiry->created_at->diffForHumans() }}</td>
                                 </tr>
@@ -330,8 +353,8 @@
                             <tbody>
                                 @forelse($recentStockAdjustments as $adj)
                                 <tr>
-                                    <td class="fw-bold">{{ $adj->variant->product->name_en ?? '—' }}</td>
-                                    <td class="text-muted small">{{ $adj->variant->name ?? '—' }}</td>
+                                    <td class="fw-bold">{{ $adj->variant->product->name_en ?? 'â€”' }}</td>
+                                    <td class="text-muted small">{{ $adj->variant->name ?? 'â€”' }}</td>
                                     <td>
                                         <span class="badge bg-{{ $adj->quantity_change >= 0 ? 'success' : 'danger' }}">
                                             {{ $adj->quantity_change > 0 ? '+' : '' }}{{ $adj->quantity_change }}
@@ -365,3 +388,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+

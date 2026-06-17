@@ -131,7 +131,7 @@ $_citySchema = [
                     {{ $ka ? 'ოფიციალური გარანტია' : 'Official Warranty' }}
                 </h3>
                 <p class="text-sm text-slate-600">
-                    {{ $ka ? '12 თვე გარანტია' : '12 months warranty' }}
+                    {{ $ka ? '6 თვე გარანტია' : '6 months warranty' }}
                 </p>
             </div>
 
@@ -205,7 +205,22 @@ $_citySchema = [
                         {{ $product->name }}
                     </h3>
 
-                    @if($product->sale_price)
+                    @php
+                        $basePrice = $product->price;
+                        $salePrice = $product->sale_price ?? null;
+                        $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
+                    @endphp
+                    @if($hasDiscount)
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-xl font-bold text-primary-600">{{ number_format((float) $salePrice, 0) }} ₾</span>
+                        <span class="text-sm text-slate-400 line-through">{{ number_format((float) $basePrice, 0) }} ₾</span>
+                    </div>
+                    @elseif($basePrice)
+                    <div class="text-xl font-bold text-slate-900">{{ number_format((float) $basePrice, 0) }} ₾</div>
+                    @else
+                    <div class="text-xl font-bold text-slate-900">{{ __('ui.price_on_request') }}</div>
+                    @endif
+                    @if(false)
                     <div class="flex items-baseline gap-2">
                         <span class="text-xl font-bold text-primary-600">{{ number_format((float)($product->sale_price ?? 0), 0) }}₾</span>
                         <span class="text-sm text-slate-400 line-through">{{ number_format((float)($product->price ?? 0), 0) }}₾</span>

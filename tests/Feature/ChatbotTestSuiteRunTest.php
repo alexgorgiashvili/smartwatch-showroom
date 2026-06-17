@@ -29,7 +29,7 @@ class ChatbotTestSuiteRunTest extends TestCase
 
         $this->assertIsArray($decoded);
         $this->assertNotEmpty($decoded);
-        $this->assertCount(82, $decoded);
+        $this->assertCount(84, $decoded);
 
         $expectedCategoryCounts = [
             'price_query' => 10,
@@ -40,7 +40,7 @@ class ChatbotTestSuiteRunTest extends TestCase
             'category_browse' => 6,
             'georgian_grammar' => 8,
             'multi_turn' => 6,
-            'guardrail_trigger' => 8,
+            'guardrail_trigger' => 10,
             'out_of_catalog' => 6,
             'contact_faq' => 4,
             'price_hallucination' => 4,

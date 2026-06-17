@@ -30,11 +30,3 @@
 </div>
 @endfragment
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    window.AdminProducts && window.AdminProducts.initForm();
-});
-</script>
-@endpush

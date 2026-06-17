@@ -5,6 +5,7 @@ namespace App\Services\Chatbot\Agents;
 use App\Services\Chatbot\LangfuseService;
 use App\Services\Chatbot\ChatbotOutcomeReason;
 use App\Services\Chatbot\CircuitBreakerService;
+use App\Services\Chatbot\ChatbotFallbackStrategyService;
 use App\Services\Chatbot\IntentResult;
 use App\Services\Chatbot\MultiLayerCacheService;
 use App\Services\Chatbot\ParallelExecutionService;
@@ -25,6 +26,7 @@ class SupervisorAgent
         private InventoryAgent $inventoryAgent,
         private ComparisonAgent $comparisonAgent,
         private GeneralAgent $generalAgent,
+        private ChatbotFallbackStrategyService $fallbackStrategy,
         private WidgetTraceLogger $widgetTrace
     ) {
     }
@@ -65,16 +67,42 @@ class SupervisorAgent
         $extractedPreferences = $this->memory->scopePreferencesForMessage($preferences, $message);
 
         if (!$this->circuitBreaker->shouldAttemptMultiAgent()) {
+            $sessionContext = $this->memory->getSessionContext($conversationId);
+            $fallbackResolution = $this->fallbackStrategy->resolveProviderFailureOutcome(
+                $intent,
+                ['products' => []],
+                $sessionContext['recent'] ?? [],
+                $preferences
+            );
+
             $this->traceWidget('supervisor.circuit_open', [
                 'state' => $this->circuitBreaker->getState(),
+            ], $trace);
+
+            $this->traceWidget('supervisor.circuit_open_fallback', [
+                'intent' => $intent->intent(),
+                'fallback_reply' => $this->widgetTrace->payloadsEnabled() ? $fallbackResolution->reply() : null,
             ], $trace);
 
             $this->langfuse()->endSpan($spanId, [
                 'state' => $this->circuitBreaker->getState(),
                 'reason' => 'circuit_open',
-            ], null, 'Circuit breaker is open');
+            ], $fallbackResolution->reply());
 
-            throw new \RuntimeException('Circuit breaker is open');
+            return [
+                'success' => true,
+                'response' => $fallbackResolution->reply(),
+                'cached' => false,
+                'cache_layer' => 'circuit_breaker_fallback',
+                'agent_used' => 'circuit_breaker',
+                'execution_mode' => 'fallback',
+                'validation_passed' => $fallbackResolution->validationPassed(),
+                'validation_context' => ['products' => []],
+                'reflection_attempts' => 0,
+                'violations' => $fallbackResolution->validationViolations(),
+                'reason' => ChatbotOutcomeReason::PROVIDER_UNAVAILABLE,
+                'extracted_preferences' => $extractedPreferences,
+            ];
         }
 
         $cachedResponse = $this->cache->getCachedResponse($message, $intent);

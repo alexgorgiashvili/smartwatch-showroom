@@ -7,7 +7,7 @@
 @section('og_title', $product->meta_title ?? $product->name)
 @section('og_description', $product->meta_description ?? $product->short_description ?? '')
 @section('og_url', url('/products/' . $product->slug))
-@section('og_image', $product->primaryImage?->url ?? asset('images/og-default.jpg'))
+@section('og_image', $product->primaryImage?->url ?? asset('images/og-default.webp'))
 @section('og_image_alt', $product->name)
 
 @push('json_ld')
@@ -37,7 +37,7 @@ $_breadcrumbSchema = [
     ],
 ];
 // Check real stock availability
-$totalStock = $product->variants->sum('quantity');
+$totalStock = $product->stock_quantity;
 $availability = $totalStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
@@ -51,7 +51,7 @@ $_productSchema = [
     '@type' => 'Product',
     'name' => $product->name ?? '',
     'description' => $product->short_description ?? '',
-    'image' => $product->primaryImage?->url ?? asset('images/og-default.jpg'),
+    'image' => $product->primaryImage?->url ?? asset('images/og-default.webp'),
     'sku' => $product->slug ?? '',
     'brand' => [
         '@type' => 'Brand',
@@ -141,7 +141,11 @@ if ($approvedReviews->count() > 0) {
         $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
         $discountPercent = $hasDiscount ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : null;
         $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
-        $defaultVariant = $product->variants->first(fn ($variant) => $variant->quantity > 0) ?? $product->variants->first();
+        $defaultVariant = $product->variants->first(fn ($variant) => $variant->available_quantity > 0) ?? $product->variants->first();
+        $giftBuilderEligible = $defaultVariant
+            && $product->gift_builder_enabled
+            && $product->fulfillment_mode === 'local_stock'
+            && in_array($product->gift_builder_role, ['main', 'both'], true);
         $colorVariants = $product->variants
             ->filter(fn ($variant) => filled($variant->color_name) && filled($variant->color_hex))
             ->unique(fn ($variant) => strtoupper($variant->color_hex) . '|' . mb_strtolower($variant->color_name))
@@ -199,7 +203,7 @@ if ($approvedReviews->count() > 0) {
     <section class="bg-gray-50 py-8 sm:py-10">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <nav class="mb-6 flex" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center gap-1 text-sm text-gray-500">
+                <ol class="flex flex-wrap items-center gap-1 text-sm text-gray-500">
                     <li>
                         <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 hover:text-primary-600">
                             <i class="fa-solid fa-house text-xs"></i>{{ __('ui.nav_home') }}
@@ -210,7 +214,7 @@ if ($approvedReviews->count() > 0) {
                         <a href="{{ route('products.index') }}" class="hover:text-primary-600">{{ __('ui.nav_catalog') }}</a>
                     </li>
                     <li><i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i></li>
-                    <li class="truncate text-gray-700">{{ $product->name }}</li>
+                    <li class="min-w-0 break-words text-gray-700">{{ $product->name }}</li>
                 </ol>
             </nav>
 
@@ -278,10 +282,10 @@ if ($approvedReviews->count() > 0) {
                                             <td class="px-2 py-3 text-gray-700">{{ __('ui.yes') }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->battery_life_hours)
+                                    @if ($product->battery_life_label)
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_hours }} {{ __('ui.hours') }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_label }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->warranty_months)
@@ -399,7 +403,7 @@ if ($approvedReviews->count() > 0) {
                                     <span class="text-3xl font-extrabold tracking-tight text-primary-600 [font-family:'Space_Grotesk',system-ui,sans-serif]">{{ number_format($salePrice, 2) }} {{ $currency }}</span>
                                     <span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">-{{ $discountPercent }}%</span>
                                 </div>
-                                <p class="mt-1 text-sm text-gray-400 line-through">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
+                                <p class="mt-2 text-sm price-compare-old inline-flex">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
                             @elseif ($basePrice)
                                 <p class="text-3xl font-extrabold tracking-tight text-gray-900 [font-family:'Space_Grotesk',system-ui,sans-serif]">{{ number_format($basePrice, 2) }} {{ $currency }}</p>
                             @else
@@ -426,10 +430,10 @@ if ($approvedReviews->count() > 0) {
                                     <p>{{ __('ui.yes') }}</p>
                                 </div>
                             @endif
-                            @if ($product->battery_life_hours)
+                            @if ($product->battery_life_label)
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
                                     <p class="font-semibold text-gray-900">{{ __('ui.product_battery') }}</p>
-                                    <p>{{ $product->battery_life_hours }} {{ __('ui.hours') }}</p>
+                                    <p>{{ $product->battery_life_label }}</p>
                                 </div>
                             @endif
                             @if ($product->screen_size)
@@ -444,12 +448,7 @@ if ($approvedReviews->count() > 0) {
                                     <p>{{ $product->display_type }}</p>
                                 </div>
                             @endif
-                            @if ($product->battery_capacity_mah)
-                                <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
-                                    <p class="font-semibold text-gray-900">{{ __('ui.spec_battery_cap') }}</p>
-                                    <p>{{ $product->battery_capacity_mah }} mAh</p>
-                                </div>
-                            @endif
+
                         </div>
 
                         @if($colorVariants->isNotEmpty())
@@ -468,7 +467,7 @@ if ($approvedReviews->count() > 0) {
                                             data-color-name="{{ $variantColor->color_name }}"
                                             data-color-hex="{{ strtoupper($variantColor->color_hex) }}"
                                             data-variant-id="{{ $variantColor->id }}"
-                                            data-stock="{{ (int) $variantColor->quantity }}"
+                                            data-stock="{{ (int) $variantColor->available_quantity }}"
                                             aria-label="{{ $variantColor->color_name }}"
                                         ></button>
                                     @endforeach
@@ -484,7 +483,7 @@ if ($approvedReviews->count() > 0) {
                             @endif
 
                             @if($defaultVariant)
-                                <form method="POST" action="{{ route('cart.add') }}" id="add-to-cart-form" data-cart-form class="space-y-2">
+                                <form method="POST" action="{{ route('cart.add') }}" id="add-to-cart-form" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}" class="space-y-2">
                                     @csrf
                                     <input type="hidden" name="variant_id" id="selected-variant-id" value="{{ $defaultVariant->id }}">
 
@@ -495,7 +494,7 @@ if ($approvedReviews->count() > 0) {
                                             type="number"
                                             name="quantity"
                                             min="1"
-                                            max="{{ max(1, min(10, (int) $defaultVariant->quantity)) }}"
+                                            max="{{ max(1, min(10, (int) $defaultVariant->available_quantity)) }}"
                                             value="1"
                                             class="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
                                         >
@@ -520,6 +519,16 @@ if ($approvedReviews->count() > 0) {
                                         </button>
                                     </div>
                                 </form>
+                            @endif
+                            @if($giftBuilderEligible)
+                                <a
+                                    href="{{ route('gift-builder.show', ['product' => $product->slug, 'variant_id' => $defaultVariant->id]) }}"
+                                    id="build-gift-link"
+                                    data-base-url="{{ route('gift-builder.show', ['product' => $product->slug]) }}"
+                                    class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
+                                >
+                                    <i class="fa-solid fa-box-open text-xs"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქრად აწყობა' : 'Build this as a gift' }}
+                                </a>
                             @endif
                             <button
                                 type="button"
@@ -602,6 +611,7 @@ if ($approvedReviews->count() > 0) {
                                                 <div class="mt-1">
                                                     @if($relatedDiscount)
                                                         <p class="text-sm font-bold text-primary-600">{{ number_format($relatedSale, 2) }} {{ $relatedCurrency }}</p>
+                                                        <p class="text-xs price-compare-old inline-flex">{{ number_format($relatedBase, 2) }} {{ $relatedCurrency }}</p>
                                                     @elseif($relatedBase)
                                                         <p class="text-sm font-bold text-gray-900">{{ number_format($relatedBase, 2) }} {{ $relatedCurrency }}</p>
                                                     @else
@@ -624,6 +634,27 @@ if ($approvedReviews->count() > 0) {
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            if (window.storefrontAnalytics) {
+                window.storefrontAnalytics.track('ViewContent', {
+                    content_ids: [@js((string) $product->id)],
+                    content_name: @js($product->name),
+                    content_type: 'product',
+                    value: @js((float) ($salePrice ?? $basePrice ?? 0)),
+                    currency: @js($product->currency ?: 'GEL'),
+                    contents: [{
+                        id: @js((string) $product->id),
+                        quantity: 1,
+                        item_price: @js((float) ($salePrice ?? $basePrice ?? 0))
+                    }],
+                    items: [{
+                        item_id: @js((string) $product->id),
+                        item_name: @js($product->name),
+                        price: @js((float) ($salePrice ?? $basePrice ?? 0)),
+                        quantity: 1
+                    }]
+                });
+            }
+
             const swatches = Array.from(document.querySelectorAll('.product-color-swatch'));
             if (!swatches.length) {
                 return;
@@ -633,6 +664,7 @@ if ($approvedReviews->count() > 0) {
             const selectedInput = document.getElementById('selected-color-input');
             const selectedVariantInput = document.getElementById('selected-variant-id');
             const quantityInput = document.getElementById('cart-quantity');
+            const giftLink = document.getElementById('build-gift-link');
 
             const setActive = (targetSwatch) => {
                 swatches.forEach((swatch) => {
@@ -651,6 +683,10 @@ if ($approvedReviews->count() > 0) {
 
                 if (selectedVariantInput && targetSwatch.dataset.variantId) {
                     selectedVariantInput.value = targetSwatch.dataset.variantId;
+                }
+                if (giftLink && targetSwatch.dataset.variantId) {
+                    const baseUrl = giftLink.getAttribute('data-base-url') || giftLink.href;
+                    giftLink.href = `${baseUrl}&variant_id=${encodeURIComponent(targetSwatch.dataset.variantId)}`;
                 }
 
                 if (quantityInput && targetSwatch.dataset.stock) {

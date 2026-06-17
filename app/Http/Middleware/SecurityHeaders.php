@@ -86,7 +86,7 @@ class SecurityHeaders
             "default-src 'self'",
 
             // Script policy
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com{$localSocketSources}",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net{$localSocketSources}",
 
             // Style policy
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net https://cdnjs.cloudflare.com{$localHttpSources}",
@@ -101,7 +101,7 @@ class SecurityHeaders
             "connect-src 'self' https: ws: wss:{$localSocketSources}",
 
             // Frame/iframe policy
-            "frame-src 'self'",
+            "frame-src 'self' https://www.googletagmanager.com",
 
             // Object/embed policy
             "object-src 'none'",

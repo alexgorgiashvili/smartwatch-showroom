@@ -6,7 +6,6 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Mockery;
 use Tests\TestCase;
 
@@ -103,49 +102,6 @@ class AlibabaImportApifyTest extends TestCase
         $this->assertEquals(1, Product::count());
     }
 
-    public function testParseAcceptsApifyUrlAndRunsLiveApifyActor(): void
-    {
-        config()->set('services.apify.token', 'test-token');
-        config()->set('services.apify.actor_id', 'apify/web-scraper');
-        config()->set('services.apify.base_url', 'https://api.apify.com/v2');
-
-        Http::fake([
-            'https://api.apify.com/v2/acts/apify~web-scraper/run-sync-get-dataset-items*' => Http::response([
-                [
-                    'url' => 'https://www.alibaba.com/product-detail/Watch_1600999999999.html',
-                    'productId' => '1600999999999',
-                    'title' => 'Live Parsed Watch',
-                    'description' => 'Live dataset item from Apify run.',
-                    'images' => [
-                        'https://example.com/live-1.jpg',
-                    ],
-                    'variants' => [
-                        ['name' => 'Blue'],
-                    ],
-                    'price' => 49.99,
-                    'currency' => 'USD',
-                ],
-            ], 200),
-        ]);
-
-        $response = $this->actingAs($this->admin)
-            ->postJson(route('admin.products.import-alibaba.parse'), [
-                'import_source' => 'apify',
-                'url' => 'https://www.alibaba.com/product-detail/Watch_1600999999999.html',
-            ]);
-
-        $response
-            ->assertStatus(200)
-            ->assertJsonPath('data.source_product_id', '1600999999999')
-            ->assertJsonPath('data.source_url', 'https://www.alibaba.com/product-detail/Watch_1600999999999.html')
-            ->assertJsonPath('data.product.name_en', 'Live Parsed Watch');
-
-        Http::assertSent(function ($request) {
-            return str_contains($request->url(), '/acts/apify~web-scraper/run-sync-get-dataset-items')
-                && $request->hasHeader('Authorization', 'Bearer test-token');
-        });
-    }
-
     public function testParseMapsTemplateStyleApifyFields(): void
     {
         $apifyTemplateItem = [
@@ -173,39 +129,16 @@ class AlibabaImportApifyTest extends TestCase
             ->assertJsonPath('data.source_product_id', '1600111111111');
     }
 
-    public function testParseReturnsValidationErrorWhenApifyIsBlockedByCaptcha(): void
+    public function testParseReturnsValidationErrorWhenApifyJsonIsMissing(): void
     {
-        config()->set('services.apify.token', 'test-token');
-        config()->set('services.apify.actor_id', 'apify/web-scraper');
-        config()->set('services.apify.base_url', 'https://api.apify.com/v2');
-        config()->set('services.apify.retry_with_residential', false);
-
-        Http::fake([
-            'https://api.apify.com/v2/acts/apify~web-scraper/run-sync-get-dataset-items*' => Http::response([
-                [
-                    'titleTag' => 'Captcha Interception',
-                    'bodySample' => 'Sorry, we have detected unusual traffic from your network.',
-                    'title' => '',
-                    'description' => '',
-                    'images' => [],
-                    'variants' => [],
-                    'specs' => [],
-                    '#debug' => [
-                        'errorMessages' => [],
-                    ],
-                ],
-            ], 200),
-        ]);
-
         $response = $this->actingAs($this->admin)
             ->postJson(route('admin.products.import-alibaba.parse'), [
                 'import_source' => 'apify',
-                'url' => 'https://www.alibaba.com/product-detail/blocked_1601113065262.html',
             ]);
 
         $response
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Alibaba blocked crawler access (captcha/interception). Try APIFY_PROXY_COUNTRY, enable residential proxy, or import using manual JSON/Page Source fallback.');
+            ->assertJsonPath('message', 'Apify JSON is required.');
     }
 
     public function testParseFromRawHtmlFillsSmartwatchSpecFieldsFromWindowDetailData(): void
@@ -264,8 +197,7 @@ class AlibabaImportApifyTest extends TestCase
 
         $response = $this->actingAs($this->admin)
             ->postJson(route('admin.products.import-alibaba.parse'), [
-                'import_source' => 'apify',
-                'url' => 'https://www.alibaba.com/product-detail/2024-Newest-Style-4g-Smart-Watch_1601113065262.html',
+                'import_source' => 'raw_html',
                 'raw_html' => $rawHtml,
             ]);
 
@@ -273,14 +205,14 @@ class AlibabaImportApifyTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.source_product_id', '1601113065262')
             ->assertJsonPath('data.product.operating_system', 'RTOS')
-            ->assertJsonPath('data.product.screen_size', '1.85 Inch')
+            ->assertJsonPath('data.product.screen_size', '1.85 ინჩი')
             ->assertJsonPath('data.product.display_type', 'IPS')
             ->assertJsonPath('data.product.screen_resolution', '240*240')
             ->assertJsonPath('data.product.brand', 'Wonlex')
             ->assertJsonPath('data.product.model', 'KT34')
             ->assertJsonPath('data.product.memory_size', '1GB+8GB')
-            ->assertJsonPath('data.product.case_material', 'Rubber')
-            ->assertJsonPath('data.product.band_material', 'Silica Gel')
+            ->assertJsonPath('data.product.case_material', 'რეზინი')
+            ->assertJsonPath('data.product.band_material', 'სილიკონის გელი')
             ->assertJsonPath('data.product.camera', '< 3MP')
             ->assertJsonPath('data.product.price', 33.9)
             ->assertJsonFragment(['კალენდარი'])
@@ -322,8 +254,7 @@ HTML;
 
                 $response = $this->actingAs($this->admin)
                         ->postJson(route('admin.products.import-alibaba.parse'), [
-                                'import_source' => 'apify',
-                                'url' => 'https://www.alibaba.com/product-detail/KT34_1601113065262.html',
+                                'import_source' => 'raw_html',
                                 'raw_html' => $rawHtml,
                         ]);
 
@@ -337,7 +268,7 @@ HTML;
                         ->assertJsonPath('data.product.operating_system', 'Android 8.1')
                         ->assertJsonPath('data.product.screen_resolution', '368*448')
                         ->assertJsonPath('data.product.battery_capacity_mah', 800)
-                        ->assertJsonPath('data.product.camera', 'Support, 0.3MP')
+                        ->assertJsonPath('data.product.camera', 'მხარდაჭერა, 0.3MP')
                         ->assertJsonFragment(['SOS ღილაკი'])
                         ->assertJsonFragment(['GPS ნავიგაცია'])
                         ->assertJsonFragment(['ხმოვანი ზარი']);
@@ -378,8 +309,7 @@ HTML;
 
         $response = $this->actingAs($this->admin)
             ->postJson(route('admin.products.import-alibaba.parse'), [
-                'import_source' => 'apify',
-                'url' => 'https://www.alibaba.com/product-detail/2024-Newest-Style-4g-Smart-Watch_1601113065262.html',
+                'import_source' => 'raw_html',
                 'raw_html' => $rawHtml,
             ]);
 
@@ -388,5 +318,37 @@ HTML;
             ->assertJsonCount(2, 'data.images')
             ->assertJsonFragment(['https://sc04.alicdn.com/kf/HAAA11111111111111111111111111111.jpg'])
             ->assertJsonFragment(['https://sc04.alicdn.com/kf/HBBB22222222222222222222222222222.jpg']);
+    }
+
+    public function testConfirmAcceptsNestedParsedPayloadShape(): void
+    {
+        $mock = Mockery::mock(ChatbotContentSyncService::class);
+        $mock->shouldReceive('syncProduct')->once();
+        $this->instance(ChatbotContentSyncService::class, $mock);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('admin.products.import-alibaba.confirm'), [
+                'product' => [
+                    'name_en' => 'Nested Watch',
+                    'name_ka' => 'Nested Watch',
+                    'slug' => 'nested-watch',
+                    'price' => 55.5,
+                    'functions' => ['GPS'],
+                ],
+                'source_product_id' => '1600555555555',
+                'images' => [],
+                'variants' => [
+                    ['name' => 'Default', 'quantity' => 0, 'low_stock_threshold' => 5],
+                ],
+            ]);
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Product created from Alibaba import.');
+
+        $this->assertDatabaseHas('products', [
+            'name_en' => 'Nested Watch',
+            'external_product_id' => '1600555555555',
+        ]);
     }
 }

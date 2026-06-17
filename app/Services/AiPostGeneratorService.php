@@ -248,8 +248,8 @@ PROMPT;
         if ($product->water_resistant) {
             $info .= "წყალგამძლე: {$product->water_resistant}\n";
         }
-        if ($product->battery_life_hours) {
-            $info .= "ბატარეა: {$product->battery_life_hours} საათი\n";
+        if ($batteryLife = $product->batteryLifeLabel()) {
+            $info .= "ბატარეა: {$batteryLife}\n";
         }
         if ($product->camera) {
             $info .= "კამერა: {$product->camera}\n";

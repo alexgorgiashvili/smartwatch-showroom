@@ -36,8 +36,14 @@ class ProductController extends Controller
         // Apply sorting
         $sort = $request->input('sort', 'featured');
         match ($sort) {
-            'price_low' => $query->orderByRaw('COALESCE(sale_price, price) ASC NULLS LAST'),
-            'price_high' => $query->orderByRaw('COALESCE(sale_price, price) DESC NULLS LAST'),
+            'price_low' => $query
+                ->orderByRaw('CASE WHEN COALESCE(sale_price, price) IS NULL THEN 1 ELSE 0 END ASC')
+                ->orderByRaw('COALESCE(sale_price, price) ASC')
+                ->orderBy('name_en'),
+            'price_high' => $query
+                ->orderByRaw('CASE WHEN COALESCE(sale_price, price) IS NULL THEN 1 ELSE 0 END ASC')
+                ->orderByRaw('COALESCE(sale_price, price) DESC')
+                ->orderBy('name_en'),
             'newest' => $query->latest(),
             default => $query->orderBy('featured', 'desc')->orderBy('name_en'),
         };

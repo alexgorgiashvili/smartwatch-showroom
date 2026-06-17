@@ -21,6 +21,10 @@ class InboxPWA {
         }
 
         this.setupNotificationListeners();
+        this.bindPushSubscriptionButton();
+        this.bootstrapPushSubscription().catch((error) => {
+            console.error('Failed to bootstrap push subscription:', error);
+        });
     }
 
     setupNotificationListeners() {
@@ -34,6 +38,27 @@ class InboxPWA {
                 this.showBrowserNotification(data.title, data.body, data.conversationId);
             });
         }
+    }
+
+    bindPushSubscriptionButton() {
+        const button = document.getElementById('inbox-enable-push');
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+
+            try {
+                await this.ensurePushSubscription();
+                button.classList.remove('btn-light');
+                button.classList.add('btn-success');
+                button.title = 'შეტყობინებები ჩართულია';
+            } catch (error) {
+                console.error('Failed to enable push notifications:', error);
+                button.disabled = false;
+            }
+        });
     }
 
     async requestNotificationPermission() {
@@ -123,6 +148,84 @@ class InboxPWA {
             console.error('Failed to subscribe to push notifications:', error);
             return null;
         }
+    }
+
+    async bootstrapPushSubscription() {
+        if (Notification.permission !== 'granted') {
+            return null;
+        }
+
+        return this.ensurePushSubscription();
+    }
+
+    async ensurePushSubscription() {
+        if (!('Notification' in window) || !('PushManager' in window)) {
+            return null;
+        }
+
+        if (!this.serviceWorkerRegistration) {
+            return null;
+        }
+
+        if (!window.vapidPublicKey) {
+            console.warn('VAPID public key is missing; skipping push subscription');
+            return null;
+        }
+
+        const hasPermission = await this.requestNotificationPermission();
+        if (!hasPermission) {
+            return null;
+        }
+
+        let subscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+
+        if (!subscription) {
+            subscription = await this.subscribeToPushNotifications();
+        }
+
+        if (!subscription) {
+            return null;
+        }
+
+        await this.syncPushSubscription(subscription);
+        return subscription;
+    }
+
+    async syncPushSubscription(subscription) {
+        const endpoint = subscription?.endpoint;
+        const keys = subscription?.toJSON?.()?.keys || subscription?.keys;
+
+        if (!endpoint || !keys?.p256dh || !keys?.auth) {
+            return false;
+        }
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const payload = {
+            endpoint,
+            expirationTime: subscription.expirationTime || null,
+            keys: {
+                p256dh: keys.p256dh,
+                auth: keys.auth,
+            },
+            contentEncoding: subscription.contentEncoding || 'aes128gcm',
+        };
+
+        const response = await fetch('/admin/push-subscriptions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to save push subscription (${response.status})`);
+        }
+
+        return true;
     }
 
     urlBase64ToUint8Array(base64String) {

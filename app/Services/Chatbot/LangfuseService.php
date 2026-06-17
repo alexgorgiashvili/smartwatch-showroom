@@ -11,6 +11,10 @@ class LangfuseService
 {
     public function enabled(): bool
     {
+        if (app()->environment('testing')) {
+            return false;
+        }
+
         return (bool) config('services.langfuse.enabled', false)
             && $this->publicKey() !== ''
             && $this->secretKey() !== ''

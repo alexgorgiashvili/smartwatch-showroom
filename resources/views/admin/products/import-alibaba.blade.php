@@ -19,28 +19,24 @@
             <h6 class="card-title mb-3">Import Source</h6>
             <ul class="nav nav-tabs mb-3" role="tablist">
                 <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-apify" role="tab">Apify JSON</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-direct" role="tab">Direct URL</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-raw-html" role="tab">Raw HTML</a></li>
             </ul>
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="tab-apify" role="tabpanel">
                     <div class="mb-3">
-                        <label class="form-label">Apify JSON or Alibaba URL</label>
-                        <textarea class="form-control" id="apifyJson" rows="6" placeholder='Paste Apify JSON output or enter Alibaba product URL...'></textarea>
+                        <label class="form-label">Apify JSON</label>
+                        <textarea class="form-control" id="apifyJson" rows="6" placeholder='Paste Apify JSON output...'></textarea>
                     </div>
                     <button type="button" class="btn btn-primary btn-sm" id="btnParseApify">
                         <i data-feather="search" style="width:14px;height:14px;"></i> Parse
                     </button>
                 </div>
-                <div class="tab-pane fade" id="tab-direct" role="tabpanel">
+                <div class="tab-pane fade" id="tab-raw-html" role="tabpanel">
                     <div class="mb-3">
-                        <label class="form-label">Alibaba Product URL</label>
-                        <input type="url" class="form-control" id="directUrl" placeholder="https://www.alibaba.com/product-detail/...">
+                        <label class="form-label">Page Source / Raw HTML</label>
+                        <textarea class="form-control" id="rawHtml" rows="8" placeholder="Paste full browser View Source / Inspect source HTML..."></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Raw HTML (alternative)</label>
-                        <textarea class="form-control" id="rawHtml" rows="4" placeholder="Paste raw product page HTML..."></textarea>
-                    </div>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnParseDirect">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnParseRawHtml">
                         <i data-feather="search" style="width:14px;height:14px;"></i> Parse
                     </button>
                 </div>
@@ -78,11 +74,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const resultContent = document.getElementById('parseResultContent');
     let parsedData = null;
 
+    function buildConfirmPayload(payload) {
+        const product = payload?.product || {};
+
+        return {
+            ...product,
+            source_url: payload?.source_url || null,
+            source_product_id: payload?.source_product_id || null,
+            selected_images: Array.isArray(payload?.images) ? payload.images : [],
+            variants: Array.isArray(payload?.variants) ? payload.variants : [],
+        };
+    }
+
     async function doParse(data) {
         try {
             resultCard?.classList.add('d-none');
             const res = await axios.post(urls.parseUrl, data, { headers: { Accept: 'application/json' } });
-            parsedData = res.data;
+            parsedData = res.data?.data || null;
             if (resultContent) {
                 resultContent.innerHTML = `<pre class="bg-light p-3 rounded" style="max-height:400px;overflow:auto;">${JSON.stringify(parsedData, null, 2)}</pre>`;
             }
@@ -96,14 +104,12 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnParseApify')?.addEventListener('click', () => {
         const val = document.getElementById('apifyJson')?.value?.trim();
         if (!val) return;
-        const isUrl = val.startsWith('http');
-        doParse({ import_source: 'apify', [isUrl ? 'url' : 'apify_json']: val });
+        doParse({ import_source: 'apify', apify_json: val });
     });
 
-    document.getElementById('btnParseDirect')?.addEventListener('click', () => {
+    document.getElementById('btnParseRawHtml')?.addEventListener('click', () => {
         doParse({
-            import_source: 'direct',
-            url: document.getElementById('directUrl')?.value?.trim() || '',
+            import_source: 'raw_html',
             raw_html: document.getElementById('rawHtml')?.value?.trim() || '',
         });
     });
@@ -111,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnConfirmImport')?.addEventListener('click', async () => {
         if (!parsedData) return;
         try {
-            const res = await axios.post(urls.confirmUrl, parsedData, { headers: { Accept: 'application/json' } });
+            const res = await axios.post(urls.confirmUrl, buildConfirmPayload(parsedData), { headers: { Accept: 'application/json' } });
             if (window.AdminHelpers) window.AdminHelpers.showToast(res.data.message || 'Imported!', 'success');
             if (res.data.redirect && window.AdminRouter) window.AdminRouter.navigate(res.data.redirect);
         } catch (e) {

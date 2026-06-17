@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Payment Success')
+@section('title', 'გადახდა წარმატებით დასრულდა')
 @section('robots', 'noindex, nofollow')
 
 @section('content')
@@ -33,3 +33,26 @@
         </div>
     </section>
 @endsection
+
+@if (!empty($purchaseEvent))
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.storefrontAnalytics) {
+            return;
+        }
+
+        const eventKey = 'purchase:' + @js($purchaseEvent['transaction_id'] ?? $orderNumber);
+        if (window.sessionStorage && window.sessionStorage.getItem(eventKey)) {
+            return;
+        }
+
+        window.storefrontAnalytics.track('Purchase', @json($purchaseEvent));
+
+        if (window.sessionStorage) {
+            window.sessionStorage.setItem(eventKey, '1');
+        }
+    });
+</script>
+@endpush
+@endif

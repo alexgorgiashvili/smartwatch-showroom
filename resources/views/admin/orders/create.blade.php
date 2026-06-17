@@ -4,14 +4,14 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Create Order">
+<div data-page-title="შეკვეთის შექმნა">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
         <div>
-            <h4 class="mb-3 mb-md-0">Create Order</h4>
+            <h4 class="mb-3 mb-md-0">შეკვეთის შექმნა</h4>
         </div>
         <div>
             <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary btn-sm" data-pjax>
-                <i data-feather="arrow-left" style="width:14px;height:14px;"></i> Back
+                <i data-feather="arrow-left" style="width:14px;height:14px;"></i> უკან
             </a>
         </div>
     </div>

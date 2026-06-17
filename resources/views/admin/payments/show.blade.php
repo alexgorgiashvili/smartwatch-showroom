@@ -7,7 +7,7 @@
 <div data-page-title="Payment Log დეტალები">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
         <div>
-            <h4 class="mb-3 mb-md-0">Payment Log #{{ $paymentLog->id }}</h4>
+            <h4 class="mb-3 mb-md-0">გადახდის ჩანაწერი #{{ $paymentLog->id }}</h4>
             <p class="text-muted small mb-0">{{ $paymentLog->created_at->format('M d, Y H:i') }}</p>
         </div>
         <div>
@@ -32,7 +32,7 @@
                                 <td class="font-monospace">{{ $paymentLog->bog_order_id ?: '—' }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted small">External Order ID:</td>
+                                <td class="text-muted small">გარე შეკვეთის ID:</td>
                                 <td class="font-monospace">{{ $paymentLog->external_order_id ?: '—' }}</td>
                             </tr>
                             <tr>
@@ -53,11 +53,11 @@
                                 <td class="text-muted small">შიდა სტატუსი:</td>
                                 <td>
                                     @if($paymentLog->chveni_statusi === 'completed')
-                                        <span class="badge bg-success">Completed</span>
+                                        <span class="badge bg-success">დასრულებული</span>
                                     @elseif($paymentLog->chveni_statusi === 'pending')
-                                        <span class="badge bg-warning">Pending</span>
+                                        <span class="badge bg-warning">მოლოდინში</span>
                                     @elseif($paymentLog->chveni_statusi === 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
+                                        <span class="badge bg-danger">უარყოფილი</span>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
@@ -143,9 +143,9 @@
     @if($paymentLog->payment_detail)
     <div class="card">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">Payment Detail (JSON)</h6>
+            <h6 class="mb-0">გადახდის დეტალები (JSON)</h6>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="copyJsonBtn">
-                <i data-feather="copy" style="width:14px;height:14px;"></i> Copy
+                <i data-feather="copy" style="width:14px;height:14px;"></i> კოპირება
             </button>
         </div>
         <div class="card-body">
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
         copyBtn.addEventListener('click', function () {
             navigator.clipboard.writeText(jsonContent.textContent).then(() => {
                 const originalHtml = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;"></i> Copied!';
+                copyBtn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;"></i> დაკოპირდა!';
                 feather.replace();
                 setTimeout(() => {
                     copyBtn.innerHTML = originalHtml;

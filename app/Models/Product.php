@@ -18,6 +18,11 @@ class Product extends Model
         'external_source',
         'external_source_url',
         'external_product_id',
+        'fulfillment_mode',
+        'bridge_product_id',
+        'bridge_product_permalink',
+        'product_sync_status',
+        'product_synced_at',
         'meta_title_ka',
         'meta_title_en',
         'meta_description_ka',
@@ -33,6 +38,7 @@ class Product extends Model
         'gps_features',
         'water_resistant',
         'battery_life_hours',
+        'battery_life_range',
         'warranty_months',
         'brand',
         'model',
@@ -49,6 +55,18 @@ class Product extends Model
         'functions',
         'is_active',
         'featured',
+        'gift_builder_enabled',
+        'gift_builder_role',
+        'gift_recipient_tags',
+        'gift_occasion_tags',
+        'gift_budget_band',
+        'gift_compatibility_tags',
+        'gift_capacity_units',
+        'gift_badge_ka',
+        'gift_badge_en',
+        'gift_builder_note_ka',
+        'gift_builder_note_en',
+        'gift_sort_order',
     ];
 
     protected $casts = [
@@ -60,9 +78,16 @@ class Product extends Model
         'gps_features' => 'boolean',
         'is_active' => 'boolean',
         'featured' => 'boolean',
+        'product_synced_at' => 'datetime',
+        'gift_builder_enabled' => 'boolean',
+        'gift_recipient_tags' => 'array',
+        'gift_occasion_tags' => 'array',
+        'gift_compatibility_tags' => 'array',
+        'gift_capacity_units' => 'integer',
+        'gift_sort_order' => 'integer',
     ];
 
-    protected $appends = ['name', 'short_description', 'description', 'meta_title', 'meta_description'];
+    protected $appends = ['name', 'short_description', 'description', 'meta_title', 'meta_description', 'stock_quantity', 'battery_life_label'];
 
     public function setCurrencyAttribute($value): void
     {
@@ -175,6 +200,70 @@ class Product extends Model
     public function getDescriptionAttribute(): ?string
     {
         return $this->localizedValue($this->description_en, $this->description_ka);
+    }
+
+    public function getStockQuantityAttribute(): int
+    {
+        if ($this->relationLoaded('variants')) {
+            return (int) $this->variants->sum(fn (ProductVariant $variant) => $variant->available_quantity);
+        }
+
+        return (int) $this->variants()->get()->sum(fn (ProductVariant $variant) => $variant->available_quantity);
+    }
+
+    public function batteryLifeLabel(?string $locale = null): ?string
+    {
+        $range = $this->normalizedBatteryLifeRange();
+        if ($range !== '') {
+            $language = $locale ?: app()->getLocale();
+            return $language === 'ka' ? "{$range} დღე" : "{$range} days";
+        }
+
+        if ($this->battery_life_hours === null || $this->battery_life_hours === '') {
+            return null;
+        }
+
+        $hours = (string) $this->battery_life_hours;
+
+        if (($locale ?: app()->getLocale()) === 'ka') {
+            return "{$hours} საათი";
+        }
+
+        return "{$hours} hours";
+    }
+
+    private function normalizedBatteryLifeRange(): string
+    {
+        $raw = trim((string) ($this->battery_life_range ?? ''));
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/\d+(?:\s*[-–]\s*\d+)?/', $raw, $matches)) {
+            return preg_replace('/\s*[-–]\s*/', '-', $matches[0]) ?? '';
+        }
+
+        return '';
+    }
+
+    public function getBatteryLifeLabelAttribute(): ?string
+    {
+        return $this->batteryLifeLabel();
+    }
+
+    public function isDropship(): bool
+    {
+        return $this->fulfillment_mode === 'dropship_bridge';
+    }
+
+    public function isLocalStock(): bool
+    {
+        return ! $this->isDropship();
+    }
+
+    public function fulfillmentLabel(): string
+    {
+        return $this->isDropship() ? 'შეკვეთით / ჩამოტანა' : 'ადგილზეა';
     }
 
     private function localizedValue(?string $en, ?string $ka): ?string

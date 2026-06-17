@@ -2,6 +2,7 @@
 
 namespace App\Services\Chatbot;
 
+use App\Models\Product;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
 
@@ -112,6 +113,7 @@ class IntentAnalyzerService
                     'temperature' => 0.0,
                     'max_tokens' => 250,
                     'timeout' => 10,
+                    'response_format' => ['type' => 'json_object'],
                     'langfuse_name' => 'chatbot.intent_analyzer',
                     'langfuse_metadata' => [
                         'component' => 'intent_analyzer',
@@ -351,9 +353,11 @@ class IntentAnalyzerService
 
     private function applyLocalIntentHeuristics(string $message, array $preferences): ?IntentResult
     {
-        if ($this->looksLikeAdultCatalogRequest($message)) {
+        $normalizedMessage = trim($message);
+
+        if ($this->looksLikeAdultCatalogRequest($normalizedMessage)) {
             return IntentResult::fromArray([
-                'standalone_query' => trim($message),
+                'standalone_query' => $normalizedMessage,
                 'intent' => 'out_of_domain',
                 'entities' => [
                     'brand' => null,
@@ -369,9 +373,9 @@ class IntentAnalyzerService
             ], 0);
         }
 
-        if ($this->looksLikeTrackingRecommendation($message)) {
+        if ($this->looksLikeTrackingRecommendation($normalizedMessage)) {
             return IntentResult::fromArray([
-                'standalone_query' => trim($message),
+                'standalone_query' => $normalizedMessage,
                 'intent' => 'recommendation',
                 'entities' => [
                     'brand' => null,
@@ -381,35 +385,41 @@ class IntentAnalyzerService
                     'category' => 'kids_smart_watch',
                 ],
                 'needs_product_data' => true,
-                'search_keywords' => ['GPS', 'ლოკაცია', 'გადაადგილების ისტორია', 'ტრეკინგი'],
+                'search_keywords' => [
+                    'GPS',
+                    'ლოკაცია',
+                    'ადგილმდებარეობა',
+                    'გადაადგილების ისტორია',
+                ],
                 'is_out_of_domain' => false,
-                'confidence' => 0.9,
+                'confidence' => 0.90,
             ], 0);
         }
 
-        if (!$this->looksLikeBudgetRecommendation($message, [], [])) {
+        $specificProductIntent = $this->applySpecificProductHeuristics($normalizedMessage);
+        if ($specificProductIntent instanceof IntentResult) {
+            return $specificProductIntent;
+        }
+
+        if (!$this->looksLikeBudgetRecommendation($normalizedMessage, [], [], $preferences)) {
             return null;
         }
 
-        $searchKeywords = [];
-        $budget = $this->extractBudgetAmount($message);
-
+        $budget = $this->extractBudgetAmount($normalizedMessage);
         if ($budget === null && isset($preferences['budget_max_gel']) && is_numeric($preferences['budget_max_gel'])) {
             $budget = (float) $preferences['budget_max_gel'];
         }
 
+        $searchKeywords = [];
         if ($budget !== null) {
-            $searchKeywords[] = rtrim(rtrim(number_format($budget, 2, '.', ''), '0'), '.') . ' ლარის ფარგლებში';
+            $budgetLabel = rtrim(rtrim(number_format($budget, 2, '.', ''), '0'), '.');
+            $searchKeywords[] = $budgetLabel . ' ლარის ფარგლებში';
+            $searchKeywords[] = $budgetLabel . ' ლარამდე';
+            $searchKeywords[] = $budgetLabel . ' ლარი';
         }
 
-        foreach (['იაფი', 'ბიუჯეტი', 'დაბალ ფასიანი', 'GPS', 'SOS'] as $keyword) {
-            if (mb_stripos($message, $keyword) !== false) {
-                $searchKeywords[] = $keyword;
-            }
-        }
-
-        $payload = [
-            'standalone_query' => trim($message),
+        return IntentResult::fromArray([
+            'standalone_query' => $normalizedMessage,
             'intent' => 'recommendation',
             'entities' => [
                 'brand' => null,
@@ -422,12 +432,246 @@ class IntentAnalyzerService
             'search_keywords' => array_values(array_unique(array_filter($searchKeywords))),
             'is_out_of_domain' => false,
             'confidence' => 0.92,
-        ];
-
-        return IntentResult::fromArray($payload, 0);
+        ], 0);
     }
 
-    private function looksLikeBudgetRecommendation(string $message, array $searchKeywords = [], array $entities = []): bool
+    private function applySpecificProductHeuristics(string $message): ?IntentResult
+    {
+        $normalized = trim($message);
+        $searchable = mb_strtolower($normalized);
+
+        if ($normalized === '' || !$this->looksLikeSpecificProductRequest($normalized)) {
+            return null;
+        }
+
+        $product = $this->findBestMatchingProduct($searchable);
+        if (!$product instanceof Product) {
+            return null;
+        }
+
+        [$brand, $model] = $this->deriveProductIdentity($product);
+        $color = $this->extractColorMention($searchable);
+        $slugHint = null;
+        $normalizedSlug = mb_strtolower(trim((string) $product->slug));
+        if ($normalizedSlug !== '' && str_contains($searchable, $normalizedSlug)) {
+            $slugHint = $this->nullableString($product->slug) ?? $normalizedSlug;
+        }
+        $intent = $this->inferSpecificProductIntent($searchable);
+
+        $searchKeywords = collect([
+            $product->name,
+            $product->name_en,
+            $product->name_ka,
+            $product->slug,
+            $brand,
+            $model,
+            $color,
+        ])
+            ->filter(fn ($keyword) => is_string($keyword) && trim($keyword) !== '')
+            ->map(fn (string $keyword): string => trim($keyword))
+            ->unique()
+            ->values()
+            ->all();
+
+        return IntentResult::fromArray([
+            'standalone_query' => trim($message),
+            'intent' => $intent,
+            'entities' => [
+                'brand' => $brand,
+                'model' => $model,
+                'product_slug_hint' => $slugHint,
+                'color' => $color,
+                'category' => null,
+            ],
+            'needs_product_data' => true,
+            'search_keywords' => $searchKeywords,
+            'is_out_of_domain' => false,
+            'confidence' => 0.98,
+        ], 0);
+    }
+
+    private function findBestMatchingProduct(string $message): ?Product
+    {
+        $products = Product::query()
+            ->active()
+            ->select(['id', 'name_en', 'name_ka', 'slug', 'brand', 'model'])
+            ->orderByDesc('featured')
+            ->orderBy('id')
+            ->limit(200)
+            ->get();
+
+        $bestProduct = null;
+        $bestScore = 0;
+
+        foreach ($products as $product) {
+            $score = $this->scoreProductMention($message, $product);
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestProduct = $product;
+            }
+        }
+
+        return $bestScore > 0 ? $bestProduct : null;
+    }
+
+    private function scoreProductMention(string $message, Product $product): int
+    {
+        $normalizedMessage = $this->normalizeProductText($message);
+        $score = 0;
+
+        foreach ($this->productSearchCandidates($product) as $candidate) {
+            if ($candidate === '' || !str_contains($normalizedMessage, $candidate)) {
+                continue;
+            }
+
+            $score += max(12, mb_strlen($candidate));
+        }
+
+        return $score;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function productSearchCandidates(Product $product): array
+    {
+        return collect([
+            $this->normalizeProductText((string) $product->name),
+            $this->normalizeProductText((string) $product->name_en),
+            $this->normalizeProductText((string) $product->name_ka),
+            $this->normalizeProductText((string) $product->slug),
+            $this->normalizeProductText((string) trim((string) $product->brand . ' ' . (string) $product->model)),
+        ])
+            ->filter(fn (string $candidate): bool => $candidate !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function deriveProductIdentity(Product $product): array
+    {
+        $brand = $this->nullableString($product->brand);
+        $model = $this->nullableString($product->model);
+
+        if ($brand !== null && $model !== null) {
+            return [$brand, $model];
+        }
+
+        $name = $this->normalizeProductText((string) $product->name);
+        $tokens = collect(preg_split('/\s+/u', $name) ?: [])
+            ->filter(fn ($token): bool => is_string($token) && trim($token) !== '')
+            ->values()
+            ->all();
+
+        if ($tokens === []) {
+            return [$brand, $model];
+        }
+
+        if ($brand === null && count($tokens) === 1) {
+            $brand = $this->nullableString($tokens[0]);
+        }
+
+        if ($brand === null && count($tokens) >= 2) {
+            $brand = $this->nullableString($tokens[0]);
+        }
+
+        if ($model === null) {
+            $remaining = count($tokens) >= 2 ? array_slice($tokens, 1) : $tokens;
+            $model = $this->nullableString(implode(' ', $remaining)) ?? ($this->nullableString($tokens[0]) ?? null);
+        }
+
+        return [$brand, $model];
+    }
+
+    private function inferSpecificProductIntent(string $message): string
+    {
+        $priceSignals = [
+            'რა ღირს',
+            'ფასი',
+            'price',
+            'cost',
+            'how much',
+            'გირდ',
+            'ღირდა',
+            'ღირ',
+        ];
+
+        if ($this->containsAnyNeedle($message, $priceSignals)) {
+            return 'price_query';
+        }
+
+        $comparisonSignals = [
+            'vs',
+            'compare',
+            'comparison',
+            'შედარ',
+            'რომელია უკეთესი',
+            'რომელი ჯობია',
+        ];
+
+        if ($this->containsAnyNeedle($message, $comparisonSignals)) {
+            return 'comparison';
+        }
+
+        $featureSignals = [
+            'აქვს',
+            'support',
+            'features',
+            'feature',
+            'მხარს უჭერს',
+            'ფუნქცია',
+            'კამერა',
+        ];
+
+        if ($this->containsAnyNeedle($message, $featureSignals)) {
+            return 'features';
+        }
+
+        return 'stock_query';
+    }
+
+    private function extractColorMention(string $message): ?string
+    {
+        $normalized = mb_strtolower(trim($message));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $colorAliases = [
+            'blue' => ['blue', 'ლურჯი', 'ლურჯ', 'ცისფერი'],
+            'black' => ['black', 'შავი'],
+            'white' => ['white', 'თეთრი'],
+            'red' => ['red', 'წითელი'],
+            'green' => ['green', 'მწვანე'],
+            'yellow' => ['yellow', 'ყვითელი'],
+            'pink' => ['pink', 'ვარდისფერი'],
+            'gray' => ['gray', 'grey', 'ნაცრისფერი'],
+        ];
+
+        foreach ($colorAliases as $canonical => $aliases) {
+            foreach ($aliases as $alias) {
+                if ($alias !== '' && str_contains($normalized, mb_strtolower($alias))) {
+                    return $canonical;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeProductText(string $text): string
+    {
+        $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower(trim($text)));
+
+        return trim((string) $normalized);
+    }
+
+    private function looksLikeBudgetRecommendation(string $message, array $searchKeywords = [], array $entities = [], array $preferences = []): bool
     {
         $normalized = mb_strtolower(trim($message));
 
@@ -435,39 +679,88 @@ class IntentAnalyzerService
             return false;
         }
 
-        $hasSpecificEntity = collect([
+        if ($this->looksLikeSpecificProductRequest($normalized)) {
+            return false;
+        }
+
+        foreach ([
             $entities['brand'] ?? null,
             $entities['model'] ?? null,
             $entities['product_slug_hint'] ?? null,
-        ])->contains(fn ($value): bool => is_string($value) && trim($value) !== '');
-
-        if ($hasSpecificEntity) {
-            return false;
+        ] as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return false;
+            }
         }
 
-        $hasBudgetSignal = preg_match('/\d+(?:[\.,]\d+)?\s*(?:₾|ლარ(?:ი|ამდე)?|gel|lari)/iu', $normalized) === 1
-            || preg_match('/\b(?:ბიუჯეტ|ფარგლებ|მდე|იაფ|დაბალ ფას)\b/iu', $normalized) === 1;
-
-        if (!$hasBudgetSignal) {
-            return false;
+        $haystack = $normalized;
+        foreach ($searchKeywords as $keyword) {
+            if (is_string($keyword) && trim($keyword) !== '') {
+                $haystack .= ' ' . mb_strtolower(trim($keyword));
+            }
         }
 
-        $genericRecommendationSignals = [
-            'რამე',
-            'რაიმე',
-            'ვარიანტი',
-            'მირჩი',
-            'შემომთავაზ',
-            'გაქვთ',
-            'მინდა',
-        ];
-
-        if (collect($searchKeywords)->contains(fn ($keyword): bool => is_string($keyword) && mb_stripos($keyword, 'ფარგლებში') !== false)) {
+        if ($this->containsAnyNeedle($haystack, ['მირჩ', 'გირჩ', 'recommend', 'suggest', 'best'])
+            && $this->containsAnyNeedle($haystack, ['საათ', 'watch', 'smartwatch', 'smart watch', 'kids', 'child', 'ბავშვ'])) {
             return true;
         }
 
-        return collect($genericRecommendationSignals)
-            ->contains(fn (string $signal): bool => mb_stripos($normalized, $signal) !== false);
+        $budgetSignals = [
+            'ფარგლებში',
+            'ფარგლ',
+            'ლარამდე',
+            'ლარიან',
+            'არაუმეტეს',
+            'ბიუჯეტ',
+            'budget',
+            'within',
+            'under',
+            'up to',
+        ];
+
+        if (!$this->containsAnyNeedle($haystack, $budgetSignals)) {
+            return false;
+        }
+
+        if (preg_match('/\d+(?:[.,]\d+)?/u', $haystack) === 1) {
+            return true;
+        }
+
+        if (isset($preferences['budget_max_gel']) && is_numeric($preferences['budget_max_gel'])) {
+            return true;
+        }
+
+        $recommendationSignals = [
+            'მირჩევ',
+            'გირჩევ',
+            'recommend',
+            'suggest',
+            'გაქვთ',
+            'რას',
+            'what',
+        ];
+
+        if ($this->containsAnyNeedle($haystack, ['მირჩ', 'გირჩ', 'recommend', 'suggest', 'best'])
+            && $this->containsAnyNeedle($haystack, ['საათ', 'watch', 'smartwatch', 'smart watch', 'kids', 'child', 'ბავშვ'])) {
+            return true;
+        }
+
+        return $this->containsAnyNeedle($haystack, $recommendationSignals);
+    }
+
+    private function looksLikeSpecificProductRequest(string $message): bool
+    {
+        $normalized = trim($message);
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (preg_match('/\b[\p{Lu}][\p{L}\p{N}]{2,}\s+[\p{Lu}][\p{L}\p{N}]{1,}(?:\s+[\p{L}\p{N}-]{2,})*/u', $normalized) === 1) {
+            return true;
+        }
+
+        return preg_match('/\b[A-Z][A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\s+[A-Z][A-Za-z0-9]+(?:-[A-Za-z0-9]+)*/', $normalized) === 1;
     }
 
     private function looksLikeAdultCatalogRequest(string $message): bool
@@ -478,15 +771,26 @@ class IntentAnalyzerService
             return false;
         }
 
-        if (preg_match('/\b(adult|grown|men|women)\b/u', $normalized) === 1 || str_contains($normalized, 'ზრდასრულ')) {
+        if ($this->containsAnyNeedle($normalized, [
+            'adult',
+            'grown',
+            'grown up',
+            'men',
+            'women',
+            'male',
+            'female',
+            'ზრდასრულ',
+            'მოზრდილ',
+            'დიდებისთვის',
+            'ქალებისთვის',
+            'კაცებისთვის',
+            'ქალის',
+            'კაცის',
+        ])) {
             return true;
         }
 
-        if (preg_match('/\b(1[89]|[2-9][0-9])\s*წლის\b/u', $normalized) === 1 && !str_contains($normalized, 'ბავშვ')) {
-            return true;
-        }
-
-        return false;
+        return preg_match('/\b(1[89]|[2-9][0-9])\s*(?:\+|წლ|წლის|years?|yrs?)\b/u', $normalized) === 1;
     }
 
     private function looksLikeTrackingRecommendation(string $message): bool
@@ -497,16 +801,20 @@ class IntentAnalyzerService
             return false;
         }
 
-        $hasTrackingSignal = str_contains($normalized, 'ლოკაცია')
-            || str_contains($normalized, 'გადაადგილების ისტორია')
-            || str_contains($normalized, 'ტრეკინგ')
-            || str_contains($normalized, 'ადგილმდებარეობ');
-
-        if (!$hasTrackingSignal) {
-            return false;
-        }
-
-        return !str_contains($normalized, 'ზრდასრულ');
+        return $this->containsAnyNeedle($normalized, [
+            'გადაადგილების ისტორია',
+            'ადგილმდებარეობა',
+            'ადგილმდებარეობ',
+            'ლოკაცია',
+            'gps',
+            'location',
+            'tracker',
+            'tracking',
+            'ტრეკერი',
+            'ტრეკერ',
+            'anti-lost',
+            'დაკარგვის',
+        ]);
     }
 
     /**
@@ -518,48 +826,83 @@ class IntentAnalyzerService
         $negated = $this->negatedFeaturesInMessage($message);
 
         if ($negated === []) {
-            return $searchKeywords;
+            return array_values(array_filter($searchKeywords, fn ($keyword) => is_string($keyword) && trim($keyword) !== ''));
         }
 
-        return array_values(array_filter($searchKeywords, function (string $keyword) use ($negated): bool {
-            $normalizedKeyword = mb_strtolower(trim($keyword));
+        $featureNeedles = [
+            'camera' => ['camera', 'კამერა'],
+            'calls' => ['call', 'calls', 'ზარი', 'ზარები', 'ზარის', 'ზარით', 'ვიდეო ზარი', 'ვიდეოზარი'],
+        ];
 
+        $filtered = [];
+
+        foreach ($searchKeywords as $keyword) {
+            if (!is_string($keyword)) {
+                continue;
+            }
+
+            $normalizedKeyword = mb_strtolower(trim($keyword));
+            if ($normalizedKeyword === '') {
+                continue;
+            }
+
+            $skip = false;
             foreach ($negated as $feature) {
-                if (str_contains($normalizedKeyword, $feature)) {
-                    return false;
+                foreach ($featureNeedles[$feature] ?? [] as $needle) {
+                    if (str_contains($normalizedKeyword, mb_strtolower($needle))) {
+                        $skip = true;
+                        break 2;
+                    }
                 }
             }
 
-            return true;
-        }));
+            if (!$skip) {
+                $filtered[] = trim($keyword);
+            }
+        }
+
+        return array_values(array_unique($filtered));
     }
 
     private function stripNegatedFeaturePhrases(string $message): string
     {
         $normalized = trim($message);
 
-        foreach (['camera', 'კამერა', 'call', 'calls', 'ზარი', 'ზარები'] as $feature) {
-            $normalized = preg_replace('/(?:მაგრამ\s+)?(?:' . preg_quote($feature, '/') . '|(?:არ\s+(?:მინდა|მაინტერესებს|მჭირდება)[^.!?\n]{0,24}' . preg_quote($feature, '/') . '))+/iu', ' ', $normalized) ?? $normalized;
+        if ($normalized === '') {
+            return '';
+        }
+
+        $negationPattern = '(?:არ მინდა|არ მჭირდება|არ მაინტერესებს|არ არის საჭირო|არ არის მნიშვნელოვანი|არ დამჭირდება|without|no)';
+
+        foreach ([
+            ['camera', 'კამერა'],
+            ['call', 'calls', 'ზარი', 'ზარები', 'ზარის', 'ზარით', 'ვიდეო ზარი', 'ვიდეოზარი'],
+        ] as $needles) {
+            foreach ($needles as $needle) {
+                $quoted = preg_quote($needle, '/');
+                $normalized = preg_replace([
+                    '/(?:' . $negationPattern . ')[^.!?\n]{0,24}' . $quoted . '/iu',
+                    '/' . $quoted . '[^.!?\n]{0,24}(?:' . $negationPattern . ')/iu',
+                ], ' ', $normalized) ?? $normalized;
+            }
         }
 
         return trim(preg_replace('/\s{2,}/u', ' ', $normalized) ?? $normalized);
     }
 
-    /**
-     * @return array<int, string>
-     */
     private function negatedFeaturesInMessage(string $message): array
     {
         $normalized = mb_strtolower($message);
         $negated = [];
 
-        foreach ([
+        $featureNeedles = [
             'camera' => ['camera', 'კამერა'],
-            'calls' => ['call', 'calls', 'ზარი', 'ზარები'],
-        ] as $feature => $needles) {
+            'calls' => ['call', 'calls', 'ზარი', 'ზარები', 'ზარის', 'ზარით', 'ვიდეო ზარი', 'ვიდეოზარი'],
+        ];
+
+        foreach ($featureNeedles as $feature => $needles) {
             foreach ($needles as $needle) {
-                $quoted = preg_quote(mb_strtolower($needle), '/');
-                if (preg_match('/(?:არ\s+(?:მინდა|მაინტერესებს|მჭირდება)|გარეშე)[^.!?\n]{0,24}' . $quoted . '/u', $normalized) === 1 || preg_match('/' . $quoted . '[^.!?\n]{0,24}(?:არ\s+(?:მინდა|მაინტერესებს|მჭირდება)|გარეშე)/u', $normalized) === 1) {
+                if ($this->containsNegatedNeedle($normalized, $needle)) {
                     $negated[] = $feature;
                     break;
                 }
@@ -571,13 +914,39 @@ class IntentAnalyzerService
 
     private function extractBudgetAmount(string $message): ?float
     {
-        if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(?:₾|ლარ(?:ი|ამდე)?|gel|lari)/iu', $message, $matches) !== 1) {
+        if (preg_match('/(\d+(?:[.,]\d+)?)/u', $message, $matches) !== 1) {
             return null;
         }
 
         return (float) str_replace(',', '.', (string) ($matches[1] ?? ''));
     }
 
+    /**
+     * @param array<int, string> $needles
+     */
+    private function containsAnyNeedle(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (!is_string($needle) || trim($needle) === '') {
+                continue;
+            }
+
+            if (mb_stripos($haystack, mb_strtolower(trim($needle))) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function containsNegatedNeedle(string $normalized, string $needle): bool
+    {
+        $quoted = preg_quote(mb_strtolower($needle), '/');
+        $negationPattern = '(?:არ მინდა|არ მჭირდება|არ მაინტერესებს|არ არის საჭირო|არ არის მნიშვნელოვანი|არ დამჭირდება|without|no)';
+
+        return preg_match('/(?:' . $negationPattern . ')[^.!?\n]{0,24}' . $quoted . '/u', $normalized) === 1
+            || preg_match('/' . $quoted . '[^.!?\n]{0,24}(?:' . $negationPattern . ')/u', $normalized) === 1;
+    }
     private function withTraceContext(array $trace): array
     {
         return array_filter([

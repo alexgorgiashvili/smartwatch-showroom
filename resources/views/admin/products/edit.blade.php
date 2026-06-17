@@ -56,9 +56,12 @@
                         <tr>
                             <th>Name</th>
                             <th>Color</th>
-                            <th>Quantity</th>
+                            <th>Available</th>
+                            <th>Local Qty</th>
+                            <th>Bridge Qty</th>
                             <th>Low Stock Threshold</th>
                             <th>Status</th>
+                            <th>Bridge Sync</th>
                             <th style="width:120px;">Actions</th>
                         </tr>
                     </thead>
@@ -76,7 +79,9 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
+                            <td>{{ $variant->available_quantity }}</td>
                             <td>{{ $variant->quantity }}</td>
+                            <td>{{ $variant->bridge_stock_quantity ?? '—' }}</td>
                             <td>{{ $variant->low_stock_threshold }}</td>
                             <td>
                                 @if($variant->isOutOfStock())
@@ -86,6 +91,14 @@
                                 @else
                                     <span class="badge bg-success">In Stock</span>
                                 @endif
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <div>{{ $variant->stock_sync_status ?: '—' }}</div>
+                                    @if($variant->bridge_variation_id)
+                                        <div class="text-muted">Var #{{ $variant->bridge_variation_id }}</div>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex gap-1">
@@ -110,7 +123,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr id="noVariantsRow"><td colspan="6" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>
+                        <tr id="noVariantsRow"><td colspan="9" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -178,12 +191,3 @@
 
 @endfragment
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    window.AdminProducts && window.AdminProducts.initForm();
-    window.AdminProducts && window.AdminProducts.initEdit();
-});
-</script>
-@endpush

@@ -70,9 +70,7 @@ class ChatbotTrainingCaseService
 
     public function createCase(array $data, $userId = null)
     {
-        return ChatbotTrainingCase::create(array_merge($data, [
-            'created_by' => $userId,
-        ]));
+        return ChatbotTrainingCase::create($this->normalizeCasePayload($data, $userId));
     }
 
     public function previewDiagnostics(array $payload, $caseId = null)
@@ -159,7 +157,7 @@ class ChatbotTrainingCaseService
     {
         try {
             $case = ChatbotTrainingCase::findOrFail($caseId);
-            $case->update($data);
+            $case->update($this->normalizeCasePayload($data, $case->created_by));
 
             return ['success' => true];
         } catch (\Exception $e) {
@@ -185,5 +183,90 @@ class ChatbotTrainingCaseService
 
             return ['success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function normalizeCasePayload(array $data, $userId = null): array
+    {
+        return [
+            'title' => trim((string) ($data['title'] ?? '')),
+            'prompt' => trim((string) ($data['prompt'] ?? '')),
+            'conversation_context_json' => $this->linesFromInput($data['conversation_context'] ?? $data['conversation_context_json'] ?? null),
+            'expected_intent' => $this->nullableString($data['expected_intent'] ?? null),
+            'expected_keywords_json' => $this->listFromInput($data['expected_keywords'] ?? $data['expected_keywords_json'] ?? null),
+            'expected_product_slugs_json' => $this->listFromInput($data['expected_product_slugs'] ?? $data['expected_product_slugs_json'] ?? null),
+            'expected_price_behavior' => $this->nullableString($data['expected_price_behavior'] ?? null),
+            'expected_stock_behavior' => $this->nullableString($data['expected_stock_behavior'] ?? null),
+            'reviewer_notes' => $this->nullableString($data['reviewer_notes'] ?? null),
+            'tags_json' => $this->listFromInput($data['tags'] ?? $data['tags_json'] ?? null),
+            'is_active' => (bool) ($data['is_active'] ?? false),
+            'source' => $this->nullableString($data['source'] ?? null) ?: 'manual',
+            'source_reference' => $this->nullableString($data['source_reference'] ?? null),
+            'created_by' => $userId,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function listFromInput(mixed $value): array
+    {
+        if (is_array($value)) {
+            return collect($value)
+                ->map(fn ($item): string => trim((string) $item))
+                ->filter(fn (string $item): bool => $item !== '')
+                ->values()
+                ->all();
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        return collect(preg_split('/[\r\n,]+/u', $text) ?: [])
+            ->map(fn ($item): string => trim((string) $item))
+            ->filter(fn (string $item): bool => $item !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function linesFromInput(mixed $value): array
+    {
+        if (is_array($value)) {
+            return collect($value)
+                ->map(fn ($item): string => trim((string) $item))
+                ->filter(fn (string $item): bool => $item !== '')
+                ->values()
+                ->all();
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        return collect(preg_split('/\r?\n/u', $text) ?: [])
+            ->map(fn ($item): string => trim((string) $item))
+            ->filter(fn (string $item): bool => $item !== '')
+            ->values()
+            ->all();
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (!is_scalar($value)) {
+            return null;
+        }
+
+        $text = trim((string) $value);
+
+        return $text === '' ? null : $text;
     }
 }

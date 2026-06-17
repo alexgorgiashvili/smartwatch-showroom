@@ -50,8 +50,8 @@ class ChatbotDocumentSeeder extends Seeder
                 $lines[] = 'წყალგამძლეობა: ' . $product->water_resistant;
             }
 
-            if ($product->battery_life_hours) {
-                $lines[] = 'ბატარეა: ' . $product->battery_life_hours . ' სთ';
+            if ($batteryLife = $product->batteryLifeLabel('ka')) {
+                $lines[] = 'ბატარეა: ' . $batteryLife;
             }
 
             if ($product->warranty_months) {
@@ -74,6 +74,7 @@ class ChatbotDocumentSeeder extends Seeder
                         'gps_features' => (bool) $product->gps_features,
                         'water_resistant' => $product->water_resistant,
                         'battery_life_hours' => $product->battery_life_hours,
+                        'battery_life_range' => $product->battery_life_range,
                         'warranty_months' => $product->warranty_months,
                     ],
                     'is_active' => true,

@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockAdjustment;
 use App\Models\User;
+use App\Services\Bridge\BridgeAlertService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +75,7 @@ class DashboardController extends Controller
 
         // ── Orders Chart (last 30 days) ──
         $ordersChart = $this->getOrdersChartData();
+        $bridgeAlerts = app(BridgeAlertService::class)->alerts();
 
         return compact(
             'totalProducts', 'totalInquiries', 'totalUsers', 'totalAdmins',
@@ -81,7 +83,7 @@ class DashboardController extends Controller
             'lowStockCount', 'outOfStockCount', 'totalInventory', 'recentAdjustments',
             'chatbotStats', 'unreadConversations',
             'recentOrders', 'recentInquiries', 'recentStockAdjustments',
-            'ordersChart'
+            'ordersChart', 'bridgeAlerts'
         );
     }
 

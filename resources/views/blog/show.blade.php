@@ -176,7 +176,7 @@
     {{-- CTA --}}
     <section class="mt-14 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-primary-900 px-8 py-8 text-center text-white shadow-sm">
         <h2 class="text-base font-bold">{{ $ka ? 'ბავშვის SIM სმარტ საათი — ახლა შეუკვეთე' : 'Kids SIM Smartwatch — Order Now' }}</h2>
-        <p class="mt-2 text-sm text-slate-300">{{ $ka ? 'სწრაფი მიწოდება მთელ საქართველოში.' : 'Fast delivery across Georgia.' }}</p>
+        <p class="mt-2 text-sm text-slate-300">{{ $ka ? 'უფასო მიწოდება საქართველოს მასშტაბით.' : 'Free delivery across Georgia.' }}</p>
         <a href="{{ route('products.index') }}" class="mt-4 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-primary-50 transition">
             {{ $ka ? 'კატალოგი →' : 'Browse →' }}
         </a>

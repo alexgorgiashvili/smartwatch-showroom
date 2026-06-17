@@ -5,7 +5,7 @@
 @section('canonical', url('/products'))
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — MyTechnic' : 'Kids SIM Smartwatches — MyTechnic')
 @section('og_url', url('/products'))
-@section('og_image', asset('images/og-default.jpg'))
+@section('og_image', asset('images/og-default.webp'))
 
 @section('header')
     <!-- Header component -->
@@ -17,7 +17,7 @@
         <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center w-full">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
                 @if(app()->getLocale() === 'ka')
-                    ბავშვის SIM სმარტ საათები — ყველა მოდელი საქართველოში
+                    ბავშვის SIM სმარტ საათები — ჩვენთან ყველაზე დიდი არჩევანია
                 @else
                     Kids SIM Smartwatches — All Models in Georgia
                 @endif
@@ -304,7 +304,7 @@
                                                     <p class="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl [font-family:'Space_Grotesk',system-ui,sans-serif]">
                                                         {{ number_format($salePrice, 2) }} {{ $currency }}
                                                     </p>
-                                                    <p class="text-xs text-slate-400 line-through sm:text-sm">
+                                                    <p class="text-xs price-compare-old sm:text-sm">
                                                         {{ number_format($basePrice, 2) }} {{ $currency }}
                                                     </p>
                                                 </div>
@@ -320,10 +320,10 @@
                                         </div>
                                     </div>
                                     </a>
-                                    @php $firstInStock = $product->variants->firstWhere('quantity', '>', 0); @endphp
+                                    @php $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0); @endphp
                                     <div class="px-3 pb-3 sm:px-4 sm:pb-4">
                                         @if($firstInStock)
-                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form>
+                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
                                                 @csrf
                                                 <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
                                                 <input type="hidden" name="quantity" value="1">
@@ -351,4 +351,3 @@
 @section('footer')
     <!-- Footer component -->
 @endsection
-

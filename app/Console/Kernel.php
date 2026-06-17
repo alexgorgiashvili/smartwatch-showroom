@@ -2,6 +2,10 @@
 
 namespace App\Console;
 
+use App\Jobs\PullBridgeOrderStatusJob;
+use App\Jobs\PushBridgeOrderJob;
+use App\Jobs\SyncBridgeCatalogJob;
+use App\Jobs\SyncBridgeInventoryJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -60,6 +64,32 @@ class Kernel extends ConsoleKernel
                  ->weeklyOn(0, '04:00')
                  ->withoutOverlapping()
                  ->runInBackground();
+
+        // Bridge catalog bootstrap sync
+        $schedule->job(new SyncBridgeCatalogJob())
+                 ->hourly()
+                 ->withoutOverlapping();
+
+        // Bridge inventory and price refresh for already mapped products
+        $schedule->job(new SyncBridgeInventoryJob())
+                 ->everyFifteenMinutes()
+                 ->withoutOverlapping();
+
+        // Push eligible bridge orders automatically once they become allowed
+        $schedule->job(new PushBridgeOrderJob())
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping();
+
+        // Reconcile pending BOG card payments in case callbacks were delayed or missed
+        $schedule->command('payments:reconcile-bog-pending --minutes=30 --limit=50')
+                 ->everyTenMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Pull remote status/tracking updates from bridge
+        $schedule->job(new PullBridgeOrderStatusJob())
+                 ->everyTenMinutes()
+                 ->withoutOverlapping();
     }
 
     /**

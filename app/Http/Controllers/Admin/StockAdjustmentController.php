@@ -41,6 +41,7 @@ class StockAdjustmentController extends Controller
             'success' => true,
             'message' => 'Stock adjusted successfully.',
             'new_quantity' => $variant->quantity,
+            'variant' => $variant,
         ]);
     }
 }

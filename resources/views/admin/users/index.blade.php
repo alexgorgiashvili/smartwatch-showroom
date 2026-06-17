@@ -4,12 +4,12 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Users">
+<div data-page-title="მომხმარებლები">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
-        <div><h4 class="mb-3 mb-md-0">Users</h4></div>
+        <div><h4 class="mb-3 mb-md-0">მომხმარებლები</h4></div>
         <div>
             <button type="button" class="btn btn-primary btn-sm" id="btnCreateUser">
-                <i data-feather="plus" style="width:16px;height:16px;"></i> Add User
+                <i data-feather="plus" style="width:16px;height:16px;"></i> მომხმარებლის დამატება
             </button>
         </div>
     </div>
@@ -27,11 +27,11 @@
                 <table class="table table-hover table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Registered</th>
-                            <th style="width:100px;">Actions</th>
+                            <th>სახელი</th>
+                            <th>ელფოსტა</th>
+                            <th>როლი</th>
+                            <th>რეგისტრაცია</th>
+                            <th style="width:100px;">მოქმედებები</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,9 +41,9 @@
                             <td class="text-muted">{{ $user->email }}</td>
                             <td>
                                 @if($user->is_admin)
-                                    <span class="badge bg-primary">Admin</span>
+                                    <span class="badge bg-primary">ადმინი</span>
                                 @else
-                                    <span class="badge bg-secondary">User</span>
+                                    <span class="badge bg-secondary">მომხმარებელი</span>
                                 @endif
                             </td>
                             <td class="text-muted small">{{ $user->created_at->format('M d, Y') }}</td>
@@ -52,15 +52,15 @@
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-outline-{{ $user->is_admin ? 'warning' : 'primary' }} btn-sm p-1"
-                                            title="{{ $user->is_admin ? 'Remove Admin' : 'Make Admin' }}"
-                                            onclick="return confirm('{{ $user->is_admin ? 'Remove admin role?' : 'Grant admin role?' }}')">
+                                            title="{{ $user->is_admin ? 'ადმინის მოხსნა' : 'ადმინის მინიჭება' }}"
+                                            onclick="return confirm('{{ $user->is_admin ? 'მოვხსნათ ადმინის როლი?' : 'მივანიჭოთ ადმინის როლი?' }}')">
                                         <i data-feather="{{ $user->is_admin ? 'shield-off' : 'shield' }}" style="width:14px;height:14px;"></i>
                                     </button>
                                 </form>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">No users found</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-3">მომხმარებლები ვერ მოიძებნა</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -90,24 +90,24 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', () => {
         const config = JSON.parse(document.getElementById('create-user-url').textContent);
         Swal.fire({
-            title: 'Add User',
+            title: 'მომხმარებლის დამატება',
             html: `
                 <div class="text-start">
-                    <div class="mb-2"><label class="form-label small">Name <span class="text-danger">*</span></label>
+                    <div class="mb-2"><label class="form-label small">სახელი <span class="text-danger">*</span></label>
                         <input type="text" id="swal-name" class="form-control form-control-sm" required></div>
-                    <div class="mb-2"><label class="form-label small">Email <span class="text-danger">*</span></label>
+                    <div class="mb-2"><label class="form-label small">ელფოსტა <span class="text-danger">*</span></label>
                         <input type="email" id="swal-email" class="form-control form-control-sm" required></div>
-                    <div class="mb-2"><label class="form-label small">Password <span class="text-danger">*</span></label>
+                    <div class="mb-2"><label class="form-label small">პაროლი <span class="text-danger">*</span></label>
                         <input type="password" id="swal-pass" class="form-control form-control-sm" required></div>
-                    <div class="mb-2"><label class="form-label small">Confirm Password <span class="text-danger">*</span></label>
+                    <div class="mb-2"><label class="form-label small">გაიმეორეთ პაროლი <span class="text-danger">*</span></label>
                         <input type="password" id="swal-pass-c" class="form-control form-control-sm" required></div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="swal-admin" value="1">
-                        <label class="form-check-label" for="swal-admin">Admin</label>
+                        <label class="form-check-label" for="swal-admin">ადმინი</label>
                     </div>
                 </div>`,
             showCancelButton: true,
-            confirmButtonText: 'Create',
+            confirmButtonText: 'შექმნა',
             preConfirm: () => {
                 const data = {
                     name: document.getElementById('swal-name').value,
@@ -117,13 +117,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     is_admin: document.getElementById('swal-admin').checked ? 1 : 0,
                 };
                 if (!data.name || !data.email || !data.password) {
-                    Swal.showValidationMessage('All fields required');
+                    Swal.showValidationMessage('ყველა ველი სავალდებულოა');
                     return false;
                 }
                 return axios.post(config.url, data)
                     .then(r => r.data)
                     .catch(e => {
-                        const msg = e.response?.data?.message || Object.values(e.response?.data?.errors || {}).flat().join(', ') || 'Error';
+                        const msg = e.response?.data?.message || Object.values(e.response?.data?.errors || {}).flat().join(', ') || 'შეცდომა';
                         Swal.showValidationMessage(msg);
                         return false;
                     });

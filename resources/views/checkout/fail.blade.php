@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Payment Failed')
+@section('title', 'გადახდა ვერ შესრულდა')
 @section('robots', 'noindex, nofollow')
 
 @section('content')

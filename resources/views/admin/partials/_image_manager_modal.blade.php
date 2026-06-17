@@ -3,16 +3,16 @@
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imageManagerModalLabel">Image Manager</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="imageManagerModalLabel">სურათების მენეჯერი</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="დახურვა"></button>
             </div>
             <div class="modal-body">
                 <ul class="nav nav-tabs mb-3" id="imageManagerTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery-tab-pane" type="button" role="tab" aria-controls="gallery-tab-pane" aria-selected="true">Global Gallery</button>
+                        <button class="nav-link active" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery-tab-pane" type="button" role="tab" aria-controls="gallery-tab-pane" aria-selected="true">საერთო გალერეა</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-tab-pane" type="button" role="tab" aria-controls="upload-tab-pane" aria-selected="false">Upload & Crop</button>
+                        <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-tab-pane" type="button" role="tab" aria-controls="upload-tab-pane" aria-selected="false">ატვირთვა და მოჭრა</button>
                     </li>
                 </ul>
                 <div class="tab-content" id="imageManagerTabContent">
@@ -21,7 +21,7 @@
                         <div class="row mb-3 g-2">
                             <div class="col-md-4">
                                 <select class="form-select form-select-sm" id="gallery-filter-product">
-                                    <option value="">All Products</option>
+                                    <option value="">ყველა პროდუქტი</option>
                                     @php
                                         // Load products if not already passed to view
                                         $galleryProducts = $products ?? \App\Models\Product::orderBy('name_en')->get(['id', 'name_en', 'name_ka']);
@@ -33,32 +33,32 @@
                             </div>
                             <div class="col-md-3">
                                 <select class="form-select form-select-sm" id="gallery-filter-time">
-                                    <option value="">All Time</option>
-                                    <option value="today">Today</option>
-                                    <option value="week">Past Week</option>
-                                    <option value="month">Past Month</option>
+                                    <option value="">ყველა დრო</option>
+                                    <option value="today">დღეს</option>
+                                    <option value="week">ბოლო კვირა</option>
+                                    <option value="month">ბოლო თვე</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btn-gallery-refresh">
-                                    <i data-feather="refresh-cw" style="width:12px;height:12px;"></i> Filter
+                                    <i data-feather="refresh-cw" style="width:12px;height:12px;"></i> გაფილტვრა
                                 </button>
                             </div>
                         </div>
 
                         <div id="gallery-loading" class="text-center py-4 d-none">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                                <span class="visually-hidden">იტვირთება...</span>
                             </div>
                         </div>
                         <div id="gallery-empty" class="text-center text-muted py-4 d-none">
-                            No images found with the current filters.
+                            არჩეული ფილტრებით სურათები ვერ მოიძებნა.
                         </div>
                         <div id="gallery-grid" class="row g-2" style="max-height: 500px; overflow-y: auto; overflow-x: hidden;">
                             <!-- Images injected via JS -->
                         </div>
                         <div class="text-center mt-3 d-none" id="gallery-load-more-container">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-gallery-load-more">Load More</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-gallery-load-more">მეტის ჩვენება</button>
                         </div>
                     </div>
                     
@@ -68,8 +68,8 @@
                             <div class="col-md-8">
                                 <div id="upload-zone" class="border border-2 border-dashed rounded p-4 text-center cursor-pointer mb-3 bg-light">
                                     <i data-feather="upload-cloud" style="width:32px;height:32px;" class="text-muted mb-2"></i>
-                                    <p class="mb-0">Drag and drop an image here or click to browse</p>
-                                    <p class="small text-muted">Supports JPG, PNG, WEBP up to 5MB</p>
+                                    <p class="mb-0">გადმოათრიეთ სურათი აქ ან დააჭირეთ ასარჩევად</p>
+                                    <p class="small text-muted">მხარს უჭერს JPG, PNG, WEBP ფორმატებს 5MB-მდე</p>
                                     <input type="file" id="standalone-image-upload" class="d-none" accept="image/jpeg,image/png,image/webp">
                                 </div>
                                 <div id="cropper-container" class="d-none mb-3" style="max-height: 400px;">
@@ -78,12 +78,12 @@
                             </div>
                             <div class="col-md-4">
                                 <div id="cropper-controls" class="d-none">
-                                    <h6 class="mb-3">Editing Tools</h6>
+                                    <h6 class="mb-3">რედაქტირების ხელსაწყოები</h6>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label small">Aspect Ratio</label>
+                                        <label class="form-label small">პროპორცია</label>
                                         <select class="form-select form-select-sm" id="cropper-ratio">
-                                            <option value="NaN">Free</option>
+                                            <option value="NaN">თავისუფალი</option>
                                             <option value="1">1:1 (Instagram)</option>
                                             <option value="1.91">1.91:1 (Facebook Post)</option>
                                             <option value="1.33333">4:3</option>
@@ -92,24 +92,24 @@
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label small d-block">Rotate</label>
+                                        <label class="form-label small d-block">მობრუნება</label>
                                         <div class="btn-group btn-group-sm w-100">
-                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-left" title="Rotate Left">
+                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-left" title="მარცხნივ მობრუნება">
                                                 <i data-feather="rotate-ccw" style="width:14px;height:14px;"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-right" title="Rotate Right">
+                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-right" title="მარჯვნივ მობრუნება">
                                                 <i data-feather="rotate-cw" style="width:14px;height:14px;"></i>
                                             </button>
                                         </div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small d-block">Flip</label>
+                                        <label class="form-label small d-block">ამობრუნება</label>
                                         <div class="btn-group btn-group-sm w-100">
-                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-h" title="Flip Horizontal">
+                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-h" title="ჰორიზონტალურად ამობრუნება">
                                                 <i data-feather="code" style="width:14px;height:14px;transform: rotate(90deg);"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-v" title="Flip Vertical">
+                                            <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-v" title="ვერტიკალურად ამობრუნება">
                                                 <i data-feather="code" style="width:14px;height:14px;"></i>
                                             </button>
                                         </div>
@@ -118,10 +118,10 @@
                                     <hr>
                                     
                                     <button type="button" class="btn btn-primary w-100 mb-2" id="btn-crop-save">
-                                        <i data-feather="check" style="width:14px;height:14px;"></i> Crop & Upload
+                                        <i data-feather="check" style="width:14px;height:14px;"></i> მოჭრა და ატვირთვა
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary w-100" id="btn-crop-cancel">
-                                        Cancel
+                                        გაუქმება
                                     </button>
                                     
                                     <div class="progress mt-3 d-none" id="upload-progress-container" style="height: 10px;">
@@ -134,8 +134,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btn-select-gallery-image" disabled>Use Selected Image</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">დახურვა</button>
+                <button type="button" class="btn btn-primary" id="btn-select-gallery-image" disabled>მონიშნული სურათის გამოყენება</button>
             </div>
         </div>
     </div>

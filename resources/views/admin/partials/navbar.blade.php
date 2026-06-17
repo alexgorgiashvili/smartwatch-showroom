@@ -14,7 +14,7 @@
                             <img class="wd-80 ht-80 rounded-circle" src="{{ asset('assets/images/others/placeholder.jpg') }}" alt="profile">
                         </div>
                         <div class="text-center">
-                            <p class="tx-16 fw-bolder">{{ auth()->user()->name ?? 'Admin' }}</p>
+                            <p class="tx-16 fw-bolder">{{ auth()->user()->name ?? 'ადმინი' }}</p>
                             <p class="tx-12 text-muted">{{ auth()->user()->email ?? '' }}</p>
                         </div>
                     </div>
@@ -24,7 +24,7 @@
                                 @csrf
                                 <button type="submit" class="btn btn-link text-body ms-0 p-0">
                                     <i class="me-2 icon-md" data-feather="log-out"></i>
-                                    <span>Log Out</span>
+                                    <span>გასვლა</span>
                                 </button>
                             </form>
                         </li>

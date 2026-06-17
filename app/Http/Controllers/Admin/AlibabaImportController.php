@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Services\AlibabaApifyLiveScraperService;
 use App\Services\AlibabaApifyPayloadAdapterService;
 use App\Services\AlibabaDataProcessorService;
 use App\Services\AlibabaScraperService;
 use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -20,7 +20,6 @@ class AlibabaImportController extends Controller
     public function __construct(
         private readonly AlibabaScraperService $scraper,
         private readonly AlibabaDataProcessorService $processor,
-        private readonly AlibabaApifyLiveScraperService $apifyScraper,
         private readonly AlibabaApifyPayloadAdapterService $apifyPayloadAdapter,
     ) {
     }
@@ -35,41 +34,32 @@ class AlibabaImportController extends Controller
     public function parse(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'import_source' => ['nullable', 'in:direct,apify'],
+            'import_source' => ['nullable', 'in:apify,raw_html'],
             'apify_json' => ['nullable', 'string'],
-            'url' => ['nullable', 'url'],
             'raw_html' => ['nullable', 'string', 'min:1000'],
         ]);
 
-        $importSource = (string) ($data['import_source'] ?? 'direct');
+        $importSource = (string) ($data['import_source'] ?? 'raw_html');
         $apifyJson = trim((string) ($data['apify_json'] ?? ''));
-        $url = trim((string) ($data['url'] ?? ''));
         $rawHtml = trim((string) ($data['raw_html'] ?? ''));
 
-        if ($importSource === 'apify' && $apifyJson === '' && $url === '') {
+        if ($importSource === 'apify' && $apifyJson === '') {
             return response()->json([
-                'message' => 'Apify JSON or Alibaba product URL is required.',
+                'message' => 'Apify JSON is required.',
             ], 422);
         }
 
-        if ($importSource !== 'apify' && $url === '' && $rawHtml === '') {
+        if ($importSource === 'raw_html' && $rawHtml === '') {
             return response()->json([
-                'message' => 'Alibaba product URL or full page source is required.',
+                'message' => 'Full page source is required.',
             ], 422);
         }
 
         try {
-            if ($rawHtml !== '') {
-                $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
-            } elseif ($importSource === 'apify') {
-                if ($apifyJson !== '') {
-                    $raw = $this->apifyPayloadAdapter->adaptFromJson($apifyJson);
-                } else {
-                    $livePayload = $this->apifyScraper->scrapeProductUrl($url);
-                    $raw = $this->apifyPayloadAdapter->adapt($livePayload);
-                }
+            if ($importSource === 'apify') {
+                $raw = $this->apifyPayloadAdapter->adaptFromJson($apifyJson);
             } else {
-                $raw = $this->scraper->scrape($data['url'] ?? null, $data['raw_html'] ?? null);
+                $raw = $this->scraper->scrape(null, $rawHtml);
             }
 
             $processed = $this->processor->process($raw);
@@ -86,7 +76,7 @@ class AlibabaImportController extends Controller
             report($exception);
 
             return response()->json([
-                'message' => 'Failed to parse this page. Try direct product URL or paste full Page Source from browser.',
+                'message' => 'Failed to parse this source. Paste full browser page source or valid Apify JSON.',
             ], 422);
         }
 
@@ -98,7 +88,7 @@ class AlibabaImportController extends Controller
 
     public function confirm(Request $request, ChatbotContentSyncService $contentSync): JsonResponse
     {
-        $payload = $request->validate([
+        $payload = validator($this->normalizeConfirmPayload($request->all()), [
             'source_url' => ['nullable', 'url'],
             'source_product_id' => ['nullable', 'string', 'max:120'],
             'name_en' => ['required', 'string', 'max:160'],
@@ -139,7 +129,7 @@ class AlibabaImportController extends Controller
             'variants.*.color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'variants.*.quantity' => ['nullable', 'integer', 'min:0'],
             'variants.*.low_stock_threshold' => ['nullable', 'integer', 'min:0'],
-        ]);
+        ])->validate();
 
         $duplicate = $this->findDuplicateBySource(
             $payload['source_url'] ?? null,
@@ -328,5 +318,25 @@ class AlibabaImportController extends Controller
         }
 
         return preg_match('/^#[0-9A-F]{6}$/', $hex) === 1 ? $hex : null;
+    }
+
+    private function normalizeConfirmPayload(array $input): array
+    {
+        $product = Arr::get($input, 'product', []);
+        if (!is_array($product)) {
+            $product = [];
+        }
+
+        $merged = array_merge($product, Arr::except($input, ['product']));
+
+        if (!array_key_exists('selected_images', $merged) && isset($input['images']) && is_array($input['images'])) {
+            $merged['selected_images'] = $input['images'];
+        }
+
+        if (!array_key_exists('variants', $merged) && isset($input['variants']) && is_array($input['variants'])) {
+            $merged['variants'] = $input['variants'];
+        }
+
+        return $merged;
     }
 }

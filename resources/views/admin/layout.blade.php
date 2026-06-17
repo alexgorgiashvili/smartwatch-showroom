@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ka">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="MyTechnic Admin">
     <meta name="theme-color" content="#ffffff">
-    <title>@yield('title', 'Admin')</title>
+    <title>@yield('title', 'ადმინი')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +32,7 @@
 <body>
     <div id="pjax-progress" class="pjax-progress"></div>
     <div class="main-wrapper">
-        @if(auth()->check() && ! request()->routeIs('admin.login'))
+        @if(! request()->routeIs('admin.login'))
             @include('admin.partials.sidebar')
             <div class="page-wrapper">
                 @include('admin.partials.navbar')
@@ -60,7 +60,7 @@
         <div id="async-toast" class="toast align-items-center bg-dark text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 280px;">
             <div class="d-flex">
                 <div class="toast-body"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="დახურვა"></button>
             </div>
         </div>
     </div>
@@ -78,16 +78,16 @@
     <!-- Global Lightbox Modal -->
     <div id="global-lightbox" class="lightbox-modal">
         <div class="lightbox-header">
-            <button class="lightbox-close" id="lightbox-close" aria-label="Close">
+            <button class="lightbox-close" id="lightbox-close" aria-label="დახურვა">
                 <i data-feather="x"></i>
             </button>
         </div>
         <div class="lightbox-content">
-            <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">
+            <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="წინა">
                 <i data-feather="chevron-left"></i>
             </button>
-            <img src="" alt="Gallery Image" class="lightbox-img" id="lightbox-main-img">
-            <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">
+            <img src="" alt="გალერიის სურათი" class="lightbox-img" id="lightbox-main-img">
+            <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="შემდეგი">
                 <i data-feather="chevron-right"></i>
             </button>
         </div>

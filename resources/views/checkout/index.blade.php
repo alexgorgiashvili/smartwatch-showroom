@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Checkout')
+@section('title', 'შეკვეთის გაფორმება')
 @section('robots', 'noindex, nofollow')
 
 @section('content')
@@ -16,11 +16,45 @@
                         <h1 class="text-xl font-bold text-gray-900">შეკვეთის დეტალები</h1>
 
                         <div class="mt-4 space-y-3">
+                            @foreach($giftGroups as $group)
+                                @php
+                                    $groupSym = ($group['currency'] ?? 'GEL') === 'GEL' ? '₾' : ($group['currency'] ?? 'GEL');
+                                @endphp
+                                <div class="rounded-xl border border-primary-100 bg-primary-50/50 p-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-[11px] font-semibold uppercase text-primary-700">სასაჩუქრე ყუთი</p>
+                                            <p class="text-sm font-bold text-gray-900">სასაჩუქრე ყუთი</p>
+                                            <p class="mt-1 text-xs text-gray-600">{{ $group['items_count'] }} პროდუქტი • {{ $group['packaging_label'] }}</p>
+                                        </div>
+                                        <p class="shrink-0 text-sm font-bold text-primary-700">{{ number_format($group['total'], 2) }} {{ $groupSym }}</p>
+                                    </div>
+
+                                    <div class="mt-3 space-y-2">
+                                        @foreach($group['items'] as $item)
+                                            <div class="flex items-center gap-3 rounded-lg bg-white p-2">
+                                                <img src="{{ $item['image'] }}" alt="{{ $item['product']->name }}" class="h-12 w-12 rounded-md border border-slate-200 object-cover" />
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="truncate text-xs font-semibold text-gray-900">{{ $item['product']->name }}</p>
+                                                    <p class="text-[11px] text-gray-500">{{ $item['variant']->name }} • {{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</p>
+                                                </div>
+                                                <p class="text-xs font-semibold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    @if($group['message'])
+                                        <p class="mt-3 rounded-lg border border-primary-100 bg-white px-3 py-2 text-xs text-gray-600">“{{ $group['message'] }}”</p>
+                                    @endif
+                                </div>
+                            @endforeach
+
                             @foreach($cartItems as $item)
                                 <div class="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
                                     <img src="{{ $item['image'] }}" alt="{{ $item['product']->name }}" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-semibold text-gray-900">{{ $item['product']->name }}</p>
+                                        <p class="mt-1 text-[11px] font-semibold text-primary-600">{{ $item['fulfillment_label'] }}</p>
                                         <p class="text-xs text-gray-600">{{ $item['variant']->name }} • {{ $item['quantity'] }} ც</p>
                                         <p class="mt-1 text-sm font-semibold text-primary-600">{{ number_format($item['subtotal'], 2) }} {{ $item['currency'] === 'GEL' ? '₾' : $item['currency'] }}</p>
                                     </div>
@@ -99,9 +133,58 @@
     </section>
 @endsection
 
+@php
+    $checkoutAnalyticsCurrency = $currencySymbol === '₾' ? 'GEL' : $currencySymbol;
+    $checkoutAnalyticsContentIds = collect($cartItems)
+        ->map(fn ($item) => (string) ($item['product']->id ?? $item['variant']->id ?? ''))
+        ->filter()
+        ->values();
+    $checkoutAnalyticsContents = collect($cartItems)
+        ->map(function ($item) {
+            $quantity = (int) ($item['quantity'] ?? 1);
+            $subtotal = (float) ($item['subtotal'] ?? 0);
+
+            return array_filter([
+                'id' => (string) ($item['product']->id ?? $item['variant']->id ?? ''),
+                'quantity' => $quantity,
+                'item_price' => $quantity > 0 ? round($subtotal / $quantity, 2) : null,
+            ], fn ($value) => $value !== null && $value !== '');
+        })
+        ->values();
+    $checkoutAnalyticsItems = collect($cartItems)
+        ->map(function ($item) {
+            $quantity = (int) ($item['quantity'] ?? 1);
+            $subtotal = (float) ($item['subtotal'] ?? 0);
+
+            return array_filter([
+                'item_id' => (string) ($item['product']->id ?? $item['variant']->id ?? ''),
+                'item_name' => $item['product']->name ?? null,
+                'price' => $quantity > 0 ? round($subtotal / $quantity, 2) : null,
+                'quantity' => $quantity,
+            ], fn ($value) => $value !== null && $value !== '');
+        })
+        ->values();
+@endphp
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        if (window.storefrontAnalytics) {
+            const checkoutKey = ['initiate-checkout', @js((int) $cartCount), @js(number_format((float) $cartTotal, 2, '.', '')), @js($checkoutAnalyticsCurrency)].join(':');
+            if (window.sessionStorage && !window.sessionStorage.getItem(checkoutKey)) {
+                window.storefrontAnalytics.track('InitiateCheckout', {
+                    currency: @js($checkoutAnalyticsCurrency),
+                    value: @js((float) $cartTotal),
+                    num_items: @js((int) $cartCount),
+                    content_type: 'product',
+                    content_ids: @json($checkoutAnalyticsContentIds),
+                    contents: @json($checkoutAnalyticsContents),
+                    items: @json($checkoutAnalyticsItems)
+                });
+                window.sessionStorage.setItem(checkoutKey, '1');
+            }
+        }
+
         const form = document.getElementById('checkout-form');
         const errorBox = document.getElementById('checkout-error');
         const submitButton = document.getElementById('checkout-submit');
@@ -251,7 +334,7 @@
                 }
 
                 if (!data.redirect_url) {
-                    errorBox.textContent = 'Redirect URL არ დაბრუნდა.';
+                    errorBox.textContent = 'გადამისამართების ბმული არ დაბრუნდა.';
                     errorBox.classList.remove('hidden');
                     return;
                 }

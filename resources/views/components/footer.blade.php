@@ -9,18 +9,26 @@
           {{ __('ui.footer_tagline') }}
         </p>
         <div class="mt-6 flex gap-3">
-          <a href="{{ $contactSettings['whatsapp_url'] ?? 'https://wa.me/995555123456' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition" title="WhatsApp">
+          @if (!empty($contactSettings['whatsapp_url']))
+          <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition" title="WhatsApp">
             <i class="fab fa-whatsapp"></i>
           </a>
-          <a href="{{ $contactSettings['facebook_url'] ?? 'https://www.facebook.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition" title="Facebook">
+          @endif
+          @if (!empty($contactSettings['facebook_url']))
+          <a href="{{ $contactSettings['facebook_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition" title="Facebook">
             <i class="fab fa-facebook"></i>
           </a>
-          <a href="{{ $contactSettings['instagram_url'] ?? 'https://www.instagram.com/mytechnic.ge' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-pink-600 hover:bg-pink-700 text-white rounded-full transition" title="Instagram">
+          @endif
+          @if (!empty($contactSettings['instagram_url']))
+          <a href="{{ $contactSettings['instagram_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-pink-600 hover:bg-pink-700 text-white rounded-full transition" title="Instagram">
             <i class="fab fa-instagram"></i>
           </a>
-          <a href="{{ $contactSettings['telegram_url'] ?? 'https://t.me/mytechnic_ge' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full transition" title="Telegram">
+          @endif
+          @if (!empty($contactSettings['telegram_url']))
+          <a href="{{ $contactSettings['telegram_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full transition" title="Telegram">
             <i class="fab fa-telegram"></i>
           </a>
+          @endif
         </div>
       </div>
 
@@ -59,7 +67,11 @@
             <i class="fas fa-phone mt-1 text-green-500"></i>
             <div>
               <p class="text-gray-400">{{ __('ui.footer_phone') }}</p>
-              <a href="tel:{{ $contactSettings['phone_link'] ?? '+995555123456' }}" class="hover:text-white transition font-medium">{{ $contactSettings['phone_display'] ?? '+995 555 123 456' }}</a>
+              @if (!empty($contactSettings['phone_link']) && !empty($contactSettings['phone_display']))
+              <a href="tel:{{ $contactSettings['phone_link'] }}" class="hover:text-white transition font-medium">{{ $contactSettings['phone_display'] }}</a>
+              @else
+              <span class="font-medium text-gray-500">-</span>
+              @endif
             </div>
           </li>
           <li class="flex items-start gap-2">
@@ -93,4 +105,3 @@
     </div>
   </div>
 </footer>
-

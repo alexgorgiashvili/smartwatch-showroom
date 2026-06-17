@@ -15,12 +15,19 @@ class OrderItem extends Model
         'quantity',
         'unit_price',
         'subtotal',
+        'bridge_product_id',
+        'bridge_variation_id',
+        'fulfillment_mode',
+        'gift_group_id',
+        'gift_role',
+        'gift_sort_order',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'gift_sort_order' => 'integer',
     ];
 
     public function order(): BelongsTo

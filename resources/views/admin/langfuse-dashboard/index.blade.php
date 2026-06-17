@@ -4,7 +4,7 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Langfuse Dashboard" data-langfuse-dashboard>
+<div data-page-title="Langfuse დეშბორდი" data-langfuse-dashboard>
     @php
         $health = $snapshot['health'] ?? ['status' => 'warning', 'label' => 'მონაცემი არ ჩანს', 'reasons' => []];
         $healthCardClass = match($health['status'] ?? 'warning') {
@@ -21,13 +21,13 @@
 
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin gap-2">
         <div>
-            <h4 class="mb-1">Langfuse Dashboard</h4>
+            <h4 class="mb-1">Langfuse დეშბორდი</h4>
             <p class="text-muted mb-0">ოპერატიული პანელი ჩატბოტის ჯანმრთელობის, ხარჯის, შეცდომებისა და ნელი ნაბიჯების სწრაფად სანახავად.</p>
             <p class="text-muted small mb-0 mt-1">ბოლო განახლება: {{ $filters['generated_at'] ?? '—' }}</p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.langfuse-link') }}" class="btn btn-sm btn-outline-secondary" data-pjax>
-                Setup
+                გამართვა
             </a>
             <a href="{{ $snapshot['base_url'] }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
                 გახსენი სრული Langfuse
@@ -60,7 +60,7 @@
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary">განახლება</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-langfuse-dashboard-refresh>Refresh</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-langfuse-dashboard-refresh>განახლება</button>
                 </div>
             </form>
         </div>

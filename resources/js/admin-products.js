@@ -1,8 +1,7 @@
 /**
- * Admin Products — DataTable, variant CRUD, image management, delete confirmations
+ * Admin Products - DataTable, variant CRUD, image management, delete confirmations
  */
 
-// Lightbox Logic
 let currentImages = [];
 let currentIndex = 0;
 
@@ -10,12 +9,12 @@ function openLightbox(images, startIndex) {
     currentImages = images;
     currentIndex = startIndex;
     const lightbox = document.getElementById('global-lightbox');
-    
+
     if (!lightbox) return;
-    
+
     updateLightboxView();
     lightbox.classList.add('active');
-    document.body.style.overflow = 'hidden'; // Prevent scrolling
+    document.body.style.overflow = 'hidden';
 }
 
 function closeLightbox() {
@@ -29,14 +28,12 @@ function closeLightbox() {
 function updateLightboxView() {
     const mainImg = document.getElementById('lightbox-main-img');
     const thumbContainer = document.getElementById('lightbox-thumbnails');
-    
+
     if (!mainImg || !currentImages.length) return;
-    
-    // Update main image
+
     mainImg.src = currentImages[currentIndex].url;
-    
-    // Build thumbnails
     thumbContainer.innerHTML = '';
+
     currentImages.forEach((img, idx) => {
         const thumb = document.createElement('img');
         thumb.src = img.thumbnail_url || img.url;
@@ -61,13 +58,11 @@ function prevLightboxImage() {
     updateLightboxView();
 }
 
-// Global Event Listeners for Lightbox
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
     document.getElementById('lightbox-next')?.addEventListener('click', nextLightboxImage);
     document.getElementById('lightbox-prev')?.addEventListener('click', prevLightboxImage);
-    
-    // Keyboard navigation
+
     document.addEventListener('keydown', (e) => {
         const lightbox = document.getElementById('global-lightbox');
         if (lightbox && lightbox.classList.contains('active')) {
@@ -79,8 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const AdminProducts = {
+    _editBound: false,
+    _currentProductData: null,
 
-    // ── Product Index Page ──
     initIndex() {
         this._initDataTable();
         this._bindDeleteProduct();
@@ -121,29 +117,30 @@ const AdminProducts = {
 
     _bindGalleryTriggers() {
         const triggers = document.querySelectorAll('.product-gallery-trigger');
-        triggers.forEach(trigger => {
-            // Remove existing listener to avoid duplicates
+        triggers.forEach((trigger) => {
             const newTrigger = trigger.cloneNode(true);
             if (trigger.parentNode) {
                 trigger.parentNode.replaceChild(newTrigger, trigger);
             }
-            
+
             newTrigger.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const productId = newTrigger.getAttribute('data-product-id');
                 if (!productId) return;
-                
+
                 try {
                     document.body.style.cursor = 'wait';
                     const res = await axios.get(`/admin/products/${productId}/images-json`);
-                    if (res.data && res.data.images && res.data.images.length > 0) {
+                    if (res.data?.images?.length) {
                         openLightbox(res.data.images, 0);
-                    } else {
-                        if (window.AdminHelpers) window.AdminHelpers.showToast('No images available for this product', 'info');
+                    } else if (window.AdminHelpers) {
+                        window.AdminHelpers.showToast('No images available for this product', 'info');
                     }
                 } catch (err) {
                     console.error('Error loading gallery', err);
-                    if (window.AdminHelpers) window.AdminHelpers.showToast('Failed to load images', 'error');
+                    if (window.AdminHelpers) {
+                        window.AdminHelpers.showToast('Failed to load images', 'error');
+                    }
                 } finally {
                     document.body.style.cursor = '';
                 }
@@ -156,23 +153,32 @@ const AdminProducts = {
             const btn = e.target.closest('.btn-delete-product');
             if (!btn) return;
 
-            const url = btn.dataset.url;
-            const name = btn.dataset.name;
+            if (typeof window.AdminHelpers === 'undefined') return;
 
-            if (typeof window.AdminHelpers !== 'undefined') {
-                window.AdminHelpers.confirmDelete(url, `Delete product "${name}"?`);
-            }
+            window.AdminHelpers.confirmDelete(btn.dataset.url, {
+                title: `Delete product "${btn.dataset.name}"?`,
+                text: 'This action cannot be undone.',
+                onSuccess: (data) => {
+                    const targetUrl = data?.redirect || '/admin/products';
+                    if (window.AdminRouter) {
+                        window.AdminRouter.navigate(targetUrl);
+                    } else {
+                        window.location.href = targetUrl;
+                    }
+                },
+            });
         });
     },
 
-    // ── Product Form (Create/Edit shared) ──
     initForm() {
         this._bindFormSubmit();
     },
 
     _bindFormSubmit() {
         const form = document.getElementById('productForm');
-        if (!form) return;
+        if (!form || form.dataset.asyncBound === '1') return;
+
+        form.dataset.asyncBound = '1';
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -189,7 +195,7 @@ const AdminProducts = {
             try {
                 const formData = new FormData(form);
                 const response = await axios.post(form.action, formData, {
-                    headers: { 'Accept': 'application/json' },
+                    headers: { Accept: 'application/json' },
                 });
 
                 if (response.data.redirect) {
@@ -198,19 +204,14 @@ const AdminProducts = {
                     } else {
                         window.location.href = response.data.redirect;
                     }
-                } else {
-                    if (typeof window.AdminHelpers !== 'undefined') {
-                        window.AdminHelpers.showToast(response.data.message || 'Saved!', 'success');
-                    }
+                } else if (typeof window.AdminHelpers !== 'undefined') {
+                    window.AdminHelpers.showToast(response.data.message || 'Saved!', 'success');
                 }
             } catch (error) {
-                if (error.response && error.response.status === 422 && typeof window.AdminHelpers !== 'undefined') {
+                if (error.response?.status === 422 && typeof window.AdminHelpers !== 'undefined') {
                     window.AdminHelpers.showValidationErrors(error.response.data.errors, form);
-                } else {
-                    const msg = error.response?.data?.message || 'An error occurred.';
-                    if (typeof window.AdminHelpers !== 'undefined') {
-                        window.AdminHelpers.showToast(msg, 'error');
-                    }
+                } else if (typeof window.AdminHelpers !== 'undefined') {
+                    window.AdminHelpers.showToast(error.response?.data?.message || 'An error occurred.', 'error');
                 }
             } finally {
                 btn.disabled = false;
@@ -220,45 +221,53 @@ const AdminProducts = {
         });
     },
 
-    // ── Edit Page (Variants + Images) ──
     initEdit() {
+        const productDataEl = document.getElementById('product-data');
+        if (!productDataEl) return;
+
+        try {
+            this._currentProductData = JSON.parse(productDataEl.textContent);
+        } catch {
+            this._currentProductData = null;
+            return;
+        }
+
+        if (this._editBound) return;
+
+        this._editBound = true;
         this._bindVariantActions();
         this._bindImageActions();
     },
 
     _bindVariantActions() {
-        const productDataEl = document.getElementById('product-data');
-        if (!productDataEl) return;
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#btnAddVariant');
+            if (!btn || !this._currentProductData?.storeVariantUrl) return;
+            this._showVariantModal(null, this._currentProductData.storeVariantUrl);
+        });
 
-        let productData;
-        try { productData = JSON.parse(productDataEl.textContent); } catch { return; }
-
-        // Add Variant
-        const btnAdd = document.getElementById('btnAddVariant');
-        if (btnAdd) {
-            btnAdd.addEventListener('click', () => this._showVariantModal(null, productData.storeVariantUrl));
-        }
-
-        // Edit Variant
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-edit-variant');
             if (!btn) return;
+
             const variant = JSON.parse(btn.dataset.variant);
-            const url = `/admin/products/variants/${variant.id}`;
-            this._showVariantModal(variant, url, 'PATCH');
+            this._showVariantModal(variant, `/admin/products/variants/${variant.id}`, 'PATCH');
         });
 
-        // Delete Variant
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-delete-variant');
-            if (!btn) return;
-            if (typeof window.AdminHelpers !== 'undefined') {
-                window.AdminHelpers.confirmDelete(btn.dataset.url, `Delete variant "${btn.dataset.name}"?`)
-                    .then((confirmed) => { if (confirmed) location.reload(); });
-            }
+            if (!btn || typeof window.AdminHelpers === 'undefined') return;
+
+            window.AdminHelpers.confirmDelete(btn.dataset.url, {
+                title: `Delete variant "${btn.dataset.name}"?`,
+                text: 'This action cannot be undone.',
+                onSuccess: () => {
+                    btn.closest('tr')?.remove();
+                    this._syncVariantsEmptyState();
+                },
+            });
         });
 
-        // Adjust Stock
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-adjust-stock');
             if (!btn) return;
@@ -317,27 +326,27 @@ const AdminProducts = {
                 }
 
                 try {
-                    const headers = { 'Accept': 'application/json' };
-                    let response;
-                    if (method === 'PATCH') {
-                        response = await axios.patch(url, data, { headers });
-                    } else {
-                        response = await axios.post(url, data, { headers });
-                    }
+                    const response = method === 'PATCH'
+                        ? await axios.patch(url, data, { headers: { Accept: 'application/json' } })
+                        : await axios.post(url, data, { headers: { Accept: 'application/json' } });
+
                     return response.data;
                 } catch (error) {
-                    const msg = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(', ') || 'Error';
+                    const msg = error.response?.data?.message
+                        || Object.values(error.response?.data?.errors || {}).flat().join(', ')
+                        || 'Error';
                     Swal.showValidationMessage(msg);
                     return false;
                 }
             },
         }).then((result) => {
-            if (result.isConfirmed) {
-                if (typeof window.AdminHelpers !== 'undefined') {
-                    window.AdminHelpers.showToast(result.value.message || 'Saved!', 'success');
-                }
-                location.reload();
+            if (!result.isConfirmed) return;
+
+            if (typeof window.AdminHelpers !== 'undefined') {
+                window.AdminHelpers.showToast(result.value.message || 'Saved!', 'success');
             }
+
+            this._upsertVariantRow(result.value.variant);
         });
     },
 
@@ -373,76 +382,242 @@ const AdminProducts = {
                     const response = await axios.post(`/admin/variants/${variantId}/adjust-stock`, {
                         quantity_change: qty,
                         reason: reason || null,
-                    }, { headers: { 'Accept': 'application/json' } });
+                    }, { headers: { Accept: 'application/json' } });
+
                     return response.data;
                 } catch (error) {
-                    const msg = error.response?.data?.message || 'Error adjusting stock';
-                    Swal.showValidationMessage(msg);
+                    Swal.showValidationMessage(error.response?.data?.message || 'Error adjusting stock');
                     return false;
                 }
             },
         }).then((result) => {
-            if (result.isConfirmed) {
-                if (typeof window.AdminHelpers !== 'undefined') {
-                    window.AdminHelpers.showToast(result.value.message || 'Stock adjusted!', 'success');
-                }
-                location.reload();
+            if (!result.isConfirmed) return;
+
+            if (typeof window.AdminHelpers !== 'undefined') {
+                window.AdminHelpers.showToast(result.value.message || 'Stock adjusted!', 'success');
+            }
+
+            if (result.value?.variant) {
+                this._upsertVariantRow(result.value.variant);
+            } else {
+                window.location.reload();
             }
         });
     },
 
     _bindImageActions() {
-        // Upload images
         const fileInput = document.getElementById('imageFileInput');
-        if (fileInput) {
+        if (fileInput && fileInput.dataset.asyncBound !== '1') {
+            fileInput.dataset.asyncBound = '1';
+
             fileInput.addEventListener('change', async () => {
                 const form = document.getElementById('imageUploadForm');
                 if (!form || !fileInput.files.length) return;
 
-                const formData = new FormData(form);
                 try {
-                    await axios.post(form.action, formData, {
-                        headers: { 'Accept': 'application/json' },
+                    const response = await axios.post(form.action, new FormData(form), {
+                        headers: { Accept: 'application/json' },
                     });
+
                     if (typeof window.AdminHelpers !== 'undefined') {
-                        window.AdminHelpers.showToast('Images uploaded!', 'success');
+                        window.AdminHelpers.showToast(response.data?.message || 'Images uploaded!', 'success');
                     }
-                    location.reload();
+
+                    this._renderImages(response.data?.images || []);
+                    fileInput.value = '';
                 } catch (error) {
-                    const msg = error.response?.data?.message || 'Upload failed';
                     if (typeof window.AdminHelpers !== 'undefined') {
-                        window.AdminHelpers.showToast(msg, 'error');
+                        window.AdminHelpers.showToast(error.response?.data?.message || 'Upload failed', 'error');
                     }
                 }
             });
         }
 
-        // Set primary
         document.addEventListener('click', async (e) => {
             const btn = e.target.closest('.btn-set-primary');
             if (!btn) return;
+
             try {
-                await axios.post(btn.dataset.url, {}, { headers: { 'Accept': 'application/json' } });
+                const response = await axios.post(btn.dataset.url, {}, { headers: { Accept: 'application/json' } });
                 if (typeof window.AdminHelpers !== 'undefined') {
-                    window.AdminHelpers.showToast('Primary image updated!', 'success');
+                    window.AdminHelpers.showToast(response.data?.message || 'Primary image updated!', 'success');
                 }
-                location.reload();
+
+                this._renderImages(response.data?.images || []);
             } catch (error) {
                 if (typeof window.AdminHelpers !== 'undefined') {
-                    window.AdminHelpers.showToast('Failed to set primary image', 'error');
+                    window.AdminHelpers.showToast(error.response?.data?.message || 'Failed to set primary image', 'error');
                 }
             }
         });
 
-        // Delete image
-        document.addEventListener('click', async (e) => {
+        document.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-delete-image');
-            if (!btn) return;
-            if (typeof window.AdminHelpers !== 'undefined') {
-                window.AdminHelpers.confirmDelete(btn.dataset.url, 'Delete this image?')
-                    .then((confirmed) => { if (confirmed) location.reload(); });
-            }
+            if (!btn || typeof window.AdminHelpers === 'undefined') return;
+
+            window.AdminHelpers.confirmDelete(btn.dataset.url, {
+                title: 'Delete this image?',
+                text: 'This action cannot be undone.',
+                onSuccess: (data) => {
+                    this._renderImages(data?.images || []);
+                },
+            });
         });
+    },
+
+    _upsertVariantRow(variant) {
+        if (!variant) return;
+
+        const tbody = document.querySelector('#variantsTable tbody');
+        if (!tbody) return;
+
+        document.getElementById('noVariantsRow')?.remove();
+
+        const rowHtml = this._buildVariantRowHtml(variant);
+        const existingRow = tbody.querySelector(`tr[data-variant-id="${variant.id}"]`);
+
+        if (existingRow) {
+            existingRow.outerHTML = rowHtml;
+        } else {
+            tbody.insertAdjacentHTML('beforeend', rowHtml);
+        }
+
+        this._syncVariantsEmptyState();
+        if (typeof feather !== 'undefined') feather.replace();
+    },
+
+    _syncVariantsEmptyState() {
+        const tbody = document.querySelector('#variantsTable tbody');
+        if (!tbody) return;
+
+        const rows = tbody.querySelectorAll('tr[data-variant-id]');
+        const emptyRow = document.getElementById('noVariantsRow');
+
+        if (rows.length === 0 && !emptyRow) {
+            tbody.insertAdjacentHTML('beforeend', '<tr id="noVariantsRow"><td colspan="9" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>');
+        }
+
+        if (rows.length > 0) {
+            emptyRow?.remove();
+        }
+    },
+
+    _buildVariantRowHtml(variant) {
+        const quantity = Number(variant.quantity ?? 0);
+        const threshold = Number(variant.low_stock_threshold ?? 0);
+        const availableQuantity = variant.available_quantity ?? quantity;
+        const bridgeQuantity = variant.bridge_stock_quantity ?? '—';
+        const syncStatus = variant.stock_sync_status || '—';
+        const hasColor = !!(variant.color_name || variant.color_hex);
+        const colorHex = variant.color_hex || '#000000';
+        const colorName = variant.color_name || 'Unnamed';
+        const bridgeVariationId = variant.bridge_variation_id
+            ? `<div class="text-muted">Var #${this._escapeHtml(String(variant.bridge_variation_id))}</div>`
+            : '';
+
+        let stockBadge = '<span class="badge bg-success">In Stock</span>';
+        if (quantity <= 0) {
+            stockBadge = '<span class="badge bg-danger">Out of Stock</span>';
+        } else if (quantity <= threshold) {
+            stockBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+        }
+
+        return `
+            <tr data-variant-id="${variant.id}">
+                <td class="fw-bold">${this._escapeHtml(variant.name || '')}</td>
+                <td>
+                    ${hasColor
+                        ? `<span class="d-inline-flex align-items-center gap-1">
+                                <span style="width:14px;height:14px;border-radius:50%;background:${this._escapeHtml(colorHex)};display:inline-block;border:1px solid #dee2e6;"></span>
+                                ${this._escapeHtml(colorName)}
+                           </span>`
+                        : '<span class="text-muted">—</span>'}
+                </td>
+                <td>${this._escapeHtml(String(availableQuantity))}</td>
+                <td>${this._escapeHtml(String(quantity))}</td>
+                <td>${this._escapeHtml(String(bridgeQuantity))}</td>
+                <td>${this._escapeHtml(String(threshold))}</td>
+                <td>${stockBadge}</td>
+                <td>
+                    <div class="small">
+                        <div>${this._escapeHtml(syncStatus)}</div>
+                        ${bridgeVariationId}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-outline-primary btn-sm p-1 btn-edit-variant"
+                                data-variant='${this._escapeAttributeJson(variant)}'
+                                title="Edit">
+                            <i data-feather="edit-2" style="width:14px;height:14px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm p-1 btn-adjust-stock"
+                                data-variant-id="${variant.id}"
+                                data-variant-name="${this._escapeHtml(variant.name || '')}"
+                                title="Adjust Stock">
+                            <i data-feather="package" style="width:14px;height:14px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-delete-variant"
+                                data-url="/admin/products/variants/${variant.id}"
+                                data-name="${this._escapeHtml(variant.name || '')}"
+                                title="Delete">
+                            <i data-feather="trash-2" style="width:14px;height:14px;"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    },
+
+    _renderImages(images) {
+        const grid = document.getElementById('imagesGrid');
+        if (!grid) return;
+
+        if (!Array.isArray(images) || images.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12" id="noImagesMsg">
+                    <p class="text-center text-muted py-3 mb-0">No images uploaded yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = images.map((image) => `
+            <div class="col-6 col-md-3 col-lg-2" data-image-id="${image.id}">
+                <div class="card h-100 ${image.is_primary ? 'border-primary' : ''}">
+                    <img src="${this._escapeHtml(image.thumbnail_url || image.url)}" class="card-img-top" alt="${this._escapeHtml(image.alt_ka || image.alt_en || '')}" style="height:120px;object-fit:cover;">
+                    <div class="card-body p-2 text-center">
+                        ${image.is_primary
+                            ? '<span class="badge bg-primary mb-1">Primary</span>'
+                            : `<button type="button" class="btn btn-outline-primary btn-sm p-1 mb-1 btn-set-primary"
+                                    data-url="${this._escapeHtml(image.primary_url)}"
+                                    title="Set as Primary">
+                                    <i data-feather="star" style="width:12px;height:12px;"></i>
+                               </button>`}
+                        <button type="button" class="btn btn-outline-danger btn-sm p-1 mb-1 btn-delete-image"
+                                data-url="${this._escapeHtml(image.delete_url)}"
+                                title="Delete">
+                            <i data-feather="trash-2" style="width:12px;height:12px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        if (typeof feather !== 'undefined') feather.replace();
+    },
+
+    _escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
+    _escapeAttributeJson(value) {
+        return this._escapeHtml(JSON.stringify(value));
     },
 };
 

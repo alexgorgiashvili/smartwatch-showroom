@@ -163,4 +163,14 @@ return [
         'base_url' => env('GRIZZLY_SMS_BASE_URL', 'https://api.grizzlysms.com/stubs/handler_api.php'),
     ],
 
+    'bridge' => [
+        'base_url' => env('BRIDGE_WP_BASE_URL'),
+        'username' => env('BRIDGE_WP_USERNAME'),
+        'app_password' => env('BRIDGE_WP_APP_PASSWORD'),
+        'usd_to_gel' => (float) env('BRIDGE_USD_TO_GEL', 2.75),
+        'product_limit' => (int) env('BRIDGE_WP_PRODUCT_LIMIT', 20),
+        'verify_ssl' => env('BRIDGE_SSL_VERIFY'),
+        'ca_bundle' => env('BRIDGE_CA_BUNDLE'),
+    ],
+
 ];

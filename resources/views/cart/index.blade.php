@@ -30,7 +30,7 @@
                 </div>
             @endif
 
-            @if($cartItems->isEmpty())
+            @if($cartItems->isEmpty() && $giftGroups->isEmpty())
                 {{-- Empty state --}}
                 <div class="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
                     <i class="fa-solid fa-cart-shopping mb-4 text-4xl text-gray-300"></i>
@@ -45,6 +45,84 @@
 
                     {{-- Cart items list --}}
                     <div class="flex-1 min-w-0">
+                        @if($giftGroups->isNotEmpty())
+                            <div class="mb-5 space-y-4">
+                                @foreach($giftGroups as $group)
+                                    @php
+                                        $groupSym = ($group['currency'] ?? 'GEL') === 'GEL' ? '₾' : ($group['currency'] ?? 'GEL');
+                                    @endphp
+                                    <article class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm">
+                                        <div class="flex flex-col gap-3 border-b border-primary-100 bg-primary-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">სასაჩუქრე ყუთი</p>
+                                                <h2 class="text-base font-bold text-gray-900">სასაჩუქრე ყუთი</h2>
+                                                <p class="mt-0.5 text-xs text-gray-600">{{ $group['items_count'] }} პროდუქტი • {{ $group['packaging_label'] }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('gift-builder.show') }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:border-primary-300 hover:bg-primary-50">
+                                                    <i class="fa-solid fa-pen text-[10px]"></i> შეცვლა
+                                                </a>
+                                                <form method="POST" action="{{ route('cart.gift-groups.remove', $group['id']) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-50">
+                                                        <i class="fa-solid fa-trash-can text-[10px]"></i> წაშლა
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <div class="divide-y divide-slate-100">
+                                            @foreach($group['items'] as $item)
+                                                <div class="flex items-center gap-4 p-4">
+                                                    <a href="{{ route('products.show', $item['product']) }}" class="block flex-shrink-0">
+                                                        <img src="{{ $item['image'] }}" alt="{{ $item['product']->name }}" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl border border-slate-100 object-cover">
+                                                    </a>
+                                                    <div class="min-w-0 flex-1">
+                                                        <div class="flex flex-wrap items-center gap-2">
+                                                            <a href="{{ route('products.show', $item['product']) }}" class="truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
+                                                                {{ $item['product']->name }}
+                                                            </a>
+                                                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</span>
+                                                        </div>
+                                                        <p class="mt-0.5 text-xs text-gray-500">{{ $item['variant']->name }}</p>
+                                                    </div>
+                                                    <p class="shrink-0 text-sm font-bold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        <div class="space-y-2 bg-slate-50 px-4 py-3 text-sm text-gray-700">
+                                            <div class="flex justify-between">
+                                                <span>პროდუქტები</span>
+                                                <span>{{ number_format($group['items_subtotal'], 2) }} {{ $groupSym }}</span>
+                                            </div>
+                                            @if((float) $group['packaging_amount'] > 0)
+                                                <div class="flex justify-between">
+                                                    <span>{{ $group['packaging_label'] }}</span>
+                                                    <span>{{ number_format($group['packaging_amount'], 2) }} {{ $groupSym }}</span>
+                                                </div>
+                                            @endif
+                                            @if((float) $group['discount_amount'] > 0)
+                                                <div class="flex justify-between text-emerald-700">
+                                                    <span>სასაჩუქრე ფასდაკლება</span>
+                                                    <span>-{{ number_format($group['discount_amount'], 2) }} {{ $groupSym }}</span>
+                                                </div>
+                                            @endif
+                                            @if($group['message'])
+                                                <p class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-gray-600">“{{ $group['message'] }}”</p>
+                                            @endif
+                                            <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-bold text-gray-900">
+                                                <span>ყუთის ჯამი</span>
+                                                <span class="text-primary-600">{{ number_format($group['total'], 2) }} {{ $groupSym }}</span>
+                                            </div>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if($cartItems->isNotEmpty())
                         <div class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             @foreach($cartItems as $item)
                                 @php $sym = $item['currency'] === 'GEL' ? '₾' : $item['currency']; @endphp
@@ -67,6 +145,7 @@
                                             {{ $item['product']->name }}
                                         </a>
                                         <p class="mt-0.5 text-xs text-gray-500">{{ $item['variant']->name }}</p>
+                                        <p class="mt-1 text-[11px] font-semibold text-primary-600">{{ $item['fulfillment_label'] }}</p>
                                         <p class="mt-1 text-xs font-medium text-gray-600">{{ number_format($item['unit_price'], 2) }} {{ $sym }} / ცალი</p>
                                     </div>
 
@@ -93,7 +172,7 @@
                                                 name="quantity"
                                                 value="{{ $item['quantity'] }}"
                                                 min="1"
-                                                max="{{ min((int) $item['variant']->quantity, 10) }}"
+                                                max="{{ min((int) $item['variant']->available_quantity, 10) }}"
                                                 data-cart-qty-input
                                                 class="w-14 rounded-lg border border-gray-300 px-2 py-1 text-center text-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
                                             >
@@ -120,6 +199,7 @@
                                 </div>
                             @endforeach
                         </div>
+                        @endif
                     </div>
 
                     {{-- Order summary sidebar --}}

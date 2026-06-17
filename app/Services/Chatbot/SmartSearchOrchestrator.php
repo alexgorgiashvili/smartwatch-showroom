@@ -109,13 +109,33 @@ class SmartSearchOrchestrator
             }
 
             $brandModel = $brandModelQuery->limit($limit * 2)->get();
+            $augmentedProducts = $brandModel;
 
-            if ($brandModel->isNotEmpty()) {
+            if ($intent->hasSpecificProduct() && $brand !== null && $brandModel->count() < 2) {
+                $brandOnlyQuery = $this->baseProductQuery();
+                $brandOnlyQuery->where(function (Builder $query) use ($brand): void {
+                    $query->where('brand', 'like', '%' . $brand . '%')
+                        ->orWhere('name_en', 'like', '%' . $brand . '%')
+                        ->orWhere('name_ka', 'like', '%' . $brand . '%')
+                        ->orWhere('slug', 'like', '%' . $brand . '%');
+                });
+
+                $brandOnly = $brandOnlyQuery->limit($limit * 2)->get();
+
+                if ($brandOnly->isNotEmpty()) {
+                    $augmentedProducts = $brandModel
+                        ->merge($brandOnly)
+                        ->unique(fn (Product $product): int => (int) $product->id)
+                        ->values();
+                }
+            }
+
+            if ($augmentedProducts->isNotEmpty()) {
                 if ($intent->intent() === 'comparison') {
-                    return $this->augmentComparisonProducts($brandModel, $intent, $limit);
+                    return $this->augmentComparisonProducts($augmentedProducts, $intent, $limit);
                 }
 
-                return $this->rankProducts($brandModel, $intent)->take($limit)->values();
+                return $this->rankProducts($augmentedProducts, $intent)->take($limit)->values();
             }
         }
 

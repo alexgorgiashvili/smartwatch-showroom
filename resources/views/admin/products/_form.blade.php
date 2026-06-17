@@ -4,6 +4,7 @@
     <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-basic" role="tab">Basic Info</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-descriptions" role="tab">Descriptions</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-specs" role="tab">Specifications</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-gift-builder" role="tab">Gift Builder</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-seo" role="tab">SEO</a></li>
 </ul>
 
@@ -43,6 +44,39 @@
                         <input type="number" step="0.01" min="0" class="form-control @error('sale_price') is-invalid @enderror"
                                id="sale_price" name="sale_price" value="{{ old('sale_price', $product->sale_price) }}">
                         @error('sale_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fulfillment_mode" class="form-label">Fulfillment Mode</label>
+                        <select class="form-select @error('fulfillment_mode') is-invalid @enderror" id="fulfillment_mode" name="fulfillment_mode">
+                            <option value="local_stock" {{ old('fulfillment_mode', $product->fulfillment_mode ?? 'local_stock') === 'local_stock' ? 'selected' : '' }}>Local Stock</option>
+                            <option value="dropship_bridge" {{ old('fulfillment_mode', $product->fulfillment_mode) === 'dropship_bridge' ? 'selected' : '' }}>Dropship Bridge</option>
+                        </select>
+                        @error('fulfillment_mode') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bridge_product_id" class="form-label">Bridge Product ID</label>
+                        <input type="text" class="form-control @error('bridge_product_id') is-invalid @enderror"
+                               id="bridge_product_id" name="bridge_product_id" value="{{ old('bridge_product_id', $product->bridge_product_id) }}">
+                        @error('bridge_product_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="product_sync_status" class="form-label">Bridge Sync Status</label>
+                        <select class="form-select @error('product_sync_status') is-invalid @enderror" id="product_sync_status" name="product_sync_status">
+                            <option value="">Not set</option>
+                            @foreach(['pending_review', 'synced', 'stale', 'sync_failed'] as $syncStatus)
+                                <option value="{{ $syncStatus }}" {{ old('product_sync_status', $product->product_sync_status) === $syncStatus ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $syncStatus)) }}</option>
+                            @endforeach
+                        </select>
+                        @error('product_sync_status') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-12">
+                        <label for="bridge_product_permalink" class="form-label">Bridge Product Permalink</label>
+                        <input type="url" class="form-control @error('bridge_product_permalink') is-invalid @enderror"
+                               id="bridge_product_permalink" name="bridge_product_permalink" value="{{ old('bridge_product_permalink', $product->bridge_product_permalink) }}">
+                        @error('bridge_product_permalink') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @if($product->product_synced_at)
+                            <div class="form-text">Last synced: {{ $product->product_synced_at->format('Y-m-d H:i') }}</div>
+                        @endif
                     </div>
                     <div class="col-md-3">
                         <div class="form-check form-switch mt-4">
@@ -182,8 +216,14 @@
                         <input type="text" class="form-control" id="camera" name="camera" value="{{ old('camera', $product->camera) }}">
                     </div>
                     <div class="col-md-3">
-                        <label for="battery_life_hours" class="form-label">Battery Life (hours)</label>
-                        <input type="number" min="1" max="1000" class="form-control" id="battery_life_hours" name="battery_life_hours" value="{{ old('battery_life_hours', $product->battery_life_hours) }}">
+                        <label for="battery_life_range" class="form-label">Battery Life Range (days)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="battery_life_range"
+                               name="battery_life_range"
+                               value="{{ old('battery_life_range', $product->battery_life_range) }}"
+                               placeholder="1-3">
+                        <div class="form-text">Enter the numeric range only. The unit is added automatically by locale.</div>
                     </div>
                     <div class="col-md-3">
                         <label for="battery_capacity_mah" class="form-label">Battery (mAh)</label>
@@ -219,6 +259,126 @@
     </div>
 
     {{-- ══ Tab 4: SEO ══ --}}
+    <div class="tab-pane fade" id="tab-gift-builder" role="tabpanel">
+        @php
+            $recipientTags = old('gift_recipient_tags', is_array($product->gift_recipient_tags) ? implode("\n", $product->gift_recipient_tags) : $product->gift_recipient_tags);
+            $occasionTags = old('gift_occasion_tags', is_array($product->gift_occasion_tags) ? implode("\n", $product->gift_occasion_tags) : $product->gift_occasion_tags);
+            $compatibilityTags = old('gift_compatibility_tags', is_array($product->gift_compatibility_tags) ? implode("\n", $product->gift_compatibility_tags) : $product->gift_compatibility_tags);
+            $recipientOptions = config('gift_builder.recipients', []);
+            $occasionOptions = config('gift_builder.occasions', []);
+            $budgetOptions = config('gift_builder.budget_bands', []);
+        @endphp
+
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div>
+                        <h6 class="mb-1">Gift Box Builder visibility</h6>
+                        <p class="text-muted small mb-0">Only active, local-stock, gift-enabled products are shown in the public builder.</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="gift_builder_enabled" name="gift_builder_enabled" value="1"
+                               {{ old('gift_builder_enabled', $product->gift_builder_enabled) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="gift_builder_enabled">Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="gift_builder_role" class="form-label">Builder role</label>
+                        <select class="form-select @error('gift_builder_role') is-invalid @enderror" id="gift_builder_role" name="gift_builder_role">
+                            @foreach(['none' => 'Not used', 'main' => 'Main gift only', 'addon' => 'Add-on only', 'both' => 'Main or add-on'] as $value => $label)
+                                <option value="{{ $value }}" {{ old('gift_builder_role', $product->gift_builder_role ?? 'none') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('gift_builder_role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="gift_budget_band" class="form-label">Budget band</label>
+                        <select class="form-select @error('gift_budget_band') is-invalid @enderror" id="gift_budget_band" name="gift_budget_band">
+                            @foreach($budgetOptions as $value => $option)
+                                <option value="{{ $value }}" {{ old('gift_budget_band', $product->gift_budget_band ?? 'all') === $value ? 'selected' : '' }}>
+                                    {{ $option['label_en'] ?? $option['label_ka'] ?? $value }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('gift_budget_band') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="gift_capacity_units" class="form-label">Capacity units</label>
+                        <input type="number" min="1" max="20" class="form-control @error('gift_capacity_units') is-invalid @enderror"
+                               id="gift_capacity_units" name="gift_capacity_units" value="{{ old('gift_capacity_units', $product->gift_capacity_units ?: 1) }}">
+                        @error('gift_capacity_units') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="gift_sort_order" class="form-label">Sort order</label>
+                        <input type="number" min="0" class="form-control @error('gift_sort_order') is-invalid @enderror"
+                               id="gift_sort_order" name="gift_sort_order" value="{{ old('gift_sort_order', $product->gift_sort_order ?: 0) }}">
+                        @error('gift_sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="gift_recipient_tags" class="form-label">Recipient tags</label>
+                        <textarea class="form-control @error('gift_recipient_tags') is-invalid @enderror"
+                                  id="gift_recipient_tags" name="gift_recipient_tags" rows="5"
+                                  placeholder="{{ implode(', ', array_keys($recipientOptions)) }}">{{ $recipientTags }}</textarea>
+                        <div class="form-text">Use one key per line. Empty means all recipients.</div>
+                        @error('gift_recipient_tags') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="gift_occasion_tags" class="form-label">Occasion tags</label>
+                        <textarea class="form-control @error('gift_occasion_tags') is-invalid @enderror"
+                                  id="gift_occasion_tags" name="gift_occasion_tags" rows="5"
+                                  placeholder="{{ implode(', ', array_keys($occasionOptions)) }}">{{ $occasionTags }}</textarea>
+                        <div class="form-text">Use one key per line. Empty means all occasions.</div>
+                        @error('gift_occasion_tags') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="gift_compatibility_tags" class="form-label">Compatibility tags</label>
+                        <textarea class="form-control @error('gift_compatibility_tags') is-invalid @enderror"
+                                  id="gift_compatibility_tags" name="gift_compatibility_tags" rows="5"
+                                  placeholder="gps, camera, school, starter">{{ $compatibilityTags }}</textarea>
+                        <div class="form-text">Add-ons with tags must overlap the main gift tags. Empty add-on tags are compatible with all.</div>
+                        @error('gift_compatibility_tags') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="gift_badge_en" class="form-label">Badge (EN)</label>
+                        <input type="text" maxlength="80" class="form-control @error('gift_badge_en') is-invalid @enderror"
+                               id="gift_badge_en" name="gift_badge_en" value="{{ old('gift_badge_en', $product->gift_badge_en) }}">
+                        @error('gift_badge_en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="gift_badge_ka" class="form-label">Badge (KA)</label>
+                        <input type="text" maxlength="80" class="form-control @error('gift_badge_ka') is-invalid @enderror"
+                               id="gift_badge_ka" name="gift_badge_ka" value="{{ old('gift_badge_ka', $product->gift_badge_ka) }}">
+                        @error('gift_badge_ka') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="gift_builder_note_en" class="form-label">Builder note (EN)</label>
+                        <textarea maxlength="255" rows="3" class="form-control @error('gift_builder_note_en') is-invalid @enderror"
+                                  id="gift_builder_note_en" name="gift_builder_note_en">{{ old('gift_builder_note_en', $product->gift_builder_note_en) }}</textarea>
+                        @error('gift_builder_note_en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="gift_builder_note_ka" class="form-label">Builder note (KA)</label>
+                        <textarea maxlength="255" rows="3" class="form-control @error('gift_builder_note_ka') is-invalid @enderror"
+                                  id="gift_builder_note_ka" name="gift_builder_note_ka">{{ old('gift_builder_note_ka', $product->gift_builder_note_ka) }}</textarea>
+                        @error('gift_builder_note_ka') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tab-pane fade" id="tab-seo" role="tabpanel">
         <div class="card">
             <div class="card-body">

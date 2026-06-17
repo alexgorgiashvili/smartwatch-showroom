@@ -4,14 +4,14 @@
         {{-- Main Form --}}
         <div class="card mb-3">
             <div class="card-header bg-transparent border-bottom">
-                <h6 class="mb-0">Post Details</h6>
+                <h6 class="mb-0">პოსტის დეტალები</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="product_id" class="form-label">Product (optional)</label>
+                        <label for="product_id" class="form-label">პროდუქტი (არასავალდებულო)</label>
                         <select class="form-select @error('product_id') is-invalid @enderror" id="product_id" name="product_id">
-                            <option value="">— No product —</option>
+                            <option value="">— პროდუქტის გარეშე —</option>
                             @foreach($products as $product)
                             <option value="{{ $product->id }}" {{ old('product_id', $post?->product_id) == $product->id ? 'selected' : '' }}>
                                 {{ $product->name_en ?: $product->name_ka }} — GEL {{ number_format($product->sale_price ?? $product->price, 2) }}
@@ -24,39 +24,39 @@
                         @php
                             $mediaTypeValue = old('media_type', $post?->media_type ?? ($post?->video_url ? 'video' : ($post?->image_url ? 'image' : 'none')));
                         @endphp
-                        <label for="media_type" class="form-label">Media Type</label>
+                        <label for="media_type" class="form-label">მედიის ტიპი</label>
                         <select class="form-select @error('media_type') is-invalid @enderror" id="media_type" name="media_type">
-                            <option value="none" {{ $mediaTypeValue === 'none' ? 'selected' : '' }}>None (Text only)</option>
-                            <option value="image" {{ $mediaTypeValue === 'image' ? 'selected' : '' }}>Image</option>
-                            <option value="video" {{ $mediaTypeValue === 'video' ? 'selected' : '' }}>Video</option>
+                            <option value="none" {{ $mediaTypeValue === 'none' ? 'selected' : '' }}>არაფერი (მხოლოდ ტექსტი)</option>
+                            <option value="image" {{ $mediaTypeValue === 'image' ? 'selected' : '' }}>სურათი</option>
+                            <option value="video" {{ $mediaTypeValue === 'video' ? 'selected' : '' }}>ვიდეო</option>
                         </select>
                         @error('media_type') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
 
                         <div class="mt-2" id="image_url_group">
-                            <label for="image_url" class="form-label">Image URL</label>
+                            <label for="image_url" class="form-label">სურათის URL</label>
                         <div class="input-group">
                             <input type="url" class="form-control @error('image_url') is-invalid @enderror"
                                    id="image_url" name="image_url" value="{{ old('image_url', $post?->image_url) }}" placeholder="https://...">
-                            <button type="button" class="btn btn-outline-secondary" id="btn-preview-image" title="Preview Image">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-preview-image" title="სურათის ნახვა">
                                 <i data-feather="external-link" style="width:14px;height:14px;"></i>
                             </button>
-                            <button type="button" class="btn btn-outline-primary" id="btn-image-manager" title="Open Image Manager">
-                                <i data-feather="image" style="width:14px;height:14px;"></i> Manager
+                            <button type="button" class="btn btn-outline-primary" id="btn-image-manager" title="სურათების მენეჯერის გახსნა">
+                                <i data-feather="image" style="width:14px;height:14px;"></i> მენეჯერი
                             </button>
                         </div>
                         @error('image_url') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="mt-2 d-none" id="video_url_group">
-                            <label for="video_url" class="form-label">Video URL</label>
+                            <label for="video_url" class="form-label">ვიდეოს URL</label>
                             <div class="input-group">
                                 <input type="url" class="form-control @error('video_url') is-invalid @enderror"
                                        id="video_url" name="video_url" value="{{ old('video_url', $post?->video_url) }}" placeholder="https://...">
-                                <button type="button" class="btn btn-outline-secondary" id="btn-preview-video" title="Preview Video">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-preview-video" title="ვიდეოს ნახვა">
                                     <i data-feather="external-link" style="width:14px;height:14px;"></i>
                                 </button>
-                                <button type="button" class="btn btn-outline-primary" id="btn-upload-video" title="Upload Video">
-                                    <i data-feather="upload-cloud" style="width:14px;height:14px;"></i> Upload
+                                <button type="button" class="btn btn-outline-primary" id="btn-upload-video" title="ვიდეოს ატვირთვა">
+                                    <i data-feather="upload-cloud" style="width:14px;height:14px;"></i> ატვირთვა
                                 </button>
                             </div>
                             @error('video_url') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
@@ -67,12 +67,12 @@
                         </div>
                     </div>
                     <div class="col-12">
-                        <label for="message" class="form-label">Message <span class="text-danger">*</span></label>
+                        <label for="message" class="form-label">ტექსტი <span class="text-danger">*</span></label>
                         <textarea class="form-control @error('message') is-invalid @enderror"
                                   id="message" name="message" rows="10" required>{{ old('message', $post?->message) }}</textarea>
                         @error('message') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span class="form-text" id="message-char-count">0 characters</span>
+                            <span class="form-text" id="message-char-count">0 სიმბოლო</span>
                             <button type="button" class="btn btn-xs btn-outline-secondary border-0 p-0 px-1" id="btn-suggest-hashtags" style="font-size:11px;">
                                 <i data-feather="hash" style="width:11px;height:11px;"></i> # ჰეშთეგები
                             </button>
@@ -80,13 +80,13 @@
                         <div id="hashtag-chips" class="d-flex flex-wrap gap-1 mt-1"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label d-block">Platforms</label>
+                        <label class="form-label d-block">პლატფორმები</label>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" id="post_to_facebook" name="post_to_facebook" value="1"
                                    {{ old('post_to_facebook', $post?->post_to_facebook ?? true) ? 'checked' : '' }}
                                    {{ !$fbConfigured ? 'disabled' : '' }}>
                             <label class="form-check-label" for="post_to_facebook">
-                                Facebook {{ !$fbConfigured ? '(not configured)' : '' }}
+                                Facebook {{ !$fbConfigured ? '(არ არის გამართული)' : '' }}
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
@@ -94,7 +94,7 @@
                                    {{ old('post_to_instagram', $post?->post_to_instagram ?? true) ? 'checked' : '' }}
                                    {{ !$igConfigured ? 'disabled' : '' }}>
                             <label class="form-check-label" for="post_to_instagram">
-                                Instagram {{ !$igConfigured ? '(not configured)' : '' }}
+                                Instagram {{ !$igConfigured ? '(არ არის გამართული)' : '' }}
                             </label>
                         </div>
                     </div>
@@ -132,51 +132,51 @@
         <div class="card mb-3 border-primary">
             <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
                 <i data-feather="zap" style="width:16px;height:16px;"></i>
-                <h6 class="mb-0 text-white">AI Content Generator</h6>
+                <h6 class="mb-0 text-white">AI კონტენტის გენერატორი</h6>
             </div>
             <div class="card-body bg-light">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Language</label>
+                    <label class="form-label small fw-bold">ენა</label>
                     <select class="form-select form-select-sm" id="ai_language">
-                        <option value="ka">Georgian</option>
+                        <option value="ka">ქართული</option>
                         <option value="en">English</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Generation Mode</label>
+                    <label class="form-label small fw-bold">გენერაციის რეჟიმი</label>
                     <select class="form-select form-select-sm" id="ai_mode">
-                        <option value="custom">Custom (Follow Instructions)</option>
-                        <option value="autonomous">Autonomous (AI decides best angles)</option>
+                        <option value="custom">ხელით (მითითებების მიხედვით)</option>
+                        <option value="autonomous">ავტომატური (AI თავად გადაწყვეტს)</option>
                     </select>
                 </div>
                 <div class="mb-3" id="ai_tone_container">
-                    <label class="form-label small fw-bold">Tone</label>
+                    <label class="form-label small fw-bold">ტონი</label>
                     <select class="form-select form-select-sm" id="ai_tone">
-                        <option value="professional">Professional</option>
-                        <option value="casual">Casual / Friendly</option>
-                        <option value="exciting">Exciting / Energetic</option>
-                        <option value="urgent">Urgent (Sales)</option>
+                        <option value="professional">პროფესიონალური</option>
+                        <option value="casual">მეგობრული</option>
+                        <option value="exciting">ენერგიული</option>
+                        <option value="urgent">სასწრაფო (გაყიდვები)</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold d-flex justify-content-between">
-                        Custom Instructions (Optional)
-                        <button type="button" class="btn btn-xs btn-outline-info p-0 px-1 border-0" id="btn-enhance-prompt" title="Enhance Georgian Prompt" style="font-size: 10px;">
-                            <i data-feather="edit-3" style="width:10px;height:10px;"></i> Enhance Prompt
+                        დამატებითი მითითებები (არასავალდებულო)
+                        <button type="button" class="btn btn-xs btn-outline-info p-0 px-1 border-0" id="btn-enhance-prompt" title="ქართული პრომპტის გაუმჯობესება" style="font-size: 10px;">
+                            <i data-feather="edit-3" style="width:10px;height:10px;"></i> გაუმჯობესება
                         </button>
                     </label>
-                    <textarea class="form-control form-control-sm" id="ai_description" rows="3" placeholder="e.g. Highlight the battery life..."></textarea>
-                    <div id="enhance-feedback" class="small text-success mt-1 d-none">Prompt enhanced successfully!</div>
+                    <textarea class="form-control form-control-sm" id="ai_description" rows="3" placeholder="მაგ: გაამახვილე ყურადღება ბატარეის ხანგრძლივობაზე..."></textarea>
+                    <div id="enhance-feedback" class="small text-success mt-1 d-none">პრომპტი წარმატებით გაუმჯობესდა!</div>
                 </div>
                 <button type="button" class="btn btn-primary btn-sm w-100 d-flex justify-content-center align-items-center gap-2" id="btn-ai-generate">
-                    <i data-feather="cpu" style="width:14px;height:14px;"></i> Generate 3 Variants
+                    <i data-feather="cpu" style="width:14px;height:14px;"></i> 3 ვარიანტის გენერაცია
                 </button>
             </div>
         </div>
 
         {{-- AI Results --}}
         <div id="ai-results-container" class="d-none">
-            <h6 class="mb-2 small fw-bold text-muted text-uppercase">Generated Variants</h6>
+            <h6 class="mb-2 small fw-bold text-muted text-uppercase">გენერირებული ვარიანტები</h6>
             <div id="ai-variants-list" class="d-flex flex-column gap-2">
                 <!-- Variants will be rendered here -->
             </div>

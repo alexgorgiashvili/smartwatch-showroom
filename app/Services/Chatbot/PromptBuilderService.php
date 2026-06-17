@@ -3,6 +3,7 @@
 namespace App\Services\Chatbot;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 
 class PromptBuilderService
@@ -113,6 +114,18 @@ class PromptBuilderService
         $sections[] = 'მომხმარებლის შეტყობინება:';
         $sections[] = '- ' . $normalizedMessage;
 
+        if ($searchContext->requestedProduct() !== null) {
+            $requestedProduct = $searchContext->requestedProduct();
+            $sections[] = 'Requested product (exact match from live database):';
+            $sections[] = $this->formatRequestedProduct($requestedProduct);
+
+            $requestedVariant = $this->resolveRequestedVariant($requestedProduct, $normalizedMessage);
+            if ($requestedVariant !== null) {
+                $sections[] = 'Requested variant: ' . ($requestedVariant->name ?: $requestedVariant->color_name ?: 'Variant');
+                $sections[] = 'Variant stock: ' . $this->formatVariantStock($requestedVariant);
+            }
+        }
+
         $productLines = $products
             ->map(function (Product $product): string {
                 $price = $product->sale_price
@@ -133,6 +146,110 @@ class PromptBuilderService
         $sections[] = $productLines !== '' ? $productLines : 'პროდუქტები ვერ მოიძებნა.';
 
         return implode("\n", $sections);
+    }
+
+    private function formatRequestedProduct(Product $product): string
+    {
+        $price = $product->sale_price
+            ? $product->sale_price . ' ₾ (discounted, regular ' . $product->price . ' ₾)'
+            : $product->price . ' ₾';
+
+        $stockQuantity = max(0, (int) $product->stock_quantity);
+        $stockStatus = $stockQuantity > 0 ? 'მარაგშია' : 'ამოწურულია';
+
+        return '- Product: ' . $product->name
+            . ' | slug: ' . $product->slug
+            . ' | price: ' . $price
+            . ' | stock: ' . $stockStatus . ' (' . $stockQuantity . ' ცალი)';
+    }
+
+    private function formatVariantStock(ProductVariant $variant): string
+    {
+        $quantity = max(0, (int) $variant->available_quantity);
+        $status = $quantity > 0 ? 'მარაგშია' : 'ამოწურულია';
+
+        return $status . ' (' . $quantity . ' ცალი)';
+    }
+
+    private function resolveRequestedVariant(Product $product, string $message): ?ProductVariant
+    {
+        $variants = $product->relationLoaded('variants')
+            ? $product->variants
+            : $product->variants()->get();
+
+        if ($variants->isEmpty()) {
+            return null;
+        }
+
+        $normalizedMessage = mb_strtolower($this->normalizePromptText($message));
+
+        foreach ($variants as $variant) {
+            if ($this->variantMatchesMessage($variant, $normalizedMessage)) {
+                return $variant;
+            }
+        }
+
+        return $variants->sortByDesc(fn (ProductVariant $variant): int => (int) $variant->available_quantity)->first();
+    }
+
+    private function variantMatchesMessage(ProductVariant $variant, string $message): bool
+    {
+        $variantText = mb_strtolower($this->normalizePromptText((string) $variant->name . ' ' . (string) $variant->color_name));
+
+        if ($variantText !== '' && str_contains($message, $variantText)) {
+            return true;
+        }
+
+        foreach ($this->variantColorAliases($variantText) as $alias) {
+            if ($alias !== '' && str_contains($message, $alias)) {
+                return true;
+            }
+        }
+
+        $variantTokens = collect(preg_split('/[^\p{L}\p{N}]+/u', $variantText) ?: [])
+            ->filter(fn ($token): bool => is_string($token) && trim($token) !== '')
+            ->values()
+            ->all();
+
+        foreach ($variantTokens as $token) {
+            if (mb_strlen($token) >= 3 && str_contains($message, $token)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function variantColorAliases(string $variantText): array
+    {
+        $aliases = [];
+
+        $colorMap = [
+            'blue' => ['blue', 'ლურჯ', 'ცისფ'],
+            'black' => ['black', 'შავ'],
+            'white' => ['white', 'თეთრ'],
+            'red' => ['red', 'წითელ'],
+            'green' => ['green', 'მწვანე'],
+            'yellow' => ['yellow', 'ყვითელ'],
+            'pink' => ['pink', 'ვარდისფერ'],
+            'gray' => ['gray', 'grey', 'ნაცრისფერ'],
+        ];
+
+        foreach ($colorMap as $canonical => $synonyms) {
+            if (str_contains($variantText, $canonical)) {
+                $aliases = array_merge($aliases, $synonyms);
+            }
+        }
+
+        return array_values(array_unique(array_filter($aliases)));
+    }
+
+    private function normalizePromptText(string $text): string
+    {
+        return preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower(trim($text))) ?? $text;
     }
 
     /**

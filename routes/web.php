@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\ChatbotLabController as AdminChatbotLabController
 use App\Http\Controllers\Admin\ChatbotTrainingController as AdminChatbotTrainingController;
 use App\Http\Controllers\Admin\LangfuseDashboardController as AdminLangfuseDashboardController;
 use App\Http\Controllers\Admin\LangfuseController as AdminLangfuseController;
+use App\Http\Controllers\Admin\BridgeController as AdminBridgeController;
 use App\Http\Controllers\Admin\FacebookPostController as AdminFacebookPostController;
 use App\Http\Controllers\Admin\InboxController as AdminInboxController;
 use App\Http\Controllers\Admin\SocialCommentController as AdminSocialCommentController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Admin\SocialDashboardController as AdminSocialDashboard
 use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\GiftBuilderController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\ProductController;
@@ -86,6 +88,10 @@ Route::get('/smartwatches/bavshvis-saati-{range}', [LandingPageController::class
     ->where('range', '4-6|7-10|11-14');
 Route::get('/sim-card-guide', [LandingPageController::class, 'simGuide'])->name('landing.sim-guide');
 Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('landing.gift-guide');
+Route::get('/gift-box-builder', [GiftBuilderController::class, 'show'])->name('gift-builder.show');
+Route::get('/gift-box-builder/products', [GiftBuilderController::class, 'products'])->name('gift-builder.products');
+Route::post('/gift-box-builder/price', [GiftBuilderController::class, 'price'])->name('gift-builder.price');
+Route::post('/gift-box-builder/add-to-cart', [GiftBuilderController::class, 'addToCart'])->name('gift-builder.add-to-cart');
 
 // City landing pages — local SEO
 Route::get('/city/{city}', [\App\Http\Controllers\CityLandingController::class, 'show'])
@@ -102,6 +108,7 @@ Route::get('/cart', [CartController::class, 'show'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/cart/update', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
+Route::delete('/cart/gift-groups/{group}', [GiftBuilderController::class, 'removeFromCart'])->name('cart.gift-groups.remove');
 Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.index');
@@ -158,6 +165,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
 	Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
 	Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+	Route::get('/bridge', [AdminBridgeController::class, 'index'])->name('bridge.index');
 
 	// ── Messaging: Inbox ──
 	Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox.index');
@@ -304,12 +312,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		->name('orders.update-status');
 	Route::patch('/orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])
 		->name('orders.update-payment-status');
+	Route::post('/orders/{order}/bridge/push', [AdminOrderController::class, 'pushBridgeOrder'])
+		->name('orders.bridge.push');
+	Route::post('/orders/{order}/bridge/refresh', [AdminOrderController::class, 'refreshBridgeOrder'])
+		->name('orders.bridge.refresh');
 	Route::delete('/orders/{order}', [AdminOrderController::class, 'destroy'])
 		->name('orders.destroy');
 	Route::post('/products/import-alibaba/parse', [AdminAlibabaImportController::class, 'parse'])
 		->name('products.import-alibaba.parse');
 	Route::post('/products/import-alibaba/confirm', [AdminAlibabaImportController::class, 'confirm'])
 		->name('products.import-alibaba.confirm');
+	Route::post('/bridge/sync-all', [AdminBridgeController::class, 'syncAll'])->name('bridge.sync-all');
+	Route::post('/bridge/products/{remoteProductId}/sync', [AdminBridgeController::class, 'syncProduct'])->name('bridge.sync-product');
+	Route::post('/bridge/orders/{order}/push', [AdminBridgeController::class, 'pushOrder'])->name('bridge.push-order');
+	Route::post('/bridge/orders/{order}/refresh', [AdminBridgeController::class, 'refreshOrder'])->name('bridge.refresh-order');
 	Route::post('/product-quality', [AdminProductQualityController::class, 'store'])->name('product-quality.store');
 	Route::post('/product-quality/{productQuality}/run', [AdminProductQualityController::class, 'run'])->name('product-quality.run');
 	Route::post('/competitors/sources', [AdminCompetitorMonitorController::class, 'storeSource'])
@@ -401,54 +417,56 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/media/upload-video', [AdminMediaController::class, 'uploadVideo'])->name('media.upload-video');
 });
 
-// Test route for real-time message broadcasting
-Route::get('/test/send-message', function () {
-    $conversation = \App\Models\Conversation::with('customer')->first();
+if (app()->environment('local')) {
+    // Test route for real-time message broadcasting
+    Route::get('/test/send-message', function () {
+        $conversation = \App\Models\Conversation::with('customer')->first();
 
-    if (!$conversation) {
-        return response()->json(['error' => 'No conversation found. Please seed test data first.']);
-    }
+        if (!$conversation) {
+            return response()->json(['error' => 'No conversation found. Please seed test data first.']);
+        }
 
-    $message = \App\Models\Message::create([
-        'conversation_id' => $conversation->id,
-        'customer_id' => $conversation->customer_id,
-        'platform_message_id' => 'test_live_' . uniqid(),
-        'sender_type' => 'customer',
-        'sender_id' => $conversation->customer_id,
-        'sender_name' => $conversation->customer->name,
-        'content' => 'This is a LIVE test message sent at ' . now()->format('H:i:s'),
-    ]);
-
-    // Update conversation
-    $conversation->update([
-        'last_message_at' => now(),
-        'unread_count' => $conversation->unread_count + 1,
-    ]);
-
-    // Broadcast the event
-    $event = new \App\Events\MessageReceived(
-        $message,
-        $conversation,
-        $conversation->customer,
-        $conversation->platform
-    );
-
-	logger()->info('Dispatching MessageReceived event', [
-        'event_class' => get_class($event),
-        'broadcast_as' => $event->broadcastAs(),
-        'broadcast_on' => array_map(fn($ch) => get_class($ch) . ':' . $ch->name, $event->broadcastOn()),
-        'message_id' => $message->id,
-    ]);
-
-    event($event);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Test message created and broadcasted!',
-        'data' => [
-            'message_id' => $message->id,
-            'content' => $message->content,
+        $message = \App\Models\Message::create([
             'conversation_id' => $conversation->id,
-        ]
-    ]);
-})->name('test.send-message');
+            'customer_id' => $conversation->customer_id,
+            'platform_message_id' => 'test_live_' . uniqid(),
+            'sender_type' => 'customer',
+            'sender_id' => $conversation->customer_id,
+            'sender_name' => $conversation->customer->name,
+            'content' => 'This is a LIVE test message sent at ' . now()->format('H:i:s'),
+        ]);
+
+        // Update conversation
+        $conversation->update([
+            'last_message_at' => now(),
+            'unread_count' => $conversation->unread_count + 1,
+        ]);
+
+        // Broadcast the event
+        $event = new \App\Events\MessageReceived(
+            $message,
+            $conversation,
+            $conversation->customer,
+            $conversation->platform
+        );
+
+        logger()->info('Dispatching MessageReceived event', [
+            'event_class' => get_class($event),
+            'broadcast_as' => $event->broadcastAs(),
+            'broadcast_on' => array_map(fn($ch) => get_class($ch) . ':' . $ch->name, $event->broadcastOn()),
+            'message_id' => $message->id,
+        ]);
+
+        event($event);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test message created and broadcasted!',
+            'data' => [
+                'message_id' => $message->id,
+                'content' => $message->content,
+                'conversation_id' => $conversation->id,
+            ]
+        ]);
+    })->name('test.send-message');
+}

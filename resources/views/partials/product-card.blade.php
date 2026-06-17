@@ -1,6 +1,9 @@
 <div class="col-md-6 col-lg-4">
     @php
         $image = $product->primaryImage ?? $product->images->first();
+        $basePrice = $product->price;
+        $salePrice = $product->sale_price ?? null;
+        $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
     @endphp
 
     <a href="{{ route('products.show', $product) }}" class="text-decoration-none">
@@ -15,13 +18,22 @@
 
             <div class="card-body">
                 <h5 class="card-title fw-semibold mb-2">{{ $product->name }}</h5>
-                <p class="text-primary fw-bold mb-3">
-                    @if ($product->price)
-                        {{ number_format((float) $product->price, 2) }} {{ $product->currency }}
+                <div class="mb-3">
+                    @if ($hasDiscount)
+                        <p class="text-primary fw-bold mb-1">
+                            {{ number_format((float) $salePrice, 2) }} {{ $product->currency }}
+                        </p>
+                        <p class="small price-compare-old mb-0">
+                            {{ number_format((float) $basePrice, 2) }} {{ $product->currency }}
+                        </p>
+                    @elseif ($basePrice)
+                        <p class="text-primary fw-bold mb-0">
+                            {{ number_format((float) $basePrice, 2) }} {{ $product->currency }}
+                        </p>
                     @else
-                        {{ __('ui.price_on_request') }}
+                        <p class="text-primary fw-bold mb-0">{{ __('ui.price_on_request') }}</p>
                     @endif
-                </p>
+                </div>
 
                 <div class="d-flex gap-3 small text-muted">
                     <div class="d-flex align-items-center gap-1">

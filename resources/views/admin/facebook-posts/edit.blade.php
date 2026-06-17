@@ -4,16 +4,16 @@
 
 @section('content')
 @fragment('content')
-<div data-page-title="Edit Post">
+<div data-page-title="პოსტის რედაქტირება">
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
-        <div><h4 class="mb-3 mb-md-0">Edit Post</h4></div>
+        <div><h4 class="mb-3 mb-md-0">პოსტის რედაქტირება</h4></div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.facebook-posts.index') }}" class="btn btn-outline-secondary btn-sm" data-pjax>
-                <i data-feather="arrow-left" style="width:14px;height:14px;"></i> Back
+                <i data-feather="arrow-left" style="width:14px;height:14px;"></i> უკან
             </a>
-            <form method="POST" action="{{ route('admin.facebook-posts.destroy', $post) }}" class="d-inline" onsubmit="return confirm('Delete this post?')">
+            <form method="POST" action="{{ route('admin.facebook-posts.destroy', $post) }}" class="d-inline" onsubmit="return confirm('წაიშალოს ეს პოსტი?')">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger btn-sm"><i data-feather="trash-2" style="width:14px;height:14px;"></i> Delete</button>
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i data-feather="trash-2" style="width:14px;height:14px;"></i> წაშლა</button>
             </form>
         </div>
     </div>
