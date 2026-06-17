@@ -13,8 +13,8 @@ class InstagramPageService
 
     public function __construct()
     {
-        $this->accountId = config('services.facebook.instagram_account_id', '');
-        $this->accessToken = config('services.facebook.page_access_token');
+        $this->accountId = (string) config('services.facebook.instagram_account_id', '');
+        $this->accessToken = (string) config('services.facebook.page_access_token', '');
     }
 
     /**
