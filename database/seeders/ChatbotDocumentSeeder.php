@@ -6,6 +6,7 @@ use App\Models\ChatbotDocument;
 use App\Models\ContactSetting;
 use App\Models\Faq;
 use App\Models\Product;
+use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Database\Seeder;
 
 class ChatbotDocumentSeeder extends Seeder
@@ -15,6 +16,7 @@ class ChatbotDocumentSeeder extends Seeder
         $this->seedProductDocuments();
         $this->seedFaqDocuments();
         $this->seedContactSettings();
+        app(ChatbotContentSyncService::class)->syncStaticPages();
     }
 
     private function seedProductDocuments(): void

@@ -24,11 +24,6 @@
             <i class="fab fa-instagram"></i>
           </a>
           @endif
-          @if (!empty($contactSettings['telegram_url']))
-          <a href="{{ $contactSettings['telegram_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-10 h-10 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full transition" title="Telegram">
-            <i class="fab fa-telegram"></i>
-          </a>
-          @endif
         </div>
       </div>
 
@@ -78,7 +73,9 @@
             <i class="fas fa-envelope mt-1 text-primary-500"></i>
             <div>
               <p class="text-gray-400">{{ __('ui.footer_email') }}</p>
-              <a href="mailto:info@mytechnic.ge" class="hover:text-white transition font-medium">info@mytechnic.ge</a>
+              <a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="hover:text-white transition font-medium">
+                {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}
+              </a>
             </div>
           </li>
           <li class="flex items-start gap-2">

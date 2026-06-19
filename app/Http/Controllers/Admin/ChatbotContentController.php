@@ -3,20 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatbotDocument;
 use App\Models\ContactSetting;
 use App\Models\Faq;
 use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class ChatbotContentController extends Controller
 {
     public function index(Request $request)
     {
+        $contactSettings = ContactSetting::allKeyed();
+
         $view = view('admin.chatbot-content.index', [
             'faqs' => Faq::query()->orderBy('sort_order')->orderBy('id')->get(),
-            'contactSettings' => ContactSetting::allKeyed(),
+            'contactSettings' => $contactSettings,
+            'contactFields' => $this->contactFields(),
+            'contactDocument' => ChatbotDocument::query()
+                ->where('key', 'contact-main')
+                ->first(['id', 'key', 'title', 'is_active', 'updated_at']),
         ]);
 
         return $this->renderPjaxView($request, $view);
@@ -67,7 +73,6 @@ class ChatbotContentController extends Controller
             'instagram_url' => ['nullable', 'url', 'max:255'],
             'facebook_url' => ['nullable', 'url', 'max:255'],
             'messenger_url' => ['nullable', 'url', 'max:255'],
-            'telegram_url' => ['nullable', 'url', 'max:255'],
         ]);
 
         foreach ($data as $key => $value) {
@@ -84,6 +89,15 @@ class ChatbotContentController extends Controller
             ->with('warning', $synced ? null : 'მონაცემი შეინახა, მაგრამ embedding sync ვერ შესრულდა.');
     }
 
+    public function syncStaticPages(ChatbotContentSyncService $syncService): RedirectResponse
+    {
+        $synced = $syncService->syncStaticPages();
+
+        return redirect()->route('admin.chatbot-content.index')
+            ->with('status', 'About, privacy, and terms pages synced into chatbot content.')
+            ->with('warning', $synced ? null : 'Pages saved, but embedding sync did not complete.');
+    }
+
     private function validateFaq(Request $request): array
     {
         $data = $request->validate([
@@ -98,5 +112,79 @@ class ChatbotContentController extends Controller
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
 
         return $data;
+    }
+
+    /**
+     * Contact settings fields shown in the admin form.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function contactFields(): array
+    {
+        return [
+            [
+                'name' => 'phone_display',
+                'label' => 'Phone display',
+                'type' => 'text',
+                'placeholder' => '+995 555 123 456',
+                'help' => 'Visible phone number on the site footer and contact page.',
+            ],
+            [
+                'name' => 'phone_link',
+                'label' => 'Phone link',
+                'type' => 'text',
+                'placeholder' => '+995555123456',
+                'help' => 'Used for tel: links and click-to-call buttons.',
+            ],
+            [
+                'name' => 'whatsapp_url',
+                'label' => 'WhatsApp URL',
+                'type' => 'url',
+                'placeholder' => 'https://wa.me/995555123456',
+                'help' => 'Used for WhatsApp buttons and chatbot handoff links.',
+            ],
+            [
+                'name' => 'email',
+                'label' => 'Email',
+                'type' => 'email',
+                'placeholder' => 'info@mytechnic.ge',
+                'help' => 'Shown on the contact page, footer, and chatbot replies.',
+            ],
+            [
+                'name' => 'location',
+                'label' => 'Location',
+                'type' => 'text',
+                'placeholder' => 'Tbilisi, Georgia',
+                'help' => 'Displayed in the footer, contact page, and chatbot context.',
+            ],
+            [
+                'name' => 'hours',
+                'label' => 'Working hours',
+                'type' => 'text',
+                'placeholder' => 'ყოველდღე 10:00 - 20:00',
+                'help' => 'Used in the contact card and the chatbot support profile.',
+            ],
+            [
+                'name' => 'instagram_url',
+                'label' => 'Instagram URL',
+                'type' => 'url',
+                'placeholder' => 'https://www.instagram.com/mytechnic.ge',
+                'help' => 'Optional social link shown in the header and footer.',
+            ],
+            [
+                'name' => 'facebook_url',
+                'label' => 'Facebook URL',
+                'type' => 'url',
+                'placeholder' => 'https://www.facebook.com/mytechnic.ge',
+                'help' => 'Optional social link shown in the header and footer.',
+            ],
+            [
+                'name' => 'messenger_url',
+                'label' => 'Messenger URL',
+                'type' => 'url',
+                'placeholder' => 'https://m.me/mytechnic.ge',
+                'help' => 'Optional social link shown in the header and footer.',
+            ],
+        ];
     }
 }

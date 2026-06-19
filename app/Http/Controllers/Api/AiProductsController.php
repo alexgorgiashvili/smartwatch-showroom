@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AiProductsController extends Controller
 {
@@ -19,6 +20,8 @@ class AiProductsController extends Controller
 
         $products = Product::active()
             ->with(['images', 'variants'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->orderByDesc('featured')
             ->orderByDesc('updated_at')
             ->get();
@@ -78,23 +81,13 @@ class AiProductsController extends Controller
                         'url' => $img->url,
                         'alt' => $img->alt ?? $product->name,
                     ])->toArray(),
-                    'features' => [
-                        'sim_support' => (bool) $product->sim_support,
-                        'gps' => (bool) $product->gps,
-                        'video_call' => (bool) $product->video_call,
-                        'waterproof' => $product->waterproof ?? null,
-                        'battery_life' => $product->battery_life ?? null,
-                        'screen_size' => $product->screen_size ?? null,
-                        'camera' => (bool) $product->camera,
-                    ],
+                    'features' => $this->featureFlags($product, $locale),
                     'suitable_for' => [
                         'age_min' => $product->age_min ?? 4,
                         'age_max' => $product->age_max ?? 12,
                     ],
-                    'rating' => $product->reviews_avg_rating 
-                        ? round((float) $product->reviews_avg_rating, 1)
-                        : null,
-                    'reviews_count' => $product->reviews_count ?? 0,
+                    'rating' => $this->productRating($product),
+                    'reviews_count' => $this->productReviewsCount($product),
                     'brand' => $product->brand ?? 'MyTechnic',
                     'featured' => (bool) $product->featured,
                     'citation_text' => $this->generateCitationText($product, $locale),
@@ -149,23 +142,13 @@ class AiProductsController extends Controller
                     'thumbnail' => $img->thumbnail_url ?? $img->url,
                     'alt' => $img->alt ?? $product->name,
                 ])->toArray(),
-                'features' => [
-                    'sim_support' => (bool) $product->sim_support,
-                    'gps' => (bool) $product->gps,
-                    'video_call' => (bool) $product->video_call,
-                    'waterproof' => $product->waterproof ?? null,
-                    'battery_life' => $product->battery_life ?? null,
-                    'screen_size' => $product->screen_size ?? null,
-                    'camera' => (bool) $product->camera,
-                ],
+                'features' => $this->featureFlags($product, $locale),
                 'suitable_for' => [
                     'age_min' => $product->age_min ?? 4,
                     'age_max' => $product->age_max ?? 12,
                 ],
-                'rating' => $product->reviews_avg_rating 
-                    ? round((float) $product->reviews_avg_rating, 1)
-                    : null,
-                'reviews_count' => $product->reviews_count ?? 0,
+                'rating' => $this->productRating($product),
+                'reviews_count' => $this->productReviewsCount($product),
                 'brand' => $product->brand ?? 'MyTechnic',
                 'citation_text' => $this->generateCitationText($product, $locale),
             ],
@@ -225,8 +208,8 @@ class AiProductsController extends Controller
         }
 
         // Boost for ratings
-        if ($product->reviews_avg_rating) {
-            $score += ($product->reviews_avg_rating / 5) * 0.1;
+        if (($rating = $this->productRating($product)) !== null) {
+            $score += ($rating / 5) * 0.1;
         }
 
         return round(min($score, 1.0), 2);
@@ -239,19 +222,95 @@ class AiProductsController extends Controller
     {
         $categories = [];
 
-        if ($products->where('gps', true)->count() > 0) {
+        if ($products->where('gps_features', true)->count() > 0) {
             $categories[] = 'GPS watches';
         }
         if ($products->where('sim_support', true)->count() > 0) {
             $categories[] = 'SIM watches';
         }
-        if ($products->where('video_call', true)->count() > 0) {
+        if ($products->contains(fn (Product $product): bool => $this->hasVideoCallFeature($product))) {
             $categories[] = 'Video call watches';
         }
-        if ($products->where('waterproof', '!=', null)->count() > 0) {
-            $categories[] = 'Waterproof watches';
+        if ($products->whereNotNull('water_resistant')->count() > 0) {
+            $categories[] = 'Water-resistant watches';
         }
 
         return $categories;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function featureFlags(Product $product, string $locale): array
+    {
+        return [
+            'sim_support' => (bool) $product->sim_support,
+            'gps' => (bool) $product->gps_features,
+            'video_call' => $this->hasVideoCallFeature($product),
+            'waterproof' => $product->water_resistant,
+            'battery_life' => $product->batteryLifeLabel($locale),
+            'screen_size' => $product->screen_size ?? null,
+            'camera' => (bool) $product->camera,
+        ];
+    }
+
+    private function hasVideoCallFeature(Product $product): bool
+    {
+        return Str::contains($this->productFeatureText($product), [
+            'video call',
+            'video calls',
+            'video calling',
+            'two-way calling',
+            'ვიდეო ზარ',
+            'ვიდეოზარ',
+            'ორმხრივ ზარ',
+        ]);
+    }
+
+    private function productFeatureText(Product $product): string
+    {
+        $parts = array_filter([
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->short_description_en,
+            (string) $product->short_description_ka,
+            (string) $product->description_en,
+            (string) $product->description_ka,
+            is_array($product->functions) ? implode(' ', array_map(static fn ($item): string => (string) $item, $product->functions)) : '',
+        ], static fn (string $part): bool => trim($part) !== '');
+
+        return mb_strtolower(implode(' ', $parts));
+    }
+
+    private function productRating(Product $product): ?float
+    {
+        $rating = $product->getAttribute('reviews_avg_rating');
+
+        if (is_numeric($rating)) {
+            return round((float) $rating, 1);
+        }
+
+        if ($product->relationLoaded('reviews')) {
+            $avg = $product->reviews->avg('rating');
+
+            return $avg !== null ? round((float) $avg, 1) : null;
+        }
+
+        return null;
+    }
+
+    private function productReviewsCount(Product $product): int
+    {
+        $count = $product->getAttribute('reviews_count');
+
+        if (is_numeric($count)) {
+            return (int) $count;
+        }
+
+        if ($product->relationLoaded('reviews')) {
+            return $product->reviews->count();
+        }
+
+        return 0;
     }
 }

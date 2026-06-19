@@ -32,7 +32,7 @@
     <h1 class="text-5xl font-bold text-gray-900 mb-4">{{ __('ui.privacy_title') }}</h1>
     <p class="text-gray-600 flex items-center justify-center gap-2">
       <i class="fas fa-calendar-alt text-primary-600"></i>
-      <span>ბოლო განახლება: 2026-03-08</span>
+      <span>{{ __('ui.privacy_updated') }}</span>
     </p>
   </div>
 
@@ -211,9 +211,9 @@
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl p-8 text-center">
       <h3 class="text-2xl font-bold mb-2">გაქვთ კითხვები კონფიდენციალობასთან დაკავშირებით?</h3>
       <p class="text-gray-300 mb-6">MyTechnic-ის გუნდი მზადაა უპასუხოს თქვენს ნებისმიერ შეკითხვას.</p>
-      <a href="mailto:info@mytechnic.ge" class="inline-flex items-center gap-2 bg-primary-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-primary-700 transition">
+      <a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="inline-flex items-center gap-2 bg-primary-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-primary-700 transition">
         <i class="fas fa-envelope"></i>
-        info@mytechnic.ge
+        {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}
       </a>
     </div>
   </div>

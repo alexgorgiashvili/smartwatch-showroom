@@ -364,6 +364,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		->name('chatbot-content.faqs.destroy');
 	Route::put('/chatbot-content/contacts', [AdminChatbotContentController::class, 'updateContacts'])
 		->name('chatbot-content.contacts.update');
+	Route::post('/chatbot-content/static-pages/sync', [AdminChatbotContentController::class, 'syncStaticPages'])
+		->name('chatbot-content.static-pages.sync');
 	Route::post('/chatbot-lab/manual', [AdminChatbotLabController::class, 'runManualTest'])
 		->name('chatbot-lab.manual.run');
 	Route::post('/chatbot-lab/manual/retry', [AdminChatbotLabController::class, 'retryManualResult'])

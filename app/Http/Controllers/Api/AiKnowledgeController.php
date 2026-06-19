@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AiKnowledgeController extends Controller
 {
@@ -55,6 +55,14 @@ class AiKnowledgeController extends Controller
 
         if ($topic === 'all' || $topic === 'comparison') {
             $knowledge['comparison'] = $this->getComparisonGuide($locale);
+        }
+
+        if ($topic === 'all' || $topic === 'company') {
+            $knowledge['company'] = $this->getCompanyProfile($locale);
+        }
+
+        if ($topic === 'all' || $topic === 'contact') {
+            $knowledge['contact'] = $this->getContactInfo();
         }
 
         return $knowledge;
@@ -259,6 +267,95 @@ class AiKnowledgeController extends Controller
                         : 'SIM support recommended for children 6+ years',
                 ],
             ],
+        ];
+    }
+
+    /**
+     * Get company profile content
+     */
+    private function getCompanyProfile(string $locale): array
+    {
+        $privacySummary = $locale === 'ka'
+            ? 'ვაგროვებთ მხოლოდ საჭირო მონაცემებს შეკვეთებისთვის, მიწოდებისთვის, მხარდაჭერისთვის და საიტის გაუმჯობესებისთვის.'
+            : 'We collect only the data needed for orders, delivery, support, and site improvement.';
+
+        $termsSummary = $locale === 'ka'
+            ? 'ვმუშაობთ საქართველოს კანონმდებლობის მიხედვით, ვთავაზობთ უფასო მიწოდებას და ვფარავთ 14-დღიან დაბრუნების წესს.'
+            : 'We operate under Georgian law, offer free delivery, and follow a 14-day return policy.';
+
+        return [
+            'brand' => 'MyTechnic',
+            'about' => [
+                'summary' => __('ui.about_intro'),
+                'mission' => __('ui.about_mission_body'),
+                'highlights' => [
+                    __('ui.trust_shipping') . ' - ' . __('ui.trust_shipping_text'),
+                    __('ui.trust_warranty') . ' - ' . __('ui.trust_warranty_text'),
+                    __('ui.trust_support') . ' - ' . __('ui.trust_support_text'),
+                ],
+            ],
+            'operations' => [
+                'delivery' => $locale === 'ka' ? 'უფასო მიწოდება მთელი საქართველოს მასშტაბით' : 'Free delivery across Georgia',
+                'warranty' => $locale === 'ka'
+                    ? '2G მოდელები - 3 თვე, 4G მოდელები - 6 თვე'
+                    : '2G models - 3 months, 4G models - 6 months',
+                'support_channels' => $locale === 'ka'
+                    ? ['ტელეფონი', 'WhatsApp', 'Messenger']
+                    : ['Phone', 'WhatsApp', 'Messenger'],
+            ],
+            'privacy' => [
+                'summary' => $privacySummary,
+                'key_points' => $locale === 'ka'
+                    ? [
+                        'ვაგროვებთ სახელს, ტელეფონს, ელფოსტას, მისამართს, შეკვეთის დეტალებს და ჩატბოტის/ვებსაიტის აქტივობას.',
+                        'ვიყენებთ მონაცემებს შეკვეთების დამუშავებისთვის, მიწოდებისთვის, კომუნიკაციისთვის, გაუმჯობესებისთვის და თაღლითობის პრევენციისთვის.',
+                        'ჩატბოტის საუბრები შეიძლება გამოყენდეს მხარდაჭერის გასაუმჯობესებლად; AI პასუხები ავტომატურია და არ არის იურიდიული ან სამედიცინო რჩევა.',
+                        'ვიცავთ მონაცემებს SSL/TLS-ით, უსაფრთხო სერვერებით, წვდომის კონტროლით და რეგულარული მონიტორინგით.',
+                    ]
+                    : [
+                        'We collect name, phone, email, address, order details, and site/chatbot activity.',
+                        'We use data for order processing, delivery, communication, improvement, and fraud prevention.',
+                        'Chatbot conversations may be used to improve support; AI replies are automatic and not legal or medical advice.',
+                        'We protect data with SSL/TLS, secure servers, access control, and regular monitoring.',
+                    ],
+            ],
+            'terms' => [
+                'summary' => $termsSummary,
+                'key_points' => $locale === 'ka'
+                    ? [
+                        'ვებსაიტის მასალები განკუთვნილია მხოლოდ პირადი, არაკომერციული გამოყენებისთვის.',
+                        'გადახდა შესაძლებელია საქართველოს ბანკის ონლაინ სისტემით ან კურიერთან ნაღდი ანგარიშსწორებით თბილისში.',
+                        'გარანტია: 2G - 3 თვე, 4G - 6 თვე; არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
+                        'დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული და აქვს ორიგინალური შეფუთვა.',
+                    ]
+                    : [
+                        'Site materials are for personal, non-commercial use only.',
+                        'Payment is available via BOG online or cash on delivery in Tbilisi.',
+                        'Warranty: 2G - 3 months, 4G - 6 months; excludes mechanical damage, water use, and unauthorized repairs.',
+                        'Returns/exchanges are available within 14 calendar days if unused and in original packaging.',
+                    ],
+            ],
+        ];
+    }
+
+    /**
+     * Get current contact info
+     */
+    private function getContactInfo(): array
+    {
+        $settings = ContactSetting::allKeyed();
+
+        return [
+            'phone' => $settings['phone_display'] ?? null,
+            'whatsapp_url' => $settings['whatsapp_url'] ?? null,
+            'email' => $settings['email'] ?? null,
+            'location' => $settings['location'] ?? null,
+            'hours' => $settings['hours'] ?? null,
+            'social' => array_filter([
+                'instagram' => $settings['instagram_url'] ?? null,
+                'facebook' => $settings['facebook_url'] ?? null,
+                'messenger' => $settings['messenger_url'] ?? null,
+            ]),
         ];
     }
 }

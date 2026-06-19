@@ -15,6 +15,7 @@ class RagContextBuilder
         'faq' => 'ხშირი კითხვა',
         'policy' => 'პოლიტიკა',
         'support' => 'ტექნიკური დახმარება',
+        'company' => 'კომპანიის ინფორმაცია',
     ];
 
     public function __construct(

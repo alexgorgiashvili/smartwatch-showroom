@@ -11,6 +11,7 @@ class ImportChatbotTrainingCases extends Command
 {
     protected $signature = 'chatbot:import-training-cases
         {--limit= : Limit number of legacy cases to import}
+        {--dataset= : Dataset file name or path}
         {--dry-run : Preview import summary without writing to the database}';
 
     protected $description = 'Import legacy chatbot golden dataset cases into the DB-backed chatbot training cases table.';
@@ -23,7 +24,8 @@ class ImportChatbotTrainingCases extends Command
             return Command::FAILURE;
         }
 
-        $dataset = $runner->loadDataset();
+        $datasetOption = trim((string) $this->option('dataset'));
+        $dataset = $runner->loadDataset($datasetOption !== '' ? $datasetOption : null);
 
         if ($dataset->isEmpty()) {
             $this->warn('Legacy dataset is empty or missing.');
@@ -69,6 +71,7 @@ class ImportChatbotTrainingCases extends Command
 
         $summaryRows = [
             ['Dataset cases', (string) $dataset->count()],
+            ['Dataset source', $datasetOption !== '' ? $datasetOption : 'chatbot_golden_dataset.json'],
             ['Dry run', $isDryRun ? 'yes' : 'no'],
         ];
 

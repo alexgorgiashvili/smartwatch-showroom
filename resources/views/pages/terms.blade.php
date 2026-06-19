@@ -32,7 +32,7 @@
     <h1 class="text-5xl font-bold text-gray-900 mb-4">{{ __('ui.terms_title') }}</h1>
     <p class="text-gray-600 flex items-center justify-center gap-2">
       <i class="fas fa-file-contract text-primary-600"></i>
-      <span>ბოლო განახლება: 2026-03-08</span>
+      <span>{{ __('ui.terms_updated') }}</span>
     </p>
   </div>
 
@@ -169,7 +169,7 @@
             <i class="fas fa-undo text-amber-600 flex-shrink-0 mt-1"></i>
             <div>
               <h4 class="font-semibold text-gray-900">დაბრუნების პოლიტიკა</h4>
-              <p class="text-gray-600 text-sm">ქარხნული წუნის შემთხვევაში მოქმედებს შესაბამისი გარანტია: 2G მოდელებზე 3 თვე და 4G მოდელებზე 6 თვე. თუ მომხმარებელს სურს მხოლოდ მოდელის გაცვლა, გაცვლა შესაძლებელია მიღებიდან 14 (თოთხმეტი) კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალი შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი. დაბრუნების ან გაცვლის მოთხოვნისთვის დაგვიკავშირდით ელფოსტაზე: info@mytechnic.ge.</p>
+              <p class="text-gray-600 text-sm">ქარხნული წუნის შემთხვევაში მოქმედებს შესაბამისი გარანტია: 2G მოდელებზე 3 თვე და 4G მოდელებზე 6 თვე. თუ მომხმარებელს სურს მხოლოდ მოდელის გაცვლა, გაცვლა შესაძლებელია მიღებიდან 14 (თოთხმეტი) კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალი შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი. დაბრუნების ან გაცვლის მოთხოვნისთვის დაგვიკავშირდით ელფოსტაზე: {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}.</p>
             </div>
           </div>
         </div>
@@ -241,7 +241,7 @@
             </li>
             <li class="flex gap-2">
               <i class="fas fa-robot text-blue-600 flex-shrink-0 mt-1"></i>
-              <span class="text-gray-700">ზუსტი ინფორმაციისთვის მიმართეთ ჩვენს გუნდს: info@mytechnic.ge</span>
+              <span class="text-gray-700">ზუსტი ინფორმაციისთვის მიმართეთ ჩვენს გუნდს: {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}</span>
             </li>
           </ul>
         </div>
@@ -263,9 +263,9 @@
     <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white rounded-xl p-8 text-center mt-12">
       <h3 class="text-2xl font-bold mb-2">გაქვთ კითხვები პირობებთან დაკავშირებით?</h3>
       <p class="text-indigo-100 mb-6">MyTechnic-ის გუნდი მზადაა უპასუხოს თქვენს ნებისმიერ შეკითხვას.</p>
-      <a href="mailto:info@mytechnic.ge" class="inline-flex items-center gap-2 bg-white text-indigo-900 font-semibold px-6 py-3 rounded-lg hover:bg-indigo-50 transition">
+      <a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="inline-flex items-center gap-2 bg-white text-indigo-900 font-semibold px-6 py-3 rounded-lg hover:bg-indigo-50 transition">
         <i class="fas fa-envelope"></i>
-        info@mytechnic.ge
+        {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}
       </a>
     </div>
   </div>

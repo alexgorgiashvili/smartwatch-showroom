@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AiRecommendationsController extends Controller
 {
@@ -23,7 +24,10 @@ class AiRecommendationsController extends Controller
         $features = $request->get('features', []);
         $limit = min($request->get('limit', 5), 10);
 
-        $productsQuery = Product::active()->with(['images', 'variants']);
+        $productsQuery = Product::active()
+            ->with(['images', 'variants'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews');
 
         // Filter by age
         if ($age) {
@@ -46,7 +50,7 @@ class AiRecommendationsController extends Controller
             foreach ($features as $feature) {
                 switch (strtolower($feature)) {
                     case 'gps':
-                        $productsQuery->where('gps', true);
+                        $productsQuery->where('gps_features', true);
                         break;
                     case 'sim':
                     case 'sim_support':
@@ -54,13 +58,24 @@ class AiRecommendationsController extends Controller
                         break;
                     case 'video':
                     case 'video_call':
-                        $productsQuery->where('video_call', true);
+                        $productsQuery->where(function ($query): void {
+                            $query
+                                ->where('description_ka', 'like', '%ვიდეო%')
+                                ->orWhere('short_description_ka', 'like', '%ვიდეო%')
+                                ->orWhere('description_en', 'like', '%video%')
+                                ->orWhere('short_description_en', 'like', '%video%');
+                        });
                         break;
                     case 'camera':
                         $productsQuery->where('camera', true);
                         break;
                     case 'waterproof':
-                        $productsQuery->whereNotNull('waterproof');
+                        $productsQuery->whereNotNull('water_resistant');
+                        break;
+                    case 'waterproof':
+                        if ($product->water_resistant) {
+                            $reasons[] = $locale === 'ka' ? 'áƒ¬áƒ§áƒáƒšáƒ’áƒáƒ›áƒ«áƒšáƒ”áƒáƒ‘áƒ' : 'Water resistance';
+                        }
                         break;
                 }
             }
@@ -114,19 +129,11 @@ class AiRecommendationsController extends Controller
                     'in_stock' => $product->stock_quantity > 0,
                     'url' => route('products.show', $product),
                     'image' => $firstImage ? $firstImage->url : null,
-                    'features' => [
-                        'sim_support' => (bool) $product->sim_support,
-                        'gps' => (bool) $product->gps,
-                        'video_call' => (bool) $product->video_call,
-                        'waterproof' => $product->waterproof ?? null,
-                        'camera' => (bool) $product->camera,
-                    ],
+                    'features' => $this->featureFlags($product, $locale),
                     'age_range' => ($product->age_min && $product->age_max)
                         ? "{$product->age_min}-{$product->age_max} years"
                         : null,
-                    'rating' => $product->reviews_avg_rating
-                        ? round((float) $product->reviews_avg_rating, 1)
-                        : null,
+                    'rating' => $this->productRating($product),
                     'recommendation_reason' => $this->generateRecommendationReason($product, $age ?? null, $budget ?? null, $features ?? [], $locale),
                     'citation_text' => $this->generateCitationText($product, $locale),
                 ];
@@ -202,7 +209,7 @@ class AiRecommendationsController extends Controller
             foreach ($features as $feature) {
                 switch (strtolower($feature)) {
                     case 'gps':
-                        if ($product->gps) {
+                        if ($product->gps_features) {
                             $reasons[] = $locale === 'ka' ? 'GPS ტრეკინგით' : 'GPS tracking';
                         }
                         break;
@@ -214,7 +221,7 @@ class AiRecommendationsController extends Controller
                         break;
                     case 'video':
                     case 'video_call':
-                        if ($product->video_call) {
+                        if ($this->hasVideoCallFeature($product)) {
                             $reasons[] = $locale === 'ka' ? 'ვიდეო ზარები' : 'Video calls';
                         }
                         break;
@@ -226,7 +233,7 @@ class AiRecommendationsController extends Controller
             $reasons[] = $locale === 'ka' ? 'რეკომენდებული' : 'Featured';
         }
 
-        if ($product->reviews_avg_rating >= 4.5) {
+        if (($rating = $this->productRating($product)) !== null && $rating >= 4.5) {
             $reasons[] = $locale === 'ka' ? 'მაღალი რეიტინგი' : 'High rating';
         }
 
@@ -246,5 +253,65 @@ class AiRecommendationsController extends Controller
         }
 
         return "MyTechnic.ge - {$product->name} - {$priceText}";
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function featureFlags(Product $product, string $locale): array
+    {
+        return [
+            'sim_support' => (bool) $product->sim_support,
+            'gps' => (bool) $product->gps_features,
+            'video_call' => $this->hasVideoCallFeature($product),
+            'waterproof' => $product->water_resistant,
+            'camera' => (bool) $product->camera,
+            'battery_life' => $product->batteryLifeLabel($locale),
+        ];
+    }
+
+    private function hasVideoCallFeature(Product $product): bool
+    {
+        return Str::contains($this->productFeatureText($product), [
+            'video call',
+            'video calls',
+            'video calling',
+            'two-way calling',
+            'ვიდეო ზარ',
+            'ვიდეოზარ',
+            'ორმხრივ ზარ',
+        ]);
+    }
+
+    private function productFeatureText(Product $product): string
+    {
+        $parts = array_filter([
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->short_description_en,
+            (string) $product->short_description_ka,
+            (string) $product->description_en,
+            (string) $product->description_ka,
+            is_array($product->functions) ? implode(' ', array_map(static fn ($item): string => (string) $item, $product->functions)) : '',
+        ], static fn (string $part): bool => trim($part) !== '');
+
+        return mb_strtolower(implode(' ', $parts));
+    }
+
+    private function productRating(Product $product): ?float
+    {
+        $rating = $product->getAttribute('reviews_avg_rating');
+
+        if (is_numeric($rating)) {
+            return round((float) $rating, 1);
+        }
+
+        if ($product->relationLoaded('reviews')) {
+            $avg = $product->reviews->avg('rating');
+
+            return $avg !== null ? round((float) $avg, 1) : null;
+        }
+
+        return null;
     }
 }

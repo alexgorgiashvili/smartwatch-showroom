@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class AiContentController extends Controller
 {
@@ -46,20 +47,20 @@ class AiContentController extends Controller
         if ($product->sim_support) {
             $markdown .= "- ✅ " . ($locale === 'ka' ? 'SIM ბარათის მხარდაჭერა' : 'SIM card support') . "\n";
         }
-        if ($product->gps) {
+        if ($product->gps_features) {
             $markdown .= "- ✅ " . ($locale === 'ka' ? 'GPS რეალურ დროში ტრეკინგი' : 'GPS real-time tracking') . "\n";
         }
-        if ($product->video_call) {
+        if ($this->hasVideoCallFeature($product)) {
             $markdown .= "- ✅ " . ($locale === 'ka' ? 'ვიდეო ზარები' : 'Video calls') . "\n";
         }
         if ($product->camera) {
             $markdown .= "- ✅ " . ($locale === 'ka' ? 'კამერა' : 'Camera') . "\n";
         }
-        if ($product->waterproof) {
-            $markdown .= "- ✅ " . ($locale === 'ka' ? 'წყალგამძლე' : 'Waterproof') . " ({$product->waterproof})\n";
+        if ($product->water_resistant) {
+            $markdown .= "- ✅ " . ($locale === 'ka' ? 'წყალგამძლეობა' : 'Water resistance') . " ({$product->water_resistant})\n";
         }
-        if ($product->battery_life) {
-            $markdown .= "- ✅ " . ($locale === 'ka' ? 'ბატარეის ხანგრძლივობა' : 'Battery life') . ": {$product->battery_life}\n";
+        if ($batteryLife = $product->batteryLifeLabel($locale)) {
+            $markdown .= "- ✅ " . ($locale === 'ka' ? 'ბატარეის ხანგრძლივობა' : 'Battery life') . ": {$batteryLife}\n";
         }
         $markdown .= "\n";
 
@@ -71,7 +72,7 @@ class AiContentController extends Controller
         } else {
             $markdown .= "- **" . number_format($price, 0) . " ₾**\n";
         }
-        $markdown .= "- " . ($locale === 'ka' ? 'უფასო მიწოდება თბილისში' : 'Free delivery in Tbilisi') . "\n\n";
+        $markdown .= "- " . ($locale === 'ka' ? 'უფასო მიწოდება საქართველოს მასშტაბით' : 'Free delivery across Georgia') . "\n\n";
 
         // Suitable For
         if ($product->age_min && $product->age_max) {
@@ -81,10 +82,10 @@ class AiContentController extends Controller
         }
 
         // Reviews
-        if ($product->reviews_avg_rating) {
+        if (($rating = $this->productRating($product)) !== null) {
             $markdown .= "## " . ($locale === 'ka' ? 'შეფასებები' : 'Reviews') . "\n";
-            $markdown .= "- " . ($locale === 'ka' ? 'რეიტინგი' : 'Rating') . ": " . round($product->reviews_avg_rating, 1) . "/5 ⭐\n";
-            $markdown .= "- " . ($locale === 'ka' ? 'მიმოხილვების რაოდენობა' : 'Reviews count') . ": " . ($product->reviews_count ?? 0) . "\n\n";
+            $markdown .= "- " . ($locale === 'ka' ? 'რეიტინგი' : 'Rating') . ": {$rating}/5 ⭐\n";
+            $markdown .= "- " . ($locale === 'ka' ? 'მიმოხილვების რაოდენობა' : 'Reviews count') . ": " . $this->productReviewsCount($product) . "\n\n";
         }
 
         // Where to Buy
@@ -99,5 +100,48 @@ class AiContentController extends Controller
         $markdown .= ($locale === 'ka' ? '**მხარდაჭერა:** ქართულ და ინგლისურ ენებზე' : '**Support:** Available in Georgian and English') . "\n";
 
         return $markdown;
+    }
+
+    private function hasVideoCallFeature(Product $product): bool
+    {
+        return Str::contains($this->productFeatureText($product), [
+            'video call',
+            'video calls',
+            'video calling',
+            'two-way calling',
+            'ვიდეო ზარ',
+            'ვიდეოზარ',
+            'ორმხრივ ზარ',
+        ]);
+    }
+
+    private function productFeatureText(Product $product): string
+    {
+        $parts = array_filter([
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->short_description_en,
+            (string) $product->short_description_ka,
+            (string) $product->description_en,
+            (string) $product->description_ka,
+            is_array($product->functions) ? implode(' ', array_map(static fn ($item): string => (string) $item, $product->functions)) : '',
+        ], static fn (string $part): bool => trim($part) !== '');
+
+        return mb_strtolower(implode(' ', $parts));
+    }
+
+    private function productRating(Product $product): ?float
+    {
+        $product->loadMissing('reviews');
+        $avg = $product->reviews->avg('rating');
+
+        return $avg !== null ? round((float) $avg, 1) : null;
+    }
+
+    private function productReviewsCount(Product $product): int
+    {
+        $product->loadMissing('reviews');
+
+        return $product->reviews->count();
     }
 }

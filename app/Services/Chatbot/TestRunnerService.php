@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\File;
 
 class TestRunnerService
 {
-    public function loadDataset(): Collection
+    public function loadDataset(?string $dataset = null): Collection
     {
-        $path = database_path('data/chatbot_golden_dataset.json');
+        $path = $this->resolveDatasetPath($dataset);
 
         if (!File::exists($path)) {
             return collect();
@@ -21,6 +21,45 @@ class TestRunnerService
         $decoded = json_decode((string) File::get($path), true);
 
         return is_array($decoded) ? collect($decoded)->values() : collect();
+    }
+
+    private function resolveDatasetPath(?string $dataset): string
+    {
+        $defaultPath = database_path('data/chatbot_golden_dataset.json');
+        $normalized = trim((string) $dataset);
+
+        if ($normalized === '') {
+            return $defaultPath;
+        }
+
+        $candidates = [];
+
+        if ($this->isAbsolutePath($normalized)) {
+            $candidates[] = $normalized;
+        } else {
+            $candidates[] = base_path($normalized);
+            $candidates[] = database_path($normalized);
+            $candidates[] = database_path('data/' . ltrim($normalized, '\\/'));
+            $candidates[] = database_path('data/' . basename($normalized));
+
+            if (!str_ends_with(strtolower($normalized), '.json')) {
+                $candidates[] = database_path('data/' . $normalized . '.json');
+                $candidates[] = database_path('data/' . basename($normalized) . '.json');
+            }
+        }
+
+        foreach (array_values(array_unique($candidates)) as $candidate) {
+            if (is_string($candidate) && $candidate !== '' && File::exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $defaultPath;
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return preg_match('/^(?:[A-Za-z]:[\\\\\\/]|\\\\\\\\|\\/)/', $path) === 1;
     }
 
     /**

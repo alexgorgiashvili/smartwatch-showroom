@@ -12,6 +12,7 @@ class ChatbotTrainingBatch extends Command
     protected $signature = 'chatbot:training-batch
         {--size=5 : Number of cases to run in this batch}
         {--offset=0 : Dataset offset to start from}
+        {--dataset= : Dataset file name or path}
         {--with-judge=0 : Run LLM judge scoring for each case (costs extra tokens)}';
 
     protected $description = 'Run chatbot training batch from golden dataset and log question/response/suggestions for human approval.';
@@ -20,9 +21,10 @@ class ChatbotTrainingBatch extends Command
     {
         $size = max(1, (int) $this->option('size'));
         $offset = max(0, (int) $this->option('offset'));
+        $datasetOption = trim((string) $this->option('dataset'));
         $withJudge = (string) $this->option('with-judge') === '1';
 
-        $dataset = $runner->loadDataset();
+        $dataset = $runner->loadDataset($datasetOption !== '' ? $datasetOption : null);
 
         if ($dataset->isEmpty()) {
             $this->warn('Dataset is empty.');
@@ -58,6 +60,7 @@ class ChatbotTrainingBatch extends Command
                 'generated_at' => now()->toIso8601String(),
                 'offset' => $offset,
                 'size' => $batch->count(),
+                'dataset' => $datasetOption !== '' ? $datasetOption : 'chatbot_golden_dataset.json',
                 'with_judge' => $withJudge,
             ],
             'results' => $results,

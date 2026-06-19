@@ -2,7 +2,7 @@
 
 @section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — GPS ტრეკინგი, 4G ზარები | MyTechnic თბილისი' : 'Kids SIM Smartwatch in Georgia — GPS Tracking, 4G Calls | MyTechnic Tbilisi')
 
-@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic — ბავშვის სმარტ საათი SIM ბარათით თბილისში და საქართველოს მასშტაბით. 4G LTE, GPS მდებარეობის კონტროლი, SOS ღილაკი, ზარები ტელეფონის გარეშე. უფასო მიტანა საქართველოში. ოფიციალური იმპორტიორი.' : 'MyTechnic — kids SIM smartwatch in Tbilisi and across Georgia. 4G LTE, GPS location tracking, SOS button, calls without phone. Free delivery in Georgia. Official importer.')
+@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic — ბავშვის სმარტ საათი SIM ბარათით თბილისში და საქართველოს მასშტაბით. 4G LTE, GPS მდებარეობის კონტროლი, SOS ღილაკი, ზარები ტელეფონის გარეშე. უფასო მიწოდება საქართველოში. ოფიციალური იმპორტიორი.' : 'MyTechnic — kids SIM smartwatch in Tbilisi and across Georgia. 4G LTE, GPS location tracking, SOS button, calls without phone. Free delivery in Georgia. Official importer.')
 @section('canonical', url('/'))
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — MyTechnic' : 'Kids SIM Smartwatch in Georgia — MyTechnic')
 @section('og_description', app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათი 4G GPS-ით. მდებარეობის კონტროლი, პირდაპირი ზარი, SOS — ტელეფონის გარეშე. ოფიციალური იმპორტიორი.' : 'Kids SIM smartwatch with 4G GPS tracking. Location control, direct calls, SOS — no phone needed. Official importer.')
@@ -125,11 +125,7 @@ $_homeSchema = [
 
                     {{-- Sub-copy --}}
                     <p class="hidden lg:block mt-5 text-base leading-relaxed text-gray-500 sm:text-lg">
-                        @if (app()->getLocale() === 'ka')
-                            ვიდეო ზარები, GPS მონიტორინგი და შეტყობინებები, ყველაფერი ერთ მოწყობილობაში
-                        @else
-                            Calls, GPS tracking, messages — a smartwatch that works completely on its own.
-                        @endif
+                        {{ __('ui.hero_subtitle') }}
                     </p>
 
                     {{-- CTAs --}}
@@ -146,7 +142,7 @@ $_homeSchema = [
                     <div class="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-gray-600" data-reveal="fade-up"
                         data-reveal-delay="4">
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'უფასო მიწოდება' : 'Free Delivery' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ __('ui.trust_shipping') }}</span>
                         <span class="flex items-center gap-1.5"><i
                                 class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? '6 თვე გარანტია' : '6-Month Warranty' }}</span>
                         <span class="flex items-center gap-1.5"><i
@@ -207,11 +203,9 @@ $_homeSchema = [
 
                         [
                             'icon' => 'fa-truck-fast',
-                            'title' => app()->getLocale() === 'ka' ? 'უფასო მიწოდება' : 'Free Delivery',
+                            'title' => __('ui.trust_shipping'),
                             'body' =>
-                                app()->getLocale() === 'ka'
-                                    ? 'მთელი საქართველოს მასშტაბით'
-                                    : 'Across all of Georgia',
+                                __('ui.trust_shipping_text'),
                         ],
                     ];
                 @endphp

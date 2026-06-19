@@ -36,7 +36,10 @@ class ChatbotContentSyncService
             ]
         );
 
-        return $this->syncDocumentEmbedding($document);
+        $synced = $this->syncDocumentEmbedding($document);
+        $this->bumpProductContextVersion();
+
+        return $synced;
     }
 
     public function deactivateFaq(Faq $faq): bool
@@ -44,6 +47,8 @@ class ChatbotContentSyncService
         ChatbotDocument::query()
             ->where('key', 'faq-' . $faq->id)
             ->update(['is_active' => false]);
+
+        $this->bumpProductContextVersion();
 
         return true;
     }
@@ -61,7 +66,6 @@ class ChatbotContentSyncService
             'Instagram: ' . ($settings['instagram_url'] ?? ''),
             'Facebook: ' . ($settings['facebook_url'] ?? ''),
             'Messenger: ' . ($settings['messenger_url'] ?? ''),
-            'Telegram: ' . ($settings['telegram_url'] ?? ''),
         ]));
 
         $document = ChatbotDocument::updateOrCreate(
@@ -77,7 +81,34 @@ class ChatbotContentSyncService
             ]
         );
 
-        return $this->syncDocumentEmbedding($document);
+        $synced = $this->syncDocumentEmbedding($document);
+        $this->bumpProductContextVersion();
+
+        return $synced;
+    }
+
+    public function syncStaticPages(): bool
+    {
+        $synced = true;
+
+        foreach ($this->staticPageDocuments() as $documentData) {
+            $document = ChatbotDocument::updateOrCreate(
+                ['key' => $documentData['key']],
+                [
+                    'type' => $documentData['type'],
+                    'title' => $documentData['title'],
+                    'content_ka' => $documentData['content_ka'],
+                    'metadata' => $documentData['metadata'],
+                    'is_active' => true,
+                ]
+            );
+
+            $synced = $this->syncDocumentEmbedding($document) && $synced;
+        }
+
+        $this->bumpProductContextVersion();
+
+        return $synced;
     }
 
     public function syncProduct(Product $product): bool
@@ -285,6 +316,63 @@ class ChatbotContentSyncService
         }
 
         Cache::increment('product_context_version');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function staticPageDocuments(): array
+    {
+        return [
+            [
+                'key' => 'page-about',
+                'type' => 'company',
+                'title' => 'MyTechnic-ის შესახებ',
+                'content_ka' => implode("\n\n", [
+                    'MyTechnic არის საქართველოში SIM-იანი ბავშვთა სმარტ საათების ოფიციალური იმპორტიორი და თბილისში დაფუძნებული გუნდი.',
+                    'ჩვენ ვამახვილებთ ყურადღებას ზარზე, GPS-ზე, შეტყობინებებზე, ვიდეო ზარზე, კამერაზე, ბატარეაზე და ყოველდღიურ გამოყენებადობაზე.',
+                    'გვინდა, რომ მშობელს ჰქონდეს სიმშვიდე, ბავშვს კი უსაფრთხო და მარტივი კავშირი.',
+                    'მნიშვნელოვანი დეტალები: უფასო მიწოდება მთელი საქართველოს მასშტაბით, 2G მოდელებზე 3 თვე გარანტია და 4G მოდელებზე 6 თვე გარანტია.',
+                    'დაგვიკავშირდით ტელეფონით, WhatsApp-ით ან Messenger-ით — სწრაფად და პირდაპირ.',
+                ]),
+                'metadata' => [
+                    'source' => 'site_page',
+                    'page' => 'about',
+                ],
+            ],
+            [
+                'key' => 'page-privacy',
+                'type' => 'policy',
+                'title' => 'კონფიდენციალობის პოლიტიკა',
+                'content_ka' => implode("\n\n", [
+                    'ვაგროვებთ მხოლოდ იმ ინფორმაციას, რომელიც საჭიროა შეკვეთისა და მხარდაჭერისთვის: სახელი, ტელეფონი, ელფოსტა, მისამართი, შეკვეთის დეტალები და ვებსაიტთან ან ჩატბოტთან დაკავშირებული აქტივობა.',
+                    'ვიყენებთ მონაცემებს შეკვეთების დამუშავებისთვის, მიწოდებისთვის, მომხმარებელთან კომუნიკაციისთვის, ვებსაიტის გაუმჯობესებისთვის და თაღლითობის პრევენციისთვის.',
+                    'ჩატბოტთან მიმოწერა შეიძლება გამოყენდეს მხარდაჭერის გაუმჯობესებისთვის. AI პასუხები ავტომატურად გენერირდება და არ წარმოადგენს იურიდიულ ან სამედიცინო რჩევას.',
+                    'ვიცავთ მონაცემებს SSL/TLS, უსაფრთხო სერვერებით, წვდომის კონტროლით და რეგულარული მონიტორინგით. პერსონალურ ინფორმაციას მესამე მხარეს არ ვუზიარებთ თქვენი თანხმობის გარეშე.',
+                ]),
+                'metadata' => [
+                    'source' => 'site_page',
+                    'page' => 'privacy',
+                ],
+            ],
+            [
+                'key' => 'page-terms',
+                'type' => 'policy',
+                'title' => 'მომსახურების პირობები',
+                'content_ka' => implode("\n\n", [
+                    'MyTechnic-ის ვებსაიტზე შესვლით და გამოყენებით თქვენ ეთანხმებით ამ პირობებს და საქართველოს მოქმედ კანონმდებლობას.',
+                    'ვებსაიტის მასალები განკუთვნილია მხოლოდ პირადი, არაკომერციული გამოყენებისთვის. აკრძალულია კოპირება, გავრცელება, რევერსული ინჟინერია ან სამართლებრივი აღნიშვნების შეცვლა.',
+                    'გადახდა შესაძლებელია საქართველოს ბანკის უსაფრთხო ონლაინ სისტემით ან კურიერთან ნაღდი ანგარიშსწორებით თბილისში. მიწოდება უფასოა მთელი საქართველოს მასშტაბით.',
+                    'გარანტია: 2G მოდელებზე 3 თვე, 4G მოდელებზე 6 თვე. გარანტია არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
+                    'დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალური შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი.',
+                    'ფასები, მარაგი და მახასიათებლები შეიძლება შეიცვალოს წინასწარი შეტყობინების გარეშე.',
+                ]),
+                'metadata' => [
+                    'source' => 'site_page',
+                    'page' => 'terms',
+                ],
+            ],
+        ];
     }
 
     private function syncDocumentEmbedding(ChatbotDocument $document): bool
