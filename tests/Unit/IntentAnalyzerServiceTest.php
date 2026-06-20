@@ -115,4 +115,68 @@ class IntentAnalyzerServiceTest extends TestCase
         $this->assertSame('Q12 და CT23 შედარება', $intent->standaloneQuery());
         $this->assertContains('CT23', $intent->searchKeywords());
     }
+    public function testTwoGCatalogRequestUsesLocalFacetHeuristic(): void
+    {
+        config()->set('services.openai.intent_enabled', true);
+        config()->set('services.openai.key', '');
+
+        $policy = Mockery::mock(UnifiedAiPolicyService::class);
+        $policy->shouldReceive('normalizeIncomingMessage')
+            ->once()
+            ->andReturn('რომელი 2G მოდელები გაქვთ?');
+
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
+
+        $intent = $service->analyze('რომელი 2G მოდელები გაქვთ?');
+
+        $this->assertSame('recommendation', $intent->intent());
+        $this->assertTrue($intent->hasCatalogFacet());
+        $this->assertTrue($intent->mentionsTwoGCatalog());
+        $this->assertFalse($intent->mentionsFourGCatalog());
+        $this->assertSame('2g_catalog', $intent->category());
+        $this->assertContains('2G', $intent->searchKeywords());
+    }
+
+    public function testFourGCatalogRequestUsesLocalFacetHeuristic(): void
+    {
+        config()->set('services.openai.intent_enabled', true);
+        config()->set('services.openai.key', '');
+
+        $policy = Mockery::mock(UnifiedAiPolicyService::class);
+        $policy->shouldReceive('normalizeIncomingMessage')
+            ->once()
+            ->andReturn('რომელი 4G მოდელები გაქვთ?');
+
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
+
+        $intent = $service->analyze('რომელი 4G მოდელები გაქვთ?');
+
+        $this->assertSame('recommendation', $intent->intent());
+        $this->assertTrue($intent->hasCatalogFacet());
+        $this->assertTrue($intent->mentionsFourGCatalog());
+        $this->assertFalse($intent->mentionsTwoGCatalog());
+        $this->assertSame('4g_catalog', $intent->category());
+        $this->assertContains('4G', $intent->searchKeywords());
+    }
+
+    public function testDiscountCatalogRequestUsesLocalFacetHeuristic(): void
+    {
+        config()->set('services.openai.intent_enabled', true);
+        config()->set('services.openai.key', '');
+
+        $policy = Mockery::mock(UnifiedAiPolicyService::class);
+        $policy->shouldReceive('normalizeIncomingMessage')
+            ->once()
+            ->andReturn('ფასდაკლებით რომელი მოდელები გაქვთ?');
+
+        $service = new IntentAnalyzerService($policy, new WidgetTraceLogger(), Mockery::mock(ModelCompletionService::class));
+
+        $intent = $service->analyze('ფასდაკლებით რომელი მოდელები გაქვთ?');
+
+        $this->assertSame('price_query', $intent->intent());
+        $this->assertTrue($intent->hasCatalogFacet());
+        $this->assertTrue($intent->mentionsDiscountCatalog());
+        $this->assertSame('discounted_catalog', $intent->category());
+        $this->assertContains('sale', $intent->searchKeywords());
+    }
 }

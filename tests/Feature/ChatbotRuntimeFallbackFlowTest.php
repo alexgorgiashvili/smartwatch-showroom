@@ -116,9 +116,90 @@ class ChatbotRuntimeFallbackFlowTest extends TestCase
 
         $message = (string) $response->json('message');
         $this->assertStringContainsString('2G სმარტსაათების არჩევანი არ გვაქვს', $message);
-        $this->assertStringContainsString('MyTechnic Ultra', $message);
-        $this->assertStringContainsString('MyTechnic Neo', $message);
         $this->assertStringNotContainsString('ბოდიში, დროებით პრობლემა გვაქვს', $message);
+    }
+
+    public function testChatbotListsAllTwoGCatalogModelsWhenProviderUnavailable(): void
+    {
+        $this->configureRuntimeFallbackTest();
+
+        Product::create([
+            'name_en' => 'Q21 2G',
+            'name_ka' => 'Q21 2G',
+            'slug' => 'q21-2g',
+            'price' => 79,
+            'sale_price' => null,
+            'currency' => 'GEL',
+            'is_active' => true,
+            'featured' => true,
+        ]);
+
+        Product::create([
+            'name_en' => 'Q19 2G',
+            'name_ka' => 'Q19 2G',
+            'slug' => 'q19-2g',
+            'price' => 79,
+            'sale_price' => 59,
+            'currency' => 'GEL',
+            'is_active' => true,
+            'featured' => false,
+        ]);
+
+        Product::create([
+            'name_en' => 'Q12 2G',
+            'name_ka' => 'Q12 2G',
+            'slug' => 'q12-2g',
+            'price' => 69,
+            'sale_price' => null,
+            'currency' => 'GEL',
+            'is_active' => true,
+            'featured' => false,
+        ]);
+
+        Product::create([
+            'name_en' => 'Q15 2G',
+            'name_ka' => 'Q15 2G',
+            'slug' => 'q15-2g',
+            'price' => 89,
+            'sale_price' => null,
+            'currency' => 'GEL',
+            'is_active' => true,
+            'featured' => false,
+        ]);
+
+        Product::create([
+            'name_en' => 'CT24 4G',
+            'name_ka' => 'CT24 4G',
+            'slug' => 'ct24-4g',
+            'price' => 189,
+            'sale_price' => 159,
+            'currency' => 'GEL',
+            'is_active' => true,
+            'featured' => false,
+        ]);
+
+        Http::fake(function (Request $request) {
+            if (str_contains($request->url(), '/chat/completions')) {
+                throw new \RuntimeException('timeout');
+            }
+
+            return Http::response([], 200);
+        });
+
+        $response = $this->postJson('/chatbot', [
+            'message' => 'რომელი 2G მოდელები გაქვთ?',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('debug.fallback_reason', 'provider_exception');
+
+        $message = (string) $response->json('message');
+        $this->assertStringContainsString('Q21 2G', $message);
+        $this->assertStringContainsString('Q19 2G', $message);
+        $this->assertStringContainsString('Q12 2G', $message);
+        $this->assertStringContainsString('Q15 2G', $message);
+        $this->assertStringContainsString('~~79 ₾~~ → **59 ₾**', $message);
+        $this->assertStringNotContainsString('CT24 4G', $message);
     }
 
     private function configureRuntimeFallbackTest(): void

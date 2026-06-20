@@ -287,6 +287,7 @@ class ProductController extends Controller
             'product_sync_status' => ['nullable', 'in:pending_review,synced,stale,sync_failed'],
             'is_active' => ['nullable', 'boolean'],
             'featured' => ['nullable', 'boolean'],
+            'home_sort_order' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'gift_builder_enabled' => ['nullable', 'boolean'],
             'gift_builder_role' => ['nullable', 'in:none,main,addon,both'],
             'gift_recipient_tags' => ['nullable'],
@@ -305,6 +306,7 @@ class ProductController extends Controller
         $data['gps_features'] = $request->boolean('gps_features');
         $data['is_active'] = $request->boolean('is_active');
         $data['featured'] = $request->boolean('featured');
+        $data['home_sort_order'] = max(0, (int) ($request->input('home_sort_order') ?: 0));
         $data['currency'] = 'GEL';
         $data['battery_life_range'] = $this->normalizeBatteryLifeRange($request->input('battery_life_range'));
         $data['functions'] = $this->normalizeFunctions($request->input('functions'));
@@ -320,6 +322,9 @@ class ProductController extends Controller
 
         if (! Schema::hasColumn('products', 'battery_life_range')) {
             unset($data['battery_life_range']);
+        }
+        if (! Schema::hasColumn('products', 'home_sort_order')) {
+            unset($data['home_sort_order']);
         }
 
         return $data;

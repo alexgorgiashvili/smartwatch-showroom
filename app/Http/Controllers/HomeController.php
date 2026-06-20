@@ -14,6 +14,7 @@ class HomeController extends Controller
         $featured = Product::active()
             ->featured()
             ->with(['primaryImage', 'images', 'variants'])
+            ->orderByRaw('COALESCE(home_sort_order, 0) ASC')
             ->orderByDesc('updated_at')
             // ->take(6)
             ->get();
@@ -21,6 +22,7 @@ class HomeController extends Controller
         if ($featured->isEmpty()) {
             $featured = Product::active()
                 ->with(['primaryImage', 'images', 'variants'])
+                ->orderByRaw('COALESCE(home_sort_order, 0) ASC')
                 ->orderByDesc('updated_at')
                 // ->take(6)
                 ->get();

@@ -139,6 +139,13 @@ class SmartSearchOrchestrator
             }
         }
 
+        $facetProducts = $this->lookupCatalogFacetProducts($intent);
+        if ($facetProducts->isNotEmpty()) {
+            return $this->rankProducts($facetProducts, $intent)
+                ->take($this->catalogFacetLimit($facetProducts, $limit))
+                ->values();
+        }
+
         $keywords = $intent->searchKeywords();
 
         if ($keywords !== []) {
@@ -162,6 +169,52 @@ class SmartSearchOrchestrator
         }
 
         return collect();
+    }
+
+    private function lookupCatalogFacetProducts(IntentResult $intent): Collection
+    {
+        if (!$intent->hasCatalogFacet()) {
+            return collect();
+        }
+
+        $candidates = $this->baseProductQuery()
+            ->limit(50)
+            ->get();
+
+        $generations = [];
+
+        if ($intent->mentionsTwoGCatalog()) {
+            $generations[] = '2g';
+        }
+
+        if ($intent->mentionsFourGCatalog()) {
+            $generations[] = '4g';
+        }
+
+        return $candidates
+            ->filter(function (Product $product) use ($generations, $intent): bool {
+                if ($intent->mentionsDiscountCatalog() && !$this->productIsDiscounted($product)) {
+                    return false;
+                }
+
+                if ($generations === []) {
+                    return true;
+                }
+
+                foreach ($generations as $generation) {
+                    if ($this->productHasGeneration($product, $generation)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->values();
+    }
+
+    private function catalogFacetLimit(Collection $products, int $defaultLimit): int
+    {
+        return min(max($defaultLimit, $products->count()), 8);
     }
 
     private function augmentComparisonProducts(Collection $seedProducts, IntentResult $intent, int $limit): Collection
@@ -244,6 +297,18 @@ class SmartSearchOrchestrator
             }
         }
 
+        if ($intent->mentionsDiscountCatalog() && $this->productIsDiscounted($product)) {
+            $score += 20;
+        }
+
+        if ($intent->mentionsTwoGCatalog() && $this->productHasGeneration($product, '2g')) {
+            $score += 12;
+        }
+
+        if ($intent->mentionsFourGCatalog() && $this->productHasGeneration($product, '4g')) {
+            $score += 12;
+        }
+
         foreach ($intent->searchKeywords() as $keyword) {
             $normalizedKeyword = $this->normalizeSearchText((string) $keyword);
 
@@ -273,6 +338,43 @@ class SmartSearchOrchestrator
         }
 
         return str_contains(' ' . $haystack . ' ', ' ' . $needle . ' ');
+    }
+
+    private function productHasGeneration(Product $product, string $generation): bool
+    {
+        $haystack = $this->normalizeSearchText(implode(' ', array_filter([
+            (string) $product->name,
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->slug,
+            (string) $product->brand,
+            (string) $product->model,
+        ])));
+
+        $patterns = $generation === '2g'
+            ? [
+                '/(?:^|\s)2\s*g(?:\s|$)/u',
+                '/(?:^|\s)2\s*გ(?:\s|$)/u',
+                '/(?:^|\s)2გ(?:\s|$)/u',
+            ]
+            : [
+                '/(?:^|\s)4\s*g(?:\s|$)/u',
+                '/(?:^|\s)4\s*გ(?:\s|$)/u',
+                '/(?:^|\s)4გ(?:\s|$)/u',
+            ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $haystack) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function productIsDiscounted(Product $product): bool
+    {
+        return is_numeric($product->sale_price) && (float) $product->sale_price > 0;
     }
 
     private function baseProductQuery(): Builder

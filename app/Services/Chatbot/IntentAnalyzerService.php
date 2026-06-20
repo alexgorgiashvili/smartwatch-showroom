@@ -401,6 +401,11 @@ class IntentAnalyzerService
             return $specificProductIntent;
         }
 
+        $catalogFacetIntent = $this->applyCatalogFacetHeuristics($normalizedMessage);
+        if ($catalogFacetIntent instanceof IntentResult) {
+            return $catalogFacetIntent;
+        }
+
         if (!$this->looksLikeBudgetRecommendation($normalizedMessage, [], [], $preferences)) {
             return null;
         }
@@ -433,6 +438,124 @@ class IntentAnalyzerService
             'is_out_of_domain' => false,
             'confidence' => 0.92,
         ], 0);
+    }
+
+    private function applyCatalogFacetHeuristics(string $message): ?IntentResult
+    {
+        $normalized = trim($message);
+        $searchable = mb_strtolower($normalized);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $mentionsTwoG = $this->mentionsGenerationFacet($searchable, '2g');
+        $mentionsFourG = $this->mentionsGenerationFacet($searchable, '4g');
+        $mentionsDiscount = $this->mentionsDiscountFacet($searchable);
+
+        if (!$mentionsTwoG && !$mentionsFourG && !$mentionsDiscount) {
+            return null;
+        }
+
+        $searchKeywords = [];
+
+        if ($mentionsTwoG) {
+            $searchKeywords = array_merge($searchKeywords, ['2G', '2 გ', '2გ']);
+        }
+
+        if ($mentionsFourG) {
+            $searchKeywords = array_merge($searchKeywords, ['4G', '4 გ', '4გ']);
+        }
+
+        if ($mentionsDiscount) {
+            $searchKeywords = array_merge($searchKeywords, ['ფასდაკლება', 'discount', 'sale']);
+        }
+
+        $intent = $this->inferCatalogFacetIntent($searchable);
+
+        return IntentResult::fromArray([
+            'standalone_query' => $normalized,
+            'intent' => $intent,
+            'entities' => [
+                'brand' => null,
+                'model' => null,
+                'product_slug_hint' => null,
+                'color' => null,
+                'category' => $mentionsDiscount
+                    ? 'discounted_catalog'
+                    : ($mentionsFourG
+                        ? '4g_catalog'
+                        : '2g_catalog'),
+            ],
+            'needs_product_data' => true,
+            'search_keywords' => array_values(array_unique(array_filter($searchKeywords))),
+            'is_out_of_domain' => false,
+            'confidence' => 0.96,
+        ], 0);
+    }
+
+    private function inferCatalogFacetIntent(string $message): string
+    {
+        if ($this->containsAnyNeedle($message, [
+            'ფასი',
+            'price',
+            'cost',
+            'how much',
+            'ღირს',
+            'ღირდა',
+            'ზუსტი',
+            'discount',
+            'sale',
+            'ფასდაკლ',
+        ])) {
+            return 'price_query';
+        }
+
+        if ($this->containsAnyNeedle($message, [
+            'მარაგ',
+            'stock',
+            'available',
+            'availability',
+            'მარაგში',
+        ])) {
+            return 'stock_query';
+        }
+
+        return 'recommendation';
+    }
+
+    private function mentionsGenerationFacet(string $message, string $generation): bool
+    {
+        $patterns = $generation === '2g'
+            ? [
+                '/(?:^|\s)2\s*g(?:\s|$)/u',
+                '/(?:^|\s)2\s*გ(?:\s|$)/u',
+                '/(?:^|\s)2გ(?:\s|$)/u',
+            ]
+            : [
+                '/(?:^|\s)4\s*g(?:\s|$)/u',
+                '/(?:^|\s)4\s*გ(?:\s|$)/u',
+                '/(?:^|\s)4გ(?:\s|$)/u',
+            ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $message) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function mentionsDiscountFacet(string $message): bool
+    {
+        return $this->containsAnyNeedle($message, [
+            'ფასდაკლ',
+            'discount',
+            'sale',
+            'offer',
+            'reduc',
+        ]);
     }
 
     private function applySpecificProductHeuristics(string $message): ?IntentResult

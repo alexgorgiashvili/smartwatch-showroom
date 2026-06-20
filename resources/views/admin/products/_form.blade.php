@@ -93,6 +93,13 @@
                         </div>
                     </div>
                     <div class="col-md-3">
+                        <label for="home_sort_order" class="form-label">Home sort order</label>
+                        <input type="number" min="0" class="form-control @error('home_sort_order') is-invalid @enderror"
+                               id="home_sort_order" name="home_sort_order" value="{{ old('home_sort_order', $product->home_sort_order ?? 0) }}">
+                        <div class="form-text">Lower numbers appear earlier on the homepage slider.</div>
+                        @error('home_sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
                         <div class="form-check form-switch mt-4">
                             <input class="form-check-input" type="checkbox" id="sim_support" name="sim_support" value="1"
                                    {{ old('sim_support', $product->sim_support) ? 'checked' : '' }}>

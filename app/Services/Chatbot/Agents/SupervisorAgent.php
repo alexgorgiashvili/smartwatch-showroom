@@ -123,6 +123,11 @@ class SupervisorAgent
                 'cache_layer' => $cachedResponse['cache_layer'],
                 'agent_used' => 'cache',
                 'execution_mode' => 'cache',
+                'validation_passed' => (bool) data_get($cachedResponse, 'metadata.validation_passed', true),
+                'validation_context' => data_get($cachedResponse, 'metadata.validation_context', ['products' => []]),
+                'reflection_attempts' => 0,
+                'violations' => [],
+                'reason' => null,
                 'extracted_preferences' => $extractedPreferences,
             ];
         }
@@ -220,10 +225,13 @@ class SupervisorAgent
                 $this->circuitBreaker->recordSuccess();
             }
 
-            if ($agentResult['success']) {
+            // Only cache fully validated model outputs. Fallback replies are
+            // cheap to regenerate and should not poison exact-match cache.
+            if ($agentResult['success'] && ($agentResult['validation_passed'] ?? false) && ($agentResult['reason'] ?? null) === null) {
                 $this->cache->cacheResponse($message, $intent, $agentResult['response'], [
                     'agent' => get_class($agent),
                     'validation_passed' => $agentResult['validation_passed'] ?? false,
+                    'validation_context' => $agentResult['validation_context'] ?? ['products' => []],
                 ]);
             }
 

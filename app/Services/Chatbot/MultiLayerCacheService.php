@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 
 class MultiLayerCacheService
 {
+    private const CACHE_KEY_VERSION = 'v4';
     private const EMBEDDING_CACHE_TTL = 3600;
     private const SEMANTIC_CACHE_TTL = 1800;
     private const RESPONSE_CACHE_TTL = 600;
@@ -26,7 +27,7 @@ class MultiLayerCacheService
         }
 
         // Try exact match first (fast)
-        $exactMatch = $this->getExactMatch($query);
+        $exactMatch = $this->getExactMatch($query, $intent);
         if ($exactMatch) {
             return array_merge($exactMatch, ['cache_layer' => 'exact']);
         }
@@ -57,7 +58,7 @@ class MultiLayerCacheService
             return;
         }
 
-        $queryHash = $this->hashQuery($query);
+        $queryHash = $this->hashQuery($query, $intent);
         $intentKey = $intent->intent();
         $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
         $embedding = [];
@@ -139,9 +140,9 @@ class MultiLayerCacheService
         ];
     }
 
-    private function getExactMatch(string $query): ?array
+    private function getExactMatch(string $query, IntentResult $intent): ?array
     {
-        $queryHash = $this->hashQuery($query);
+        $queryHash = $this->hashQuery($query, $intent);
         return Cache::tags(['chatbot'])->get("chatbot:response:{$queryHash}");
     }
 
@@ -212,8 +213,17 @@ class MultiLayerCacheService
         return $dotProduct / ($magnitudeA * $magnitudeB);
     }
 
-    private function hashQuery(string $query): string
+    private function hashQuery(string $query, ?IntentResult $intent = null): string
     {
-        return md5(mb_strtolower(trim($query)));
+        $intentKey = $intent?->intent() ?? '';
+        $category = $intent?->category() ?? '';
+        $facetKey = implode('|', array_filter([
+            $intent?->hasCatalogFacet() ? 'catalog_facet' : '',
+            $intent?->mentionsTwoGCatalog() ? '2g' : '',
+            $intent?->mentionsFourGCatalog() ? '4g' : '',
+            $intent?->mentionsDiscountCatalog() ? 'discount' : '',
+        ]));
+
+        return md5(self::CACHE_KEY_VERSION . '|' . mb_strtolower(trim($query)) . '|' . $intentKey . '|' . $category . '|' . $facetKey);
     }
 }

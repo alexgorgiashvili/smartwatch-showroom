@@ -266,7 +266,7 @@ $_homeSchema = [
                             @endphp
                             <li class="splide__slide">
                                 <div
-                                    class="group w-[164px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.13)] sm:w-[200px] lg:w-[230px]">
+                                    class="group w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.13)]">
 
                                     <a href="{{ route('products.show', $product) }}" class="block">
                                         {{-- Image --}}
@@ -293,7 +293,8 @@ $_homeSchema = [
                                                             class="text-lg font-extrabold tracking-tight text-primary-600 [font-family:'Space_Grotesk',system-ui,sans-serif] sm:text-xl">{{ number_format($salePrice, 2) }}
                                                             {{ $currency }}</span>
                                                         <span
-                                                            class="text-xs price-compare-old">{{ number_format($basePrice, 2) }}</span>
+                                                            class="text-xs price-compare-old shrink-0 whitespace-nowrap">{{ number_format($basePrice, 2) }}
+                                                            {{ $currency }}</span>
                                                     </div>
                                                 @else
                                                     <span

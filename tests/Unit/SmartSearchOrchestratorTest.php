@@ -164,6 +164,50 @@ class SmartSearchOrchestratorTest extends TestCase
         $this->assertSame(['q12-watch', 'wonlex-ct23'], $context->products()->take(2)->pluck('slug')->all());
     }
 
+    public function testTwoGCatalogSearchReturnsEveryMatchingModel(): void
+    {
+        $this->createProduct('q21-2g', 'Q21 2G', 'Wonlex', 'Q21 2G', 79);
+        $this->createProduct('q19-2g', 'Q19 2G', 'Wonlex', 'Q19 2G', 79, 59);
+        $this->createProduct('q12-2g', 'Q12 2G', 'Wonlex', 'Q12 2G', 69);
+        $this->createProduct('q15-2g', 'Q15 2G', 'Wonlex', 'Q15 2G', 89);
+        $this->createProduct('ct24-4g', 'CT24 4G', 'Wonlex', 'CT24 4G', 189, 159);
+
+        $context = $this->makeOrchestrator()->search($this->catalogIntent('რომელი 2G მოდელები გაქვთ?', 'recommendation', '2g_catalog', ['2G']));
+
+        $this->assertSame(['q21-2g', 'q19-2g', 'q12-2g', 'q15-2g'], $context->products()->pluck('slug')->all());
+        $this->assertSame('q21-2g', $context->requestedProduct()?->slug);
+        $this->assertSame('', $context->ragContext());
+    }
+
+    public function testFourGCatalogSearchReturnsMoreThanFourModels(): void
+    {
+        $this->createProduct('q21-2g', 'Q21 2G', 'Wonlex', 'Q21 2G', 79);
+        $this->createProduct('ct24-4g', 'CT24 4G', 'Wonlex', 'CT24 4G', 189, 159);
+        $this->createProduct('ct23-4g', 'CT23 4G', 'Wonlex', 'CT23 4G', 199);
+        $this->createProduct('ct27-4g', 'CT27 4G', 'Wonlex', 'CT27 4G', 209);
+        $this->createProduct('kt34-4g', 'KT34 4G', 'Wonlex', 'KT34 4G', 219);
+        $this->createProduct('t53-4g', 'T53 4G', 'Wonlex', 'T53 4G', 229);
+
+        $context = $this->makeOrchestrator()->search($this->catalogIntent('რომელი 4G მოდელები გაქვთ?', 'recommendation', '4g_catalog', ['4G']));
+
+        $this->assertSame(['ct24-4g', 'ct23-4g', 'ct27-4g', 'kt34-4g', 't53-4g'], $context->products()->pluck('slug')->all());
+        $this->assertCount(5, $context->products());
+    }
+
+    public function testDiscountedTwoGCatalogSearchKeepsOnlyDiscountedModels(): void
+    {
+        $this->createProduct('q21-2g', 'Q21 2G', 'Wonlex', 'Q21 2G', 79, 69);
+        $this->createProduct('q19-2g', 'Q19 2G', 'Wonlex', 'Q19 2G', 79, 59);
+        $this->createProduct('q12-2g', 'Q12 2G', 'Wonlex', 'Q12 2G', 69);
+        $this->createProduct('ct24-4g', 'CT24 4G', 'Wonlex', 'CT24 4G', 189, 159);
+        $this->createProduct('ct23-4g', 'CT23 4G', 'Wonlex', 'CT23 4G', 199);
+
+        $context = $this->makeOrchestrator()->search($this->catalogIntent('ფასდაკლებით რომელი 2G მოდელები გაქვთ?', 'price_query', 'discounted_catalog', ['2G', 'ფასდაკლება']));
+
+        $this->assertSame(['q21-2g', 'q19-2g'], $context->products()->pluck('slug')->all());
+        $this->assertCount(2, $context->products());
+    }
+
     private function makeOrchestrator(?RagContextBuilder $ragBuilder = null): SmartSearchOrchestrator
     {
         $ragBuilder ??= tap(Mockery::mock(RagContextBuilder::class), function ($builder): void {
@@ -176,6 +220,25 @@ class SmartSearchOrchestratorTest extends TestCase
             ->andReturnUsing(fn (string $message): string => $message);
 
         return new SmartSearchOrchestrator($ragBuilder, $policy);
+    }
+
+    private function catalogIntent(string $query, string $intent, ?string $category, array $searchKeywords): IntentResult
+    {
+        return new IntentResult(
+            $query,
+            $intent,
+            null,
+            null,
+            null,
+            null,
+            $category,
+            true,
+            $searchKeywords,
+            false,
+            0.97,
+            15,
+            false
+        );
     }
 
     private function makeIntent(?string $slugHint = 'mytechnic-ultra'): IntentResult
@@ -197,7 +260,7 @@ class SmartSearchOrchestratorTest extends TestCase
         );
     }
 
-    private function createProduct(string $slug, string $nameKa, string $brand, string $model): Product
+    private function createProduct(string $slug, string $nameKa, string $brand, string $model, float $price = 299, ?float $salePrice = null): Product
     {
         return Product::query()->create([
             'name_en' => $nameKa,
@@ -205,9 +268,11 @@ class SmartSearchOrchestratorTest extends TestCase
             'slug' => $slug,
             'brand' => $brand,
             'model' => $model,
-            'price' => 299,
+            'price' => $price,
+            'sale_price' => $salePrice,
             'currency' => 'GEL',
             'is_active' => true,
+            'featured' => false,
         ]);
     }
 }

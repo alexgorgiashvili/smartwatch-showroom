@@ -51,11 +51,19 @@ class ProductContextService
                 ->values();
         }
 
+        $productCollection = $this->filterCatalogFacetProducts($productCollection, $intentResult);
+
+        if ($intentResult->hasCatalogFacet() && !$intentResult->hasSpecificProduct()) {
+            return $productCollection
+                ->take($this->catalogFacetLimit($productCollection))
+                ->values();
+        }
+
         if (in_array($intentResult->intent(), ['price_query', 'stock_query'], true)) {
             if ($intentResult->hasSpecificProduct()) {
                 return $productCollection->take(self::PRODUCT_CONTEXT_LIMIT)->values();
             }
-            return $productCollection->take(4)->values();
+            return $productCollection->take(self::PRODUCT_CONTEXT_LIMIT)->values();
         }
 
         if ($intentResult->intent() === 'comparison') {
@@ -134,6 +142,92 @@ class ProductContextService
             ->implode("\n");
 
         return $productLines !== '' ? $productLines : 'პროდუქტები ვერ მოიძებნა.';
+    }
+
+    private function filterCatalogFacetProducts(Collection $products, IntentResult $intentResult): Collection
+    {
+        if (!$intentResult->hasCatalogFacet()) {
+            return $products;
+        }
+
+        $generations = [];
+
+        if ($intentResult->mentionsTwoGCatalog()) {
+            $generations[] = '2g';
+        }
+
+        if ($intentResult->mentionsFourGCatalog()) {
+            $generations[] = '4g';
+        }
+
+        return $products
+            ->filter(function (Product $product) use ($generations, $intentResult): bool {
+                if ($intentResult->mentionsDiscountCatalog() && !$this->productIsDiscounted($product)) {
+                    return false;
+                }
+
+                if ($generations === []) {
+                    return true;
+                }
+
+                foreach ($generations as $generation) {
+                    if ($this->productMatchesGeneration($product, $generation)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->values();
+    }
+
+    private function catalogFacetLimit(Collection $products): int
+    {
+        return min(max(self::PRODUCT_CONTEXT_LIMIT, $products->count()), 8);
+    }
+
+    private function productMatchesGeneration(Product $product, string $generation): bool
+    {
+        $haystack = $this->normalizeSearchText(implode(' ', array_filter([
+            (string) $product->name,
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->slug,
+            (string) $product->brand,
+            (string) $product->model,
+        ])));
+
+        $patterns = $generation === '2g'
+            ? [
+                '/(?:^|\s)2\s*g(?:\s|$)/u',
+                '/(?:^|\s)2\s*გ(?:\s|$)/u',
+                '/(?:^|\s)2გ(?:\s|$)/u',
+            ]
+            : [
+                '/(?:^|\s)4\s*g(?:\s|$)/u',
+                '/(?:^|\s)4\s*გ(?:\s|$)/u',
+                '/(?:^|\s)4გ(?:\s|$)/u',
+            ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $haystack) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function productIsDiscounted(Product $product): bool
+    {
+        return is_numeric($product->sale_price) && (float) $product->sale_price > 0;
+    }
+
+    private function normalizeSearchText(string $value): string
+    {
+        $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower($value));
+
+        return trim((string) $normalized);
     }
 
     private function productHasRealisticPrice(mixed $salePrice, mixed $price): bool

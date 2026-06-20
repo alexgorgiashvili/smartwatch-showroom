@@ -149,9 +149,107 @@ class IntentResult
         return $this->needsProductData && !$this->isOutOfDomain;
     }
 
+    public function hasCatalogFacet(): bool
+    {
+        return $this->mentionsTwoGCatalog()
+            || $this->mentionsFourGCatalog()
+            || $this->mentionsDiscountCatalog();
+    }
+
+    public function mentionsTwoGCatalog(): bool
+    {
+        return $this->mentionsGenerationCatalog('2g');
+    }
+
+    public function mentionsFourGCatalog(): bool
+    {
+        return $this->mentionsGenerationCatalog('4g');
+    }
+
+    public function mentionsDiscountCatalog(): bool
+    {
+        $text = $this->catalogFacetText();
+
+        if ($text === '') {
+            return false;
+        }
+
+        return $this->containsAnyFacetNeedle($text, [
+            'ფასდაკლ',
+            'discount',
+            'sale',
+            'offer',
+            'reduc',
+        ]);
+    }
+
     public function hasSpecificProduct(): bool
     {
         return $this->brand !== null && $this->model !== null;
+    }
+
+    private function mentionsGenerationCatalog(string $generation): bool
+    {
+        $text = $this->catalogFacetText();
+
+        if ($text === '') {
+            return false;
+        }
+
+        $patterns = $generation === '2g'
+            ? [
+                '/(?:^|\s)2\s*g(?:\s|$)/u',
+                '/(?:^|\s)2\s*გ(?:\s|$)/u',
+                '/(?:^|\s)2გ(?:\s|$)/u',
+            ]
+            : [
+                '/(?:^|\s)4\s*g(?:\s|$)/u',
+                '/(?:^|\s)4\s*გ(?:\s|$)/u',
+                '/(?:^|\s)4გ(?:\s|$)/u',
+            ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function catalogFacetText(): string
+    {
+        $parts = array_filter([
+            $this->standaloneQuery,
+            $this->category ?? '',
+            implode(' ', $this->searchKeywords),
+        ], fn (mixed $part): bool => is_string($part) && trim($part) !== '');
+
+        if ($parts === []) {
+            return '';
+        }
+
+        $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower(implode(' ', $parts)));
+
+        return trim((string) $normalized);
+    }
+
+    /**
+     * @param array<int, string> $needles
+     */
+    private function containsAnyFacetNeedle(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (!is_string($needle) || trim($needle) === '') {
+                continue;
+            }
+
+            if (mb_stripos($haystack, mb_strtolower(trim($needle))) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function normalizeNullableString(mixed $value): ?string

@@ -205,19 +205,12 @@ class ChatbotFallbackStrategyService
             ? $contextProducts
             : $this->fallbackCatalogProducts($preferences, 3);
 
-        if ($this->mentionsTwoGContext($contextText)) {
-            $twoGProducts = $this->twoGCatalogProducts(3);
+        if (!$intentResult?->hasSpecificProduct()) {
+            $facetReply = $this->buildCatalogFacetReply($contextText);
 
-            if ($twoGProducts !== []) {
-                return implode("\n", [
-                    'გირჩევთ შემდეგ 2G მოდელებს:',
-                    $this->formatProductBullets($twoGProducts),
-                    '',
-                    'თუ სხვა ტიპის მოდელს ეძებთ, მომწერეთ ბიუჯეტი ან სასურველი ფუნქცია და უფრო ზუსტად შეგირჩევთ.',
-                ]);
+            if ($facetReply !== null) {
+                return $facetReply;
             }
-
-            return $this->buildTwoGFallbackReply($catalogProducts);
         }
 
         if ($intentResult?->intent() === 'recommendation' || $this->looksLikeRecommendationRequest($contextText)) {
@@ -284,6 +277,165 @@ class ChatbotFallbackStrategyService
         }
 
         return $reply;
+    }
+
+    private function buildCatalogFacetReply(string $contextText): ?string
+    {
+        $twoG = $this->mentionsTwoGContext($contextText);
+        $fourG = $this->mentionsFourGContext($contextText);
+        $discounted = $this->mentionsDiscountContext($contextText);
+
+        if (!$twoG && !$fourG && !$discounted) {
+            return null;
+        }
+
+        $facetProducts = $this->catalogFacetProducts($twoG, $fourG, $discounted, 8);
+        $generationLabel = $this->catalogFacetGenerationLabel($twoG, $fourG);
+
+        if ($facetProducts !== []) {
+            $heading = $discounted
+                ? ($generationLabel !== ''
+                    ? 'გთავაზობთ შემდეგ ' . $generationLabel . ' ფასდაკლებულ მოდელებს:'
+                    : 'გთავაზობთ შემდეგ ფასდაკლებულ მოდელებს:')
+                : ($generationLabel !== ''
+                    ? 'გირჩევთ შემდეგ ' . $generationLabel . ' მოდელებს:'
+                    : 'გირჩევთ შემდეგ მოდელებს:');
+
+            $closing = $discounted
+                ? 'თუ გინდათ, შემიძლია ფასდაკლებულ და არაფასდაკლებულ ვარიანტებსაც შეგადაროთ.'
+                : 'თუ სხვა ტიპის მოდელს ეძებთ, მომწერეთ ბიუჯეტი ან სასურველი ფუნქცია და უფრო ზუსტად შეგირჩევთ.';
+
+            return implode("\n", [
+                $heading,
+                $this->formatProductBullets($facetProducts, null),
+                '',
+                $closing,
+            ]);
+        }
+
+        if ($discounted) {
+            return $generationLabel !== ''
+                ? 'ამჟამად ' . $generationLabel . ' ფასდაკლებულ მოდელებს ვერ მოვიძიე.'
+                : 'ამჟამად ფასდაკლებულ მოდელებს ვერ მოვიძიე.';
+        }
+
+        if ($twoG && $fourG) {
+            return 'ამჟამად 2G და 4G მოდელებს ვერ მოვიძიე.';
+        }
+
+        if ($fourG) {
+            return 'ამჟამად ჩვენს კატალოგში 4G სმარტსაათების არჩევანი არ გვაქვს.';
+        }
+
+        return 'ამჟამად ჩვენს კატალოგში 2G სმარტსაათების არჩევანი არ გვაქვს.';
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function catalogFacetProducts(bool $twoG, bool $fourG, bool $discounted, int $limit = 3): array
+    {
+        return Product::query()
+            ->active()
+            ->withSum('variants as total_stock', 'quantity')
+            ->orderByDesc('featured')
+            ->orderBy('id')
+            ->limit(20)
+            ->get()
+            ->filter(function (Product $product) use ($twoG, $fourG, $discounted): bool {
+                return $this->productMatchesCatalogFacet($product, $twoG, $fourG, $discounted);
+            })
+            ->map(function (Product $product): array {
+                return [
+                    'name' => trim((string) $product->name),
+                    'price' => is_numeric($product->price) ? (float) $product->price : null,
+                    'sale_price' => is_numeric($product->sale_price) && (float) $product->sale_price > 0
+                        ? (float) $product->sale_price
+                        : null,
+                    'is_in_stock' => (int) ($product->total_stock ?? 0) > 0,
+                    'slug' => (string) $product->slug,
+                ];
+            })
+            ->filter(fn (array $product): bool => $product['name'] !== '')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    private function productMatchesCatalogFacet(Product $product, bool $twoG, bool $fourG, bool $discounted): bool
+    {
+        if ($discounted && !$this->productIsDiscounted($product)) {
+            return false;
+        }
+
+        if ($twoG && $this->productHasGeneration($product, '2g')) {
+            return true;
+        }
+
+        if ($fourG && $this->productHasGeneration($product, '4g')) {
+            return true;
+        }
+
+        return !$twoG && !$fourG;
+    }
+
+    private function catalogFacetGenerationLabel(bool $twoG, bool $fourG): string
+    {
+        $labels = [];
+
+        if ($twoG) {
+            $labels[] = '2G';
+        }
+
+        if ($fourG) {
+            $labels[] = '4G';
+        }
+
+        return implode(' და ', $labels);
+    }
+
+    private function productHasGeneration(Product $product, string $generation): bool
+    {
+        $haystack = $this->normalizeProductText(implode(' ', array_filter([
+            (string) $product->name,
+            (string) $product->name_en,
+            (string) $product->name_ka,
+            (string) $product->slug,
+            (string) $product->brand,
+            (string) $product->model,
+        ])));
+
+        $patterns = $generation === '2g'
+            ? [
+                '/(?:^|\s)2\s*g(?:\s|$)/u',
+                '/(?:^|\s)2\s*გ(?:\s|$)/u',
+                '/(?:^|\s)2გ(?:\s|$)/u',
+            ]
+            : [
+                '/(?:^|\s)4\s*g(?:\s|$)/u',
+                '/(?:^|\s)4\s*გ(?:\s|$)/u',
+                '/(?:^|\s)4გ(?:\s|$)/u',
+            ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $haystack) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function productIsDiscounted(Product $product): bool
+    {
+        return is_numeric($product->sale_price) && (float) $product->sale_price > 0;
+    }
+
+    private function normalizeProductText(string $value): string
+    {
+        $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower($value));
+
+        return trim((string) $normalized);
     }
 
     /**
@@ -413,13 +565,16 @@ class ChatbotFallbackStrategyService
     /**
      * @param array<int, array<string, mixed>> $products
      */
-    private function formatProductBullets(array $products): string
+    private function formatProductBullets(array $products, ?int $limit = 3): string
     {
-        return collect($products)
-            ->take(3)
+        $items = $limit === null
+            ? collect($products)
+            : collect($products)->take($limit);
+
+        return $items
             ->map(function (array $product): string {
                 $parts = [trim((string) ($product['name'] ?? ''))];
-                $price = $this->formatPrice($product['sale_price'] ?? $product['price'] ?? null);
+                $price = $this->formatPrice($product['sale_price'] ?? null, $product['price'] ?? null);
 
                 if ($price !== null) {
                     $parts[] = $price;
@@ -430,13 +585,25 @@ class ChatbotFallbackStrategyService
             ->implode("\n");
     }
 
-    private function formatPrice(mixed $price): ?string
+    private function formatPrice(mixed $salePrice, mixed $regularPrice = null): ?string
     {
-        if (!is_numeric($price)) {
+        if (is_numeric($salePrice) && (float) $salePrice > 0) {
+            $sale = rtrim(rtrim(number_format((float) $salePrice, 2, '.', ''), '0'), '.');
+
+            if (is_numeric($regularPrice) && (float) $regularPrice > (float) $salePrice) {
+                $regular = rtrim(rtrim(number_format((float) $regularPrice, 2, '.', ''), '0'), '.');
+
+                return '~~' . $regular . ' ₾~~ → **' . $sale . ' ₾**';
+            }
+
+            return $sale . ' ₾';
+        }
+
+        if (!is_numeric($regularPrice)) {
             return null;
         }
 
-        $normalized = rtrim(rtrim(number_format((float) $price, 2, '.', ''), '0'), '.');
+        $normalized = rtrim(rtrim(number_format((float) $regularPrice, 2, '.', ''), '0'), '.');
 
         return $normalized . ' ₾';
     }
@@ -464,10 +631,38 @@ class ChatbotFallbackStrategyService
         $normalized = preg_replace('/\s+/u', ' ', mb_strtolower(trim($text))) ?? mb_strtolower(trim($text));
 
         return $normalized !== '' && (
-            str_contains($normalized, '2g')
-            || str_contains($normalized, '2 გ')
-            || str_contains($normalized, '2გ')
+            preg_match('/(?:^|\s)2\s*g(?:\s|$)/u', $normalized) === 1
+            || preg_match('/(?:^|\s)2\s*გ(?:\s|$)/u', $normalized) === 1
+            || preg_match('/(?:^|\s)2გ(?:\s|$)/u', $normalized) === 1
         );
+    }
+
+    private function mentionsFourGContext(string $text): bool
+    {
+        $normalized = preg_replace('/\s+/u', ' ', mb_strtolower(trim($text))) ?? mb_strtolower(trim($text));
+
+        return $normalized !== '' && (
+            preg_match('/(?:^|\s)4\s*g(?:\s|$)/u', $normalized) === 1
+            || preg_match('/(?:^|\s)4\s*გ(?:\s|$)/u', $normalized) === 1
+            || preg_match('/(?:^|\s)4გ(?:\s|$)/u', $normalized) === 1
+        );
+    }
+
+    private function mentionsDiscountContext(string $text): bool
+    {
+        $normalized = mb_strtolower(trim($text));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        return $this->containsAnyNeedle($normalized, [
+            'ფასდაკლ',
+            'discount',
+            'sale',
+            'offer',
+            'reduc',
+        ]);
     }
 
     private function looksLikeRecommendationRequest(string $text): bool

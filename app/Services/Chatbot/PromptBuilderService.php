@@ -106,6 +106,12 @@ class PromptBuilderService
             $sections[] = $effectiveRagContextText;
         }
 
+        if ($intentResult->hasCatalogFacet()) {
+            $sections[] = 'კატალოგის ჯგუფის მითითება:';
+            $sections[] = '- ქვემოთ მოცემული პროდუქტი გამოიყენე როგორც ამ შეკითხვის სრული შესაბამისი სია.';
+            $sections[] = '- თუ მომხმარებელი 2G, 4G ან ფასდაკლებულ მოდელებს ეკითხება, აღნიშნე სიაში არსებული ყველა შესაბამისი ვარიანტი.';
+        }
+
         if ($searchContext->productNotFoundMessage()) {
             $sections[] = 'მნიშვნელოვანი კონტექსტი:';
             $sections[] = $searchContext->productNotFoundMessage();

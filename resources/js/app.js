@@ -11,16 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
 		new Splide('#popular-splide', {
 			type      : 'slide',
 			gap       : '1rem',
-			autoWidth : true,
-			padding   : { right: '10%' },
+			perPage   : 5,
+			perMove   : 1,
 			arrows    : true,
 			pagination: true,
-			snap      : true,
-			drag      : 'free',
+			omitEnd   : false,
+			rewind    : false,
+			trimSpace : false,
 			breakpoints: {
-				1024: { padding: { right: '5%' } },
-				768:  { padding: { right: '8%' } },
-				640:  { padding: { right: '12%' } },
+				1280: { perPage: 4 },
+				1024: { perPage: 3 },
+				768:  { perPage: 2 },
+				640:  {
+					perPage  : 1,
+					fixedWidth: '82vw',
+					gap      : '0.875rem',
+					padding  : { left: '1rem', right: '1rem' },
+					focus    : 0,
+				},
 			},
 		}).mount();
 	}
