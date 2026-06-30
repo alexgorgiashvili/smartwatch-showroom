@@ -26,6 +26,7 @@
                             <th>სახელი</th>
                             <th>ფასი</th>
                             <th>ვარიანტები</th>
+                            <th>სელექციური სიაში</th>
                             <th>მარაგი</th>
                             <th>სტატუსი</th>
                             <th style="width:100px;">მოქმედებები</th>
@@ -58,6 +59,13 @@
                                 @endif
                             </td>
                             <td>{{ $product->variants_count }}</td>
+                            <td>
+                                @if(($product->listed_variants_count ?? 0) > 0)
+                                    <span class="badge bg-primary">{{ $product->listed_variants_count }}</span>
+                                @else
+                                    <span class="badge bg-light text-muted border">0</span>
+                                @endif
+                            </td>
                             <td>
                                 @php
                                     $totalStock = $product->variants->sum('quantity');

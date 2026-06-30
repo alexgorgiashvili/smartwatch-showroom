@@ -70,6 +70,7 @@ Route::get('/sitemap-ai.xml', [\App\Http\Controllers\AiSitemapController::class,
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/products/{product:slug}/quick-review', [ProductController::class, 'quickReview'])->name('products.quick-review');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 Route::get('/about', fn () => view('pages.about'))->name('about');
@@ -107,6 +108,7 @@ Route::get('/chatbot/history', [ChatController::class, 'history'])
 Route::get('/cart', [CartController::class, 'show'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/cart/update', [CartController::class, 'update'])->name('cart.update');
+Route::patch('/cart/replace-variant', [CartController::class, 'replaceVariant'])->name('cart.replace-variant');
 Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::delete('/cart/gift-groups/{group}', [GiftBuilderController::class, 'removeFromCart'])->name('cart.gift-groups.remove');
 Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
@@ -352,6 +354,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		->name('products.variants.store');
 	Route::patch('/products/variants/{variant}', [AdminProductController::class, 'updateVariant'])
 		->name('products.variants.update');
+	Route::patch('/products/variants/{variant}/toggle-listing', [AdminProductController::class, 'toggleVariantListing'])
+		->name('products.variants.toggle-listing');
+	Route::put('/products/variants/{variant}/images', [AdminProductController::class, 'syncVariantImages'])
+		->name('products.variants.images.sync');
 	Route::delete('/products/variants/{variant}', [AdminProductController::class, 'deleteVariant'])
 		->name('products.variants.delete');
 	Route::post('/variants/{variant}/adjust-stock', [AdminStockAdjustmentController::class, 'store'])

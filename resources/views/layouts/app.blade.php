@@ -61,6 +61,7 @@
         $gtmId = config('storefront_analytics.gtm_id');
         $metaPixelId = config('storefront_analytics.meta_pixel_id');
         $analyticsFlashEvent = session('analytics_event');
+        $shouldLoadMetaPixel = filled($metaPixelId) && ! app()->environment('local');
     @endphp
 
     @if ($gtmId)
@@ -72,7 +73,7 @@
     </script>
     @endif
 
-    @if ($metaPixelId)
+    @if ($shouldLoadMetaPixel)
     <script>
         !function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -95,7 +96,7 @@
     <iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode($gtmId) }}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
   </noscript>
   @endif
-  @if ($metaPixelId)
+  @if ($shouldLoadMetaPixel)
   <noscript>
     <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ urlencode($metaPixelId) }}&ev=PageView&noscript=1" alt="">
   </noscript>
@@ -124,9 +125,11 @@
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">კატალოგი</a>
                 </li>
+                @if (config('gift_builder.enabled', false))
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">სასაჩუქრე ყუთის აწყობა</a>
                 </li>
+                @endif
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">კითხვები</a>
                 </li>
@@ -150,10 +153,12 @@
                       <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
                       {{ app()->getLocale() === 'ka' ? 'საჩუქრის გზამკვლევი' : 'Gift Guide' }}
                     </a>
+                    @if (config('gift_builder.enabled', false))
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
                       <i class="fa-solid fa-box-open w-4 text-center text-xs text-primary-400"></i>
                       სასაჩუქრე ყუთის აწყობა
                     </a>
+                    @endif
                   </div>
                 </li>
                 <li>
@@ -187,11 +192,13 @@
                   <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>კატალოგი
                 </a>
               </li>
+              @if (config('gift_builder.enabled', false))
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('gift-builder.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('gift-builder.show') }}">
                   <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>სასაჩუქრე ყუთის აწყობა
                 </a>
               </li>
+              @endif
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('faq') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('faq') }}">
                   <i class="fa-solid fa-circle-question w-4 text-center text-xs opacity-60"></i>კითხვები
@@ -217,7 +224,9 @@
                   <div class="bg-gray-900/60 pb-1">
                     <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'SIM გზამკვლევი' : 'SIM Guide' }}</a>
                     <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}</a>
+                    @if (config('gift_builder.enabled', false))
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>სასაჩუქრე ყუთის აწყობა</a>
+                    @endif
                   </div>
                 </details>
               </li>
@@ -311,6 +320,35 @@
     {{-- Cart toast notification --}}
     <div id="cart-toast" class="pointer-events-none fixed bottom-6 right-6 z-[9999] hidden rounded-xl px-5 py-3 text-sm font-semibold text-white opacity-0 shadow-xl transition-opacity duration-300"></div>
 
+    <div id="quick-review-root" class="pointer-events-none fixed inset-0 z-[110] hidden" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="absolute inset-0 bg-slate-950/45 opacity-0 backdrop-blur-[1px] transition-opacity duration-300" data-quick-review-overlay></div>
+      <aside class="absolute inset-y-0 right-0 flex h-full w-full max-w-md translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 sm:max-w-xl lg:max-w-[820px]" data-quick-review-panel>
+        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">{{ app()->getLocale() === 'ka' ? 'სწრაფი არჩევა' : 'Quick Review' }}</p>
+            <h2 class="mt-1 text-lg font-bold text-slate-900">{{ app()->getLocale() === 'ka' ? 'აირჩიეთ ვარიანტი' : 'Choose your option' }}</h2>
+          </div>
+          <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-900" data-quick-review-close aria-label="{{ app()->getLocale() === 'ka' ? 'დახურვა' : 'Close' }}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4 lg:px-6" data-quick-review-body>
+          <div class="animate-pulse space-y-3.5">
+            <div class="h-44 rounded-2xl bg-slate-100 sm:h-52 lg:h-64"></div>
+            <div class="h-4 w-2/3 rounded-full bg-slate-100"></div>
+            <div class="h-4 w-1/2 rounded-full bg-slate-100"></div>
+            <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+              <div class="h-12 rounded-xl bg-slate-100"></div>
+              <div class="h-12 rounded-xl bg-slate-100"></div>
+              <div class="h-12 rounded-xl bg-slate-100"></div>
+              <div class="h-12 rounded-xl bg-slate-100"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
     <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}" data-history-endpoint="{{ route('chatbot.history') }}">
       <button type="button" class="chatbot-fab" data-chatbot-toggle aria-expanded="false" aria-controls="chatbot-panel">
         <span class="chatbot-fab-icon">🤖</span>
@@ -342,7 +380,7 @@
       </section>
     </div>
 
-    <div id="site-lightbox" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-hidden="true">
+    <div id="site-lightbox" class="fixed inset-0 z-[130] hidden" role="dialog" aria-modal="true" aria-hidden="true">
       <div data-site-lightbox-overlay class="absolute inset-0 bg-black/80"></div>
       <div class="relative flex h-full w-full items-center justify-center p-3 sm:p-6">
         <button type="button" data-site-lightbox-close class="absolute right-3 top-3 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="დახურვა">
@@ -505,74 +543,647 @@
             if (!form.hasAttribute('data-cart-form')) return;
             e.preventDefault();
 
-          var btn = e.submitter || form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; }
+            var btn = e.submitter || form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+            }
 
-          var formData = new FormData(form);
-          if (btn && btn.name) {
-            formData.set(btn.name, btn.value);
-          }
+            var formData = new FormData(form);
+            if (btn && btn.name) {
+                formData.set(btn.name, btn.value);
+            }
 
             fetch(form.action, {
                 method: 'POST',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
             })
             .then(function (res) {
-              return res.json().then(function (data) {
-                return { ok: res.ok, data: data };
-              }).catch(function () {
-                return { ok: false, data: { message: 'სერვერმა არასწორი პასუხი დააბრუნა.' } };
-              });
+                return res.json().then(function (data) {
+                    return { ok: res.ok, data: data };
+                }).catch(function () {
+                    return { ok: false, data: { message: 'სერვერმა არასწორი პასუხი დააბრუნა.' } };
+                });
             })
             .then(function (result) {
-              if (result.ok && result.data.success) {
-                updateCartBadges(result.data.cart_count || 0);
+                var data = result.data || {};
 
-                if (window.storefrontAnalytics) {
-                  var quantity = parseInt(formData.get('quantity') || '1', 10);
-                  var unitPrice = parseFloat(form.getAttribute('data-analytics-price') || '0');
-                  var itemId = String(form.getAttribute('data-analytics-item-id') || formData.get('variant_id') || '');
-                  var itemName = form.getAttribute('data-analytics-item-name') || undefined;
-                  window.storefrontAnalytics.track('AddToCart', {
-                    content_ids: [itemId],
-                    content_name: itemName,
-                    content_type: 'product',
-                    currency: form.getAttribute('data-analytics-currency') || 'GEL',
-                    value: unitPrice > 0 ? unitPrice * (isNaN(quantity) ? 1 : quantity) : undefined,
-                    items: [{
-                      item_id: itemId,
-                      item_name: itemName,
-                      price: unitPrice > 0 ? unitPrice : undefined,
-                      quantity: isNaN(quantity) ? 1 : quantity
-                    }],
-                    contents: [{
-                      id: itemId,
-                      quantity: isNaN(quantity) ? 1 : quantity,
-                      item_price: unitPrice > 0 ? unitPrice : undefined
-                    }]
-                  });
+                if (result.ok && data.success) {
+                    updateCartBadges(data.cart_count || 0);
+
+                    if (window.storefrontAnalytics) {
+                        var quantity = parseInt(formData.get('quantity') || '1', 10);
+                        var resolvedQuantity = isNaN(quantity) ? 1 : quantity;
+                        var unitPrice = parseFloat(form.getAttribute('data-analytics-price') || '0');
+                        var itemId = String(form.getAttribute('data-analytics-item-id') || formData.get('variant_id') || '');
+                        var itemName = form.getAttribute('data-analytics-item-name') || undefined;
+
+                        window.storefrontAnalytics.track('AddToCart', {
+                            content_ids: [itemId],
+                            content_name: itemName,
+                            content_type: 'product',
+                            currency: form.getAttribute('data-analytics-currency') || 'GEL',
+                            value: unitPrice > 0 ? unitPrice * resolvedQuantity : undefined,
+                            items: [{
+                                item_id: itemId,
+                                item_name: itemName,
+                                price: unitPrice > 0 ? unitPrice : undefined,
+                                quantity: resolvedQuantity
+                            }],
+                            contents: [{
+                                id: itemId,
+                                quantity: resolvedQuantity,
+                                item_price: unitPrice > 0 ? unitPrice : undefined
+                            }]
+                        });
+                    }
+
+                    document.dispatchEvent(new CustomEvent('cart:add-success', {
+                        detail: {
+                            form: form,
+                            data: data
+                        }
+                    }));
+
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+
+                    showCartToast(data.message || 'პროდუქტი დაემატა კალათაში.', false);
+
+                    var qty = form.querySelector('input[name="quantity"][type="number"]');
+                    if (qty) {
+                        qty.value = 1;
+                    }
+                } else {
+                    showCartToast(data.message || 'შეცდომა მოხდა.', true);
                 }
-
-                if (result.data.redirect_url) {
-                  window.location.href = result.data.redirect_url;
-                  return;
-                }
-
-                showCartToast(result.data.message || 'პროდუქტი დაემატა კალათაში.', false);
-                var qty = form.querySelector('input[name="quantity"][type="number"]');
-                if (qty) { qty.value = 1; }
-              } else {
-                showCartToast((result.data && result.data.message) || 'შეცდომა მოხდა.', true);
-              }
             })
             .catch(function () {
-                showCartToast('შეცდომა მოხდა. სცადეთ თავიდან.', true);
+                showCartToast('ქსელური შეცდომა. სცადეთ თავიდან.', true);
             })
             .finally(function () {
-                if (btn) { btn.disabled = false; }
+                if (btn) {
+                    btn.disabled = false;
+                }
             });
         });
+    }());
+    </script>
+    <script>
+    (function () {
+      var root = document.getElementById('quick-review-root');
+      if (!root) {
+        return;
+      }
+
+      var overlay = root.querySelector('[data-quick-review-overlay]');
+      var panel = root.querySelector('[data-quick-review-panel]');
+      var body = root.querySelector('[data-quick-review-body]');
+      var closeButton = root.querySelector('[data-quick-review-close]');
+      var lightboxRoot = document.getElementById('site-lightbox');
+      var lightboxOverlay = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-overlay]') : null;
+      var lightboxClose = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-close]') : null;
+      var lightboxPrev = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-prev]') : null;
+      var lightboxNext = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-next]') : null;
+      var lightboxImage = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-image]') : null;
+      var lightboxCaption = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-caption]') : null;
+      var lightboxCounter = lightboxRoot ? lightboxRoot.querySelector('[data-site-lightbox-counter]') : null;
+      var activeForm = null;
+      var activeRequestToken = 0;
+      var closeTimer = null;
+      var activeGalleryIndex = 0;
+      var lightboxOpen = false;
+      var lightboxTouchStartX = null;
+      var lightboxTouchStartY = null;
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function buildVariantOption(option, selectedId) {
+        var isSelected = Number(option.id) === Number(selectedId);
+        var isDisabled = !option.in_stock;
+        var colorPreview = option.color_hex
+          ? '<span class="h-5 w-5 rounded-full border border-slate-200" style="background-color:' + option.color_hex + ';"></span>'
+          : '<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] text-slate-400"><i class="fa-solid fa-palette"></i></span>';
+
+        return '<button type="button" data-quick-review-variant data-variant-id="' + option.id + '" data-variant-stock="' + option.stock + '"'
+          + ' data-variant-image-url="' + escapeHtml(option.image_url || '') + '" data-variant-image-alt="' + escapeHtml(option.image_alt || '') + '" data-variant-image-index="' + escapeHtml(option.image_index === 0 || option.image_index ? option.image_index : '') + '"'
+          + ' class="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition '
+          + (isSelected ? 'border-primary-500 bg-primary-50 text-slate-900' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300')
+          + (isDisabled ? ' opacity-50' : '') + '"'
+          + (isDisabled ? ' disabled' : '') + ' aria-pressed="' + (isSelected ? 'true' : 'false') + '">'
+          + '<span class="flex min-w-0 items-center gap-3">' + colorPreview + '<span class="min-w-0"><span class="block truncate text-sm font-semibold">'
+          + escapeHtml(option.label) + '</span></span></span>'
+          + '<i class="fa-solid fa-check text-xs ' + (isSelected ? 'text-primary-600' : 'text-transparent') + '"></i>'
+          + '</button>';
+      }
+
+      function buildGalleryMarkup(galleryImages, activeIndex) {
+        var items = Array.isArray(galleryImages) ? galleryImages : [];
+        var safeIndex = items.length > 0 ? Math.max(0, Math.min(activeIndex || 0, items.length - 1)) : 0;
+        var currentImage = items[safeIndex] || {
+          url: '',
+          thumbnail_url: '',
+          alt: ''
+        };
+        var currentImageSrc = currentImage.url || currentImage.thumbnail_url || '';
+
+        if (!items.length) {
+          return {
+            html: '<div class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"><img src="" alt="" data-quick-review-gallery-image data-gallery-index="0" class="h-48 w-full object-contain transition-opacity duration-200 sm:h-56 lg:h-[340px]"></div>',
+            activeIndex: 0,
+            total: 0
+          };
+        }
+
+        var thumbs = items.map(function (image, index) {
+          var isActive = index === safeIndex;
+          return ''
+            + '<button type="button" data-quick-review-gallery-thumb data-gallery-index="' + index + '" data-gallery-src="' + escapeHtml(image.url || image.thumbnail_url || '') + '" data-gallery-alt="' + escapeHtml(image.alt || '') + '" class="shrink-0 overflow-hidden rounded-xl border transition ' + (isActive ? 'border-primary-500 ring-2 ring-primary-200' : 'border-slate-200 hover:border-slate-300') + '">'
+            +   '<img src="' + escapeHtml(image.thumbnail_url || image.url || '') + '" alt="' + escapeHtml(image.alt || '') + '" class="h-16 w-16 object-cover sm:h-18 sm:w-18">'
+            + '</button>';
+        }).join('');
+
+        return {
+          html: ''
+            + '<div class="space-y-3">'
+            +   '<div class="relative h-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 sm:h-[260px] lg:h-[280px]">'
+            +     '<div class="absolute inset-0 flex items-center justify-center p-3 sm:p-4">'
+            +       '<button type="button" data-quick-review-gallery-open data-gallery-index="' + safeIndex + '" class="flex h-full w-full cursor-zoom-in items-center justify-center focus:outline-none">'
+            +         '<img src="' + escapeHtml(currentImageSrc) + '" alt="' + escapeHtml(currentImage.alt || '') + '" data-quick-review-gallery-image data-gallery-index="' + safeIndex + '" class="h-full w-full select-none object-contain transition-opacity duration-200">'
+            +       '</button>'
+            +     '</div>'
+            +     (items.length > 1 ? '<button type="button" data-quick-review-gallery-prev class="absolute left-3 top-1/2 -translate-y-1/2 inline-flex size-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"><i class="fa-solid fa-chevron-left text-sm"></i></button>' : '')
+            +     (items.length > 1 ? '<button type="button" data-quick-review-gallery-next class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex size-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"><i class="fa-solid fa-chevron-right text-sm"></i></button>' : '')
+            +     (items.length > 1 ? '<div class="absolute bottom-3 right-3 rounded-full bg-slate-900/70 px-2.5 py-1 text-[11px] font-semibold text-white" data-quick-review-gallery-counter>' + (safeIndex + 1) + ' / ' + items.length + '</div>' : '')
+            +   '</div>'
+            +   (items.length > 1 ? '<div class="-mx-1 flex gap-2 overflow-x-auto pb-1 px-1" data-quick-review-gallery-thumbs>' + thumbs + '</div>' : '')
+            + '</div>',
+          activeIndex: safeIndex,
+          total: items.length
+        };
+      }
+
+      function setGalleryImage(nextIndex) {
+        var galleryImage = body.querySelector('[data-quick-review-gallery-image]');
+        var thumbs = Array.from(body.querySelectorAll('[data-quick-review-gallery-thumb]'));
+        var counter = body.querySelector('[data-quick-review-gallery-counter]');
+
+        if (!galleryImage || !thumbs.length) {
+          activeGalleryIndex = 0;
+          return;
+        }
+
+        var total = thumbs.length;
+        var normalizedIndex = ((nextIndex % total) + total) % total;
+        var currentThumb = thumbs[normalizedIndex];
+        var currentImage = currentThumb ? currentThumb.querySelector('img') : null;
+        var nextSrc = currentThumb ? currentThumb.getAttribute('data-gallery-src') || '' : '';
+        var nextAlt = currentThumb ? currentThumb.getAttribute('data-gallery-alt') || '' : '';
+
+        if (!nextSrc && currentImage) {
+          nextSrc = currentImage.getAttribute('src') || '';
+        }
+        if (!nextAlt && currentImage) {
+          nextAlt = currentImage.getAttribute('alt') || '';
+        }
+
+        thumbs.forEach(function (thumb, index) {
+          thumb.classList.toggle('border-primary-500', index === normalizedIndex);
+          thumb.classList.toggle('ring-2', index === normalizedIndex);
+          thumb.classList.toggle('ring-primary-200', index === normalizedIndex);
+          thumb.classList.toggle('border-slate-200', index !== normalizedIndex);
+        });
+
+        if (nextSrc && galleryImage.getAttribute('src') !== nextSrc) {
+          galleryImage.style.opacity = '0.35';
+          galleryImage.onload = function () {
+            galleryImage.style.opacity = '1';
+            galleryImage.onload = null;
+          };
+          galleryImage.src = nextSrc;
+        }
+
+        galleryImage.alt = nextAlt || galleryImage.alt || '';
+        galleryImage.setAttribute('data-gallery-index', String(normalizedIndex));
+        if (counter) {
+          counter.textContent = (normalizedIndex + 1) + ' / ' + total;
+        }
+        activeGalleryIndex = normalizedIndex;
+      }
+
+      function getGalleryActiveIndex() {
+        var galleryImage = body.querySelector('[data-quick-review-gallery-image]');
+        if (!galleryImage) {
+          return activeGalleryIndex || 0;
+        }
+
+        var parsedIndex = parseInt(galleryImage.getAttribute('data-gallery-index') || '0', 10);
+        return Number.isFinite(parsedIndex) ? parsedIndex : 0;
+      }
+
+      function openLightbox(index) {
+        if (!lightboxRoot || !lightboxImage || !lightboxCaption) {
+          return;
+        }
+
+        var thumbs = Array.from(body.querySelectorAll('[data-quick-review-gallery-thumb]'));
+        if (!thumbs.length) {
+          return;
+        }
+
+        var total = thumbs.length;
+        var normalizedIndex = ((index % total) + total) % total;
+        var thumb = thumbs[normalizedIndex];
+        var thumbImage = thumb ? thumb.querySelector('img') : null;
+        var src = thumb ? thumb.getAttribute('data-gallery-src') || '' : '';
+        var alt = thumb ? thumb.getAttribute('data-gallery-alt') || '' : '';
+
+        if (!src && thumbImage) {
+          src = thumbImage.getAttribute('src') || '';
+        }
+        if (!alt && thumbImage) {
+          alt = thumbImage.getAttribute('alt') || '';
+        }
+
+        if (!src) {
+          return;
+        }
+
+        lightboxOpen = true;
+        lightboxRoot.classList.remove('hidden');
+        lightboxRoot.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+
+        lightboxImage.src = src;
+        lightboxImage.alt = alt || '';
+        lightboxCaption.textContent = alt || '';
+        if (lightboxCounter) {
+          lightboxCounter.textContent = (normalizedIndex + 1) + ' / ' + total;
+        }
+        if (lightboxPrev) {
+          lightboxPrev.classList.toggle('hidden', total < 2);
+        }
+        if (lightboxNext) {
+          lightboxNext.classList.toggle('hidden', total < 2);
+        }
+
+        if (lightboxClose) {
+          lightboxClose.focus();
+        }
+      }
+
+      function closeLightbox() {
+        if (!lightboxRoot || !lightboxImage || !lightboxCaption) {
+          return;
+        }
+
+        lightboxOpen = false;
+        lightboxRoot.classList.add('hidden');
+        lightboxRoot.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+        lightboxImage.src = '';
+        lightboxImage.alt = '';
+        lightboxCaption.textContent = '';
+        if (lightboxCounter) {
+          lightboxCounter.textContent = '';
+        }
+        lightboxTouchStartX = null;
+        lightboxTouchStartY = null;
+      }
+
+      function navigateLightbox(step) {
+        if (!lightboxOpen) {
+          return;
+        }
+
+        var targetIndex = getGalleryActiveIndex() + step;
+        setGalleryImage(targetIndex);
+        openLightbox(targetIndex);
+      }
+
+      function setOpenState(isOpen) {
+        if (isOpen && closeTimer) {
+          clearTimeout(closeTimer);
+          closeTimer = null;
+        }
+
+        root.classList.toggle('hidden', !isOpen);
+        root.classList.toggle('pointer-events-none', !isOpen);
+        root.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        document.body.classList.toggle('overflow-hidden', isOpen);
+
+        requestAnimationFrame(function () {
+          overlay.classList.toggle('opacity-0', !isOpen);
+          panel.classList.toggle('translate-x-full', !isOpen);
+        });
+      }
+
+      function closeDrawer() {
+        activeForm = null;
+        activeRequestToken += 1;
+        overlay.classList.add('opacity-0');
+        panel.classList.add('translate-x-full');
+        if (closeTimer) {
+          clearTimeout(closeTimer);
+        }
+        closeTimer = setTimeout(function () {
+          closeTimer = null;
+          setOpenState(false);
+        }, 250);
+      }
+
+      function renderPayload(payload) {
+        var product = payload.product || {};
+        var variants = Array.isArray(payload.variants) ? payload.variants : [];
+        var galleryImages = Array.isArray(payload.gallery_images) ? payload.gallery_images : [];
+        var defaultVariantId = payload.default_variant_id || (variants[0] ? variants[0].id : '');
+        var maxQuantity = payload.max_quantity || 1;
+        var variantButtons = variants.map(function (variant) {
+          return buildVariantOption(variant, defaultVariantId);
+        }).join('');
+        var initialVariant = variants.find(function (variant) {
+          return String(variant.id) === String(defaultVariantId);
+        }) || variants[0] || null;
+        var initialGalleryIndex = initialVariant && initialVariant.image_index !== null && typeof initialVariant.image_index !== 'undefined' && initialVariant.image_index !== ''
+          ? parseInt(initialVariant.image_index, 10)
+          : 0;
+        var gallery = buildGalleryMarkup(galleryImages, Number.isFinite(initialGalleryIndex) ? initialGalleryIndex : 0);
+
+        activeGalleryIndex = gallery.activeIndex;
+
+        body.innerHTML = ''
+          + '<div class="space-y-5">'
+          +   '<div class="space-y-4">'
+          +     gallery.html
+          +     '<div>'
+          +       '<div class="flex items-start justify-between gap-3">'
+          +         '<div class="min-w-0">'
+          +           '<h3 class="text-xl font-bold leading-tight text-slate-900">' + escapeHtml(product.name || '') + '</h3>'
+          +           '<p class="mt-2 text-sm leading-relaxed text-slate-500">' + escapeHtml(product.short_description || '') + '</p>'
+          +         '</div>'
+          +         '<a href="' + escapeHtml(product.url || '#') + '" class="shrink-0 text-sm font-semibold text-primary-600 hover:text-primary-700">{{ app()->getLocale() === 'ka' ? 'სრული გვერდი' : 'Full page' }}</a>'
+          +       '</div>'
+          +       '<div class="mt-3 flex items-end gap-2">'
+          +         '<p class="text-3xl font-extrabold leading-none text-slate-900">' + escapeHtml(product.price_formatted || '') + '</p>'
+          +         (product.base_price_formatted ? '<p class="price-compare-old text-lg">' + escapeHtml(product.base_price_formatted) + '</p>' : '')
+          +       '</div>'
+          +     '</div>'
+          +   '</div>'
+          +   '<form method="POST" action="' + escapeHtml(payload.add_to_cart_url) + '" data-cart-form data-quick-review-form data-analytics-item-id="' + escapeHtml(product.id || '') + '" data-analytics-item-name="' + escapeHtml(product.name || '') + '" data-analytics-price="' + escapeHtml(product.price || 0) + '" data-analytics-currency="' + escapeHtml(product.currency || 'GEL') + '" class="space-y-5">'
+          +     '<input type="hidden" name="_token" value="{{ csrf_token() }}">'
+          +     '<input type="hidden" name="variant_id" value="' + defaultVariantId + '" data-quick-review-variant-input>'
+          +     '<div>'
+          +       '<div class="mb-2 flex items-center justify-between gap-2">'
+          +         '<p class="text-sm font-semibold text-slate-900">{{ app()->getLocale() === 'ka' ? 'ფერი / ვარიანტი' : 'Color / Variant' }}</p>'
+          +       '</div>'
+          +       '<div class="grid gap-2 sm:grid-cols-2" data-quick-review-variants>' + variantButtons + '</div>'
+          +     '</div>'
+          +     '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">'
+          +       '<div class="flex items-center justify-between gap-3">'
+          +         '<label for="quick-review-quantity" class="text-sm font-semibold text-slate-700">{{ app()->getLocale() === 'ka' ? 'რაოდენობა' : 'Quantity' }}</label>'
+          +         '<input id="quick-review-quantity" type="number" name="quantity" min="1" max="' + maxQuantity + '" value="1" class="w-24 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">'
+          +       '</div>'
+          +     '</div>'
+          +     '<div class="grid gap-2 sm:grid-cols-2">'
+          +       '<button type="submit" name="post_add_action" value="cart" class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-600">'
+          +         '<i class="fa-solid fa-cart-shopping text-xs"></i>{{ app()->getLocale() === 'ka' ? 'კალათაში დამატება' : 'Add to Cart' }}'
+          +       '</button>'
+          +       '<button type="submit" name="post_add_action" value="checkout" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition hover:border-primary-300 hover:bg-primary-100">'
+          +         '<i class="fa-solid fa-bag-shopping text-xs"></i>{{ app()->getLocale() === 'ka' ? 'შეკვეთის გაფორმება' : 'Checkout' }}'
+          +       '</button>'
+          +     '</div>'
+          +   '</form>'
+          + '</div>';
+
+        activeForm = body.querySelector('[data-quick-review-form]');
+      }
+
+      function setVariant(button) {
+        var form = body.querySelector('[data-quick-review-form]');
+        if (!form || !button) {
+          return;
+        }
+
+        var variantIdInput = form.querySelector('[data-quick-review-variant-input]');
+        var quantityInput = form.querySelector('input[name="quantity"]');
+        var stock = Math.max(1, Math.min(10, parseInt(button.getAttribute('data-variant-stock') || '1', 10)));
+
+        body.querySelectorAll('[data-quick-review-variant]').forEach(function (item) {
+          var selected = item === button;
+          item.classList.toggle('border-primary-500', selected);
+          item.classList.toggle('bg-primary-50', selected);
+          item.classList.toggle('text-slate-900', selected);
+          item.classList.toggle('border-slate-200', !selected);
+          item.classList.toggle('bg-white', !selected);
+          item.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          var check = item.querySelector('.fa-check');
+          if (check) {
+            check.classList.toggle('text-primary-600', selected);
+            check.classList.toggle('text-transparent', !selected);
+          }
+        });
+
+        if (variantIdInput) {
+          variantIdInput.value = button.getAttribute('data-variant-id') || '';
+        }
+        if (quantityInput) {
+          quantityInput.max = String(stock);
+          if (parseInt(quantityInput.value || '1', 10) > stock) {
+            quantityInput.value = String(stock);
+          }
+        }
+
+        var variantImageIndex = button.getAttribute('data-variant-image-index');
+        if (variantImageIndex !== null && variantImageIndex !== '') {
+          setGalleryImage(parseInt(variantImageIndex, 10));
+        }
+      }
+
+      function showLoading() {
+        body.innerHTML = '<div class="animate-pulse space-y-3"><div class="h-36 rounded-2xl bg-slate-100"></div><div class="h-4 w-2/3 rounded-full bg-slate-100"></div><div class="h-4 w-1/2 rounded-full bg-slate-100"></div><div class="grid grid-cols-2 gap-2"><div class="h-11 rounded-xl bg-slate-100"></div><div class="h-11 rounded-xl bg-slate-100"></div></div></div>';
+      }
+
+      document.addEventListener('click', function (event) {
+        var openImage = event.target.closest('[data-quick-review-gallery-open]');
+        if (openImage) {
+          event.preventDefault();
+          openLightbox(parseInt(openImage.getAttribute('data-gallery-index') || '0', 10));
+          return;
+        }
+
+        if (lightboxOpen && lightboxRoot && (event.target === lightboxOverlay || event.target.closest('[data-site-lightbox-close]'))) {
+          event.preventDefault();
+          closeLightbox();
+          return;
+        }
+
+        if (lightboxOpen && event.target.closest('[data-site-lightbox-prev]')) {
+          event.preventDefault();
+          navigateLightbox(-1);
+          return;
+        }
+
+        if (lightboxOpen && event.target.closest('[data-site-lightbox-next]')) {
+          event.preventDefault();
+          navigateLightbox(1);
+          return;
+        }
+
+        var galleryPrev = event.target.closest('[data-quick-review-gallery-prev]');
+        if (galleryPrev) {
+          event.preventDefault();
+          setGalleryImage(getGalleryActiveIndex() - 1);
+          return;
+        }
+
+        var galleryNext = event.target.closest('[data-quick-review-gallery-next]');
+        if (galleryNext) {
+          event.preventDefault();
+          setGalleryImage(getGalleryActiveIndex() + 1);
+          return;
+        }
+
+        var galleryThumb = event.target.closest('[data-quick-review-gallery-thumb]');
+        if (galleryThumb) {
+          event.preventDefault();
+          setGalleryImage(parseInt(galleryThumb.getAttribute('data-gallery-index') || '0', 10));
+          return;
+        }
+
+        var trigger = event.target.closest('[data-product-quick-review-trigger]');
+        if (trigger) {
+          event.preventDefault();
+          var url = trigger.getAttribute('data-product-quick-review-url');
+          if (!url) {
+            return;
+          }
+
+          activeRequestToken += 1;
+          var requestToken = activeRequestToken;
+
+          setOpenState(true);
+          showLoading();
+
+          fetch(url, {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+          })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              return { ok: response.ok, data: data };
+            });
+          })
+          .then(function (result) {
+            if (requestToken !== activeRequestToken) {
+              return;
+            }
+
+            if (!result.ok) {
+              throw new Error('Quick review failed');
+            }
+
+            renderPayload(result.data);
+          })
+          .catch(function () {
+            if (requestToken !== activeRequestToken) {
+              return;
+            }
+
+            body.innerHTML = '<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">{{ app()->getLocale() === 'ka' ? 'ამ პროდუქტის გახსნა ახლა ვერ მოხერხდა. სცადეთ თავიდან.' : 'We could not open this product right now. Please try again.' }}</div>';
+          });
+
+          return;
+        }
+
+        var variantButton = event.target.closest('[data-quick-review-variant]');
+        if (variantButton) {
+          event.preventDefault();
+          setVariant(variantButton);
+          return;
+        }
+
+        if (event.target === overlay || event.target.closest('[data-quick-review-close]')) {
+          closeDrawer();
+        }
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && root.getAttribute('aria-hidden') === 'false') {
+          closeDrawer();
+          return;
+        }
+
+        if (!lightboxOpen) {
+          return;
+        }
+
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          navigateLightbox(-1);
+        }
+
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          navigateLightbox(1);
+        }
+      });
+
+      if (lightboxRoot) {
+        lightboxRoot.addEventListener('touchstart', function (event) {
+          if (!lightboxOpen || !event.touches || event.touches.length !== 1) {
+            return;
+          }
+
+          lightboxTouchStartX = event.touches[0].clientX;
+          lightboxTouchStartY = event.touches[0].clientY;
+        }, { passive: true });
+
+        lightboxRoot.addEventListener('touchend', function (event) {
+          if (!lightboxOpen || lightboxTouchStartX === null || !event.changedTouches || event.changedTouches.length !== 1) {
+            return;
+          }
+
+          var deltaX = event.changedTouches[0].clientX - lightboxTouchStartX;
+          var deltaY = event.changedTouches[0].clientY - lightboxTouchStartY;
+
+          lightboxTouchStartX = null;
+          lightboxTouchStartY = null;
+
+          if (Math.abs(deltaX) < 40 || Math.abs(deltaX) < Math.abs(deltaY)) {
+            return;
+          }
+
+          if (event.cancelable) {
+            event.preventDefault();
+          }
+          navigateLightbox(deltaX < 0 ? 1 : -1);
+        }, { passive: false });
+      }
+
+      document.addEventListener('cart:add-success', function (event) {
+        if (!activeForm || !event.detail || event.detail.form !== activeForm) {
+          return;
+        }
+
+        if (!(event.detail.data && event.detail.data.redirect_url)) {
+          closeDrawer();
+        }
+      });
     }());
     </script>
     @stack('scripts')

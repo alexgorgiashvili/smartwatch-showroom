@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Services\Chatbot\ChatbotContentSyncService;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +22,10 @@ class ProductController extends Controller
     {
         $products = Product::query()
             ->with(['primaryImage', 'images', 'variants'])
-            ->withCount('variants')
+            ->withCount([
+                'variants',
+                'variants as listed_variants_count' => fn ($query) => $query->where('is_listed_separately', true),
+            ])
             ->orderByDesc('updated_at')
             ->get();
 
@@ -87,7 +91,7 @@ class ProductController extends Controller
 
     public function edit(Request $request, Product $product)
     {
-        $product->load(['images', 'variants']);
+        $product->load(['images', 'variants.images']);
 
         $view = view('admin.products.edit', [
             'product' => $product,
@@ -168,6 +172,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:160'],
             'color_name' => ['nullable', 'string', 'max:50'],
             'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'is_listed_separately' => ['nullable', 'boolean'],
             'quantity' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
             'bridge_variation_id' => ['nullable', 'string', 'max:120'],
@@ -178,6 +183,7 @@ class ProductController extends Controller
         ]);
 
         $data['color_hex'] = isset($data['color_hex']) ? strtoupper($data['color_hex']) : null;
+        $data['is_listed_separately'] = $request->boolean('is_listed_separately');
 
         $data['product_id'] = $product->id;
 
@@ -188,7 +194,7 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Variant added successfully.',
-            'variant' => $variant,
+            'variant' => $this->buildVariantPayload($variant),
         ]);
     }
 
@@ -202,6 +208,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:160'],
             'color_name' => ['nullable', 'string', 'max:50'],
             'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'is_listed_separately' => ['nullable', 'boolean'],
             'quantity' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
             'bridge_variation_id' => ['nullable', 'string', 'max:120'],
@@ -212,6 +219,7 @@ class ProductController extends Controller
         ]);
 
         $data['color_hex'] = isset($data['color_hex']) ? strtoupper($data['color_hex']) : null;
+    $data['is_listed_separately'] = $request->boolean('is_listed_separately');
 
         $variant->update($data);
 
@@ -223,7 +231,73 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Variant updated successfully.',
-            'variant' => $variant,
+            'variant' => $this->buildVariantPayload($variant),
+        ]);
+    }
+
+    public function toggleVariantListing(
+        Request $request,
+        ProductVariant $variant,
+        ChatbotContentSyncService $contentSync
+    ): JsonResponse
+    {
+        $data = $request->validate([
+            'is_listed_separately' => ['required', 'boolean'],
+        ]);
+
+        $variant->update([
+            'is_listed_separately' => (bool) $data['is_listed_separately'],
+        ]);
+
+        $product = $variant->product()->with('variants')->first();
+        if ($product) {
+            $contentSync->syncProduct($product);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Catalog listing visibility updated.',
+            'variant' => $this->buildVariantPayload($variant),
+        ]);
+    }
+
+    public function syncVariantImages(Request $request, ProductVariant $variant): JsonResponse
+    {
+        $data = $request->validate([
+            'image_ids' => ['nullable', 'array'],
+            'image_ids.*' => ['integer', 'distinct', 'exists:product_images,id'],
+        ]);
+
+        $imageIds = collect($data['image_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($imageIds->isNotEmpty()) {
+            $validIds = ProductImage::query()
+                ->where('product_id', $variant->product_id)
+                ->whereIn('id', $imageIds)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->values();
+
+            if ($validIds->count() !== $imageIds->count()) {
+                return response()->json([
+                    'message' => 'All selected images must belong to the same product as the variant.',
+                ], 422);
+            }
+        }
+
+        $syncPayload = [];
+        foreach ($imageIds as $index => $imageId) {
+            $syncPayload[$imageId] = ['sort_order' => $index];
+        }
+
+        $variant->images()->sync($syncPayload);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Variant image mapping saved.',
+            'variant' => $this->buildVariantPayload($variant->fresh()),
         ]);
     }
 
@@ -516,5 +590,30 @@ class ProductController extends Controller
         Storage::disk('public')->put($thumbnailPath, $thumbBinary);
 
         return $thumbnailPath;
+    }
+
+    private function buildVariantPayload(ProductVariant $variant): array
+    {
+        $variant->loadMissing(['images']);
+
+        return [
+            'id' => (int) $variant->id,
+            'product_id' => (int) $variant->product_id,
+            'name' => (string) $variant->name,
+            'color_name' => $variant->color_name,
+            'color_hex' => $variant->color_hex ? strtoupper((string) $variant->color_hex) : null,
+            'quantity' => (int) $variant->quantity,
+            'low_stock_threshold' => (int) $variant->low_stock_threshold,
+            'available_quantity' => (int) $variant->available_quantity,
+            'bridge_stock_quantity' => $variant->bridge_stock_quantity,
+            'stock_sync_status' => $variant->stock_sync_status,
+            'bridge_variation_id' => $variant->bridge_variation_id,
+            'is_listed_separately' => (bool) $variant->is_listed_separately,
+            'mapped_images_count' => $variant->images->count(),
+            'mapped_image_ids' => $variant->images->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+            'toggle_listing_url' => route('admin.products.variants.toggle-listing', $variant),
+            'sync_images_url' => route('admin.products.variants.images.sync', $variant),
+            'delete_url' => route('admin.products.variants.delete', $variant),
+        ];
     }
 }

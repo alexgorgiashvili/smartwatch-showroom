@@ -150,7 +150,14 @@ if ($approvedReviews->count() > 0) {
             ->filter(fn ($variant) => filled($variant->color_name) && filled($variant->color_hex))
             ->unique(fn ($variant) => strtoupper($variant->color_hex) . '|' . mb_strtolower($variant->color_name))
             ->values();
-        $defaultColor = $colorVariants->first();
+        $defaultColor = $defaultVariant
+            ? $colorVariants->firstWhere('id', $defaultVariant->id)
+            : null;
+        if (! $defaultColor) {
+            $defaultColor = $colorVariants->first();
+        }
+        $selectedColorId = $defaultColor?->id;
+        $variantImageMap = $variantImageMap ?? [];
         $thumbnailPaths = $product->images
             ->map(function ($image) {
                 $thumbnailPath = ltrim((string) ($image->thumbnail_path ?? ''), '/');
@@ -459,15 +466,22 @@ if ($approvedReviews->count() > 0) {
                                 </p>
                                 <div class="mt-3 flex flex-wrap items-center gap-2.5">
                                     @foreach($colorVariants as $index => $variantColor)
+                                        @php
+                                            $variantImage = $variantImageMap[$variantColor->id] ?? null;
+                                        @endphp
                                         <button
                                             type="button"
-                                            class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $index === 0 ? 'ring-2 ring-primary-500 ring-offset-2' : '' }}"
+                                            class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $selectedColorId === $variantColor->id ? 'ring-2 ring-primary-500 ring-offset-2' : '' }}"
                                             style="background-color: {{ $variantColor->color_hex }};"
                                             title="{{ $variantColor->color_name }}"
                                             data-color-name="{{ $variantColor->color_name }}"
                                             data-color-hex="{{ strtoupper($variantColor->color_hex) }}"
                                             data-variant-id="{{ $variantColor->id }}"
                                             data-stock="{{ (int) $variantColor->available_quantity }}"
+                                            data-image-index="{{ $variantImage['index'] ?? '' }}"
+                                            data-image-url="{{ $variantImage['thumbnail_url'] ?? $variantImage['url'] ?? '' }}"
+                                            data-image-alt="{{ $variantImage['alt'] ?? $product->name }}"
+                                            aria-pressed="{{ $selectedColorId === $variantColor->id ? 'true' : 'false' }}"
                                             aria-label="{{ $variantColor->color_name }}"
                                         ></button>
                                     @endforeach
@@ -520,10 +534,10 @@ if ($approvedReviews->count() > 0) {
                                     </div>
                                 </form>
                             @endif
-                            @if($giftBuilderEligible)
-                                <a
-                                    href="{{ route('gift-builder.show', ['product' => $product->slug, 'variant_id' => $defaultVariant->id]) }}"
-                                    id="build-gift-link"
+                        @if($giftBuilderEligible && config('gift_builder.enabled', false))
+                            <a
+                                href="{{ route('gift-builder.show', ['product' => $product->slug, 'variant_id' => $defaultVariant->id]) }}"
+                                id="build-gift-link"
                                     data-base-url="{{ route('gift-builder.show', ['product' => $product->slug]) }}"
                                     class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
                                 >
@@ -665,12 +679,31 @@ if ($approvedReviews->count() > 0) {
             const selectedVariantInput = document.getElementById('selected-variant-id');
             const quantityInput = document.getElementById('cart-quantity');
             const giftLink = document.getElementById('build-gift-link');
+            const galleryRoot = document.getElementById('product-splide');
+            const gallerySplide = galleryRoot && galleryRoot.__splide ? galleryRoot.__splide : null;
+            const initialSwatch = swatches.find((swatch) => swatch.getAttribute('aria-pressed') === 'true') || swatches[0];
+            const defaultImageIndex = initialSwatch ? Number.parseInt(initialSwatch.dataset.imageIndex || '0', 10) : 0;
+
+            const syncGalleryImage = (targetSwatch) => {
+                if (!gallerySplide || !targetSwatch) {
+                    return;
+                }
+
+                const imageIndex = Number.parseInt(targetSwatch.dataset.imageIndex || '', 10);
+                if (Number.isFinite(imageIndex)) {
+                    gallerySplide.go(imageIndex);
+                } else if (Number.isFinite(defaultImageIndex)) {
+                    gallerySplide.go(defaultImageIndex);
+                }
+            };
 
             const setActive = (targetSwatch) => {
                 swatches.forEach((swatch) => {
+                    swatch.setAttribute('aria-pressed', 'false');
                     swatch.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2');
                 });
                 targetSwatch.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2');
+                targetSwatch.setAttribute('aria-pressed', 'true');
 
                 const colorName = targetSwatch.dataset.colorName || '';
                 const selectedText = "{{ app()->getLocale() === 'ka' ? 'არჩეული' : 'Selected' }}";
@@ -696,6 +729,8 @@ if ($approvedReviews->count() > 0) {
                         quantityInput.value = String(stock);
                     }
                 }
+
+                syncGalleryImage(targetSwatch);
             };
 
             swatches.forEach((swatch) => {
@@ -703,6 +738,10 @@ if ($approvedReviews->count() > 0) {
                     setActive(this);
                 });
             });
+
+            if (initialSwatch) {
+                setActive(initialSwatch);
+            }
         });
     </script>
 @endpush

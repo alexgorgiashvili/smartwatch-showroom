@@ -35,3 +35,14 @@ When I type `/prompt` followed by any text, transform that text into a well-stru
 - Toast notifications: `showToast(message, type)` from `admin-helpers.js`
 - Confirm dialogs: `confirmDelete(url, csrfToken)` from `admin-helpers.js`
 - DataTables initialized per-page in registered page init functions
+
+### Georgian text safety
+- Keep Georgian source text in UTF-8.
+- Prefer small `apply_patch` edits for Georgian copy.
+- Avoid large shell-based rewrites on Blade/PHP/JS files when the change includes Georgian text.
+- Verify rendered HTML or browser output, not only console output.
+
+### Browser automation preference
+- When a task mentions `@chrome` or depends on browser state, prefer the user's existing Chrome profile/session first.
+- Check open Chrome tabs before trying a fresh login or a new browser backend.
+- If the Chrome bridge/runtime fails, use the safest read-only fallback available and report the fallback clearly instead of silently switching behavior.

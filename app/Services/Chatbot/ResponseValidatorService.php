@@ -164,6 +164,52 @@ class ResponseValidatorService
         return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
     }
 
+    public function validateWarrantyClaims(string $response, array $ragContext): ValidationResult
+    {
+        if (!$this->containsWarrantySignal($response)) {
+            return ValidationResult::pass();
+        }
+
+        $claimedMonths = $this->extractWarrantyMonths($response);
+        if ($claimedMonths === []) {
+            return ValidationResult::pass();
+        }
+
+        $allowedMonths = $this->collectAllowedWarrantyMonths($ragContext);
+        if ($allowedMonths === []) {
+            return ValidationResult::pass();
+        }
+
+        $violations = [];
+
+        foreach ($claimedMonths as $claimedMonth) {
+            if (!in_array($claimedMonth, $allowedMonths, true)) {
+                $violations[] = [
+                    'type' => 'warranty_mismatch',
+                    'months' => $claimedMonth,
+                    'allowed_months' => $allowedMonths,
+                ];
+            }
+        }
+
+        return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
+    }
+
+    public function validateOfferTone(string $response): ValidationResult
+    {
+        if (preg_match('/(?:^|[^\p{L}])გთავაზოთ(?:$|[^\p{L}])/u', $response) !== 1) {
+            return ValidationResult::pass();
+        }
+
+        return ValidationResult::fail([
+            [
+                'type' => 'offer_tone_mismatch',
+                'term' => 'გთავაზოთ',
+                'preferred_term' => 'შემოგთავაზოთ',
+            ],
+        ]);
+    }
+
     public function validateAll(string $response, array $ragContext, ?IntentResult $intentResult = null): ValidationResult
     {
         $results = [];
@@ -173,6 +219,8 @@ class ResponseValidatorService
         }
 
         $results[] = $this->validateStockClaims($response, $ragContext);
+        $results[] = $this->validateWarrantyClaims($response, $ragContext);
+        $results[] = $this->validateOfferTone($response);
         $results[] = $this->validateUrls($response, $ragContext);
 
         $violations = collect($results)
@@ -291,5 +339,91 @@ class ResponseValidatorService
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function containsWarrantySignal(string $response): bool
+    {
+        return preg_match('/(გარანტი\p{L}*|warranty|guarantee)/iu', $response) === 1
+            || (
+                preg_match('/\b\d{1,3}\s*(?:-?\s*)?(?:თვე(?:ა|იანი|ები|ის|ზე|ში|ს)?|months?|month)\b/iu', $response) === 1
+                && preg_match('/\b(2G|4G)\b/iu', $response) === 1
+            );
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function extractWarrantyMonths(string $response): array
+    {
+        $patterns = [
+            '/(?:გარანტი\p{L}*|warranty|guarantee)[^.\n]{0,60}?(\d{1,3})\s*(?:[-–—]?\s*)?(?:თვე(?:ა|იანი|ები|ის|ზე|ში|ს)?|months?|month)\b/iu',
+            '/(\d{1,3})\s*(?:[-–—]?\s*)?(?:თვე(?:ა|იანი|ები|ის|ზე|ში|ს)?|months?|month)\b[^.\n]{0,60}?(?:გარანტი\p{L}*|warranty|guarantee)/iu',
+        ];
+
+        $months = [];
+
+        foreach ($patterns as $pattern) {
+            if (!preg_match_all($pattern, $response, $matches)) {
+                continue;
+            }
+
+            foreach ($matches[1] ?? [] as $value) {
+                if (is_numeric($value)) {
+                    $months[] = (int) $value;
+                }
+            }
+        }
+
+        return collect($months)
+            ->filter(fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param array<string, mixed> $ragContext
+     * @return array<int, int>
+     */
+    private function collectAllowedWarrantyMonths(array $ragContext): array
+    {
+        $products = $ragContext['products'] ?? [];
+        if (!is_array($products)) {
+            return [3, 6];
+        }
+
+        $allowed = [];
+
+        foreach ($products as $product) {
+            if (!is_array($product)) {
+                continue;
+            }
+
+            $searchable = preg_replace(
+                '/[^\p{L}\p{N}]+/u',
+                ' ',
+                mb_strtolower(implode(' ', array_filter([
+                    (string) ($product['name'] ?? ''),
+                    (string) ($product['slug'] ?? ''),
+                ])))
+            ) ?? '';
+
+            if ($searchable !== '' && preg_match('/(?:^|\s)2\s*g(?:\s|$)|(?:^|\s)2\s*გ(?:\s|$)|(?:^|\s)2გ(?:\s|$)/u', $searchable) === 1) {
+                $allowed[3] = true;
+            }
+
+            if ($searchable !== '' && preg_match('/(?:^|\s)4\s*g(?:\s|$)|(?:^|\s)4\s*გ(?:\s|$)|(?:^|\s)4გ(?:\s|$)/u', $searchable) === 1) {
+                $allowed[6] = true;
+            }
+        }
+
+        if ($allowed === []) {
+            return [3, 6];
+        }
+
+        $months = array_map('intval', array_keys($allowed));
+        sort($months);
+
+        return $months;
     }
 }

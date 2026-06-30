@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათი საქართველოში — GPS ტრეკინგი, 4G ზარები | MyTechnic თბილისი' : 'Kids SIM Smartwatch in Georgia — GPS Tracking, 4G Calls | MyTechnic Tbilisi')
 
@@ -165,47 +165,49 @@ $_homeSchema = [
     </section>
 
     {{-- ============================================================
-     TRUST BAND — Dark .tech-surface, 4 feature tiles
+     TRUST BAND - Purchase benefits and buying reassurance
 ============================================================ --}}
     <section class="tech-surface py-16" data-reveal="fade-up">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <p class="mb-10 text-center text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
-                {{ app()->getLocale() === 'ka' ? 'რატომ MyTechnic' : 'Why MyTechnic' }}
-            </p>
+            <div class="mx-auto mb-10 max-w-2xl text-center">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+                    {{ app()->getLocale() === 'ka' ? 'შეძენის უპირატესობები' : 'Buying Benefits' }}
+                </p>
+                <h2 class="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    {{ app()->getLocale() === 'ka' ? 'ყველაფერი, რაც ყიდვას უფრო მარტივს ხდის' : 'Everything that makes buying easier' }}
+                </h2>
+            </div>
 
-            <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6">
                 @php
                     $trustTiles = [
                         [
-                            'icon' => 'fa-tower-broadcast',
-                            'title' => app()->getLocale() === 'ka' ? '4G LTE + ზარები' : '4G LTE + Calls',
-                            'body' =>
-                                app()->getLocale() === 'ka'
-                                    ? 'ტელეფონის გარეშე დარეკვა'
-                                    : 'Call & receive without a phone',
+                            'icon' => 'fa-wallet',
+                            'title' => app()->getLocale() === 'ka' ? 'კურიერთან გადახდა' : 'Cash on Delivery',
+                            'body' => app()->getLocale() === 'ka'
+                                ? 'შეკვეთას ადგილზე გადაამოწმებთ და მხოლოდ მერე იხდით'
+                                : 'Check the order first, then pay on delivery',
                         ],
                         [
-                            'icon' => 'fa-location-dot',
-                            'title' => app()->getLocale() === 'ka' ? 'GPS რეალ-ტაიმ' : 'Real-Time GPS',
-                            'body' =>
-                                app()->getLocale() === 'ka'
-                                    ? 'ცოცხალი რუქა SetTracker აპიდან'
-                                    : 'Live map from the SetTracker app',
+                            'icon' => 'fa-truck-fast',
+                            'title' => app()->getLocale() === 'ka' ? 'სწრაფი მიწოდება' : 'Fast Delivery',
+                            'body' => app()->getLocale() === 'ka'
+                                ? 'თბილისში სწრაფად, რეგიონებში ოპერატიულად'
+                                : 'Fast in Tbilisi, reliable across Georgia',
                         ],
                         [
                             'icon' => 'fa-shield-halved',
-                            'title' => app()->getLocale() === 'ka' ? 'IP67 წყალგამძლე' : 'IP67 Waterproof',
-                            'body' =>
-                                app()->getLocale() === 'ka'
-                                    ? 'ყოველდღიური გამოყენებისთვის'
-                                    : 'Splashproof for daily use',
+                            'title' => app()->getLocale() === 'ka' ? 'ოფიციალური გარანტია' : 'Official Warranty',
+                            'body' => app()->getLocale() === 'ka'
+                                ? 'მხარდაჭერა და გარანტია შეძენის შემდეგაც'
+                                : 'Support and warranty after purchase',
                         ],
-
                         [
-                            'icon' => 'fa-truck-fast',
-                            'title' => __('ui.trust_shipping'),
-                            'body' =>
-                                __('ui.trust_shipping_text'),
+                            'icon' => 'fa-headset',
+                            'title' => app()->getLocale() === 'ka' ? 'შერჩევაში დახმარება' : 'Model Guidance',
+                            'body' => app()->getLocale() === 'ka'
+                                ? 'გირჩევთ საუკეთესო მოდელს ასაკისა და საჭიროების მიხედვით'
+                                : 'We help choose the right model for age and needs',
                         ],
                     ];
                 @endphp
@@ -213,7 +215,7 @@ $_homeSchema = [
                 @foreach ($trustTiles as $i => $tile)
                     <div class="glass-card p-5 text-center lg:p-6" data-reveal="fade-up"
                         data-reveal-delay="{{ $i }}">
-                        <div class="mx-auto mb-3 inline-flex rounded-xl bg-white/10 p-3">
+                        <div class="mb-4 inline-flex rounded-2xl bg-white/10 p-3.5">
                             <i class="fa-solid {{ $tile['icon'] }} text-xl text-white/90"></i>
                         </div>
                         <h3 class="text-sm font-semibold text-white lg:text-base">{{ $tile['title'] }}</h3>
@@ -311,22 +313,44 @@ $_homeSchema = [
                                     </a>
 
                                     {{-- Cart button --}}
-                                    @php $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0); @endphp
-                                    <div class="px-3.5 pb-3.5 lg:px-4 lg:pb-4">
+                                    @php
+                                        $availableVariants = $product->variants->filter(fn ($variant) => $variant->available_quantity > 0)->values();
+                                        $firstInStock = $availableVariants->first();
+                                        $requiresQuickReview = $availableVariants->count() > 1
+                                            || $availableVariants->contains(fn ($variant) => filled($variant->color_name));
+                                    @endphp
+                                    <div class="space-y-2 px-3.5 pb-3.5 lg:px-4 lg:pb-4">
+                                        <a href="{{ route('products.show', $product) }}"
+                                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-[11px] font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600 sm:text-xs">
+                                            <i class="fa-solid fa-circle-info text-[10px]"></i>
+                                            {{ app()->getLocale() === 'ka' ? 'დეტალურად' : 'Details' }}
+                                        </a>
                                         @if ($firstInStock)
-                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
-                                                @csrf
-                                                <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit"
-                                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-primary-600">
-                                                    <i class="fa-solid fa-cart-shopping text-[10px]"></i>
-                                                    {{ app()->getLocale() === 'ka' ? 'კალათაში' : 'Add to Cart' }}
+                                            @if ($requiresQuickReview)
+                                                <button
+                                                    type="button"
+                                                    data-product-quick-review-trigger
+                                                    data-product-quick-review-url="{{ route('products.quick-review', $product) }}"
+                                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-[11px] font-semibold text-white transition-colors group-hover:bg-primary-600 sm:text-xs"
+                                                >
+                                                    <i class="fa-solid fa-eye text-[10px]"></i>
+                                                    {{ app()->getLocale() === 'ka' ? 'სწრაფი ნახვა' : 'Quick View' }}
                                                 </button>
-                                            </form>
+                                            @else
+                                                <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
+                                                    @csrf
+                                                    <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit"
+                                                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-[11px] font-semibold text-white transition-colors group-hover:bg-primary-600 sm:text-xs">
+                                                        <i class="fa-solid fa-cart-shopping text-[10px]"></i>
+                                                        {{ app()->getLocale() === 'ka' ? 'კალათაში' : 'Add to Cart' }}
+                                                    </button>
+                                                </form>
+                                            @endif
                                         @else
                                             <button disabled
-                                                class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400">
+                                                class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-[11px] font-semibold text-gray-400 sm:text-xs">
                                                 {{ app()->getLocale() === 'ka' ? 'ამოიწურა' : 'Out of Stock' }}
                                             </button>
                                         @endif
@@ -393,6 +417,7 @@ $_homeSchema = [
                     </div>
                     <i class="fa-solid fa-arrow-right ml-auto text-xs text-gray-300 transition group-hover:text-primary-500"></i>
                 </a>
+                @if (config('gift_builder.enabled', false))
                 <a href="{{ route('gift-builder.show') }}"
                    class="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md">
                     <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-100">
@@ -404,6 +429,7 @@ $_homeSchema = [
                     </div>
                     <i class="fa-solid fa-arrow-right ml-auto text-xs text-gray-300 transition group-hover:text-primary-500"></i>
                 </a>
+                @endif
             </div>
 
             <div class="mt-5 text-center">

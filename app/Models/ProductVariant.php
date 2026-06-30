@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -13,6 +14,7 @@ class ProductVariant extends Model
         'name',
         'color_name',
         'color_hex',
+        'is_listed_separately',
         'quantity',
         'low_stock_threshold',
         'bridge_variation_id',
@@ -26,6 +28,7 @@ class ProductVariant extends Model
     protected $casts = [
         'quantity' => 'integer',
         'low_stock_threshold' => 'integer',
+        'is_listed_separately' => 'boolean',
         'bridge_stock_quantity' => 'integer',
         'stock_synced_at' => 'datetime',
     ];
@@ -43,6 +46,14 @@ class ProductVariant extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'product_variant_id');
+    }
+
+    public function images(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductImage::class, 'product_variant_images')
+            ->withPivot('sort_order')
+            ->withTimestamps()
+            ->orderBy('product_variant_images.sort_order');
     }
 
     public function isLowStock(): bool

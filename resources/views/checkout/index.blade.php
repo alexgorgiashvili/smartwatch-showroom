@@ -36,7 +36,12 @@
                                                 <img src="{{ $item['image'] }}" alt="{{ $item['product']->name }}" class="h-12 w-12 rounded-md border border-slate-200 object-cover" />
                                                 <div class="min-w-0 flex-1">
                                                     <p class="truncate text-xs font-semibold text-gray-900">{{ $item['product']->name }}</p>
-                                                    <p class="text-[11px] text-gray-500">{{ $item['variant']->name }} • {{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</p>
+                                                    <div class="flex items-center gap-2 text-[11px] text-gray-500">
+                                                        @if (!empty($item['color_hex']))
+                                                            <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
+                                                        @endif
+                                                        <span>{{ $item['variant_label'] }} • {{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</span>
+                                                    </div>
                                                 </div>
                                                 <p class="text-xs font-semibold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
                                             </div>
@@ -55,7 +60,12 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-semibold text-gray-900">{{ $item['product']->name }}</p>
                                         <p class="mt-1 text-[11px] font-semibold text-primary-600">{{ $item['fulfillment_label'] }}</p>
-                                        <p class="text-xs text-gray-600">{{ $item['variant']->name }} • {{ $item['quantity'] }} ც</p>
+                                        <div class="flex items-center gap-2 text-xs text-gray-600">
+                                            @if (!empty($item['color_hex']))
+                                                <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
+                                            @endif
+                                            <span>{{ $item['variant_label'] }} • {{ $item['quantity'] }} ც</span>
+                                        </div>
                                         <p class="mt-1 text-sm font-semibold text-primary-600">{{ number_format($item['subtotal'], 2) }} {{ $item['currency'] === 'GEL' ? '₾' : $item['currency'] }}</p>
                                     </div>
                                 </div>
@@ -93,14 +103,26 @@
 
                             <div class="relative" id="checkout-city-picker">
                                 <input type="hidden" name="city_id" id="checkout-city-id" required>
+                                <label for="checkout-city-search" class="mb-1 block text-xs font-medium text-gray-500">
+                                    ქალაქი
+                                </label>
                                 <input
                                     type="text"
                                     id="checkout-city-search"
                                     placeholder="ქალაქი *"
                                     autocomplete="off"
-                                    class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
                                 >
+                                <button
+                                    type="button"
+                                    id="checkout-city-toggle"
+                                    class="absolute right-3 top-[34px] inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 transition hover:bg-slate-50 hover:text-gray-600"
+                                    aria-label="ქალაქების სიის გახსნა"
+                                >
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </button>
                                 <div id="checkout-city-results" class="absolute z-20 mt-1 hidden max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"></div>
+                                <p class="mt-1 text-[11px] text-gray-400">აირჩიეთ სიიდან ან გადაახვიეთ მეტის სანახავად</p>
                             </div>
 
                             <textarea name="exact_address" rows="3" required placeholder="ზუსტი მისამართი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"></textarea>
@@ -108,10 +130,10 @@
                             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                                 <p class="text-sm font-semibold text-gray-900">გადახდის მეთოდი</p>
                                 <div class="mt-3 space-y-2">
-                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                                    <label class="checkout-bog-option flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
                                         <input type="radio" name="payment_type" value="1" checked class="h-4 w-4 flex-shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500">
-                                        <div class="flex h-7 w-[100px] flex-shrink-0 items-center rounded border border-slate-200 bg-white px-1.5">
-                                            <img src="{{ asset('images/payment-method/bog_geo_horizontal.png') }}" alt="BOG" class="h-full w-full object-contain" onerror="this.style.display='none'">
+                                        <div class="checkout-bog-logo flex h-8 min-w-[112px] flex-shrink-0 items-center justify-center rounded-lg border border-orange-200 bg-orange-50 px-2 shadow-sm">
+                                            <img src="{{ asset('images/payment-method/bog_geo_horizontal.png') }}" alt="საქართველოს ბანკი" class="max-h-5 w-full object-contain" onerror="this.style.display='none'">
                                         </div>
                                         <span class="text-sm text-gray-700">ონლაინ გადახდა</span>
                                     </label>
@@ -191,19 +213,22 @@
         const citySearchInput = document.getElementById('checkout-city-search');
         const cityIdInput = document.getElementById('checkout-city-id');
         const cityResults = document.getElementById('checkout-city-results');
+        const cityToggleButton = document.getElementById('checkout-city-toggle');
         const cities = @json($cities->map(fn ($city) => ['id' => $city->id, 'name' => $city->name])->values());
+        const popularCityIds = @json($popularCityIds->values());
+        const cityPageSize = 12;
+        let cityVisibleLimit = cityPageSize;
+        let cityCurrentQuery = '';
 
         if (!form) {
             return;
         }
 
-        // Phone number formatting
         const phoneInput = form.querySelector('input[name="customer_phone"]');
         if (phoneInput) {
             phoneInput.addEventListener('input', function (e) {
                 let value = e.target.value.replace(/\D/g, '');
 
-                // Format as 995XXXXXXX or 5XXXXXXX
                 if (value.length > 0) {
                     if (value.startsWith('995')) {
                         value = value.substring(0, 12);
@@ -211,8 +236,6 @@
                         value = value.substring(0, 9);
                     } else if (value.startsWith('0') && value.length > 1) {
                         value = value.substring(1, 10);
-                    } else {
-                        value = value;
                     }
                 }
 
@@ -222,12 +245,9 @@
             phoneInput.addEventListener('blur', function (e) {
                 let value = e.target.value.replace(/\D/g, '');
 
-                // Format on blur
                 if (value.length === 9 && value.startsWith('5')) {
                     value = '995' + value;
-                } else if (value.length === 12 && value.startsWith('995')) {
-                    value = value;
-                } else {
+                } else if (!(value.length === 12 && value.startsWith('995'))) {
                     value = '';
                 }
 
@@ -235,35 +255,82 @@
             });
         }
 
-        function renderCityResults(query) {
+        function filteredCities(query) {
             const normalized = (query || '').trim().toLowerCase();
-            if (normalized.length === 0) {
-                cityResults.classList.add('hidden');
-                cityResults.innerHTML = '';
-                return;
+
+            return cities.filter(function (city) {
+                return normalized.length === 0 || city.name.toLowerCase().includes(normalized);
+            });
+        }
+
+        function renderCityResults(query, resetLimit = true) {
+            const normalized = (query || '').trim().toLowerCase();
+            const previousScrollTop = cityResults ? cityResults.scrollTop : 0;
+
+            if (resetLimit) {
+                cityVisibleLimit = cityPageSize;
             }
 
-            const matches = cities
-                .filter(city => city.name.toLowerCase().includes(normalized))
-                .slice(0, 40);
+            cityCurrentQuery = query || '';
 
-            if (matches.length === 0) {
+            const matches = filteredCities(query);
+            const visibleMatches = matches.slice(0, normalized.length === 0 ? cityVisibleLimit : Math.max(cityVisibleLimit, 40));
+
+            if (visibleMatches.length === 0) {
                 cityResults.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">ქალაქი ვერ მოიძებნა</div>';
                 cityResults.classList.remove('hidden');
                 return;
             }
 
-            cityResults.innerHTML = matches
-                .map(city => `<button type="button" data-city-id="${city.id}" data-city-name="${city.name}" class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">${city.name}</button>`)
+            cityResults.innerHTML = visibleMatches
+                .map(function (city) {
+                    const isPopular = normalized.length === 0 && popularCityIds.includes(city.id);
+                    const badge = isPopular
+                        ? '<span class="ml-2 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-600">პოპულარული</span>'
+                        : '';
+
+                    return '<button type="button" data-city-id="' + city.id + '" data-city-name="' + city.name + '" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"><span>' + city.name + '</span>' + badge + '</button>';
+                })
                 .join('');
 
             cityResults.classList.remove('hidden');
+
+            if (!resetLimit) {
+                cityResults.scrollTop = previousScrollTop;
+            }
         }
 
         citySearchInput?.addEventListener('input', function () {
             cityIdInput.value = '';
             citySearchInput.setCustomValidity('');
-            renderCityResults(citySearchInput.value);
+            renderCityResults(citySearchInput.value, true);
+        });
+
+        citySearchInput?.addEventListener('focus', function () {
+            renderCityResults(citySearchInput.value, true);
+        });
+
+        cityToggleButton?.addEventListener('click', function () {
+            citySearchInput?.focus();
+            renderCityResults(citySearchInput?.value || '', true);
+        });
+
+        cityResults?.addEventListener('scroll', function () {
+            if (cityResults.classList.contains('hidden')) {
+                return;
+            }
+
+            if (cityResults.scrollTop + cityResults.clientHeight < cityResults.scrollHeight - 16) {
+                return;
+            }
+
+            const totalMatches = filteredCities(cityCurrentQuery).length;
+            if (cityVisibleLimit >= totalMatches) {
+                return;
+            }
+
+            cityVisibleLimit += cityPageSize;
+            renderCityResults(cityCurrentQuery, false);
         });
 
         cityResults?.addEventListener('click', function (event) {
@@ -292,17 +359,15 @@
                 return;
             }
 
-            // Format phone number before submission
-            const phoneInput = form.querySelector('input[name="customer_phone"]');
-            if (phoneInput) {
-                let phone = phoneInput.value.replace(/\D/g, '');
+            const checkoutPhoneInput = form.querySelector('input[name="customer_phone"]');
+            if (checkoutPhoneInput) {
+                let phone = checkoutPhoneInput.value.replace(/\D/g, '');
 
-                // If starts with 5, add 995
                 if (phone.length === 9 && phone.startsWith('5')) {
                     phone = '995' + phone;
                 }
 
-                phoneInput.value = phone;
+                checkoutPhoneInput.value = phone;
             }
 
             event.preventDefault();
@@ -334,7 +399,7 @@
                 }
 
                 if (!data.redirect_url) {
-                    errorBox.textContent = 'გადამისამართების ბმული არ დაბრუნდა.';
+                    errorBox.textContent = 'გადასამისამართებელი ბმული არ დაბრუნდა.';
                     errorBox.classList.remove('hidden');
                     return;
                 }

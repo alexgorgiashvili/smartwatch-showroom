@@ -56,6 +56,8 @@
                         <tr>
                             <th>Name</th>
                             <th>Color</th>
+                            <th>Catalog</th>
+                            <th>Mapped Images</th>
                             <th>Available</th>
                             <th>Local Qty</th>
                             <th>Bridge Qty</th>
@@ -78,6 +80,21 @@
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
+                            </td>
+                            <td>
+                                @if($variant->is_listed_separately)
+                                    <span class="badge bg-primary">Listed</span>
+                                @else
+                                    <span class="badge bg-light text-muted border">Hidden</span>
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $mappedCount = $variant->images->count();
+                                @endphp
+                                <span class="badge {{ $mappedCount > 0 ? 'bg-info text-dark' : 'bg-light text-muted border' }}">
+                                    {{ $mappedCount }} mapped
+                                </span>
                             </td>
                             <td>{{ $variant->available_quantity }}</td>
                             <td>{{ $variant->quantity }}</td>
@@ -107,6 +124,18 @@
                                             title="Edit">
                                         <i data-feather="edit-2" style="width:14px;height:14px;"></i>
                                     </button>
+                                    <button type="button" class="btn {{ $variant->is_listed_separately ? 'btn-primary' : 'btn-outline-primary' }} btn-sm p-1 btn-toggle-listed-variant"
+                                            data-url="{{ route('admin.products.variants.toggle-listing', $variant) }}"
+                                            data-is-listed="{{ $variant->is_listed_separately ? '1' : '0' }}"
+                                            title="Toggle catalog listing">
+                                        <i data-feather="layers" style="width:14px;height:14px;"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm p-1 btn-map-variant-images"
+                                            data-sync-url="{{ route('admin.products.variants.images.sync', $variant) }}"
+                                            data-image-ids='@json($variant->images->pluck('id')->values())'
+                                            title="Map images">
+                                        <i data-feather="image" style="width:14px;height:14px;"></i>
+                                    </button>
                                     <button type="button" class="btn btn-outline-info btn-sm p-1 btn-adjust-stock"
                                             data-variant-id="{{ $variant->id }}"
                                             data-variant-name="{{ $variant->name }}"
@@ -123,7 +152,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr id="noVariantsRow"><td colspan="9" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>
+                        <tr id="noVariantsRow"><td colspan="11" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -183,6 +212,7 @@
         'id' => $product->id,
         'slug' => $product->slug,
         'storeVariantUrl' => route('admin.products.variants.store', $product),
+        'allImagesJsonUrl' => route('admin.images.all.json'),
     ];
 @endphp
 <script id="product-data" type="application/json">{!! json_encode($productEditConfig, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>

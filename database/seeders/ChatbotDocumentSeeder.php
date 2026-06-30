@@ -182,6 +182,29 @@ class ChatbotDocumentSeeder extends Seeder
                 ]
             );
         }
+
+        $shippingAnswer = "მიწოდება უფასოა საქართველოს მასშტაბით.\n\nმიწოდების სავარაუდო ვადებია:\n- თბილისი: 1 სამუშაო დღე\n- რეგიონული ქალაქები: 1-3 სამუშაო დღე\n- სოფელი ან დაშორებული მისამართი: 2-5 სამუშაო დღე\n\nიმავე დღეს მიწოდება მხოლოდ გამონაკლის შემთხვევებშია შესაძლებელი და მხოლოდ წინასწარი დადასტურების შემდეგ.\n\nკურიერი, შესაძლებლობის ფარგლებში, წინასწარ დაგიკავშირდებათ მისამართის და ჩაბარების დროის დასაზუსტებლად. თუ მისამართის, ლოჯისტიკის ან სამუშაო დღის გამო დამატებითი დაზუსტება გახდა საჭირო, ვადა შეიძლება შეიცვალოს.";
+
+        Faq::updateOrCreate(
+            ['question' => $documents[0]['title']],
+            [
+                'answer' => $shippingAnswer,
+                'category' => $documents[0]['metadata']['category'] ?? 'სხვა',
+                'sort_order' => 0,
+                'is_active' => true,
+            ]
+        );
+
+        ChatbotDocument::updateOrCreate(
+            ['key' => 'faq-shipping'],
+            [
+                'type' => 'faq',
+                'title' => $documents[0]['title'],
+                'content_ka' => $shippingAnswer,
+                'metadata' => ['category' => 'მიწოდება'],
+                'is_active' => true,
+            ]
+        );
     }
 
     private function seedContactSettings(): void

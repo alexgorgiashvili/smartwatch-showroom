@@ -24,10 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
 				768:  { perPage: 2 },
 				640:  {
 					perPage  : 1,
-					fixedWidth: '82vw',
-					gap      : '0.875rem',
-					padding  : { left: '1rem', right: '1rem' },
-					focus    : 0,
+					gap      : '0.75rem',
+					padding  : { left: '0.75rem', right: '0.75rem' },
+					focus    : 'center',
 				},
 			},
 		}).mount();
@@ -35,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const productSplide = document.getElementById('product-splide');
 	if (productSplide && !productSplide.classList.contains('is-initialized')) {
-		new Splide('#product-splide', {
+		const splide = new Splide('#product-splide', {
 			type: 'slide',
 			perPage: 1,
 			autoplay: false,
@@ -44,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			speed: 400,
 			gap: '0.5rem',
 		}).mount();
+
+		productSplide.__splide = splide;
 	}
 
 	const relatedSplide = document.getElementById('related-products-splide');

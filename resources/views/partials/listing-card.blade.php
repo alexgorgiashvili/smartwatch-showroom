@@ -15,7 +15,9 @@
         $product->water_resistant ?: null,
         $product->battery_capacity_mah ? $product->battery_capacity_mah . 'mAh' : null,
     ]), 0, 3);
-    $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0) ?? null;
+    $availableVariants = $product->variants->filter(fn ($variant) => $variant->available_quantity > 0)->values();
+    $hasAvailableVariants = $availableVariants->isNotEmpty();
+    $detailsUrl = route('products.show', $product);
 @endphp
 <div class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
     <a href="{{ route('products.show', $product) }}" class="block">
@@ -48,20 +50,27 @@
         </div>
     </a>
     <div class="px-3 pb-3">
-        @if($firstInStock)
-            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($sale ?? $base ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
-                @csrf
-                <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-600">
-                    <i class="fa-solid fa-cart-shopping text-[10px]"></i>
-                    {{ app()->getLocale() === 'ka' ? 'კალათაში' : 'Add to Cart' }}
+        <div class="grid gap-2 sm:grid-cols-2">
+            @if ($hasAvailableVariants)
+                <button
+                    type="button"
+                    data-product-quick-review-trigger
+                    data-product-quick-review-url="{{ route('products.quick-review', $product) }}"
+                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
+                >
+                    <i class="fa-solid fa-eye text-[10px]"></i>
+                    {{ app()->getLocale() === 'ka' ? 'სწრაფი ნახვა' : 'Quick View' }}
                 </button>
-            </form>
-        @else
-            <a href="{{ route('products.show', $product) }}" class="inline-flex w-full items-center justify-center rounded-full border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                {{ app()->getLocale() === 'ka' ? 'დეტალები' : 'View Details' }}
+            @else
+                <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400">
+                    {{ app()->getLocale() === 'ka' ? 'ამოწურულია' : 'Out of Stock' }}
+                </button>
+            @endif
+
+            <a href="{{ $detailsUrl }}" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                {{ app()->getLocale() === 'ka' ? 'დეტალები' : 'Details' }}
             </a>
-        @endif
+        </div>
     </div>
 </div>

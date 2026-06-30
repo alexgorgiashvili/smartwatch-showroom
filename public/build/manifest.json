@@ -32,12 +32,12 @@
     "isEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-B4ANMe8v.css",
+    "file": "assets/app-Ymbgsuio.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/admin.js": {
-    "file": "assets/admin-aI_Re3zs.js",
+    "file": "assets/admin-Y35qAbuq.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
@@ -47,7 +47,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-ChbeySLN.js",
+    "file": "assets/app-HO8jn7XG.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

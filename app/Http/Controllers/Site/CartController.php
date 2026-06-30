@@ -159,6 +159,106 @@ class CartController extends Controller
         return redirect()->back()->with('cart_status', 'კალათა განახლდა.');
     }
 
+    public function replaceVariant(Request $request, CartSnapshotService $snapshot): RedirectResponse|JsonResponse
+    {
+        $data = $request->validate([
+            'current_variant_id' => ['required', 'integer', 'exists:product_variants,id'],
+            'new_variant_id' => ['required', 'integer', 'exists:product_variants,id', 'different:current_variant_id'],
+        ]);
+
+        $returnJson = $this->shouldReturnJson($request);
+        $cart = $request->session()->get('cart', []);
+
+        if (! array_key_exists((int) $data['current_variant_id'], $cart)) {
+            if ($returnJson) {
+                return response()->json(['success' => false, 'message' => 'პროდუქტი კალათაში ვერ მოიძებნა.'], 404);
+            }
+
+            return redirect()->back()->with('cart_error', 'პროდუქტი კალათაში ვერ მოიძებნა.');
+        }
+
+        $variants = ProductVariant::query()
+            ->with('product')
+            ->whereIn('id', [(int) $data['current_variant_id'], (int) $data['new_variant_id']])
+            ->get()
+            ->keyBy('id');
+
+        $currentVariant = $variants->get((int) $data['current_variant_id']);
+        $newVariant = $variants->get((int) $data['new_variant_id']);
+
+        if (! $currentVariant || ! $newVariant || ! $currentVariant->product || ! $newVariant->product) {
+            if ($returnJson) {
+                return response()->json(['success' => false, 'message' => 'ვერ შევცვალეთ ვარიანტი.'], 422);
+            }
+
+            return redirect()->back()->with('cart_error', 'ვერ შევცვალეთ ვარიანტი.');
+        }
+
+        if ((int) $currentVariant->product_id !== (int) $newVariant->product_id) {
+            if ($returnJson) {
+                return response()->json(['success' => false, 'message' => 'ფერის შეცვლა მხოლოდ ამავე პროდუქტშია შესაძლებელი.'], 422);
+            }
+
+            return redirect()->back()->with('cart_error', 'ფერის შეცვლა მხოლოდ ამავე პროდუქტშია შესაძლებელი.');
+        }
+
+        if (! $newVariant->product->is_active || ! $newVariant->canFulfillQuantity(1)) {
+            if ($returnJson) {
+                return response()->json(['success' => false, 'message' => 'არჩეული ვარიანტი ხელმისაწვდომი აღარ არის.'], 422);
+            }
+
+            return redirect()->back()->with('cart_error', 'არჩეული ვარიანტი ხელმისაწვდომი აღარ არის.');
+        }
+
+        $currentQuantity = max(1, min(10, (int) ($cart[(int) $currentVariant->id]['quantity'] ?? 1)));
+        $existingNewQuantity = max(0, min(10, (int) ($cart[(int) $newVariant->id]['quantity'] ?? 0)));
+        $mergedQuantity = min(10, $currentQuantity + $existingNewQuantity);
+        $finalQuantity = min($mergedQuantity, max(1, $newVariant->available_quantity));
+        $wasClamped = $finalQuantity < $mergedQuantity;
+
+        unset($cart[(int) $currentVariant->id]);
+        $cart[(int) $newVariant->id] = [
+            'variant_id' => (int) $newVariant->id,
+            'quantity' => $finalQuantity,
+        ];
+
+        $request->session()->put('cart', $cart);
+
+        $cartSnapshot = $snapshot->build($request);
+        $summary = $cartSnapshot['summary'];
+        $item = $cartSnapshot['standard_items']->first(fn ($line) => (int) $line['variant']->id === (int) $newVariant->id);
+        if (! $item) {
+            if ($returnJson) {
+                return response()->json(['success' => false, 'message' => 'ფერის შეცვლის შემდეგ კალათა ვერ განახლდა.'], 422);
+            }
+
+            return redirect()->back()->with('cart_error', 'ფერის შეცვლის შემდეგ კალათა ვერ განახლდა.');
+        }
+        $currency = $item['currency'] ?? 'GEL';
+        $currencySymbol = $currency === 'GEL' ? '₾' : $currency;
+
+        $message = $wasClamped
+            ? 'ფერი შეიცვალა, თუმცა რაოდენობა მარაგის მიხედვით ავტომატურად დაკორექტირდა.'
+            : 'ფერი წარმატებით შეიცვალა.';
+
+        if ($returnJson) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'cart_count' => (int) $summary['count'],
+                'cart_total' => (float) $summary['total'],
+                'cart_total_formatted' => number_format((float) $summary['total'], 2) . ' ' . $currencySymbol,
+                'item_subtotal_formatted' => number_format((float) ($item['subtotal'] ?? 0), 2) . ' ' . $currencySymbol,
+                'quantity' => (int) ($item['quantity'] ?? $finalQuantity),
+                'variant_label' => $item['variant_label'] ?? $newVariant->name,
+                'color_name' => $item['color_name'] ?? $newVariant->color_name,
+                'reload' => true,
+            ]);
+        }
+
+        return redirect()->back()->with('cart_status', $message);
+    }
+
     public function remove(Request $request): RedirectResponse
     {
         $data = $request->validate([

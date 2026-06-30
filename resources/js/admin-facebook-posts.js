@@ -6,7 +6,7 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 export function initFacebookPostsForm() {
     const btnGenerate = $('#btn-ai-generate');
-    if (!btnGenerate) return;
+    const hasAiComposer = !!btnGenerate;
 
     const messageInput = $('#message');
     const charCount = $('#message-char-count');
@@ -172,6 +172,17 @@ export function initFacebookPostsForm() {
         const loadMoreContainer = $('#gallery-load-more-container');
         const btnGalleryLoadMore = $('#btn-gallery-load-more');
 
+        let activeProductId = productId?.value || null;
+        if (!activeProductId) {
+            const productDataEl = document.getElementById('product-data');
+            if (productDataEl) {
+                try {
+                    const data = JSON.parse(productDataEl.textContent);
+                    activeProductId = data.productId || data.id || null;
+                } catch (e) {}
+            }
+        }
+
         let selectedImageUrl = null;
         let galleryCurrentPage = 1;
         let galleryHasMore = false;
@@ -185,8 +196,9 @@ export function initFacebookPostsForm() {
                 if (modalEl) modalEl.removeAttribute('inert');
 
                 // Pre-select current product in filter if one is chosen (for FB posts)
-                if (productId && productId.value && filterProduct) {
-                    filterProduct.value = productId.value;
+                const selectedProductId = (productId && productId.value) || activeProductId;
+                if (selectedProductId && filterProduct) {
+                    filterProduct.value = selectedProductId;
                 }
 
                 imageModal.show();
@@ -207,22 +219,21 @@ export function initFacebookPostsForm() {
         if (btnImageManagerProduct) {
             // For products, we don't have a specific input to update, we just use it for upload/crop
             // and trigger a page reload or gallery refresh after upload
-            const productFormId = window.location.pathname.split('/').pop() !== 'edit'
-                ? window.location.pathname.split('/')[3]
-                : null;
-
             // If we are on the edit page, we can extract the ID from the URL or a data attribute
             let currentProdId = productId ? productId.value : null;
             if (!currentProdId && document.getElementById('product-data')) {
                 try {
                     const data = JSON.parse(document.getElementById('product-data').textContent);
-                    currentProdId = data.productId;
+                    currentProdId = data.productId || data.id || null;
                 } catch(e) {}
             }
 
             // Set the product ID so the cropper knows where to upload
-            if (currentProdId && productId) {
-                productId.value = currentProdId;
+            if (currentProdId) {
+                activeProductId = currentProdId;
+                if (productId) {
+                    productId.value = currentProdId;
+                }
             }
 
             btnImageManagerProduct.addEventListener('click', () => {
@@ -551,8 +562,9 @@ export function initFacebookPostsForm() {
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
                 formData.append('image', blob, 'cropped_image.jpg');
-                if (productId && productId.value) {
-                    formData.append('product_id', productId.value);
+                const selectedProductId = (productId && productId.value) || activeProductId;
+                if (selectedProductId) {
+                    formData.append('product_id', selectedProductId);
                 }
 
                 try {
@@ -578,8 +590,9 @@ export function initFacebookPostsForm() {
                         if (triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
 
                         // Select current product in filter to show newly uploaded image
-                        if (productId && productId.value && filterProduct) {
-                            filterProduct.value = productId.value;
+                        const selectedProductId = (productId && productId.value) || activeProductId;
+                        if (selectedProductId && filterProduct) {
+                            filterProduct.value = selectedProductId;
                         }
 
                         galleryCurrentPage = 1;
@@ -604,6 +617,10 @@ export function initFacebookPostsForm() {
         });
     }
     // --- End Image Manager Logic ---
+
+    if (!hasAiComposer) {
+        return;
+    }
 
     // Toggle Tone visibility based on mode
     if (mode && toneContainer) {

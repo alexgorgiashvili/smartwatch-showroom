@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — ყველა მოდელი | MyTechnic' : 'Kids SIM Smartwatches — All Models in Georgia | MyTechnic')
-@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic-ის ბავშვის SIM სმარტ საათების კატალოგი — 4G GPS, ბავშვთა უსაფრთხოება. ნახეთ ყველა მოდელი, ფასები, მახასიათათებლები.' : 'Browse MyTechnic SIM smartwatch catalog — 4G GPS, child safety. All models, prices and specs.')
+@section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic-ის ბავშვის SIM სმარტ საათების კატალოგი — 4G GPS, ბავშვთა უსაფრთხოება. ნახეთ ყველა მოდელი, ფასები, მახასიათებლები.' : 'Browse MyTechnic SIM smartwatch catalog — 4G GPS, child safety. All models, prices and specs.')
 @section('canonical', url('/products'))
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — MyTechnic' : 'Kids SIM Smartwatches — MyTechnic')
 @section('og_url', url('/products'))
@@ -12,12 +12,22 @@
 @endsection
 
 @section('content')
-    {{-- SEO H1 (visible but styled to blend with page intro) --}}
+    @php
+        $generation = $generation ?? request('generation', 'all');
+        $sort = $sort ?? request('sort', 'featured');
+        $sortLabels = [
+            'featured' => __('ui.sort_featured'),
+            'price_low' => __('ui.sort_price_low'),
+            'price_high' => __('ui.sort_price_high'),
+            'discount' => __('ui.sort_discount'),
+        ];
+    @endphp
+
     <div class="bg-white border-b border-gray-100 py-8 sm:py-10 overflow-hidden">
         <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center w-full">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
                 @if(app()->getLocale() === 'ka')
-                    ბავშვის SIM სმარტ საათები — ჩვენთან ყველაზე დიდი არჩევანია
+                    ბავშვის SIM სმარტ საათები — თქვენთვის ყველა ვარიანტი
                 @else
                     Kids SIM Smartwatches — All Models in Georgia
                 @endif
@@ -32,35 +42,34 @@
         </div>
     </div>
 
-    <!-- Trust Signals Bar -->
     <section class="border-b border-gray-100 bg-gradient-to-r from-primary-50 to-white overflow-hidden">
         <div class="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 w-full">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="flex items-center justify-center gap-3 sm:justify-start">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-100">
                         <i class="fa-solid fa-truck-fast text-xl text-primary-600"></i>
                     </div>
-                    <div class="text-center sm:text-left">
+                    <div class="min-w-0 text-left">
                         <p class="text-sm font-semibold text-gray-900">{{ __('ui.trust_shipping') }}</p>
                         <p class="text-xs text-gray-600">{{ __('ui.trust_shipping_text') }}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-center gap-3 sm:justify-start">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100">
                         <i class="fa-solid fa-shield-halved text-xl text-green-600"></i>
                     </div>
-                    <div class="text-center sm:text-left">
+                    <div class="min-w-0 text-left">
                         <p class="text-sm font-semibold text-gray-900">{{ __('ui.trust_warranty') }}</p>
                         <p class="text-xs text-gray-600">{{ __('ui.trust_warranty_text') }}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-center gap-3 sm:justify-start">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100">
                         <i class="fa-solid fa-headset text-xl text-purple-600"></i>
                     </div>
-                    <div class="text-center sm:text-left">
+                    <div class="min-w-0 text-left">
                         <p class="text-sm font-semibold text-gray-900">{{ __('ui.trust_support') }}</p>
                         <p class="text-xs text-gray-600">{{ __('ui.trust_support_text') }}</p>
                     </div>
@@ -69,30 +78,8 @@
         </div>
     </section>
 
-    {{-- Guides strip --}}
-    <section class="border-b border-slate-100 bg-white overflow-hidden">
-        <div class="mx-auto max-w-screen-xl px-4 py-4 sm:px-6 lg:px-8 w-full">
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('landing.sim-guide') }}"
-                   class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700">
-                    <i class="fa-solid fa-sim-card text-[10px] text-primary-500"></i>SIM გზამკვლევი
-                </a>
-                <a href="{{ route('landing.gift-guide') }}"
-                   class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700">
-                    <i class="fa-solid fa-gift text-[10px] text-amber-500"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}
-                </a>
-                <a href="{{ route('blog.index') }}"
-                   class="ml-auto hidden items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-primary-600 sm:inline-flex">
-                    <i class="fa-solid fa-newspaper text-[10px]"></i>{{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }} →
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Products Section -->
     <section class="bg-white overflow-hidden">
         <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 w-full">
-            <!-- Search Bar -->
             <div class="mx-auto mt-8 max-w-2xl w-full">
                 <form action="{{ route('products.index') }}" method="GET" class="flex gap-2">
                     <div class="relative flex-1">
@@ -109,243 +96,370 @@
                     </div>
                     <button
                         type="submit"
-                        class="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                        data-search-submit
+                        class="inline-flex min-w-[118px] items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        {{ __('ui.search') }}
+                        <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/45 border-t-slate-900" data-search-spinner></span>
+                        <span data-search-label>{{ __('ui.search') }}</span>
                     </button>
-                    @if ($search || $category)
+                    @if ($search || $generation !== 'all')
                         <a
                             href="{{ route('products.index') }}"
+                            data-products-reset
                             class="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
                             title="{{ __('ui.filter_reset') }}"
                         >
                             <i class="fa-solid fa-xmark"></i>
                         </a>
                     @endif
-                    <input type="hidden" name="category" value="{{ $category }}">
-                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                    <input type="hidden" name="generation" value="{{ $generation }}">
+                    <input type="hidden" name="sort" value="{{ $sort }}">
                 </form>
             </div>
 
-            <!-- Category Pills/Tabs -->
-            <div class="mt-6 flex flex-wrap justify-center gap-2 w-full">
-                <a
-                    href="{{ route('products.index', ['search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ !$category ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+            <div class="mt-6 flex flex-wrap justify-center gap-2 w-full" data-product-filters>
+                <button
+                    type="button"
+                    data-product-filter="all"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $generation === 'all' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    aria-pressed="{{ $generation === 'all' ? 'true' : 'false' }}"
                 >
-                    <i class="fa-solid fa-border-all"></i>
-                    {{ __('ui.category_all') }}
-                </a>
-                <a
-                    href="{{ route('products.index', ['category' => 'sim', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'sim' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-400/40 border-t-slate-900" data-filter-spinner></span>
+                    <span data-filter-label>{{ app()->getLocale() === 'ka' ? 'ყველა' : 'All' }}</span>
+                </button>
+                <button
+                    type="button"
+                    data-product-filter="2g"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $generation === '2g' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    aria-pressed="{{ $generation === '2g' ? 'true' : 'false' }}"
                 >
-                    <i class="fa-solid fa-sim-card"></i>
-                    {{ __('ui.category_sim') }}
-                </a>
-                <a
-                    href="{{ route('products.index', ['category' => 'gps', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'gps' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-400/40 border-t-slate-900" data-filter-spinner></span>
+                    <span data-filter-label>2G</span>
+                </button>
+                <button
+                    type="button"
+                    data-product-filter="4g"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $generation === '4g' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    aria-pressed="{{ $generation === '4g' ? 'true' : 'false' }}"
                 >
-                    <i class="fa-solid fa-location-dot"></i>
-                    {{ __('ui.category_gps') }}
-                </a>
-                <a
-                    href="{{ route('products.index', ['category' => 'new', 'search' => $search, 'sort' => request('sort')]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition {{ $category === 'new' ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
-                >
-                    <i class="fa-solid fa-sparkles"></i>
-                    {{ __('ui.category_new') }}
-                </a>
+                    <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-400/40 border-t-slate-900" data-filter-spinner></span>
+                    <span data-filter-label>4G</span>
+                </button>
             </div>
 
             <div class="mt-8 sm:mt-12">
-                <div class="mb-8 flex items-center justify-between">
-                    <p class="text-sm text-gray-600">
-                        @if ($products->count() === 1)
-                            {{ __('ui.products_count_singular', ['count' => $products->count()]) }}
-                        @else
-                            {{ __('ui.products_count', ['count' => $products->count()]) }}
-                        @endif
-                    </p>
-
-                    <div class="flex items-center gap-2">
-                        <label for="sort" class="text-sm font-medium text-gray-700">{{ __('ui.sort_by') }}:</label>
-                        <select
-                            id="sort"
-                            name="sort"
-                            onchange="window.location.href='{{ route('products.index', ['search' => $search, 'category' => $category]) }}&sort=' + this.value"
-                            class="rounded-lg border-gray-300 text-sm"
+                <div class="mb-8 flex items-center justify-end" data-sort-filters>
+                    <div class="relative min-w-[220px]" data-sort-dropdown>
+                        <button
+                            type="button"
+                            data-sort-trigger
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            class="inline-flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-700 shadow-sm transition hover:border-slate-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                            <option value="featured" {{ request('sort') === 'featured' || !request('sort') ? 'selected' : '' }}>{{ __('ui.sort_featured') }}</option>
-                            <option value="price_low" {{ request('sort') === 'price_low' ? 'selected' : '' }}>{{ __('ui.sort_price_low') }}</option>
-                            <option value="price_high" {{ request('sort') === 'price_high' ? 'selected' : '' }}>{{ __('ui.sort_price_high') }}</option>
-                            <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>{{ __('ui.sort_newest') }}</option>
-                        </select>
+                            <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-400/40 border-t-slate-900" data-sort-spinner></span>
+                            <span class="flex min-w-0 items-center gap-2" data-sort-text>
+                                <span class="shrink-0 text-sm font-semibold text-slate-500">{{ __('ui.sort_by') }}:</span>
+                                <span class="truncate font-medium text-slate-900" data-sort-current>{{ $sortLabels[$sort] ?? __('ui.sort_featured') }}</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition" data-sort-chevron></i>
+                        </button>
+
+                        <div
+                            class="absolute right-0 z-20 mt-2 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_42px_rgba(15,23,42,0.12)]"
+                            data-sort-menu
+                        >
+                            @foreach ($sortLabels as $sortValue => $sortLabel)
+                                <button
+                                    type="button"
+                                    data-sort-option="{{ $sortValue }}"
+                                    data-sort-label="{{ $sortLabel }}"
+                                    class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition {{ $sort === $sortValue ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                                    aria-pressed="{{ $sort === $sortValue ? 'true' : 'false' }}"
+                                >
+                                    <span>{{ $sortLabel }}</span>
+                                    <i class="fa-solid fa-check text-xs {{ $sort === $sortValue ? 'opacity-100' : 'opacity-0' }}" data-sort-check></i>
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 
-                @if ($products->isEmpty())
-                    <div class="mt-8 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ __('ui.no_products') }}</h3>
-                        <p class="mt-1 text-sm text-gray-500">{{ __('ui.no_products_text') }}</p>
-                        <div class="mt-6">
-                            <a href="{{ route('products.index') }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
-                                <i class="fa-solid fa-arrow-rotate-left mr-2"></i>
-                                {{ __('ui.filter_reset') }}
-                            </a>
-                        </div>
-                    </div>
-                @else
-                    <ul class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4 w-full">
-                        @foreach ($products as $product)
-                            @php
-                                $image = $product->primaryImage ?? $product->images->first();
-                                $secondaryImage = $product->images->skip(1)->first();
-                                $imageUrl = $image?->thumbnail_url ?: asset('storage/images/home/smart-watch3.jpg');
-                                $secondaryImageUrl = $secondaryImage?->thumbnail_url;
-                                $currency = $product->currency === 'GEL' ? '₾' : $product->currency;
-                                $basePrice = $product->price;
-                                $salePrice = $product->sale_price ?? null;
-                                $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
-                                $discountPercent = $hasDiscount ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : null;
-                                $isNewArrival = $product->created_at && $product->created_at->greaterThan(now()->subDays(30));
-
-                                $featureBadges = [];
-                                if ($product->sim_support) {
-                                    $featureBadges[] = 'SIM Support';
-                                }
-                                if ($product->gps_features) {
-                                    $featureBadges[] = 'GPS';
-                                }
-                                if ($product->water_resistant) {
-                                    $featureBadges[] = $product->water_resistant;
-                                }
-                                if ($product->battery_capacity_mah) {
-                                    $featureBadges[] = $product->battery_capacity_mah . 'mAh';
-                                }
-                                if ($product->display_type) {
-                                    $featureBadges[] = $product->display_type;
-                                }
-                                $featureBadges = array_slice($featureBadges, 0, 2);
-                            @endphp
-                            <li>
-                                <div class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_28px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
-                                    <a href="{{ route('products.show', $product) }}" class="block">
-                                    <div class="relative isolate overflow-hidden">
-                                        <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-2 sm:p-3">
-                                            <div class="flex flex-wrap gap-1.5">
-                                                @if ($product->featured)
-                                                    <span class="inline-flex items-center rounded-full border border-white/30 bg-slate-900/80 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-white">
-                                                        Featured
-                                                    </span>
-                                                @elseif ($isNewArrival)
-                                                    <span class="inline-flex items-center rounded-full border border-white/30 bg-white/85 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-900">
-                                                        New Arrival
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <div>
-                                                @if ($hasDiscount)
-                                                    <span class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50/95 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700">
-                                                        -{{ $discountPercent }}%
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <img
-                                            src="{{ $imageUrl }}"
-                                            alt="{{ $image?->alt ?: $product->name }}"
-                                            loading="lazy"
-                                            decoding="async"
-                                            class="h-44 w-full object-contain transition duration-500 group-hover:scale-[1.06] {{ $secondaryImageUrl ? 'group-hover:opacity-0' : '' }}"
-                                        />
-
-                                        @if ($secondaryImageUrl)
-                                            <img
-                                                src="{{ $secondaryImageUrl }}"
-                                                alt="{{ $secondaryImage?->alt ?: $product->name }}"
-                                                loading="lazy"
-                                                decoding="async"
-                                                class="absolute inset-0 h-44 w-full object-contain opacity-0 transition duration-500 group-hover:opacity-100"
-                                            />
-                                        @endif
-
-                                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/10 to-transparent"></div>
-                                    </div>
-
-                                    <div class="space-y-3 p-3 sm:p-4">
-                                        <h3 class="line-clamp-2 text-sm font-semibold tracking-tight text-slate-900 sm:text-base [font-family:'Space_Grotesk',system-ui,sans-serif] group-hover:text-slate-700">
-                                            {{ $product->name }}
-                                        </h3>
-
-                                        @if ($product->short_description)
-                                            <p class="line-clamp-2 text-xs text-slate-500 sm:text-sm">{{ $product->short_description }}</p>
-                                        @endif
-
-                                        @if (!empty($featureBadges))
-                                            <div class="flex flex-wrap gap-1.5">
-                                                @foreach ($featureBadges as $badge)
-                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-600 sm:text-[11px]">
-                                                        {{ $badge }}
-                                                    </span>
-                                                @endforeach
-                                            </div>
-                                        @endif
-
-                                        <div class="border-t border-slate-100 pt-3">
-                                            @if ($hasDiscount)
-                                                <div class="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
-                                                    <p class="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl [font-family:'Space_Grotesk',system-ui,sans-serif]">
-                                                        {{ number_format($salePrice, 2) }} {{ $currency }}
-                                                    </p>
-                                                    <p class="text-xs price-compare-old sm:text-sm">
-                                                        {{ number_format($basePrice, 2) }} {{ $currency }}
-                                                    </p>
-                                                </div>
-                                            @else
-                                                <p class="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl [font-family:'Space_Grotesk',system-ui,sans-serif]">
-                                                    @if ($basePrice)
-                                                        {{ number_format($basePrice, 2) }} {{ $currency }}
-                                                    @else
-                                                        {{ __('ui.price_on_request') }}
-                                                    @endif
-                                                </p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    </a>
-                                    @php $firstInStock = $product->variants->first(fn ($variant) => $variant->available_quantity > 0); @endphp
-                                    <div class="px-3 pb-3 sm:px-4 sm:pb-4">
-                                        @if($firstInStock)
-                                            <form method="POST" action="{{ route('cart.add') }}" data-cart-form data-analytics-item-id="{{ $product->id }}" data-analytics-item-name="{{ $product->name }}" data-analytics-price="{{ (float) ($salePrice ?? $basePrice ?? 0) }}" data-analytics-currency="{{ $product->currency ?: 'GEL' }}">
-                                                @csrf
-                                                <input type="hidden" name="variant_id" value="{{ $firstInStock->id }}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-primary-600">
-                                                    <i class="fa-solid fa-cart-shopping text-[10px]"></i>
-                                                    {{ app()->getLocale() === 'ka' ? 'კალათაში' : 'Add to Cart' }}
-                                                </button>
-                                            </form>
-                                        @else
-                                            <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400">
-                                                {{ app()->getLocale() === 'ka' ? 'მარაგი ამოიწურა' : 'Out of Stock' }}
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+                <div id="products-grid" data-products-grid aria-live="polite">
+                    @include('products._grid', ['products' => $products])
+                </div>
             </div>
         </div>
     </section>
+
+    @push('scripts')
+    <script>
+    (function () {
+        const grid = document.querySelector('[data-products-grid]');
+        const filterButtons = Array.from(document.querySelectorAll('[data-product-filter]'));
+        const sortButtons = Array.from(document.querySelectorAll('[data-sort-option]'));
+        const searchInput = document.querySelector('input[name="search"]');
+        const searchForm = document.querySelector('form[action="{{ route('products.index') }}"]');
+        const resetButton = document.querySelector('[data-products-reset]');
+        const searchSubmitButton = document.querySelector('[data-search-submit]');
+        const searchSpinner = document.querySelector('[data-search-spinner]');
+        const searchLabel = document.querySelector('[data-search-label]');
+        const sortDropdown = document.querySelector('[data-sort-dropdown]');
+        const sortTrigger = document.querySelector('[data-sort-trigger]');
+        const sortMenu = document.querySelector('[data-sort-menu]');
+        const sortCurrent = document.querySelector('[data-sort-current]');
+        const sortSpinner = document.querySelector('[data-sort-spinner]');
+        const sortText = document.querySelector('[data-sort-text]');
+        const sortChevron = document.querySelector('[data-sort-chevron]');
+        const generationField = searchForm?.querySelector('input[name="generation"]');
+        const sortField = searchForm?.querySelector('input[name="sort"]');
+        let activeLoadingControl = null;
+
+        if (!grid || filterButtons.length === 0) {
+            return;
+        }
+
+        const initialGeneration = new URLSearchParams(window.location.search).get('generation') || '{{ $generation }}';
+        const initialSort = new URLSearchParams(window.location.search).get('sort') || '{{ $sort }}';
+
+        function setActiveFilter(generation) {
+            filterButtons.forEach((button) => {
+                const active = button.dataset.productFilter === generation;
+                button.classList.toggle('bg-primary-600', active);
+                button.classList.toggle('text-white', active);
+                button.classList.toggle('shadow-md', active);
+                button.classList.toggle('bg-gray-100', !active);
+                button.classList.toggle('text-gray-700', !active);
+                button.classList.toggle('hover:bg-gray-200', !active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+
+        function setActiveSort(sort) {
+            sortButtons.forEach((button) => {
+                const active = button.dataset.sortOption === sort;
+                button.classList.toggle('bg-slate-100', active);
+                button.classList.toggle('text-slate-900', active);
+                button.classList.toggle('bg-transparent', !active);
+                button.classList.toggle('text-slate-600', !active);
+                button.classList.toggle('hover:bg-slate-50', !active);
+                button.classList.toggle('hover:text-slate-900', !active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+
+                const checkIcon = button.querySelector('[data-sort-check]');
+                if (checkIcon) {
+                    checkIcon.classList.toggle('opacity-100', active);
+                    checkIcon.classList.toggle('opacity-0', !active);
+                }
+
+                if (active && sortCurrent) {
+                    sortCurrent.textContent = button.dataset.sortLabel || button.textContent.trim();
+                }
+            });
+        }
+
+        function setSortMenuState(isOpen) {
+            if (!sortTrigger || !sortMenu) {
+                return;
+            }
+
+            sortMenu.classList.toggle('hidden', !isOpen);
+            sortTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            sortChevron?.classList.toggle('rotate-180', isOpen);
+        }
+
+        function setLoadingState(isLoading, triggerType = null, triggerElement = null) {
+            grid.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+            activeLoadingControl = isLoading ? { type: triggerType, element: triggerElement } : null;
+
+            if (searchInput) {
+                searchInput.disabled = isLoading;
+            }
+
+            if (searchSubmitButton) {
+                searchSubmitButton.disabled = isLoading;
+            }
+
+            if (sortTrigger) {
+                sortTrigger.disabled = isLoading;
+            }
+
+            if (resetButton) {
+                resetButton.classList.toggle('pointer-events-none', isLoading);
+                resetButton.classList.toggle('opacity-60', isLoading);
+            }
+
+            filterButtons.forEach((button) => {
+                button.disabled = isLoading;
+                button.classList.toggle('pointer-events-none', isLoading);
+                button.classList.toggle('opacity-70', isLoading);
+
+                const spinner = button.querySelector('[data-filter-spinner]');
+                const label = button.querySelector('[data-filter-label]');
+                if (spinner) {
+                    const shouldShow = isLoading && triggerType === 'filter' && triggerElement === button;
+                    spinner.classList.toggle('hidden', !shouldShow);
+                    if (label) {
+                        label.classList.toggle('hidden', shouldShow);
+                    }
+                }
+            });
+
+            sortButtons.forEach((button) => {
+                button.disabled = isLoading;
+                button.classList.toggle('pointer-events-none', isLoading);
+                button.classList.toggle('opacity-70', isLoading);
+            });
+
+            if (searchSpinner) {
+                searchSpinner.classList.toggle('hidden', !(isLoading && triggerType === 'search'));
+            }
+
+            if (searchLabel) {
+                searchLabel.classList.toggle('hidden', isLoading && triggerType === 'search');
+            }
+
+            if (sortSpinner) {
+                sortSpinner.classList.toggle('hidden', !(isLoading && triggerType === 'sort'));
+            }
+
+            if (sortText) {
+                sortText.classList.toggle('hidden', isLoading && triggerType === 'sort');
+            }
+        }
+
+        function buildUrl(generation, sort) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('generation', generation);
+            params.set('ajax', '1');
+            params.set('search', searchInput?.value || '');
+            params.set('sort', sort || sortField?.value || '{{ $sort }}');
+            return `${window.location.pathname}?${params.toString()}`;
+        }
+
+        async function loadProducts(generation, sort, pushState = true, triggerType = null, triggerElement = null) {
+            const url = buildUrl(generation, sort);
+            setLoadingState(true, triggerType, triggerElement);
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                const payload = await response.json();
+                grid.innerHTML = payload.html || '';
+                setActiveFilter(generation);
+                setActiveSort(sort);
+                if (generationField) {
+                    generationField.value = generation;
+                }
+                if (sortField) {
+                    sortField.value = sort;
+                }
+
+                if (pushState) {
+                    const params = new URLSearchParams(url.split('?')[1] || '');
+                    params.delete('ajax');
+                    window.history.pushState({ generation }, '', `${window.location.pathname}?${params.toString()}`);
+                }
+            } catch (error) {
+                window.location.href = url.replace('&ajax=1', '');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const generation = button.dataset.productFilter || 'all';
+                if (generation === (new URLSearchParams(window.location.search).get('generation') || initialGeneration)) {
+                    return;
+                }
+                const currentSort = new URLSearchParams(window.location.search).get('sort') || sortField?.value || initialSort;
+                loadProducts(generation, currentSort, true, 'filter', button);
+            });
+        });
+
+        sortTrigger?.addEventListener('click', () => {
+            if (sortTrigger.disabled) {
+                return;
+            }
+
+            const isExpanded = sortTrigger.getAttribute('aria-expanded') === 'true';
+            setSortMenuState(!isExpanded);
+        });
+
+        sortButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const sort = button.dataset.sortOption || 'featured';
+                const currentSort = new URLSearchParams(window.location.search).get('sort') || initialSort;
+                if (sort === currentSort) {
+                    setSortMenuState(false);
+                    return;
+                }
+                const currentGeneration = new URLSearchParams(window.location.search).get('generation') || generationField?.value || initialGeneration;
+                setSortMenuState(false);
+                loadProducts(currentGeneration, sort, true, 'sort', sortTrigger);
+            });
+        });
+
+        searchForm?.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const currentGeneration = new URLSearchParams(window.location.search).get('generation') || initialGeneration;
+            const currentSort = new URLSearchParams(window.location.search).get('sort') || initialSort;
+            loadProducts(currentGeneration, currentSort, true, 'search', searchSubmitButton);
+        });
+
+        resetButton?.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            loadProducts('all', sortField?.value || initialSort, true, 'reset', resetButton);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!sortDropdown?.contains(event.target)) {
+                setSortMenuState(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                setSortMenuState(false);
+            }
+        });
+
+        window.addEventListener('popstate', () => {
+            const generation = new URLSearchParams(window.location.search).get('generation') || 'all';
+            const sort = new URLSearchParams(window.location.search).get('sort') || 'featured';
+            setSortMenuState(false);
+            loadProducts(generation, sort, false);
+        });
+
+        setActiveFilter(initialGeneration);
+        setActiveSort(initialSort);
+        setSortMenuState(false);
+        if (generationField) {
+            generationField.value = initialGeneration;
+        }
+        if (sortField) {
+            sortField.value = initialSort;
+        }
+    })();
+    </script>
+    @endpush
 @endsection
 
 @section('footer')

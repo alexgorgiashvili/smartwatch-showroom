@@ -73,6 +73,10 @@ class SecurityHeaders
      */
     protected function getContentSecurityPolicy(): string
     {
+        $metaTrackingSources = config('storefront_analytics.meta_pixel_id')
+            ? ' https://www.facebook.com https://facebook.com'
+            : '';
+
         $localHttpSources = config('app.env') === 'local'
             ? " http://127.0.0.1:* http://localhost:*"
             : '';
@@ -116,7 +120,7 @@ class SecurityHeaders
             "base-uri 'self'",
 
             // Form action restriction (where forms can submit)
-            "form-action 'self'",
+            "form-action 'self'{$metaTrackingSources}",
 
             // Frame ancestors (who can frame this page)
             config('app.env') === 'local' ? "frame-ancestors *" : "frame-ancestors 'none'",

@@ -11,6 +11,13 @@ class GiftBuilderFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('gift_builder.enabled', true);
+    }
+
     public function test_builder_page_loads_with_config_and_pdp_preselect(): void
     {
         $main = $this->giftVariant('Kids GPS Watch', 'main', 149);

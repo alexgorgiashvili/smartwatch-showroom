@@ -3,12 +3,17 @@
 namespace App\Services\Cart;
 
 use App\Models\ProductVariant;
+use App\Services\Product\VariantImageResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
 class CartSnapshotService
 {
+    public function __construct(private readonly VariantImageResolver $variantImageResolver)
+    {
+    }
+
     public function build(Request $request, array $options = []): array
     {
         $normalizeSession = (bool) ($options['normalize_session'] ?? true);
@@ -26,7 +31,7 @@ class CartSnapshotService
             ->values();
 
         $variantQuery = ProductVariant::query()
-            ->with(['product.primaryImage'])
+            ->with(['product.primaryImage', 'product.variants'])
             ->whereIn('id', $variantIds);
 
         if ($lockForUpdate) {
@@ -240,6 +245,7 @@ class CartSnapshotService
     {
         $product = $variant->product;
         $unitPrice = (float) ($product->sale_price ?? $product->price ?? 0);
+        $image = $this->variantImageResolver->imageForVariant($product, $variant);
 
         if ($unitPrice <= 0) {
             return null;
@@ -248,17 +254,34 @@ class CartSnapshotService
         return [
             'variant' => $variant,
             'product' => $product,
+            'variant_label' => $this->variantLabel($variant),
+            'color_name' => $variant->color_name,
+            'color_hex' => $variant->color_hex,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'subtotal' => $unitPrice * $quantity,
             'currency' => $product->currency,
-            'image' => $product->primaryImage?->url ?? asset('storage/images/home/smart-watch3.jpg'),
+            'image' => $image['thumbnail_url'] ?? $image['url'] ?? $product->primaryImage?->url ?? asset('storage/images/home/smart-watch3.jpg'),
             'fulfillment_mode' => $product->fulfillment_mode,
             'fulfillment_label' => $product->fulfillmentLabel(),
             'gift_group_id' => $giftGroupId,
             'gift_role' => $giftRole,
             'gift_sort_order' => $giftSortOrder,
         ];
+    }
+
+    private function variantLabel(ProductVariant $variant): string
+    {
+        $name = trim((string) $variant->name);
+        $colorName = trim((string) $variant->color_name);
+
+        if ($name !== '' && $colorName !== '') {
+            return str_contains(mb_strtolower($name), mb_strtolower($colorName))
+                ? $name
+                : "{$name} • {$colorName}";
+        }
+
+        return $colorName !== '' ? $colorName : ($name !== '' ? $name : 'Variant');
     }
 
     private function giftRoleAllowed($product, string $role): bool

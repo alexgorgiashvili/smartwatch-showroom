@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'enabled' => env('GIFT_BUILDER_ENABLED', false),
     'max_items' => 4,
     'message_max_length' => 300,
 

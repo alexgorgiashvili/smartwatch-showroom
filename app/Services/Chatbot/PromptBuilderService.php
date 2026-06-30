@@ -106,6 +106,23 @@ class PromptBuilderService
             $sections[] = $effectiveRagContextText;
         }
 
+        $warrantyTopic = preg_match('/(გარანტ|warranty|guarantee)/iu', $normalizedMessage) === 1;
+        if (!$warrantyTopic) {
+            foreach ($intentResult->searchKeywords() as $keyword) {
+                if (is_string($keyword) && preg_match('/(გარანტ|warranty|guarantee)/iu', $keyword) === 1) {
+                    $warrantyTopic = true;
+                    break;
+                }
+            }
+        }
+
+        if ($warrantyTopic) {
+            $sections[] = 'გარანტიის პოლიტიკა:';
+            $sections[] = '- 2G მოდელებზე მოქმედებს 3 თვიანი გარანტია.';
+            $sections[] = '- 4G მოდელებზე მოქმედებს 6 თვიანი გარანტია.';
+            $sections[] = '- 12 თვე არ გამოიყენო, თუ კონტექსტში ეს ზუსტად არ წერია.';
+        }
+
         if ($intentResult->hasCatalogFacet()) {
             $sections[] = 'კატალოგის ჯგუფის მითითება:';
             $sections[] = '- ქვემოთ მოცემული პროდუქტი გამოიყენე როგორც ამ შეკითხვის სრული შესაბამისი სია.';
@@ -275,12 +292,18 @@ class PromptBuilderService
             })
             ->implode("\n");
 
-        return implode("\n", [
+        $instructions = [
             'Re-answer the same user request in Georgian.',
             'Your previous reply violated response integrity checks. Fix the answer and keep it concise.',
             'Do not invent prices, stock claims, or URLs that are not supported by the provided context.',
             'Validation issues to fix:',
             $violationLines !== '' ? $violationLines : '- unknown',
-        ]);
+        ];
+
+        if (collect($violations)->contains(fn (array $violation): bool => ($violation['type'] ?? null) === 'offer_tone_mismatch')) {
+            $instructions[] = 'როცა ვარიანტებს სთავაზობ, გამოიყენე „შემოგთავაზოთ" და არა „გთავაზოთ".';
+        }
+
+        return implode("\n", $instructions);
     }
 }

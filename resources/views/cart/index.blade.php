@@ -59,9 +59,11 @@
                                                 <p class="mt-0.5 text-xs text-gray-600">{{ $group['items_count'] }} პროდუქტი • {{ $group['packaging_label'] }}</p>
                                             </div>
                                             <div class="flex items-center gap-2">
+                                                @if (config('gift_builder.enabled', false))
                                                 <a href="{{ route('gift-builder.show') }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:border-primary-300 hover:bg-primary-50">
                                                     <i class="fa-solid fa-pen text-[10px]"></i> შეცვლა
                                                 </a>
+                                                @endif
                                                 <form method="POST" action="{{ route('cart.gift-groups.remove', $group['id']) }}">
                                                     @csrf
                                                     @method('DELETE')
@@ -85,7 +87,12 @@
                                                             </a>
                                                             <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</span>
                                                         </div>
-                                                        <p class="mt-0.5 text-xs text-gray-500">{{ $item['variant']->name }}</p>
+                                                        <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+                                                            @if (!empty($item['color_hex']))
+                                                                <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
+                                                            @endif
+                                                            <span>{{ $item['variant_label'] }}</span>
+                                                        </div>
                                                     </div>
                                                     <p class="shrink-0 text-sm font-bold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
                                                 </div>
@@ -144,7 +151,43 @@
                                         <a href="{{ route('products.show', $item['product']) }}" class="block truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
                                             {{ $item['product']->name }}
                                         </a>
-                                        <p class="mt-0.5 text-xs text-gray-500">{{ $item['variant']->name }}</p>
+                                        <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+                                            @if (!empty($item['color_hex']))
+                                                <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
+                                            @endif
+                                            <span>{{ $item['variant_label'] }}</span>
+                                        </div>
+                                        @php
+                                            $switchableVariants = $item['product']->variants
+                                                ->filter(fn ($variant) => $variant->available_quantity > 0)
+                                                ->values();
+                                        @endphp
+                                        @if ($switchableVariants->count() > 1)
+                                            <form method="POST" action="{{ route('cart.replace-variant') }}" class="mt-2" data-cart-variant-form>
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="current_variant_id" value="{{ $item['variant']->id }}">
+                                                <label class="mb-1 block text-[11px] font-medium text-gray-500">
+                                                    {{ app()->getLocale() === 'ka' ? 'ფერის შეცვლა' : 'Change color' }}
+                                                </label>
+                                                <select
+                                                    name="new_variant_id"
+                                                    data-cart-variant-select
+                                                    class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                                                >
+                                                    @foreach ($switchableVariants as $variantOption)
+                                                        @php
+                                                            $variantOptionLabel = filled($variantOption->name) && filled($variantOption->color_name) && !str_contains(mb_strtolower($variantOption->name), mb_strtolower($variantOption->color_name))
+                                                                ? $variantOption->name . ' • ' . $variantOption->color_name
+                                                                : ($variantOption->color_name ?: $variantOption->name ?: 'Variant');
+                                                        @endphp
+                                                        <option value="{{ $variantOption->id }}" {{ $variantOption->id === $item['variant']->id ? 'selected' : '' }}>
+                                                            {{ $variantOptionLabel }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </form>
+                                        @endif
                                         <p class="mt-1 text-[11px] font-semibold text-primary-600">{{ $item['fulfillment_label'] }}</p>
                                         <p class="mt-1 text-xs font-medium text-gray-600">{{ number_format($item['unit_price'], 2) }} {{ $sym }} / ცალი</p>
                                     </div>
@@ -253,6 +296,13 @@
     [data-cart-qty-input] {
         -moz-appearance: textfield;
         appearance: textfield;
+    }
+
+    [data-cart-variant-select],
+    [data-cart-variant-select] option,
+    [data-cart-variant-select] optgroup {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
     }
 </style>
 <script>
@@ -420,6 +470,48 @@
                     submitUpdate(form);
                 });
             }
+        });
+
+        document.querySelectorAll('[data-cart-variant-form]').forEach(function (form) {
+            var select = form.querySelector('select[name="new_variant_id"]');
+            if (!select) {
+                return;
+            }
+
+            select.addEventListener('change', function () {
+                var currentVariantInput = form.querySelector('input[name="current_variant_id"]');
+                if (!currentVariantInput || !select.value || select.value === currentVariantInput.value) {
+                    return;
+                }
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(form)
+                })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data };
+                    });
+                })
+                .then(function (result) {
+                    if (!result.ok || !result.data.success) {
+                        showMessage(result.data.message || 'ფერის შეცვლა ვერ მოხერხდა.', true);
+                        select.value = currentVariantInput.value;
+                        return;
+                    }
+
+                    showMessage(result.data.message || 'ფერი შეიცვალა.', false);
+                    window.location.reload();
+                })
+                .catch(function () {
+                    showMessage('ქსელური შეცდომა. სცადეთ თავიდან.', true);
+                    select.value = currentVariantInput.value;
+                });
+            });
         });
     }());
 </script>

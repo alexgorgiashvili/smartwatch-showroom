@@ -26,6 +26,14 @@ class ConditionalReflectionService
             return false;
         }
 
+        if ($this->containsWarrantySignal($response)) {
+            return true;
+        }
+
+        if ($this->containsOfferToneSignal($response)) {
+            return true;
+        }
+
         $confidenceThreshold = config('chatbot.reflection.confidence_threshold', 0.7);
 
         if ($retrievalScore < $confidenceThreshold) {
@@ -180,5 +188,19 @@ class ConditionalReflectionService
             'confidence_threshold' => config('chatbot.reflection.confidence_threshold', 0.7),
             'critique_model' => config('chatbot.reflection.critique_model', 'gpt-4o-mini'),
         ];
+    }
+
+    private function containsWarrantySignal(string $response): bool
+    {
+        return preg_match('/(გარანტი\p{L}*|warranty|guarantee)/iu', $response) === 1
+            || (
+                preg_match('/\b\d{1,3}\s*(?:-?\s*)?(?:თვე(?:ა|იანი|ები|ის|ზე|ში|ს)?|months?|month)\b/iu', $response) === 1
+                && preg_match('/\b(2G|4G)\b/iu', $response) === 1
+            );
+    }
+
+    private function containsOfferToneSignal(string $response): bool
+    {
+        return preg_match('/(?:^|[^\p{L}])გთავაზოთ(?:$|[^\p{L}])/u', $response) === 1;
     }
 }

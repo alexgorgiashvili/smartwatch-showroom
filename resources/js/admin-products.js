@@ -98,7 +98,7 @@ const AdminProducts = {
             pageLength: 25,
             order: [],
             columnDefs: [
-                { orderable: false, targets: [0, 6] },
+                { orderable: false, targets: [0, 7] },
             ],
             language: {
                 search: '',
@@ -273,6 +273,39 @@ const AdminProducts = {
             if (!btn) return;
             this._showStockAdjustModal(btn.dataset.variantId, btn.dataset.variantName);
         });
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-toggle-listed-variant');
+            if (!btn) return;
+
+            const currentlyListed = btn.dataset.isListed === '1';
+
+            try {
+                const response = await axios.patch(btn.dataset.url, {
+                    is_listed_separately: !currentlyListed,
+                }, { headers: { Accept: 'application/json' } });
+
+                if (typeof window.AdminHelpers !== 'undefined') {
+                    window.AdminHelpers.showToast(response.data?.message || 'Updated', 'success');
+                }
+
+                if (response.data?.variant) {
+                    this._upsertVariantRow(response.data.variant);
+                }
+            } catch (error) {
+                if (typeof window.AdminHelpers !== 'undefined') {
+                    window.AdminHelpers.showToast(error.response?.data?.message || 'Failed to update listing visibility', 'error');
+                }
+            }
+        });
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-map-variant-images');
+            if (!btn) return;
+
+            const selectedIds = this._safeJsonParse(btn.dataset.imageIds, []);
+            await this._openVariantImagePicker(btn.dataset.syncUrl, selectedIds);
+        });
     },
 
     _showVariantModal(variant, url, method = 'POST') {
@@ -307,6 +340,10 @@ const AdminProducts = {
                             <input type="number" id="swal-threshold" class="form-control form-control-sm" min="0" value="${variant?.low_stock_threshold ?? 5}" required>
                         </div>
                     </div>
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" id="swal-listed-separately" ${variant?.is_listed_separately ? 'checked' : ''}>
+                        <label class="form-check-label small" for="swal-listed-separately">Show as separate card in catalog</label>
+                    </div>
                 </div>
             `,
             showCancelButton: true,
@@ -318,6 +355,7 @@ const AdminProducts = {
                     color_hex: document.getElementById('swal-color-name').value ? document.getElementById('swal-color-hex').value : null,
                     quantity: parseInt(document.getElementById('swal-qty').value, 10),
                     low_stock_threshold: parseInt(document.getElementById('swal-threshold').value, 10),
+                    is_listed_separately: document.getElementById('swal-listed-separately').checked,
                 };
 
                 if (!data.name) {
@@ -494,7 +532,7 @@ const AdminProducts = {
         const emptyRow = document.getElementById('noVariantsRow');
 
         if (rows.length === 0 && !emptyRow) {
-            tbody.insertAdjacentHTML('beforeend', '<tr id="noVariantsRow"><td colspan="9" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>');
+            tbody.insertAdjacentHTML('beforeend', '<tr id="noVariantsRow"><td colspan="11" class="text-center text-muted py-3">No variants yet. Add one above.</td></tr>');
         }
 
         if (rows.length > 0) {
@@ -511,6 +549,9 @@ const AdminProducts = {
         const hasColor = !!(variant.color_name || variant.color_hex);
         const colorHex = variant.color_hex || '#000000';
         const colorName = variant.color_name || 'Unnamed';
+        const isListed = !!variant.is_listed_separately;
+        const mappedImagesCount = Number(variant.mapped_images_count ?? (Array.isArray(variant.mapped_image_ids) ? variant.mapped_image_ids.length : 0));
+        const mappedImageIds = Array.isArray(variant.mapped_image_ids) ? variant.mapped_image_ids : [];
         const bridgeVariationId = variant.bridge_variation_id
             ? `<div class="text-muted">Var #${this._escapeHtml(String(variant.bridge_variation_id))}</div>`
             : '';
@@ -533,6 +574,14 @@ const AdminProducts = {
                            </span>`
                         : '<span class="text-muted">—</span>'}
                 </td>
+                <td>
+                    ${isListed
+                        ? '<span class="badge bg-primary">Listed</span>'
+                        : '<span class="badge bg-light text-muted border">Hidden</span>'}
+                </td>
+                <td>
+                    <span class="badge ${mappedImagesCount > 0 ? 'bg-info text-dark' : 'bg-light text-muted border'}">${this._escapeHtml(String(mappedImagesCount))} mapped</span>
+                </td>
                 <td>${this._escapeHtml(String(availableQuantity))}</td>
                 <td>${this._escapeHtml(String(quantity))}</td>
                 <td>${this._escapeHtml(String(bridgeQuantity))}</td>
@@ -551,6 +600,18 @@ const AdminProducts = {
                                 title="Edit">
                             <i data-feather="edit-2" style="width:14px;height:14px;"></i>
                         </button>
+                        <button type="button" class="btn ${isListed ? 'btn-primary' : 'btn-outline-primary'} btn-sm p-1 btn-toggle-listed-variant"
+                                data-url="${this._escapeHtml(variant.toggle_listing_url || `/admin/products/variants/${variant.id}/toggle-listing`)}"
+                                data-is-listed="${isListed ? '1' : '0'}"
+                                title="Toggle catalog listing">
+                            <i data-feather="layers" style="width:14px;height:14px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm p-1 btn-map-variant-images"
+                                data-sync-url="${this._escapeHtml(variant.sync_images_url || `/admin/products/variants/${variant.id}/images`)}"
+                                data-image-ids='${this._escapeAttributeJson(mappedImageIds)}'
+                                title="Map images">
+                            <i data-feather="image" style="width:14px;height:14px;"></i>
+                        </button>
                         <button type="button" class="btn btn-outline-info btn-sm p-1 btn-adjust-stock"
                                 data-variant-id="${variant.id}"
                                 data-variant-name="${this._escapeHtml(variant.name || '')}"
@@ -558,7 +619,7 @@ const AdminProducts = {
                             <i data-feather="package" style="width:14px;height:14px;"></i>
                         </button>
                         <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-delete-variant"
-                                data-url="/admin/products/variants/${variant.id}"
+                                data-url="${this._escapeHtml(variant.delete_url || `/admin/products/variants/${variant.id}`)}"
                                 data-name="${this._escapeHtml(variant.name || '')}"
                                 title="Delete">
                             <i data-feather="trash-2" style="width:14px;height:14px;"></i>
@@ -567,6 +628,101 @@ const AdminProducts = {
                 </td>
             </tr>
         `;
+    },
+
+    async _openVariantImagePicker(syncUrl, selectedIds = []) {
+        const allImagesUrl = this._currentProductData?.allImagesJsonUrl;
+        if (!allImagesUrl || !syncUrl || typeof Swal === 'undefined') {
+            return;
+        }
+
+        let images = [];
+        try {
+            const response = await axios.get(allImagesUrl, {
+                params: {
+                    product_id: this._currentProductData.id,
+                },
+            });
+
+            images = response.data?.images || [];
+        } catch (error) {
+            if (typeof window.AdminHelpers !== 'undefined') {
+                window.AdminHelpers.showToast(error.response?.data?.message || 'Failed to load product images', 'error');
+            }
+            return;
+        }
+
+        const selectedSet = new Set((selectedIds || []).map((id) => Number(id)));
+        const imageOptions = images.map((image) => {
+            const imageId = Number(image.id);
+            const label = this._escapeHtml(image.product_name || `Image #${imageId}`);
+            const thumb = this._escapeHtml(image.thumbnail_url || image.url || '');
+            const checked = selectedSet.has(imageId) ? 'checked' : '';
+
+            return `
+                <label class="d-flex align-items-center gap-2 border rounded p-2 mb-2">
+                    <input type="checkbox" class="variant-image-checkbox" value="${imageId}" ${checked}>
+                    <img src="${thumb}" alt="${label}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;">
+                    <span class="small text-start flex-grow-1">${label}</span>
+                </label>
+            `;
+        }).join('');
+
+        await Swal.fire({
+            title: 'Map Images to Variant',
+            html: images.length
+                ? `<div style="max-height: 360px; overflow-y:auto;">${imageOptions}</div><p class="small text-muted mt-2 mb-0">Order is saved top-to-bottom.</p>`
+                : '<p class="text-muted mb-0">No images available for this product yet.</p>',
+            showCancelButton: true,
+            confirmButtonText: 'Save Mapping',
+            preConfirm: async () => {
+                if (!images.length) {
+                    return true;
+                }
+
+                const selectedImageIds = Array.from(document.querySelectorAll('.variant-image-checkbox:checked'))
+                    .map((el) => Number(el.value))
+                    .filter((id) => !Number.isNaN(id));
+
+                try {
+                    const response = await axios.put(syncUrl, {
+                        image_ids: selectedImageIds,
+                    }, { headers: { Accept: 'application/json' } });
+
+                    return response.data;
+                } catch (error) {
+                    const msg = error.response?.data?.message
+                        || Object.values(error.response?.data?.errors || {}).flat().join(', ')
+                        || 'Failed to save mapping';
+                    Swal.showValidationMessage(msg);
+                    return false;
+                }
+            },
+        }).then((result) => {
+            if (!result.isConfirmed || !result.value) {
+                return;
+            }
+
+            if (typeof window.AdminHelpers !== 'undefined') {
+                window.AdminHelpers.showToast(result.value.message || 'Mapping saved', 'success');
+            }
+
+            if (result.value.variant) {
+                this._upsertVariantRow(result.value.variant);
+            }
+        });
+    },
+
+    _safeJsonParse(value, fallback) {
+        if (typeof value !== 'string' || value.trim() === '') {
+            return fallback;
+        }
+
+        try {
+            return JSON.parse(value);
+        } catch (_) {
+            return fallback;
+        }
     },
 
     _renderImages(images) {

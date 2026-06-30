@@ -48,7 +48,8 @@ class GeneralAgent
         $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
-        $modeInstruction = 'ზოგადი რეჟიმი: მიეცი მომხმარებელს სასარგებლო, ბუნებრივი პასუხები. ფოკუსირდი მისი საჭიროებების გაგებაზე და პერსონალიზებულ რეკომენდაციებზე.';
+        $modeInstruction = 'ზოგადი რეჟიმი: მიეცი მომხმარებელს სასარგებლო, ბუნებრივი პასუხები. ფოკუსირდი მომხმარებლის საჭიროებების გაგებაზე და პერსონალიზებულ რეკომენდაციებზე. შეინარჩუნე პირველი პირის, customer-facing ტონი და მოერიდე მესამე პირს.';
+        $modeInstruction .= ' როცა მოდელებს ან ვარიანტებს სთავაზობ, გამოიყენე „შემოგთავაზოთ" და არა „გთავაზოთ".';
         $systemPrompt .= "\n\n" . $modeInstruction;
 
         $userContext = $this->promptBuilder->buildUserContext(

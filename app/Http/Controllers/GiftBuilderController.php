@@ -15,6 +15,8 @@ class GiftBuilderController extends Controller
 {
     public function show(Request $request, GiftBuilderCatalogService $catalog): View
     {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
         return view('gift-builder.show', [
             'builderConfig' => $catalog->builderConfig($request),
         ]);
@@ -22,6 +24,8 @@ class GiftBuilderController extends Controller
 
     public function products(Request $request, GiftBuilderCatalogService $catalog): JsonResponse
     {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
         return response()->json([
             'products' => $catalog->products([
                 'role' => $request->query('role', 'all'),
@@ -34,6 +38,8 @@ class GiftBuilderController extends Controller
 
     public function price(Request $request, GiftBuilderPricingService $pricing): JsonResponse
     {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
         return response()->json([
             'success' => true,
             'gift_box' => $pricing->price($request->all()),
@@ -46,6 +52,8 @@ class GiftBuilderController extends Controller
         GiftBuilderCartService $cart,
         CartSnapshotService $snapshot
     ): JsonResponse {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
         $priced = $pricing->price($request->all());
         $result = $cart->addGroup($request, $priced);
 
@@ -63,6 +71,8 @@ class GiftBuilderController extends Controller
         string $group,
         GiftBuilderCartService $cart
     ): RedirectResponse {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
         $cart->removeGroup($request, $group);
 
         return redirect()->back()->with('cart_status', 'სასაჩუქრე ყუთი წაიშალა კალათიდან.');
