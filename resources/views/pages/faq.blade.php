@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები — MyTechnic' : 'FAQ — MyTechnic')
-@section('meta_description', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები MyTechnic სმარტ საათებზე — SIM, GPS, მიწოდება, გარანტია.' : 'Frequently asked questions about MyTechnic smartwatches — SIM, GPS, delivery, warranty.')
+@section('title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვები — MyTechnic' : 'FAQ — MyTechnic')
+@section('meta_description', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვები MyTechnic სმარტ საათებზე — SIM, GPS, მიწოდება, გარანტია.' : 'Frequently asked questions about MyTechnic smartwatches — SIM, GPS, delivery, warranty.')
 @section('canonical', url('/faq'))
-@section('og_title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვებები — MyTechnic' : 'FAQ — MyTechnic')
+@section('og_title', app()->getLocale() === 'ka' ? 'ხშირად დასმული კითხვები — MyTechnic' : 'FAQ — MyTechnic')
 @section('og_url', url('/faq'))
 
 @push('json_ld')
@@ -43,9 +43,8 @@ $_faqSchema = [
       <div class="mt-10">
         <div class="grid grid-cols-12 gap-4 items-start content-start" data-accordion-root>
           <article class="col-span-12 lg:col-span-4 glass-card p-5 sm:p-6">
-            <p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">[LIVE] CONNECTIVITY</p>
-            <h2 class="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-white">დაგჭირდათ სწრაფი პასუხი?</h2>
-            <p class="mt-2 text-sm text-white/70">დაწერეთ Live Chat-ში ან მოგვწერეთ WhatsApp-ზე — ჩვეულებრივ სწრაფად გპასუხობთ.</p>
+            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">{{ $contactSettings['faq_support_title'] ?? 'გჭირდებათ სწრაფი დახმარება?' }}</h2>
+            <p class="mt-2 text-sm text-white/70">{{ $contactSettings['faq_support_description'] ?? 'მოგვწერეთ Live Chat-ში, WhatsApp-ზე ან Messenger-ზე და შეძლებისდაგვარად სწრაფად გიპასუხებთ.' }}</p>
             <div class="mt-5 flex flex-wrap gap-3">
               <button type="button" data-open-chat class="tech-pulse inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
                 <i class="fas fa-comment-dots text-white/90"></i>
@@ -55,6 +54,12 @@ $_faqSchema = [
               <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15">
                 <i class="fab fa-whatsapp text-white/90"></i>
                 <span>WhatsApp</span>
+              </a>
+              @endif
+              @if (!empty($contactSettings['messenger_url']))
+              <a href="{{ $contactSettings['messenger_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15">
+                <i class="fab fa-facebook-messenger text-white/90"></i>
+                <span>Messenger</span>
               </a>
               @endif
               <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 rounded-full bg-white text-slate-950 px-4 py-2 text-sm font-semibold hover:bg-white/90">
@@ -118,9 +123,9 @@ $_faqSchema = [
                         </div>
                       </button>
 
-                      <div id="faq-panel-{{ $faq->id }}" class="accordion-panel" data-accordion-panel data-open="0" style="display: none; opacity: 0; max-height: 0; overflow: hidden;">
+                      <div id="faq-panel-{{ $faq->id }}" class="accordion-panel" data-accordion-panel data-open="0" style="display: none; opacity: 0; height: 0; overflow: hidden;">
                         <div class="pt-4 text-sm leading-relaxed text-white/75 whitespace-pre-line">
-                          {{ $faq->answer }}
+                          {{ str_replace(["\\r\\n", "\\n", "\\r"], "\n", $faq->answer) }}
                         </div>
                       </div>
                     </li>
@@ -146,40 +151,26 @@ $_faqSchema = [
       const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       const animateOpen = (panel) => {
-        clearTimeout(panel._accordionTimer);
         panel.style.display = 'block';
         panel.style.overflow = 'hidden';
-        panel.style.maxHeight = '0px';
+        panel.style.height = '0px';
         panel.style.opacity = '0';
 
         requestAnimationFrame(() => {
-          panel.style.maxHeight = `${panel.scrollHeight}px`;
+          panel.style.height = `${panel.scrollHeight}px`;
           panel.style.opacity = '1';
         });
-
-        panel._accordionTimer = setTimeout(() => {
-          if (panel.dataset.open === '1') {
-            panel.style.maxHeight = 'none';
-          }
-        }, 240);
       };
 
       const animateClose = (panel) => {
-        clearTimeout(panel._accordionTimer);
         panel.style.overflow = 'hidden';
-        panel.style.maxHeight = `${panel.scrollHeight}px`;
+        panel.style.height = `${panel.scrollHeight}px`;
         panel.style.opacity = '1';
 
         requestAnimationFrame(() => {
-          panel.style.maxHeight = '0px';
+          panel.style.height = '0px';
           panel.style.opacity = '0';
         });
-
-        panel._accordionTimer = setTimeout(() => {
-          if (panel.dataset.open === '0') {
-            panel.style.display = 'none';
-          }
-        }, 220);
       };
 
       const setOpen = (button, panel, open) => {
@@ -190,8 +181,9 @@ $_faqSchema = [
 
         if (prefersReducedMotion) {
           panel.style.display = open ? 'block' : 'none';
-          panel.style.maxHeight = open ? 'none' : '0px';
+          panel.style.height = open ? 'auto' : '0px';
           panel.style.opacity = open ? '1' : '0';
+          panel.style.overflow = open ? 'visible' : 'hidden';
           return;
         }
 
@@ -224,17 +216,19 @@ $_faqSchema = [
 
         panel.style.transition = prefersReducedMotion
           ? 'none'
-          : 'max-height 220ms ease, opacity 160ms ease';
+          : 'height 220ms ease, opacity 160ms ease';
 
         panel.addEventListener('transitionend', (event) => {
-          if (event.propertyName && event.propertyName !== 'max-height') return;
+          if (event.propertyName && event.propertyName !== 'height') return;
 
           const isOpen = panel.dataset.open === '1';
           if (isOpen) {
-            panel.style.maxHeight = 'none';
+            panel.style.height = 'auto';
             panel.style.opacity = '1';
+            panel.style.overflow = 'visible';
           } else {
             panel.style.display = 'none';
+            panel.style.overflow = 'hidden';
           }
         });
 

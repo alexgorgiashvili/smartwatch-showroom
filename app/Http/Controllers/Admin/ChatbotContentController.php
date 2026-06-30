@@ -73,6 +73,8 @@ class ChatbotContentController extends Controller
             'instagram_url' => ['nullable', 'url', 'max:255'],
             'facebook_url' => ['nullable', 'url', 'max:255'],
             'messenger_url' => ['nullable', 'url', 'max:255'],
+            'faq_support_title' => ['required', 'string', 'max:120'],
+            'faq_support_description' => ['required', 'string', 'max:500'],
         ]);
 
         foreach ($data as $key => $value) {
@@ -184,6 +186,20 @@ class ChatbotContentController extends Controller
                 'type' => 'url',
                 'placeholder' => 'https://m.me/mytechnic.ge',
                 'help' => 'Optional social link shown in the header and footer.',
+            ],
+            [
+                'name' => 'faq_support_title',
+                'label' => 'FAQ support title',
+                'type' => 'text',
+                'placeholder' => 'გჭირდებათ სწრაფი დახმარება?',
+                'help' => 'Shown in the FAQ sidebar support card.',
+            ],
+            [
+                'name' => 'faq_support_description',
+                'label' => 'FAQ support description',
+                'type' => 'text',
+                'placeholder' => 'მოგვწერეთ Live Chat-ში, WhatsApp-ზე ან Messenger-ზე და შეძლებისდაგვარად სწრაფად გიპასუხებთ.',
+                'help' => 'Short helper text shown under the FAQ support title.',
             ],
         ];
     }

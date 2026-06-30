@@ -22,6 +22,8 @@ class ContactSetting extends Model
         'instagram_url' => 'https://www.instagram.com/mytechnic.ge',
         'facebook_url' => 'https://www.facebook.com/mytechnic.ge',
         'messenger_url' => 'https://m.me/mytechnic.ge',
+        'faq_support_title' => 'გჭირდებათ სწრაფი დახმარება?',
+        'faq_support_description' => 'მოგვწერეთ Live Chat-ში, WhatsApp-ზე ან Messenger-ზე და შეძლებისდაგვარად სწრაფად გიპასუხებთ.',
     ];
 
     public static function allKeyed(): array
