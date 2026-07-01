@@ -75,6 +75,10 @@ class GeoPaymentController extends Controller
                 throw new RuntimeException('Selected city is invalid.');
             }
 
+            if ((int) $data['payment_type'] === 2 && ! $this->isTbilisi($city->name)) {
+                throw new RuntimeException('კურიერთან გადახდა ხელმისაწვდომია მხოლოდ თბილისის შეკვეთებისთვის.');
+            }
+
             // Format phone number
             $phone = $data['customer_phone'];
             if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
@@ -175,6 +179,16 @@ class GeoPaymentController extends Controller
                 'message' => 'Payment initialization failed.',
             ], 500);
         }
+    }
+
+    private function isTbilisi(string $cityName): bool
+    {
+        $normalizedName = mb_strtolower(trim($cityName));
+
+        return $normalizedName === 'თბილისი'
+            || str_starts_with($normalizedName, 'თბილისი >')
+            || $normalizedName === 'tbilisi'
+            || str_starts_with($normalizedName, 'tbilisi >');
     }
 
     public function bogPayRedirect(Request $request): RedirectResponse|JsonResponse

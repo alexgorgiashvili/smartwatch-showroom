@@ -471,7 +471,7 @@ if ($approvedReviews->count() > 0) {
                                         @endphp
                                         <button
                                             type="button"
-                                            class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $selectedColorId === $variantColor->id ? 'ring-2 ring-primary-500 ring-offset-2' : '' }}"
+                                            class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $selectedColorId === $variantColor->id ? 'ring-2 ring-primary-500 ring-offset-2' : '' }} {{ $variantColor->available_quantity <= 0 ? 'opacity-45' : '' }}"
                                             style="background-color: {{ $variantColor->color_hex }};"
                                             title="{{ $variantColor->color_name }}"
                                             data-color-name="{{ $variantColor->color_name }}"
@@ -483,9 +483,14 @@ if ($approvedReviews->count() > 0) {
                                             data-image-alt="{{ $variantImage['alt'] ?? $product->name }}"
                                             aria-pressed="{{ $selectedColorId === $variantColor->id ? 'true' : 'false' }}"
                                             aria-label="{{ $variantColor->color_name }}"
-                                        ></button>
+                                        >
+                                            @if($variantColor->available_quantity <= 0)
+                                                <span class="pointer-events-none absolute h-px w-9 rotate-45 bg-slate-600" aria-hidden="true"></span>
+                                            @endif
+                                        </button>
                                     @endforeach
                                 </div>
+                                <p id="selected-variant-stock" class="mt-3 text-sm" role="status" aria-live="polite"></p>
                             </div>
                         @endif
 
@@ -519,6 +524,7 @@ if ($approvedReviews->count() > 0) {
                                             type="submit"
                                             name="post_add_action"
                                             value="cart"
+                                            data-purchase-button
                                             class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
                                         >
                                             <i class="fa-solid fa-cart-shopping text-xs"></i>კალათაში დამატება
@@ -527,6 +533,7 @@ if ($approvedReviews->count() > 0) {
                                             type="submit"
                                             name="post_add_action"
                                             value="checkout"
+                                            data-purchase-button
                                             class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
                                         >
                                             <i class="fa-solid fa-bag-shopping text-xs"></i>შეკვეთის გაფორმება
@@ -678,6 +685,8 @@ if ($approvedReviews->count() > 0) {
             const selectedInput = document.getElementById('selected-color-input');
             const selectedVariantInput = document.getElementById('selected-variant-id');
             const quantityInput = document.getElementById('cart-quantity');
+            const stockStatus = document.getElementById('selected-variant-stock');
+            const purchaseButtons = Array.from(document.querySelectorAll('[data-purchase-button]'));
             const giftLink = document.getElementById('build-gift-link');
             const galleryRoot = document.getElementById('product-splide');
             const gallerySplide = galleryRoot && galleryRoot.__splide ? galleryRoot.__splide : null;
@@ -722,12 +731,25 @@ if ($approvedReviews->count() > 0) {
                     giftLink.href = `${baseUrl}&variant_id=${encodeURIComponent(targetSwatch.dataset.variantId)}`;
                 }
 
-                if (quantityInput && targetSwatch.dataset.stock) {
-                    const stock = Math.max(1, Math.min(10, parseInt(targetSwatch.dataset.stock, 10) || 1));
-                    quantityInput.max = String(stock);
-                    if (parseInt(quantityInput.value, 10) > stock) {
-                        quantityInput.value = String(stock);
+                const availableStock = Math.max(0, parseInt(targetSwatch.dataset.stock || '0', 10) || 0);
+                const isOutOfStock = availableStock <= 0;
+                if (quantityInput) {
+                    quantityInput.disabled = isOutOfStock;
+                    quantityInput.max = String(Math.max(1, Math.min(10, availableStock)));
+                    if (!isOutOfStock && parseInt(quantityInput.value, 10) > availableStock) {
+                        quantityInput.value = String(Math.min(10, availableStock));
                     }
+                }
+                purchaseButtons.forEach((button) => {
+                    button.disabled = isOutOfStock;
+                    button.classList.toggle('cursor-not-allowed', isOutOfStock);
+                    button.classList.toggle('opacity-50', isOutOfStock);
+                });
+                if (stockStatus) {
+                    stockStatus.textContent = isOutOfStock
+                        ? @js(app()->getLocale() === 'ka' ? 'არჩეული ფერი მარაგში არ არის.' : 'The selected color is out of stock.')
+                        : @js(app()->getLocale() === 'ka' ? 'არჩეული ფერი მარაგშია.' : 'The selected color is in stock.');
+                    stockStatus.className = `mt-3 text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-emerald-600'}`;
                 }
 
                 syncGalleryImage(targetSwatch);

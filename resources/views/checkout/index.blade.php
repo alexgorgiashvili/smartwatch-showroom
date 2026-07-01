@@ -106,22 +106,25 @@
                                 <label for="checkout-city-search" class="mb-1 block text-xs font-medium text-gray-500">
                                     ქალაქი
                                 </label>
-                                <input
-                                    type="text"
-                                    id="checkout-city-search"
-                                    placeholder="ქალაქი *"
-                                    autocomplete="off"
-                                    class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
-                                >
-                                <button
-                                    type="button"
-                                    id="checkout-city-toggle"
-                                    class="absolute right-3 top-[34px] inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 transition hover:bg-slate-50 hover:text-gray-600"
-                                    aria-label="ქალაქების სიის გახსნა"
-                                >
-                                    <i class="fa-solid fa-chevron-down text-xs"></i>
-                                </button>
-                                <div id="checkout-city-results" class="absolute z-20 mt-1 hidden max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"></div>
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        id="checkout-city-search"
+                                        placeholder="ქალაქი *"
+                                        autocomplete="off"
+                                        class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 pr-12 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
+                                    >
+                                    <button
+                                        type="button"
+                                        id="checkout-city-toggle"
+                                        class="absolute inline-flex items-center justify-center rounded-md text-gray-400 transition hover:bg-slate-50 hover:text-gray-600"
+                                        style="top: 0; right: 0; bottom: 0; width: 2.75rem;"
+                                        aria-label="ქალაქების სიის გახსნა"
+                                    >
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </button>
+                                    <div id="checkout-city-results" class="absolute z-20 mt-1 hidden max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg" style="top: 100%; left: 0; right: 0;"></div>
+                                </div>
                                 <p class="mt-1 text-[11px] text-gray-400">აირჩიეთ სიიდან ან გადაახვიეთ მეტის სანახავად</p>
                             </div>
 
@@ -137,16 +140,29 @@
                                         </div>
                                         <span class="text-sm text-gray-700">ონლაინ გადახდა</span>
                                     </label>
-                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                                    <label id="courier-payment-option" class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition">
                                         <input type="radio" name="payment_type" value="2" class="h-4 w-4 flex-shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-sm text-gray-700">კურიერთან გადახდა</span>
+                                        <span>
+                                            <span class="block text-sm font-medium text-gray-700">კურიერთან გადახდა</span>
+                                            <span class="mt-0.5 block text-xs text-gray-500">ხელმისაწვდომია მხოლოდ თბილისის შეკვეთებისთვის</span>
+                                        </span>
                                     </label>
+                                </div>
+                                <div id="courier-payment-notice" class="mt-3 hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800" role="status" aria-live="polite">
+                                    <i class="fa-solid fa-location-dot mr-1.5" aria-hidden="true"></i>
+                                    კურიერთან გადახდისთვის აირჩიეთ ქალაქი თბილისი. სხვა ქალაქებში შეგიძლიათ გადაიხადოთ ონლაინ.
                                 </div>
                             </div>
 
                             <button id="checkout-submit" type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                                 შეკვეთის დადასტურება
                             </button>
+                            <p class="px-2 text-center text-xs leading-5 text-gray-500">
+                                შეკვეთის დადასტურებით ეთანხმებით
+                                <a href="{{ route('terms') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">მომსახურების პირობებს</a>
+                                და
+                                <a href="{{ route('privacy') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">კონფიდენციალობის პოლიტიკას</a>.
+                            </p>
                         </form>
                     </div>
                 </div>
@@ -214,6 +230,10 @@
         const cityIdInput = document.getElementById('checkout-city-id');
         const cityResults = document.getElementById('checkout-city-results');
         const cityToggleButton = document.getElementById('checkout-city-toggle');
+        const courierPaymentInput = form?.querySelector('input[name="payment_type"][value="2"]');
+        const onlinePaymentInput = form?.querySelector('input[name="payment_type"][value="1"]');
+        const courierPaymentOption = document.getElementById('courier-payment-option');
+        const courierPaymentNotice = document.getElementById('courier-payment-notice');
         const cities = @json($cities->map(fn ($city) => ['id' => $city->id, 'name' => $city->name])->values());
         const popularCityIds = @json($popularCityIds->values());
         const cityPageSize = 12;
@@ -222,6 +242,36 @@
 
         if (!form) {
             return;
+        }
+
+        function isTbilisiSelected() {
+            const selectedCity = cities.find(function (city) {
+                return String(city.id) === String(cityIdInput?.value || '');
+            });
+            const normalizedName = (selectedCity?.name || '').trim().toLowerCase();
+
+            return normalizedName === 'თბილისი'
+                || normalizedName.startsWith('თბილისი >')
+                || normalizedName === 'tbilisi'
+                || normalizedName.startsWith('tbilisi >');
+        }
+
+        function syncCourierPaymentAvailability(showNotice = false) {
+            const hasSelectedCity = Boolean(cityIdInput?.value);
+            const courierAvailable = isTbilisiSelected();
+
+            if (courierPaymentInput) {
+                courierPaymentInput.disabled = hasSelectedCity && !courierAvailable;
+            }
+            courierPaymentOption?.classList.toggle('opacity-60', hasSelectedCity && !courierAvailable);
+            courierPaymentOption?.classList.toggle('cursor-not-allowed', hasSelectedCity && !courierAvailable);
+
+            if (hasSelectedCity && !courierAvailable && courierPaymentInput?.checked) {
+                onlinePaymentInput.checked = true;
+                showNotice = true;
+            }
+
+            courierPaymentNotice?.classList.toggle('hidden', !(showNotice || (hasSelectedCity && !courierAvailable)));
         }
 
         const phoneInput = form.querySelector('input[name="customer_phone"]');
@@ -303,6 +353,7 @@
         citySearchInput?.addEventListener('input', function () {
             cityIdInput.value = '';
             citySearchInput.setCustomValidity('');
+            syncCourierPaymentAvailability();
             renderCityResults(citySearchInput.value, true);
         });
 
@@ -343,6 +394,11 @@
             citySearchInput.value = target.getAttribute('data-city-name') || '';
             citySearchInput.setCustomValidity('');
             cityResults.classList.add('hidden');
+            syncCourierPaymentAvailability(false);
+        });
+
+        courierPaymentInput?.addEventListener('change', function () {
+            syncCourierPaymentAvailability(!isTbilisiSelected());
         });
 
         document.addEventListener('click', function (event) {
@@ -356,6 +412,13 @@
                 event.preventDefault();
                 citySearchInput.setCustomValidity('აირჩიეთ ქალაქი სიიდან');
                 citySearchInput.reportValidity();
+                return;
+            }
+
+            if (courierPaymentInput?.checked && !isTbilisiSelected()) {
+                event.preventDefault();
+                syncCourierPaymentAvailability(true);
+                citySearchInput.focus();
                 return;
             }
 

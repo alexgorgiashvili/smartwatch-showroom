@@ -8,12 +8,18 @@ use App\Services\Cart\CartSnapshotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class CheckoutController extends Controller
 {
     public function show(Request $request, CartSnapshotService $snapshot): View|RedirectResponse
     {
-        $cartSnapshot = $snapshot->build($request);
+        try {
+            $cartSnapshot = $snapshot->build($request, ['enforce_stock' => true]);
+        } catch (RuntimeException) {
+            return redirect()->route('cart.index')
+                ->with('cart_error', 'კალათაში არსებული პროდუქტის მარაგი შეიცვალა. გთხოვთ, განაახლოთ კალათა.');
+        }
         $summary = $cartSnapshot['summary'];
 
         if ((int) $summary['count'] <= 0) {

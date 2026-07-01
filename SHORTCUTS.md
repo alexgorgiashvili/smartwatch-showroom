@@ -21,6 +21,8 @@
   - `sd`
 - Local git push shortcut (`add + commit + push`):
   - `gpush "commit message"`
+- Local code push + full server deploy:
+  - `gdeploy "commit message"`
 - Server git push shortcut (სერვერიდან GitHub-ზე):
   - `spush "commit message"`
 - Pull latest code from GitHub to local:
@@ -57,6 +59,8 @@
 
 - კოდის ატვირთვა ლოკალიდან GitHub-ზე:
   - `gpush "your message"`
+- კოდის ატვირთვა ლოკალიდან და სერვერზე სრული deploy:
+  - `gdeploy "your message"`
 - კოდის ატვირთვა სერვერიდან GitHub-ზე:
   - `spush "your message"`
 - GitHub-დან ლოკალზე pull:
@@ -158,6 +162,9 @@ spull                             # GitHub-დან ლოკალზე
 
 **სცენარი 2: ლოკალზე ცვლილება → სერვერზე გადატანა**
 ```powershell
+gdeploy "local changes"          # push + server pull/deploy
+
+# იგივე ცალ-ცალკე:
 gpush "local changes"             # ლოკალიდან GitHub-ზე
 spullserver                       # GitHub-დან სერვერზე
 # ან
