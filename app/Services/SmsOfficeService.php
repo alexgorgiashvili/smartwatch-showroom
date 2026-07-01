@@ -14,10 +14,10 @@ class SmsOfficeService
 
     public function __construct()
     {
-        $this->apiKey = config('services.smsoffice.api_key');
-        $this->sender = config('services.smsoffice.sender');
-        $this->baseUrl = config('services.smsoffice.base_url');
-        $this->timeout = config('services.smsoffice.timeout');
+        $this->apiKey = (string) config('services.smsoffice.api_key', '');
+        $this->sender = (string) config('services.smsoffice.sender', '');
+        $this->baseUrl = (string) config('services.smsoffice.base_url', '');
+        $this->timeout = (int) config('services.smsoffice.timeout', 30);
     }
 
     /**
