@@ -16,18 +16,17 @@ class PaymentStatusController extends Controller
             ->with('items')
             ->where('order_number', $orderNumber)
             ->first();
+        $purchaseEvent = null;
 
-        return view('checkout.success', [
-            'orderNumber' => $orderNumber,
-            'paymentMethod' => $request->string('method')->toString(),
-            'purchaseEvent' => $order ? [
+        if ($order && (float) $order->total_amount > 0) {
+            $purchaseEvent = [
                 'transaction_id' => $order->order_number,
                 'value' => (float) $order->total_amount,
-                'currency' => $order->currency ?: 'GEL',
+                'currency' => strtoupper($order->currency ?: 'GEL'),
                 'content_type' => 'product',
-                'content_ids' => $order->items->map(fn ($item) => (string) ($item->product_id ?? $item->product_variant_id ?? $item->id))->filter()->values()->all(),
+                'content_ids' => $order->items->map(fn ($item) => (string) ($item->product_variant_id ?? $item->id))->filter()->values()->all(),
                 'items' => $order->items->map(fn ($item) => array_filter([
-                    'item_id' => (string) ($item->product_id ?? $item->product_variant_id ?? $item->id),
+                    'item_id' => (string) ($item->product_variant_id ?? $item->id),
                     'item_name' => $item->product_name,
                     'price' => (float) $item->unit_price,
                     'quantity' => (int) $item->quantity,
@@ -39,7 +38,13 @@ class PaymentStatusController extends Controller
                     'item_name' => $item->product_name,
                 ]))->values()->all(),
                 'num_items' => (int) $order->items->sum('quantity'),
-            ] : null,
+            ];
+        }
+
+        return view('checkout.success', [
+            'orderNumber' => $orderNumber,
+            'paymentMethod' => $request->string('method')->toString(),
+            'purchaseEvent' => $purchaseEvent,
         ]);
     }
 
