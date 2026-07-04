@@ -65,7 +65,7 @@ return [
     'trust_shipping' => 'Free Delivery',
     'trust_shipping_text' => 'Across Georgia',
     'trust_warranty' => 'Warranty',
-    'trust_warranty_text' => '2G models - 3 months, 4G models - 6 months',
+    'trust_warranty_text' => '2G models - 1 month, 4G models - 3 months',
     'trust_support' => '24/7 Support',
     'trust_support_text' => 'Via WhatsApp & Phone',
     'product_description' => 'Full Description',

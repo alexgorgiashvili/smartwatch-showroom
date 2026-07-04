@@ -125,7 +125,7 @@
                                     </button>
                                     <div id="checkout-city-results" class="absolute z-20 mt-1 hidden max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg" style="top: 100%; left: 0; right: 0;"></div>
                                 </div>
-                                <p class="mt-1 text-[11px] text-gray-400">აირჩიეთ სიიდან ან გადაახვიეთ მეტის სანახავად</p>
+                                <p class="mt-1 text-[11px] text-gray-400">აირჩიეთ სიიდან</p>
                             </div>
 
                             <textarea name="exact_address" rows="3" required placeholder="ზუსტი მისამართი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"></textarea>

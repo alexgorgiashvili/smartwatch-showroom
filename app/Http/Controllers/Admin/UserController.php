@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -35,7 +36,11 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(12)->mixedCase()->numbers()->symbols(),
+            ],
             'is_admin' => ['nullable', 'boolean'],
         ]);
 

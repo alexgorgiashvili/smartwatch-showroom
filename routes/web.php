@@ -136,8 +136,12 @@ Route::post('/webhook/facebook', [AdminWebhookController::class, 'handle'])
 */
 Route::prefix('admin')->name('admin.')->group(function () {
 	Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
-	Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
-	Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+	Route::post('/login', [AdminAuthController::class, 'login'])
+		->middleware('throttle:admin-login')
+		->name('login.submit');
+	Route::post('/logout', [AdminAuthController::class, 'logout'])
+		->middleware('auth')
+		->name('logout');
 });
 
 /*

@@ -131,7 +131,7 @@ $_citySchema = [
                     {{ $ka ? 'ოფიციალური გარანტია' : 'Official Warranty' }}
                 </h3>
                 <p class="text-sm text-slate-600">
-                    {{ $ka ? '6 თვე გარანტია' : '6 months warranty' }}
+                    {{ $ka ? '2G 1 თვე / 4G 3 თვე' : '2G 1 month / 4G 3 months' }}
                 </p>
             </div>
 

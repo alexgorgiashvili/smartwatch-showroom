@@ -37,23 +37,3 @@ Route::get('/webhooks/messages', [WebhookController::class, 'verify']);
 
 // Grizzly SMS webhook (unauthenticated — no signature verification from provider)
 Route::post('/webhooks/grizzly-sms', [\App\Http\Controllers\GrizzlySmsWebhookController::class, 'handle']);
-
-/*
-|--------------------------------------------------------------------------
-| Conversation API Routes (Protected)
-|--------------------------------------------------------------------------
-|
-| Real-time inbox API endpoints - require authentication
-|
-*/
-Route::middleware(['web', 'auth'])->group(function () {
-    Route::prefix('conversations')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
-        Route::get('{id}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
-        Route::post('{id}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'sendMessage']);
-        Route::post('{id}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
-        Route::post('{id}/status', [\App\Http\Controllers\Api\ConversationController::class, 'updateStatus']);
-        Route::post('{id}/toggle-ai', [\App\Http\Controllers\Api\ConversationController::class, 'toggleAi']);
-        Route::post('{id}/ai-suggest', [\App\Http\Controllers\Api\ConversationController::class, 'aiSuggestion']);
-    });
-});

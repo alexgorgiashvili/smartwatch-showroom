@@ -10,12 +10,10 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (config('app.env') !== 'local') {
-            $user = $request->user();
+        $user = $request->user();
 
-            if (! $user || ! $user->is_admin) {
-                return redirect()->route('admin.login');
-            }
+        if (! $user || ! $user->is_admin) {
+            return redirect()->route('admin.login');
         }
 
         return $next($request);

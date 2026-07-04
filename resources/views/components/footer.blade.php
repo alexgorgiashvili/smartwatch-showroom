@@ -1,9 +1,9 @@
 <footer class="bg-gray-900 text-gray-300 py-12">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Main Footer Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+    <div class="grid grid-cols-2 gap-x-5 gap-y-8 mb-8 md:grid-cols-3 md:gap-8">
       <!-- Brand & Description -->
-      <div>
+      <div class="col-span-2 md:col-span-1">
         <h3 class="text-white font-bold text-lg mb-4">MyTechnic</h3>
         <p class="text-sm leading-relaxed text-gray-400">
           {{ __('ui.footer_tagline') }}
@@ -28,7 +28,7 @@
       </div>
 
       <!-- Quick Links -->
-      <div>
+      <div class="min-w-0">
         <h4 class="text-white font-semibold mb-4">{{ __('ui.footer_quick_links') }}</h4>
         <ul class="space-y-2 text-sm">
           <li>
@@ -55,12 +55,12 @@
       </div>
 
       <!-- Contact Info -->
-      <div>
+      <div class="min-w-0">
         <h4 class="text-white font-semibold mb-4">{{ __('ui.footer_contact_info') }}</h4>
         <ul class="space-y-3 text-sm">
           <li class="flex items-start gap-2">
             <i class="fas fa-phone mt-1 text-green-500"></i>
-            <div>
+            <div class="min-w-0">
               <p class="text-gray-400">{{ __('ui.footer_phone') }}</p>
               @if (!empty($contactSettings['phone_link']) && !empty($contactSettings['phone_display']))
               <a href="tel:{{ $contactSettings['phone_link'] }}" class="hover:text-white transition font-medium">{{ $contactSettings['phone_display'] }}</a>
@@ -71,16 +71,16 @@
           </li>
           <li class="flex items-start gap-2">
             <i class="fas fa-envelope mt-1 text-primary-500"></i>
-            <div>
+            <div class="min-w-0">
               <p class="text-gray-400">{{ __('ui.footer_email') }}</p>
-              <a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="hover:text-white transition font-medium">
+              <a href="mailto:{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}" class="break-all font-medium transition hover:text-white">
                 {{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}
               </a>
             </div>
           </li>
           <li class="flex items-start gap-2">
             <i class="fas fa-map-marker-alt mt-1 text-red-500"></i>
-            <div>
+            <div class="min-w-0">
               <p class="text-gray-400">{{ __('ui.footer_location') }}</p>
               <p class="font-medium">{{ $contactSettings['location'] ?? 'Tbilisi, Georgia' }}</p>
             </div>

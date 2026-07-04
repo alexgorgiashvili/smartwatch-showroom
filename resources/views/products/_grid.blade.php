@@ -180,7 +180,7 @@
                                     {{ app()->getLocale() === 'ka' ? 'სწრაფი ნახვა' : 'Quick View' }}
                                 </button>
                             @else
-                                <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400">
+                                <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full border border-red-700 bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm">
                                     {{ app()->getLocale() === 'ka' ? 'ამოწურულია' : 'Out of Stock' }}
                                 </button>
                             @endif

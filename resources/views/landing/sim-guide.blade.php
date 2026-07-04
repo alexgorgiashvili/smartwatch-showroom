@@ -248,8 +248,8 @@
         <h2 class="text-lg font-bold">{{ $ka ? 'SIM-იანი სმარტ საათი — ახლა შეუკვეთე' : 'SIM Smartwatch — Order Now' }}</h2>
         <p class="mt-2 text-sm text-slate-300">
             {{ $ka
-                ? 'ყველა ჩვენი მოდელი SIM ბარათს მხარს უჭერს. უფასო მიწოდება საქართველოს მასშტაბით და მოკლე trust copy-ში 6 თვე გარანტია.'
-                : 'All our models support SIM cards. Free delivery across Georgia and a 6-month warranty in short trust copy.' }}
+                ? 'ყველა ჩვენი მოდელი SIM ბარათს მხარს უჭერს. უფასო მიწოდება საქართველოს მასშტაბით და მოქმედებს გარანტია: 2G 1 თვე, 4G 3 თვე.'
+                : 'All our models support SIM cards. Free delivery across Georgia and warranty applies: 2G 1 month, 4G 3 months.' }}
         </p>
         <a href="{{ route('products.index') }}"
            class="mt-5 inline-block rounded-full bg-white px-7 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-primary-50">

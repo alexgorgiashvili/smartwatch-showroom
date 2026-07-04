@@ -65,7 +65,7 @@ return [
     'trust_shipping' => 'უფასო მიწოდება',
     'trust_shipping_text' => 'საქართველოს მასშტაბით',
     'trust_warranty' => 'გარანტია',
-    'trust_warranty_text' => '2G მოდელებზე 3 თვე, 4G მოდელებზე 6 თვე',
+    'trust_warranty_text' => '2G მოდელებზე 1 თვე, 4G მოდელებზე 3 თვე',
     'trust_support' => 'სწრაფი მხარდაჭერა',
     'trust_support_text' => 'WhatsApp-ით და ტელეფონით',
     'product_description' => 'სრული აღწერა',
