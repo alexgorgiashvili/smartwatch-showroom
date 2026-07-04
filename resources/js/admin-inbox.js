@@ -339,7 +339,19 @@ async function sendMessage() {
         if (window.AdminHelpers) window.AdminHelpers.showToast(msg, 'error');
     } finally {
         if (btn) btn.disabled = false;
-        input?.focus();
+        focusMessageInput();
+    }
+}
+
+function focusMessageInput() {
+    const input = $('#inbox-message-input');
+    if (!input) return;
+
+    // On mobile browsers, focusing the composer can auto-scroll the page.
+    try {
+        input.focus({ preventScroll: true });
+    } catch (_) {
+        input.focus();
     }
 }
 
