@@ -311,6 +311,48 @@ document.addEventListener('DOMContentLoaded', () => {
 	let conversationId = null;
 	let isSending = false;
 	let historyLoaded = false;
+	let keyboardSyncFrame = null;
+	let keyboardSyncTimers = [];
+
+	const syncChatbotKeyboardViewport = () => {
+		const viewport = window.visualViewport;
+		const viewportHeight = viewport?.height || window.innerHeight || document.documentElement.clientHeight;
+		const viewportOffsetTop = viewport?.offsetTop || 0;
+
+		widget.style.setProperty('--chatbot-vv-height', `${Math.round(viewportHeight)}px`);
+		widget.style.setProperty('--chatbot-vv-offset-top', `${Math.round(viewportOffsetTop)}px`);
+	};
+
+	const clearKeyboardSync = () => {
+		if (keyboardSyncFrame !== null) {
+			cancelAnimationFrame(keyboardSyncFrame);
+			keyboardSyncFrame = null;
+		}
+
+		keyboardSyncTimers.forEach((timer) => window.clearTimeout(timer));
+		keyboardSyncTimers = [];
+	};
+
+	const scheduleKeyboardSync = (delays = [0, 120, 260]) => {
+		clearKeyboardSync();
+		syncChatbotKeyboardViewport();
+
+		keyboardSyncFrame = requestAnimationFrame(() => {
+			keyboardSyncFrame = null;
+			syncChatbotKeyboardViewport();
+		});
+
+		delays
+			.filter((delay) => delay > 0)
+			.forEach((delay) => {
+				const timer = window.setTimeout(() => {
+					syncChatbotKeyboardViewport();
+					keyboardSyncTimers = keyboardSyncTimers.filter((activeTimer) => activeTimer !== timer);
+				}, delay);
+
+				keyboardSyncTimers.push(timer);
+			});
+	};
 
 	const focusChatbotInput = () => {
 		if (!input) {
@@ -454,11 +496,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			panel.classList.add('is-open');
 			panel.setAttribute('aria-hidden', 'false');
 			toggleButton.setAttribute('aria-expanded', 'true');
-			requestAnimationFrame(() => {
-				focusChatbotInput();
-			});
+			syncChatbotKeyboardViewport();
 			if (historyEndpoint && !historyLoaded) loadHistory();
 		} else {
+			clearKeyboardSync();
+			panel.classList.remove('is-keyboard-open');
 			panel.classList.remove('is-open');
 			panel.setAttribute('aria-hidden', 'true');
 			toggleButton.setAttribute('aria-expanded', 'false');
@@ -474,12 +516,28 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	input?.addEventListener('focus', () => {
+		panel.classList.add('is-keyboard-open');
+		scheduleKeyboardSync([0, 120, 260, 420]);
 		scrollMessagesToBottom();
 	});
 
 	input?.addEventListener('blur', () => {
+		panel.classList.remove('is-keyboard-open');
+		scheduleKeyboardSync([0, 120]);
 		scrollMessagesToBottom();
 	});
+
+	window.visualViewport?.addEventListener('resize', () => {
+		if (panel.classList.contains('is-open')) {
+			scheduleKeyboardSync([0, 120, 260]);
+		}
+	}, { passive: true });
+
+	window.visualViewport?.addEventListener('scroll', () => {
+		if (panel.classList.contains('is-open')) {
+			scheduleKeyboardSync([0, 120, 260]);
+		}
+	}, { passive: true });
 
 	// ── Load conversation history on open ──
 	const loadHistory = async () => {

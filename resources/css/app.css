@@ -414,6 +414,13 @@
 		border-radius: 1.1rem;
 	}
 
+	.chatbot-panel.is-keyboard-open {
+		top: calc(var(--chatbot-vv-offset-top, 0px) + 0.5rem);
+		bottom: auto;
+		height: calc(var(--chatbot-vv-height, 100vh) - 1rem);
+		max-height: calc(var(--chatbot-vv-height, 100vh) - 1rem);
+	}
+
 	.chatbot-form {
 		gap: 0.4rem;
 		padding: 0.75rem 0.75rem 0.9rem;
