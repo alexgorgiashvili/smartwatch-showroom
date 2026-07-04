@@ -34,7 +34,7 @@ class MultiLayerCacheService
 
         // Skip semantic matching if semantic cache is disabled or empty
         $intentKey = $intent->intent();
-        $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
+        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
 
         if (empty($semanticIndex)) {
             return null; // No semantic cache yet, skip expensive embedding
@@ -60,7 +60,7 @@ class MultiLayerCacheService
 
         $queryHash = $this->hashQuery($query, $intent);
         $intentKey = $intent->intent();
-        $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
+        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
         $embedding = [];
 
         if (!app()->environment('testing') && !empty($semanticIndex)) {
@@ -77,8 +77,8 @@ class MultiLayerCacheService
             'cached_at' => time(),
         ];
 
-        Cache::tags(['chatbot'])->put(
-            "chatbot:response:{$queryHash}",
+        $this->cache()->put(
+            $this->key("response:{$queryHash}"),
             $cacheData,
             config('chatbot.caching.layers.response.ttl', self::RESPONSE_CACHE_TTL)
         );
@@ -95,8 +95,8 @@ class MultiLayerCacheService
 
         $queryHash = $this->hashQuery($query);
 
-        return Cache::tags(['chatbot'])->remember(
-            "chatbot:embedding:{$queryHash}",
+        return $this->cache()->remember(
+            $this->key("embedding:{$queryHash}"),
             config('chatbot.caching.layers.embedding.ttl', self::EMBEDDING_CACHE_TTL),
             fn() => $this->embeddingService->embed($query)
         );
@@ -107,7 +107,7 @@ class MultiLayerCacheService
      */
     public function invalidateProductCache(int $productId): void
     {
-        Cache::tags(['chatbot'])->flush();
+        $this->bumpNamespaceVersion();
     }
 
     /**
@@ -115,7 +115,7 @@ class MultiLayerCacheService
      */
     public function clearAll(): void
     {
-        Cache::tags(['chatbot'])->flush();
+        $this->bumpNamespaceVersion();
     }
 
     /**
@@ -143,7 +143,7 @@ class MultiLayerCacheService
     private function getExactMatch(string $query, IntentResult $intent): ?array
     {
         $queryHash = $this->hashQuery($query, $intent);
-        return Cache::tags(['chatbot'])->get("chatbot:response:{$queryHash}");
+        return $this->cache()->get($this->key("response:{$queryHash}"));
     }
 
     private function getSemanticMatch(string $query, IntentResult $intent): ?array
@@ -151,7 +151,7 @@ class MultiLayerCacheService
         $embedding = $this->getOrCacheEmbedding($query);
         $intentKey = $intent->intent();
 
-        $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
+        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
 
         $threshold = config('chatbot.caching.layers.semantic.threshold', self::SEMANTIC_SIMILARITY_THRESHOLD);
 
@@ -159,7 +159,7 @@ class MultiLayerCacheService
             $similarity = $this->cosineSimilarity($embedding, $cachedEmbedding);
 
             if ($similarity >= $threshold) {
-                $cached = Cache::tags(['chatbot'])->get("chatbot:response:{$cachedHash}");
+                $cached = $this->cache()->get($this->key("response:{$cachedHash}"));
                 if ($cached) {
                     return array_merge($cached, ['similarity' => $similarity]);
                 }
@@ -172,7 +172,7 @@ class MultiLayerCacheService
     private function addToSemanticIndex(string $queryHash, array $embedding, string $intent): void
     {
         $intentKey = $intent;
-        $semanticIndex = Cache::tags(['chatbot'])->get("chatbot:semantic_index:{$intentKey}", []);
+        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
 
         $semanticIndex[$queryHash] = $embedding;
 
@@ -180,8 +180,8 @@ class MultiLayerCacheService
             $semanticIndex = array_slice($semanticIndex, -100, 100, true);
         }
 
-        Cache::tags(['chatbot'])->put(
-            "chatbot:semantic_index:{$intentKey}",
+        $this->cache()->put(
+            $this->key("semantic_index:{$intentKey}"),
             $semanticIndex,
             config('chatbot.caching.layers.semantic.ttl', self::SEMANTIC_CACHE_TTL)
         );
@@ -211,6 +211,29 @@ class MultiLayerCacheService
         }
 
         return $dotProduct / ($magnitudeA * $magnitudeB);
+    }
+
+    private function cache()
+    {
+        $cache = Cache::store();
+
+        return $cache->supportsTags()
+            ? $cache->tags(['chatbot'])
+            : $cache;
+    }
+
+    private function key(string $suffix): string
+    {
+        $version = (int) Cache::store()->get('chatbot:namespace_version', 1);
+
+        return "chatbot:v{$version}:{$suffix}";
+    }
+
+    private function bumpNamespaceVersion(): void
+    {
+        $cache = Cache::store();
+        $current = (int) $cache->get('chatbot:namespace_version', 1);
+        $cache->forever('chatbot:namespace_version', $current + 1);
     }
 
     private function hashQuery(string $query, ?IntentResult $intent = null): string
