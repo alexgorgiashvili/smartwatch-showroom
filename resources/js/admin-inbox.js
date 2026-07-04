@@ -16,6 +16,14 @@ function isLocalhostRuntime() {
     return ['127.0.0.1', 'localhost'].includes(window.location.hostname);
 }
 
+function isMobileChatViewport() {
+    return window.matchMedia?.('(max-width: 991px)')?.matches ?? window.innerWidth <= 991;
+}
+
+function setMobileChatMode(active) {
+    document.body.classList.toggle('inbox-chat-open', active && isMobileChatViewport());
+}
+
 function subscribeToInboxChannel(name) {
     if (!window.Echo) return null;
 
@@ -211,6 +219,7 @@ async function openConversation(id) {
 
     const chatContent = document.querySelector('.chat-wrapper .chat-content');
     if (chatContent) chatContent.classList.add('show');
+    setMobileChatMode(true);
 
     if (window.Echo) {
         if (prevConversationId) window.Echo.leave(`inbox.conversation.${prevConversationId}`);
@@ -244,6 +253,7 @@ async function openConversation(id) {
 
         // Messages
         renderMessages(messages);
+        scrollMessagesToBottom();
 
         // Refresh list to clear unread count
         loadConversations();
@@ -282,7 +292,7 @@ function renderMessages(messages) {
     });
 
     list.innerHTML = html;
-    if (wasNearBottom) body.scrollTop = body.scrollHeight;
+    if (wasNearBottom) scrollMessagesToBottom();
 }
 
 function isNearBottom(el) {
@@ -339,7 +349,11 @@ async function sendMessage() {
         if (window.AdminHelpers) window.AdminHelpers.showToast(msg, 'error');
     } finally {
         if (btn) btn.disabled = false;
-        focusMessageInput();
+        if (!isMobileChatViewport()) {
+            focusMessageInput();
+        } else {
+            scrollMessagesToBottom();
+        }
     }
 }
 
@@ -353,6 +367,12 @@ function focusMessageInput() {
     } catch (_) {
         input.focus();
     }
+}
+
+function scrollMessagesToBottom() {
+    const body = $('#inbox-messages');
+    if (!body) return;
+    body.scrollTop = body.scrollHeight;
 }
 
 function appendMessage(m) {
@@ -527,6 +547,7 @@ export function initInbox() {
     $('#backToChatList')?.addEventListener('click', () => {
         const chatContent = document.querySelector('.chat-wrapper .chat-content');
         if (chatContent) chatContent.classList.remove('show');
+        setMobileChatMode(false);
     });
 
     $('#inbox-refresh')?.addEventListener('click', () => {
@@ -585,4 +606,5 @@ export function destroyInbox() {
         if (state.conversationId) window.Echo.leave(`inbox.conversation.${state.conversationId}`);
     }
     stopFallbackPolling();
+    setMobileChatMode(false);
 }

@@ -27,7 +27,7 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/admin-s9DWKuJB.css",
+    "file": "assets/admin-CjDZh5hG.css",
     "src": "resources/css/admin.css",
     "isEntry": true
   },
@@ -37,7 +37,7 @@
     "isEntry": true
   },
   "resources/js/admin.js": {
-    "file": "assets/admin-D2bYpO1u.js",
+    "file": "assets/admin-D3950BeA.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
