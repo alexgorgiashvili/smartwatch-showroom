@@ -144,7 +144,7 @@ $_homeSchema = [
                         <span class="flex items-center gap-1.5"><i
                                 class="fa-solid fa-circle-check text-primary-500"></i>{{ __('ui.trust_shipping') }}</span>
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? '4G 3 თვე / 2G 1 თვე' : '4G 3 Months / 2G 1 Month' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'გარანტია' : 'Warranty' }}</span>
                         <span class="flex items-center gap-1.5"><i
                                 class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'ოფ. იმპორტიორი' : 'Official Importer' }}</span>
                     </div>
