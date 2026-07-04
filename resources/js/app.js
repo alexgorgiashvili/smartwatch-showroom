@@ -311,22 +311,72 @@ document.addEventListener('DOMContentLoaded', () => {
 	let conversationId = null;
 	let isSending = false;
 	let historyLoaded = false;
+	let viewportSyncFrame = null;
+	let viewportSyncTimers = [];
 
 	const syncChatbotViewport = () => {
 		const viewport = window.visualViewport;
-		const viewportHeight = viewport?.height || window.innerHeight;
+		const layoutViewportHeight = window.innerHeight || document.documentElement.clientHeight;
+		const viewportHeight = viewport?.height || layoutViewportHeight;
 		const keyboardInset = viewport
-			? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+			? Math.max(0, layoutViewportHeight - viewport.height - viewport.offsetTop)
 			: 0;
 
 		widget.style.setProperty('--chatbot-viewport-height', `${Math.round(viewportHeight)}px`);
 		widget.style.setProperty('--chatbot-keyboard-inset', `${Math.round(keyboardInset)}px`);
 	};
 
+	const clearChatbotViewportSync = () => {
+		if (viewportSyncFrame !== null) {
+			cancelAnimationFrame(viewportSyncFrame);
+			viewportSyncFrame = null;
+		}
+
+		viewportSyncTimers.forEach((timer) => window.clearTimeout(timer));
+		viewportSyncTimers = [];
+	};
+
+	const scheduleChatbotViewportSync = (delays = [0, 120, 280]) => {
+		clearChatbotViewportSync();
+		syncChatbotViewport();
+
+		viewportSyncFrame = requestAnimationFrame(() => {
+			viewportSyncFrame = null;
+			syncChatbotViewport();
+		});
+
+		delays
+			.filter((delay) => delay > 0)
+			.forEach((delay) => {
+				const timer = window.setTimeout(() => {
+					syncChatbotViewport();
+					viewportSyncTimers = viewportSyncTimers.filter((activeTimer) => activeTimer !== timer);
+				}, delay);
+
+				viewportSyncTimers.push(timer);
+			});
+	};
+
+	const focusChatbotInput = () => {
+		if (!input) {
+			return;
+		}
+
+		try {
+			input.focus({ preventScroll: true });
+		} catch (_) {
+			input.focus();
+		}
+
+		scheduleChatbotViewportSync([120, 280, 420]);
+		scrollMessagesToBottom();
+	};
+
 	syncChatbotViewport();
-	window.addEventListener('resize', syncChatbotViewport, { passive: true });
-	window.visualViewport?.addEventListener('resize', syncChatbotViewport, { passive: true });
-	window.visualViewport?.addEventListener('scroll', syncChatbotViewport, { passive: true });
+	window.addEventListener('resize', () => scheduleChatbotViewportSync([120, 280]), { passive: true });
+	window.addEventListener('orientationchange', () => scheduleChatbotViewportSync([180, 360, 540]), { passive: true });
+	window.visualViewport?.addEventListener('resize', () => scheduleChatbotViewportSync([120, 280]), { passive: true });
+	window.visualViewport?.addEventListener('scroll', () => scheduleChatbotViewportSync([120, 280]), { passive: true });
 
 	const addMessage = (text, role) => {
 		const bubble = document.createElement('div');
@@ -454,13 +504,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const setOpenState = (open) => {
 		if (open) {
-			syncChatbotViewport();
+			scheduleChatbotViewportSync([120, 280]);
 			panel.classList.add('is-open');
 			panel.setAttribute('aria-hidden', 'false');
 			toggleButton.setAttribute('aria-expanded', 'true');
-			input.focus();
+			requestAnimationFrame(() => {
+				focusChatbotInput();
+			});
 			if (historyEndpoint && !historyLoaded) loadHistory();
 		} else {
+			clearChatbotViewportSync();
+			scheduleChatbotViewportSync([120, 280]);
 			panel.classList.remove('is-open');
 			panel.setAttribute('aria-hidden', 'true');
 			toggleButton.setAttribute('aria-expanded', 'false');
@@ -473,6 +527,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	closeButton?.addEventListener('click', () => {
 		setOpenState(false);
+	});
+
+	input?.addEventListener('focus', () => {
+		scheduleChatbotViewportSync([120, 280, 420]);
+		scrollMessagesToBottom();
+	});
+
+	input?.addEventListener('blur', () => {
+		scheduleChatbotViewportSync([120, 280, 420]);
 	});
 
 	// ── Load conversation history on open ──
