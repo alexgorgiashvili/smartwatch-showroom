@@ -224,11 +224,20 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	const renderMarkdown = (text) => {
-		const raw = marked.parse(text);
+		const normalizedText = String(text).replace(
+			/\[([^\]]+)\]\(\[([^\]\s]+)\]\(\2\)?/g,
+			'[$1]($2)'
+		);
+		const raw = marked.parse(normalizedText);
 		return DOMPurify.sanitize(raw, {
 			ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br', 'p', 'ul', 'ol', 'li', 'code'],
 			ALLOWED_ATTR: ['href', 'target', 'rel'],
 		});
+	};
+
+	const withoutProductLinkBlock = (text) => {
+		const linkBlockStart = String(text).search(/^\s*\[[^\]]+\]\s*\(/m);
+		return linkBlockStart >= 0 ? String(text).slice(0, linkBlockStart).trimEnd() : text;
 	};
 
 	const widget = document.getElementById('chatbot-widget');
@@ -302,6 +311,22 @@ document.addEventListener('DOMContentLoaded', () => {
 	let conversationId = null;
 	let isSending = false;
 	let historyLoaded = false;
+
+	const syncChatbotViewport = () => {
+		const viewport = window.visualViewport;
+		const viewportHeight = viewport?.height || window.innerHeight;
+		const keyboardInset = viewport
+			? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+			: 0;
+
+		widget.style.setProperty('--chatbot-viewport-height', `${Math.round(viewportHeight)}px`);
+		widget.style.setProperty('--chatbot-keyboard-inset', `${Math.round(keyboardInset)}px`);
+	};
+
+	syncChatbotViewport();
+	window.addEventListener('resize', syncChatbotViewport, { passive: true });
+	window.visualViewport?.addEventListener('resize', syncChatbotViewport, { passive: true });
+	window.visualViewport?.addEventListener('scroll', syncChatbotViewport, { passive: true });
 
 	const addMessage = (text, role) => {
 		const bubble = document.createElement('div');
@@ -424,31 +449,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		splide.on('mounted', scrollMessagesToBottom);
 		splide.mount();
 
-		if (products.length > 1) {
-			let lastWheelAt = 0;
-			root.addEventListener('wheel', (event) => {
-				if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
-					return;
-				}
-
-				event.preventDefault();
-
-				const now = Date.now();
-				if (now - lastWheelAt < 250) {
-					return;
-				}
-
-				lastWheelAt = now;
-				splide.go(event.deltaY > 0 ? '>' : '<');
-			}, { passive: false });
-		}
-
 		scrollMessagesToBottom();
-		root.scrollIntoView({ block: 'nearest' });
 	};
 
 	const setOpenState = (open) => {
 		if (open) {
+			syncChatbotViewport();
 			panel.classList.add('is-open');
 			panel.setAttribute('aria-hidden', 'false');
 			toggleButton.setAttribute('aria-expanded', 'true');
@@ -476,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		try {
 			const res = await fetch(historyEndpoint, {
+				cache: 'no-store',
 				headers: {
 					'Accept': 'application/json',
 					'X-CSRF-TOKEN': csrfToken || '',
@@ -487,10 +494,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			if (Array.isArray(data.messages) && data.messages.length > 0) {
 				messages.innerHTML = '';
-				data.messages.forEach((msg) => {
+				data.messages
+					.sort((a, b) => {
+						const timeDifference = Date.parse(a.created_at || '') - Date.parse(b.created_at || '');
+						return timeDifference || Number(a.id || 0) - Number(b.id || 0);
+					})
+					.forEach((msg) => {
 					const role = msg.sender_type === 'customer' ? 'user' : 'bot';
-					addMessage(msg.content, role);
-				});
+					const hasProducts = role === 'bot'
+						&& Array.isArray(msg.products)
+						&& msg.products.length > 0;
+					addMessage(hasProducts ? withoutProductLinkBlock(msg.content) : msg.content, role);
+					if (hasProducts) {
+						addCarousel(msg.products);
+					}
+					});
 				return;
 			}
 		} catch {
@@ -577,7 +595,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 							// Update bubble text
 							typingBubble.classList.remove('chatbot-typing');
-							typingBubble.innerHTML = renderMarkdown(data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.');
+							const hasProducts = Array.isArray(data.products) && data.products.length > 0;
+							const responseMessage = data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.';
+							typingBubble.innerHTML = renderMarkdown(
+								hasProducts ? withoutProductLinkBlock(responseMessage) : responseMessage
+							);
 
 							// Fix links
 							typingBubble.querySelectorAll('a').forEach((a) => {

@@ -358,7 +358,11 @@ class ChatController extends Controller
                     $fallbackStrategy
                 );
 
-                $pipelineResponse = $pipelineResult->response();
+                $pipelineResponse = $this->removeUnsupportedBudgetClaim(
+                    $pipelineResult->response(),
+                    $safeIncomingMessage,
+                    $customer
+                );
                 $pipelineFallbackReason = $pipelineResult->fallbackReason();
                 $pipelineValidationPassed = $pipelineResult->validationPassed();
                 $pipelineValidationViolations = $pipelineResult->validationViolations();
@@ -506,17 +510,15 @@ class ChatController extends Controller
             }
 
             if ($selectedProducts !== []) {
-                $responseData['products'] = collect($selectedProducts)
-                ->map(fn (array $p) => [
-                    'name' => $p['name'] ?? '',
-                    'price' => isset($p['sale_price']) && $p['sale_price']
-                        ? $p['sale_price'] . ' ₾'
-                        : (isset($p['price']) ? $p['price'] . ' ₾' : ''),
-                    'url' => $p['url'] ?? '',
-                    'image' => $p['image'] ?? '',
-                ])
-                ->values()
-                ->all();
+                $responseData['products'] = $this->formatWidgetProducts($selectedProducts);
+
+                if (isset($botMessage)) {
+                    $botMessage->update([
+                        'metadata' => array_merge($botMessage->metadata ?? [], [
+                            'widget_products' => $responseData['products'],
+                        ]),
+                    ]);
+                }
 
                 $widgetTrace->logStep('widget.respond.products_attached', array_filter([
                     'trace_id' => $traceId,
@@ -609,6 +611,50 @@ class ChatController extends Controller
         ));
 
         return $filtered !== [] ? $filtered : $products;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     * @return array<int, array{name: string, price: string, url: string, image: string}>
+     */
+    private function formatWidgetProducts(array $products): array
+    {
+        return collect($products)
+            ->map(fn (array $product) => [
+                'name' => (string) ($product['name'] ?? ''),
+                'price' => isset($product['sale_price']) && $product['sale_price']
+                    ? $product['sale_price'] . ' ₾'
+                    : (isset($product['price']) ? $product['price'] . ' ₾' : ''),
+                'url' => (string) ($product['url'] ?? ''),
+                'image' => (string) ($product['image'] ?? ''),
+            ])
+            ->filter(fn (array $product) => $product['name'] !== '' && $product['url'] !== '')
+            ->values()
+            ->all();
+    }
+
+    private function removeUnsupportedBudgetClaim(
+        string $response,
+        string $incomingMessage,
+        Customer $customer
+    ): string {
+        $preferences = is_array($customer->preferences) ? $customer->preferences : [];
+        $hasSavedBudget = isset($preferences['budget_max_gel'])
+            && is_numeric($preferences['budget_max_gel']);
+        $mentionsBudget = preg_match(
+            '/(?:ბიუჯეტ|ფარგლებ|ლარამდე|₾|gel|budget|under|up to)/iu',
+            $incomingMessage
+        ) === 1;
+
+        if ($hasSavedBudget || $mentionsBudget) {
+            return $response;
+        }
+
+        return preg_replace(
+            '/თქვენი\s+ბიუჯეტის\s+და\s+მოთხოვნის\s+გათვალისწინებით\s*,?/iu',
+            'თქვენი მოთხოვნის მიხედვით,',
+            $response
+        ) ?? $response;
     }
 
     /**
@@ -827,17 +873,35 @@ class ChatController extends Controller
         }
 
         $messages = $conversation->messages()
-            ->orderBy('created_at')
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->take(20)
             ->get()
             ->reverse()
             ->values()
-            ->map(fn (Message $m) => [
-                'content' => $m->content,
-                'sender_type' => $m->sender_type,
-                'created_at' => $m->created_at->toIso8601String(),
-            ]);
+            ->map(function (Message $message) use ($customer): array {
+                $products = data_get($message->metadata, 'widget_products', []);
+
+                if (!is_array($products)) {
+                    $products = [];
+                }
+
+                if ($message->sender_type === 'bot' && $products === []) {
+                    $products = $this->formatWidgetProducts(
+                        $this->lookupMentionedWidgetProductsFromCatalog($message->content)
+                    );
+                }
+
+                return [
+                    'id' => $message->id,
+                    'content' => $message->sender_type === 'bot'
+                        ? $this->removeUnsupportedBudgetClaim($message->content, '', $customer)
+                        : $message->content,
+                    'sender_type' => $message->sender_type,
+                    'created_at' => $message->created_at->toIso8601String(),
+                    'products' => $products,
+                ];
+            });
 
         $widgetTrace->logStep('widget.history.response_sent', array_filter([
             'trace_id' => $traceId,
@@ -850,7 +914,7 @@ class ChatController extends Controller
         return response()->json([
             'messages' => $messages,
             'conversation_id' => $conversation->id,
-        ]);
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 
     /**
