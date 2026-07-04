@@ -2,7 +2,7 @@
 
 namespace App\Services\Chatbot;
 
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class ConversationMemoryService
 {
@@ -12,7 +12,7 @@ class ConversationMemoryService
     public function getContext(int $conversationId): array
     {
         $key = $this->sessionKey($conversationId);
-        $raw = Redis::hgetall($key);
+        $raw = Cache::get($key, []);
 
         if (!is_array($raw) || $raw === []) {
             return [
@@ -101,7 +101,7 @@ class ConversationMemoryService
 
     public function clearContext(int $conversationId): void
     {
-        Redis::del($this->sessionKey($conversationId));
+        Cache::forget($this->sessionKey($conversationId));
     }
 
     private function sessionKey(int $conversationId): string
@@ -113,8 +113,7 @@ class ConversationMemoryService
     {
         $key = $this->sessionKey($conversationId);
 
-        Redis::hMSet($key, $payload);
-        Redis::expire($key, self::SESSION_TTL_SECONDS);
+        Cache::put($key, $payload, self::SESSION_TTL_SECONDS);
     }
 
     private function decodeArray(string $json): array
