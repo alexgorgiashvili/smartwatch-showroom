@@ -390,6 +390,20 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	};
 
+	const keepMessagesBottomVisible = (delays = [0, 120, 260, 420]) => {
+		delays
+			.filter((delay) => delay >= 0)
+			.forEach((delay) => {
+				window.setTimeout(() => {
+					scrollMessagesToBottom();
+					const lastMessage = messages.lastElementChild;
+					if (lastMessage && typeof lastMessage.scrollIntoView === 'function') {
+						lastMessage.scrollIntoView({ block: 'end', inline: 'nearest' });
+					}
+				}, delay);
+			});
+	};
+
 	// ── Typing indicator (animated dots) ──
 	const createTypingIndicator = () => {
 		const bubble = document.createElement('div');
@@ -518,24 +532,26 @@ document.addEventListener('DOMContentLoaded', () => {
 	input?.addEventListener('focus', () => {
 		panel.classList.add('is-keyboard-open');
 		scheduleKeyboardSync([0, 120, 260, 420]);
-		scrollMessagesToBottom();
+		keepMessagesBottomVisible([0, 120, 260, 420, 620]);
 	});
 
 	input?.addEventListener('blur', () => {
 		panel.classList.remove('is-keyboard-open');
 		scheduleKeyboardSync([0, 120]);
-		scrollMessagesToBottom();
+		keepMessagesBottomVisible([0, 120]);
 	});
 
 	window.visualViewport?.addEventListener('resize', () => {
 		if (panel.classList.contains('is-open')) {
 			scheduleKeyboardSync([0, 120, 260]);
+			keepMessagesBottomVisible([0, 120, 260]);
 		}
 	}, { passive: true });
 
 	window.visualViewport?.addEventListener('scroll', () => {
 		if (panel.classList.contains('is-open')) {
 			scheduleKeyboardSync([0, 120, 260]);
+			keepMessagesBottomVisible([0, 120, 260]);
 		}
 	}, { passive: true });
 
