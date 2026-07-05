@@ -389,7 +389,7 @@ class ResponseValidatorService
     {
         $products = $ragContext['products'] ?? [];
         if (!is_array($products)) {
-            return [3, 6];
+            return [1, 3];
         }
 
         $allowed = [];
@@ -409,16 +409,16 @@ class ResponseValidatorService
             ) ?? '';
 
             if ($searchable !== '' && preg_match('/(?:^|\s)2\s*g(?:\s|$)|(?:^|\s)2\s*გ(?:\s|$)|(?:^|\s)2გ(?:\s|$)/u', $searchable) === 1) {
-                $allowed[3] = true;
+                $allowed[1] = true;
             }
 
             if ($searchable !== '' && preg_match('/(?:^|\s)4\s*g(?:\s|$)|(?:^|\s)4\s*გ(?:\s|$)|(?:^|\s)4გ(?:\s|$)/u', $searchable) === 1) {
-                $allowed[6] = true;
+                $allowed[3] = true;
             }
         }
 
         if ($allowed === []) {
-            return [3, 6];
+            return [1, 3];
         }
 
         $months = array_map('intval', array_keys($allowed));
