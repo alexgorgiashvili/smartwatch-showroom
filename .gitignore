@@ -18,3 +18,4 @@ yarn-error.log
 /.idea
 /.vscode
 /NobleUI - HTML - v2.0
+.deploy.local.ps1

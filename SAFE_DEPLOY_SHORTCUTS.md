@@ -13,7 +13,22 @@
 
 ## 1. One-command safe sync
 
-ჯერ დააყენე environment variables PowerShell-ში:
+საუკეთესო გზა არის პროექტში შექმნა `.deploy.local.ps1` ფაილი ამ მაგალითის მიხედვით:
+
+```powershell
+$DEPLOY_SSH_HOST = "your-server-host"
+$DEPLOY_SSH_USER = "your-ssh-user"
+$DEPLOY_SSH_PATH = "/absolute/path/to/project"
+$DEPLOY_SSH_PORT = "22"
+```
+
+შეგიძლია template აიღო აქედან:
+
+```powershell
+.deploy.local.example.ps1
+```
+
+ან, ალტერნატივად, environment variables PowerShell-ში:
 
 ```powershell
 $env:DEPLOY_SSH_HOST = "your-server-host"
@@ -57,6 +72,12 @@ $env:DEPLOY_SSH_PORT = "22"
 
 ```powershell
 .\gsafedeploy.cmd "update chatbot prompts"
+```
+
+თუ `PATH` სწორადაა დაყენებული, უბრალოდ ასე:
+
+```powershell
+gsafedeploy "update chatbot prompts"
 ```
 
 ## 3. Separate commands თუ დაგჭირდება

@@ -16,15 +16,22 @@
 
 $ErrorActionPreference = "Stop"
 
-$hostName = $env:DEPLOY_SSH_HOST
-$userName = $env:DEPLOY_SSH_USER
-$deployPath = $env:DEPLOY_SSH_PATH
-$port = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SSH_PORT)) { "22" } else { $env:DEPLOY_SSH_PORT }
-$branch = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_BRANCH)) { "main" } else { $env:DEPLOY_BRANCH }
+$configPath = Join-Path $PSScriptRoot ".deploy.local.ps1"
+if (Test-Path $configPath) {
+    . $configPath
+}
+
+$hostName = if ([string]::IsNullOrWhiteSpace($DEPLOY_SSH_HOST)) { $env:DEPLOY_SSH_HOST } else { $DEPLOY_SSH_HOST }
+$userName = if ([string]::IsNullOrWhiteSpace($DEPLOY_SSH_USER)) { $env:DEPLOY_SSH_USER } else { $DEPLOY_SSH_USER }
+$deployPath = if ([string]::IsNullOrWhiteSpace($DEPLOY_SSH_PATH)) { $env:DEPLOY_SSH_PATH } else { $DEPLOY_SSH_PATH }
+$portValue = if ([string]::IsNullOrWhiteSpace($DEPLOY_SSH_PORT)) { $env:DEPLOY_SSH_PORT } else { $DEPLOY_SSH_PORT }
+$branchValue = if ([string]::IsNullOrWhiteSpace($DEPLOY_BRANCH)) { $env:DEPLOY_BRANCH } else { $DEPLOY_BRANCH }
+$port = if ([string]::IsNullOrWhiteSpace($portValue)) { "22" } else { $portValue }
+$branch = if ([string]::IsNullOrWhiteSpace($branchValue)) { "main" } else { $branchValue }
 
 if ([string]::IsNullOrWhiteSpace($hostName) -or [string]::IsNullOrWhiteSpace($userName) -or [string]::IsNullOrWhiteSpace($deployPath)) {
-    Write-Host "Missing required environment variables." -ForegroundColor Yellow
-    Write-Host "Set DEPLOY_SSH_HOST, DEPLOY_SSH_USER, and DEPLOY_SSH_PATH first." -ForegroundColor Yellow
+    Write-Host "Missing deploy configuration." -ForegroundColor Yellow
+    Write-Host "Create .deploy.local.ps1 from .deploy.local.example.ps1 or set DEPLOY_SSH_HOST, DEPLOY_SSH_USER, and DEPLOY_SSH_PATH." -ForegroundColor Yellow
     exit 1
 }
 
