@@ -89,7 +89,7 @@ class PromptBuilderService
             '- მთავარი: ' . route('home'),
             '- კატალოგი: ' . route('products.index'),
             '- კონტაქტი: ' . route('contact'),
-            'საკონტაქტო ინფორმაცია (ადმინისტრატორის ლაივ პარამეტრები):',
+            'საკონტაქტო ინფორმაცია (ადმინისტრატორის live პარამეტრები):',
             '- ტელეფონი: ' . ($contactSettings['phone_display'] ?? ''),
             '- WhatsApp: ' . ($contactSettings['whatsapp_url'] ?? ''),
             '- ელფოსტა: ' . ($contactSettings['email'] ?? ''),
@@ -118,15 +118,33 @@ class PromptBuilderService
 
         if ($warrantyTopic) {
             $sections[] = 'გარანტიის პოლიტიკა:';
-            $sections[] = '- 2G მოდელებზე მოქმედებს 3 თვიანი გარანტია.';
-            $sections[] = '- 4G მოდელებზე მოქმედებს 6 თვიანი გარანტია.';
-            $sections[] = '- 12 თვე არ გამოიყენო, თუ კონტექსტში ეს ზუსტად არ წერია.';
+
+            foreach (UnifiedAiPolicyService::canonicalWarrantyPolicyLines() as $line) {
+                $sections[] = $line;
+            }
         }
+
+        $newModelsTopic = preg_match('/(ახალ\p{L}*\s+მოდელ\p{L}*|new\s+models?)/iu', $normalizedMessage) === 1;
+        $sliderTopic = preg_match('/(სლაიდერ\p{L}*|slider)/iu', $normalizedMessage) === 1;
+        $availabilityAssumptionTopic = preg_match('/(პროდუქცი\p{L}*\s+არ\s+გაქვთ|არაფერ\p{L}*\s+არ\s+არის|საერთოდ\s+გაქვთ\s+რამე)/iu', $normalizedMessage) === 1;
+        $budgetTopic = preg_match('/(\d+\s*(?:₾|ლარ(?:ი|ამდე|ის)?))/iu', $normalizedMessage) === 1
+            || preg_match('/(ბიუჯეტ|იაფ\p{L}*|cheap|budget|cheapest)/iu', $normalizedMessage) === 1;
 
         if ($intentResult->hasCatalogFacet()) {
             $sections[] = 'კატალოგის ჯგუფის მითითება:';
-            $sections[] = '- ქვემოთ მოცემული პროდუქტი გამოიყენე როგორც ამ შეკითხვის სრული შესაბამისი სია.';
+            $sections[] = '- ქვემოთ მოცემული პროდუქტები გამოიყენე როგორც ამ შეკითხვის სრული შესაბამისი სია.';
             $sections[] = '- თუ მომხმარებელი 2G, 4G ან ფასდაკლებულ მოდელებს ეკითხება, აღნიშნე სიაში არსებული ყველა შესაბამისი ვარიანტი.';
+        }
+
+        if ($newModelsTopic) {
+            $sections[] = 'ახალი მოდელების ინტერპრეტაცია:';
+            $sections[] = '- თუ ზუსტი release-date ინფორმაცია არ ჩანს, "ახალი მოდელები" განმარტე როგორც ამჟამად აქტიური და ხელმისაწვდომი მოდელები.';
+        }
+
+        if ($sliderTopic) {
+            $sections[] = 'სლაიდერის ახსნის ტონი:';
+            $sections[] = '- მოკლედ და ბუნებრივად აუხსენი, რომ სლაიდერში მსგავსი ალტერნატივებიც გამოვიტანეთ, რათა შედარება გაუმარტივდეს.';
+            $sections[] = '- გამოიყენე ფორმულირება "გამოვიტანეთ" და არა "გამოიტანეთ".';
         }
 
         if ($searchContext->productNotFoundMessage()) {
@@ -165,8 +183,22 @@ class PromptBuilderService
             })
             ->implode("\n");
 
-        $sections[] = 'პროდუქტები (ლაივ მარაგი ბაზიდან):';
+        $sections[] = 'პროდუქტები (live მარაგი ბაზიდან):';
         $sections[] = $productLines !== '' ? $productLines : 'პროდუქტები ვერ მოიძებნა.';
+
+        if ($productLines !== '') {
+            $sections[] = 'live კატალოგის პასუხის წესი:';
+            $sections[] = '- რადგან შესაბამისი live პროდუქტები უკვე ნაპოვნია, არ თქვა "არ გვაქვს", "არ არის", "ვერ მოვიძიე" ან "დაგვიკავშირდით ფასისთვის".';
+            $sections[] = '- ჯერ დაასახელე 2-4 კონკრეტული მოდელი ამ სიიდან და მხოლოდ შემდეგ დაამატე მოკლე განმარტება ან follow-up.';
+
+            if ($budgetTopic) {
+                $sections[] = '- თუ შეკითხვა ბიუჯეტს ეხება, ჯერ ბიუჯეტში მოქცეული ვარიანტები დაასახელე; თუ ზუსტად არ ეტევა, ახსენე უახლოესი ალტერნატივა.';
+            }
+
+            if ($availabilityAssumptionTopic) {
+                $sections[] = '- თუ მომხმარებელი ფიქრობს, რომ პროდუქცია არ გვაქვს, რბილად შეასწორე: "კი, გვაქვს" და დაასახელე რამდენიმე მაგალითი.';
+            }
+        }
 
         return implode("\n", $sections);
     }
@@ -307,3 +339,4 @@ class PromptBuilderService
         return implode("\n", $instructions);
     }
 }
+

@@ -2,7 +2,6 @@
 
 namespace App\Services\Chatbot;
 
-use App\Services\AiConversationService;
 use Illuminate\Support\Facades\Log;
 
 class ChatbotLabService
@@ -28,22 +27,53 @@ class ChatbotLabService
             if ($conversationId && $continueSession) {
                 $conversation = \App\Models\Conversation::findOrFail($conversationId);
             } else {
+                $customer = \App\Models\Customer::firstOrCreate(
+                    ['email' => 'lab-test@mytechnic.local'],
+                    [
+                        'name' => 'Lab Test',
+                        'platform_user_ids' => ['whatsapp' => 'lab-test'],
+                    ]
+                );
+
                 $conversation = \App\Models\Conversation::create([
-                    'customer_name' => 'Lab Test',
-                    'platform' => 'test',
-                    'platform_conversation_id' => 'lab-' . time(),
-                    'status' => 'open',
+                    'customer_id' => $customer->id,
+                    'platform' => 'whatsapp',
+                    'platform_conversation_id' => 'lab-' . uniqid(),
+                    'status' => 'active',
                 ]);
             }
 
             \App\Models\Message::create([
                 'conversation_id' => $conversation->id,
+                'customer_id' => $conversation->customer_id,
                 'content' => $prompt,
                 'sender_type' => 'customer',
+                'sender_id' => $conversation->customer_id,
+                'sender_name' => (string) ($conversation->customer->name ?? 'Lab Test'),
             ]);
 
-            $aiService = app(AiConversationService::class);
-            $response = $aiService->generateResponse($conversation);
+            $pipeline = app(ChatPipelineService::class);
+            $pipelineResult = $pipeline->process(
+                $prompt,
+                $conversation,
+                $conversation->customer,
+                'lab_' . uniqid(),
+                app(BifurcatedMemoryService::class),
+                app(IntentAnalyzerService::class),
+                app(\App\Services\Chatbot\Agents\SupervisorAgent::class),
+                app(UnifiedAiPolicyService::class),
+                app(ChatbotFallbackStrategyService::class)
+            );
+            $response = $pipelineResult->response();
+
+            \App\Models\Message::create([
+                'conversation_id' => $conversation->id,
+                'customer_id' => $conversation->customer_id,
+                'content' => (string) $response,
+                'sender_type' => 'admin',
+                'sender_id' => 0,
+                'sender_name' => 'AI Assistant',
+            ]);
 
             if (!$continueSession) {
                 $conversation->delete();

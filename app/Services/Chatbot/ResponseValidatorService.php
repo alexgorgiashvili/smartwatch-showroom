@@ -195,6 +195,84 @@ class ResponseValidatorService
         return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
     }
 
+    public function validateCatalogAvailabilityClaims(string $response, array $ragContext, ?IntentResult $intentResult = null): ValidationResult
+    {
+        $products = $ragContext['products'] ?? [];
+        if (!is_array($products) || $products === []) {
+            return ValidationResult::pass();
+        }
+
+        if (in_array($intentResult?->intent(), ['out_of_domain', 'clarification_needed'], true)) {
+            return ValidationResult::pass();
+        }
+
+        $normalized = mb_strtolower($response);
+        $hasContradictoryNegative = collect([
+            'არ გვაქვს',
+            'არჩევანი არ გვაქვს',
+            'ვერ მოვიძიე',
+            'კატალოგში არ არის',
+            'კატალოგში ვერ მოვიძიე',
+        ])->contains(fn (string $phrase): bool => str_contains($normalized, $phrase));
+
+        if (!$hasContradictoryNegative) {
+            return ValidationResult::pass();
+        }
+
+        $knownProducts = collect($products)
+            ->filter(fn ($product): bool => is_array($product))
+            ->map(function (array $product): string {
+                return mb_strtolower(trim(implode(' ', array_filter([
+                    (string) ($product['name'] ?? ''),
+                    (string) ($product['slug'] ?? ''),
+                ]))));
+            })
+            ->filter()
+            ->values();
+
+        $mentionsKnownProduct = $knownProducts->contains(function (string $productText) use ($normalized): bool {
+            if ($productText === '') {
+                return false;
+            }
+
+            foreach (preg_split('/[^\p{L}\p{N}]+/u', $productText) ?: [] as $token) {
+                $token = trim((string) $token);
+
+                if ($token !== '' && mb_strlen($token) >= 3 && str_contains($normalized, $token)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if ($intentResult?->hasCatalogFacet()) {
+            $matchingFacetProducts = collect($products)
+                ->filter(fn ($product): bool => is_array($product) && $this->productMatchesRequestedFacet($product, $intentResult))
+                ->count();
+
+            if ($matchingFacetProducts > 0) {
+                return ValidationResult::fail([[
+                    'type' => 'catalog_availability_mismatch',
+                    'reason' => 'facet_products_exist',
+                ]]);
+            }
+
+            return ValidationResult::pass();
+        }
+
+        if (in_array($intentResult?->intent(), ['recommendation', 'price_query', 'stock_query'], true) && !$intentResult?->hasSpecificProduct()) {
+            if (!$mentionsKnownProduct) {
+                return ValidationResult::fail([[
+                    'type' => 'catalog_availability_mismatch',
+                    'reason' => 'live_products_exist',
+                ]]);
+            }
+        }
+
+        return ValidationResult::pass();
+    }
+
     public function validateOfferTone(string $response): ValidationResult
     {
         if (preg_match('/(?:^|[^\p{L}])გთავაზოთ(?:$|[^\p{L}])/u', $response) !== 1) {
@@ -220,6 +298,7 @@ class ResponseValidatorService
 
         $results[] = $this->validateStockClaims($response, $ragContext);
         $results[] = $this->validateWarrantyClaims($response, $ragContext);
+        $results[] = $this->validateCatalogAvailabilityClaims($response, $ragContext, $intentResult);
         $results[] = $this->validateOfferTone($response);
         $results[] = $this->validateUrls($response, $ragContext);
 
@@ -388,8 +467,10 @@ class ResponseValidatorService
     private function collectAllowedWarrantyMonths(array $ragContext): array
     {
         $products = $ragContext['products'] ?? [];
+        $policyMonths = UnifiedAiPolicyService::canonicalWarrantyMonthsByGeneration();
+
         if (!is_array($products)) {
-            return [1, 3];
+            return array_values($policyMonths);
         }
 
         $allowed = [];
@@ -409,16 +490,16 @@ class ResponseValidatorService
             ) ?? '';
 
             if ($searchable !== '' && preg_match('/(?:^|\s)2\s*g(?:\s|$)|(?:^|\s)2\s*გ(?:\s|$)|(?:^|\s)2გ(?:\s|$)/u', $searchable) === 1) {
-                $allowed[1] = true;
+                $allowed[$policyMonths['2g']] = true;
             }
 
             if ($searchable !== '' && preg_match('/(?:^|\s)4\s*g(?:\s|$)|(?:^|\s)4\s*გ(?:\s|$)|(?:^|\s)4გ(?:\s|$)/u', $searchable) === 1) {
-                $allowed[3] = true;
+                $allowed[$policyMonths['4g']] = true;
             }
         }
 
         if ($allowed === []) {
-            return [1, 3];
+            return array_values($policyMonths);
         }
 
         $months = array_map('intval', array_keys($allowed));
@@ -426,4 +507,39 @@ class ResponseValidatorService
 
         return $months;
     }
+
+    private function productMatchesRequestedFacet(array $product, IntentResult $intentResult): bool
+    {
+        $haystack = preg_replace(
+            '/[^\p{L}\p{N}]+/u',
+            ' ',
+            mb_strtolower(implode(' ', array_filter([
+                (string) ($product['name'] ?? ''),
+                (string) ($product['slug'] ?? ''),
+            ])))
+        ) ?? '';
+
+        if ($haystack === '') {
+            return false;
+        }
+
+        $matchesTwoG = preg_match('/(?:^|\s)2\s*g(?:\s|$)|(?:^|\s)2\s*გ(?:\s|$)|(?:^|\s)2გ(?:\s|$)/u', $haystack) === 1;
+        $matchesFourG = preg_match('/(?:^|\s)4\s*g(?:\s|$)|(?:^|\s)4\s*გ(?:\s|$)|(?:^|\s)4გ(?:\s|$)/u', $haystack) === 1;
+        $isDiscounted = is_numeric($product['sale_price'] ?? null) && (float) $product['sale_price'] > 0;
+
+        if ($intentResult->mentionsDiscountCatalog() && !$isDiscounted) {
+            return false;
+        }
+
+        if ($intentResult->mentionsTwoGCatalog() && $matchesTwoG) {
+            return true;
+        }
+
+        if ($intentResult->mentionsFourGCatalog() && $matchesFourG) {
+            return true;
+        }
+
+        return !$intentResult->mentionsTwoGCatalog() && !$intentResult->mentionsFourGCatalog();
+    }
 }
+

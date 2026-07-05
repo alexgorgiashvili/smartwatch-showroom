@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactSetting;
+use App\Services\Chatbot\UnifiedAiPolicyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -296,9 +297,7 @@ class AiKnowledgeController extends Controller
             ],
             'operations' => [
                 'delivery' => $locale === 'ka' ? 'უფასო მიწოდება მთელი საქართველოს მასშტაბით' : 'Free delivery across Georgia',
-                'warranty' => $locale === 'ka'
-                    ? '2G მოდელები - 1 თვე, 4G მოდელები - 3 თვე'
-                    : '2G models - 1 month, 4G models - 3 months',
+                'warranty' => UnifiedAiPolicyService::canonicalWarrantySummary($locale),
                 'support_channels' => $locale === 'ka'
                     ? ['ტელეფონი', 'WhatsApp', 'Messenger']
                     : ['Phone', 'WhatsApp', 'Messenger'],
@@ -325,13 +324,13 @@ class AiKnowledgeController extends Controller
                     ? [
                         'ვებსაიტის მასალები განკუთვნილია მხოლოდ პირადი, არაკომერციული გამოყენებისთვის.',
                         'გადახდა შესაძლებელია საქართველოს ბანკის ონლაინ სისტემით ან კურიერთან ნაღდი ანგარიშსწორებით თბილისში.',
-                        'გარანტია: 2G - 1 თვე, 4G - 3 თვე; არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
+                        'გარანტია: ' . UnifiedAiPolicyService::canonicalWarrantySummary('ka') . '; არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
                         'დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული და აქვს ორიგინალური შეფუთვა.',
                     ]
                     : [
                         'Site materials are for personal, non-commercial use only.',
                         'Payment is available via BOG online or cash on delivery in Tbilisi.',
-                        'Warranty: 2G - 1 month, 4G - 3 months; excludes mechanical damage, water use, and unauthorized repairs.',
+                        'Warranty: ' . UnifiedAiPolicyService::canonicalWarrantySummary('en') . '; excludes mechanical damage, water use, and unauthorized repairs.',
                         'Returns/exchanges are available within 14 calendar days if unused and in original packaging.',
                     ],
             ],
@@ -359,3 +358,4 @@ class AiKnowledgeController extends Controller
         ];
     }
 }
+

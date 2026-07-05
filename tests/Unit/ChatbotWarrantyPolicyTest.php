@@ -40,8 +40,8 @@ class ChatbotWarrantyPolicyTest extends TestCase
         );
 
         $this->assertStringContainsString('გარანტიის პოლიტიკა:', $context);
-        $this->assertStringContainsString('2G მოდელებზე მოქმედებს 3 თვიანი გარანტია.', $context);
-        $this->assertStringContainsString('4G მოდელებზე მოქმედებს 6 თვიანი გარანტია.', $context);
+        $this->assertStringContainsString('2G მოდელებზე მოქმედებს 1 თვიანი გარანტია.', $context);
+        $this->assertStringContainsString('4G მოდელებზე მოქმედებს 3 თვიანი გარანტია.', $context);
     }
 
     public function testWarrantyClaimsOutsidePolicyAreRejected(): void
@@ -73,7 +73,7 @@ class ChatbotWarrantyPolicyTest extends TestCase
         $validator = new ResponseValidatorService();
 
         $result = $validator->validateAll(
-            'Q21 — 2G მოდელზე 3 თვიანი გარანტიაა.',
+            'Q21 — 2G მოდელზე 1 თვიანი გარანტიაა.',
             [
                 'products' => [
                     [

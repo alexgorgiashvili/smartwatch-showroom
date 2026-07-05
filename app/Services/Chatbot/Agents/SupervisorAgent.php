@@ -106,7 +106,7 @@ class SupervisorAgent
         }
 
         $cachedResponse = $this->cache->getCachedResponse($message, $intent);
-        if ($cachedResponse) {
+        if ($cachedResponse && !$this->shouldBypassCache($message, $intent, $cachedResponse)) {
             $this->traceWidget('supervisor.cache_hit', [
                 'cache_layer' => $cachedResponse['cache_layer'],
             ], $trace);
@@ -130,6 +130,13 @@ class SupervisorAgent
                 'reason' => null,
                 'extracted_preferences' => $extractedPreferences,
             ];
+        }
+
+        if ($cachedResponse) {
+            $this->traceWidget('supervisor.cache_bypassed', [
+                'cache_layer' => $cachedResponse['cache_layer'] ?? null,
+                'reason' => 'stale_or_overly_generic_catalog_denial',
+            ], $trace);
         }
 
         $this->traceWidget('supervisor.cache_miss', [], $trace);
@@ -227,7 +234,12 @@ class SupervisorAgent
 
             // Only cache fully validated model outputs. Fallback replies are
             // cheap to regenerate and should not poison exact-match cache.
-            if ($agentResult['success'] && ($agentResult['validation_passed'] ?? false) && ($agentResult['reason'] ?? null) === null) {
+            if (
+                $agentResult['success']
+                && is_string($agentResult['response'] ?? null)
+                && ($agentResult['validation_passed'] ?? false)
+                && ($agentResult['reason'] ?? null) === null
+            ) {
                 $this->cache->cacheResponse($message, $intent, $agentResult['response'], [
                     'agent' => get_class($agent),
                     'validation_passed' => $agentResult['validation_passed'] ?? false,
@@ -313,5 +325,73 @@ class SupervisorAgent
     private function langfuse(): LangfuseService
     {
         return app(LangfuseService::class);
+    }
+
+    /**
+     * Product-seeking questions are sensitive to catalog freshness, so we
+     * avoid replaying stale cached denials and force a fresh search.
+     *
+     * @param array<string, mixed> $cachedResponse
+     */
+    private function shouldBypassCache(string $message, IntentResult $intent, array $cachedResponse): bool
+    {
+        $response = mb_strtolower((string) ($cachedResponse['response'] ?? ''));
+        $normalizedMessage = mb_strtolower($message);
+
+        if (
+            in_array($intent->intent(), ['stock_query', 'general'], true)
+            && collect(['ახალი მოდელ', 'new model', 'current model', 'ახლა რა გაქვთ'])
+                ->contains(fn (string $signal): bool => str_contains($normalizedMessage, $signal))
+        ) {
+            return true;
+        }
+
+        $denialPhrases = [
+            'არ გვაქვს',
+            'არ შეიცავს',
+            'კატალოგი არ შეიცავს',
+            'კონკრეტული მოდელები არ არის',
+            'ახალი მოდელები ჩვენს კატალოგში არ არის',
+            'ვერ გირჩევთ',
+            'ვერ გითხრით',
+        ];
+
+        $productSeekingSignals = [
+            'მირჩიე',
+            'რა გაქვთ',
+            'რომელი',
+            'მოდელი',
+            'მოდელები',
+            'gps',
+            '4g',
+            '2g',
+            'ბიუჯეტ',
+            'ფასი',
+            'პატარა მაჯ',
+            'ახალი',
+        ];
+
+        $isProductSeekingIntent = in_array($intent->intent(), [
+            'recommendation',
+            'stock_query',
+            'price_query',
+            'comparison',
+        ], true);
+
+        if (!$isProductSeekingIntent) {
+            return false;
+        }
+
+        $hasDenial = collect($denialPhrases)->contains(
+            fn (string $phrase): bool => str_contains($response, $phrase)
+        );
+
+        if (!$hasDenial) {
+            return false;
+        }
+
+        return collect($productSeekingSignals)->contains(
+            fn (string $signal): bool => str_contains($normalizedMessage, $signal)
+        );
     }
 }

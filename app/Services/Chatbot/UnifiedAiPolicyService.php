@@ -4,6 +4,11 @@ namespace App\Services\Chatbot;
 
 class UnifiedAiPolicyService
 {
+    private const WARRANTY_MONTHS_BY_GENERATION = [
+        '2g' => 1,
+        '4g' => 3,
+    ];
+
     private const TRANSLITERATION_MAP = [
         'gamarjoba' => 'გამარჯობა',
         'gamarjveba' => 'გამარჯობა',
@@ -167,6 +172,47 @@ class UnifiedAiPolicyService
     public function websiteGreetingReply(): string
     {
         return 'გამარჯობა! სიამოვნებით დაგეხმარებით. მითხარით რა გაინტერესებთ: ფასი, მარაგი, GPS, SOS თუ კონკრეტული მოდელი.';
+    }
+
+    /**
+     * @return array{2g: int, 4g: int}
+     */
+    public static function canonicalWarrantyMonthsByGeneration(): array
+    {
+        return self::WARRANTY_MONTHS_BY_GENERATION;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function canonicalWarrantyPolicyLines(string $locale = 'ka'): array
+    {
+        $months = self::canonicalWarrantyMonthsByGeneration();
+
+        if ($locale !== 'ka') {
+            return [
+                '- 2G models include a ' . $months['2g'] . '-month warranty.',
+                '- 4G models include a ' . $months['4g'] . '-month warranty.',
+                '- Do not claim a 12-month warranty unless the live context explicitly says so.',
+            ];
+        }
+
+        return [
+            '- 2G მოდელებზე მოქმედებს ' . $months['2g'] . ' თვიანი გარანტია.',
+            '- 4G მოდელებზე მოქმედებს ' . $months['4g'] . ' თვიანი გარანტია.',
+            '- 12 თვე არ ახსენო, თუ live context ამას პირდაპირ არ ადასტურებს.',
+        ];
+    }
+
+    public static function canonicalWarrantySummary(string $locale = 'ka'): string
+    {
+        $months = self::canonicalWarrantyMonthsByGeneration();
+
+        if ($locale !== 'ka') {
+            return '2G models - ' . $months['2g'] . ' month, 4G models - ' . $months['4g'] . ' months';
+        }
+
+        return '2G მოდელები - ' . $months['2g'] . ' თვე, 4G მოდელები - ' . $months['4g'] . ' თვე';
     }
 
     public function looksGeorgianOrTransliterated(string $text): bool

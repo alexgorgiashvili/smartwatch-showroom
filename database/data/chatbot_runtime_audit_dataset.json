@@ -1,0 +1,324 @@
+{
+  "name": "Chatbot Runtime Audit Dataset",
+  "single_turn": [
+    {
+      "id": "budget-100-001",
+      "category": "budget",
+      "question": "100 ლარამდე GPS-იანი საათი რა გაქვთ?",
+      "expected": {
+        "must_contain_any": ["100", "Q19", "Q21", "GPS"],
+        "must_not_contain": ["არ გვაქვს", "ვერ მოვიძიე"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "budget-two-options-001",
+      "category": "budget",
+      "question": "ორი ვარიანტი მითხარი, ერთი იაფი და ერთი უკეთესი GPS-იანი",
+      "expected": {
+        "must_contain_any": ["Q19", "Q21", "CT23", "CT27", "KT34"],
+        "must_contain_all": ["GPS"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "recommend-small-wrist-001",
+      "category": "recommendation",
+      "question": "პატარა მაჯაზე კომფორტული მოდელი გაქვთ?",
+      "expected": {
+        "must_contain_any": ["CT27", "პატარა", "კომპაქტური"],
+        "must_not_contain": ["არ გვაქვს"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "recommend-school-001",
+      "category": "recommendation",
+      "question": "სკოლისთვის ყოველდღიური სატარებელი საბავშვო საათი მირჩიე",
+      "expected": {
+        "must_contain_any": ["Q21", "Q19", "KT20", "KT34", "სკოლ"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "recommend-gps-call-001",
+      "category": "recommendation",
+      "question": "მინდა საათი GPS-ით და ზარებით, კამერა აუცილებელი არ არის",
+      "expected": {
+        "must_contain_any": ["GPS", "ზარ", "Q21", "Q19", "CT23", "CT27"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "new-models-001",
+      "category": "catalog",
+      "question": "რა ახალი მოდელები გაქვთ ახლა?",
+      "expected": {
+        "must_contain_any": ["მოდელი", "KT34", "CT24", "CT23", "CT27", "T53"],
+        "must_not_contain": ["არ გვაქვს ახალი", "ვერ მოვიძიე"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "price-q12-001",
+      "category": "price",
+      "question": "Q12-ის ფასი რამდენია?",
+      "expected": {
+        "must_contain_all": ["Q12", "79"],
+        "must_not_contain": ["არ ვიცი", "ვერ მოვიძიე"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "price-q21-001",
+      "category": "price",
+      "question": "Q21-ის ფასი მითხარი",
+      "expected": {
+        "must_contain_all": ["Q21", "79"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "price-ct23-001",
+      "category": "price",
+      "question": "Wonlex CT23 რა ღირს?",
+      "expected": {
+        "must_contain_all": ["CT23", "169"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "price-ct27-001",
+      "category": "price",
+      "question": "CT27 ფასი რა არის?",
+      "expected": {
+        "must_contain_all": ["CT27", "179"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "price-typo-ct23-001",
+      "category": "price",
+      "question": "Wolenx CT23 რა ღირს?",
+      "expected": {
+        "must_contain_all": ["CT23", "169"],
+        "must_not_contain": ["არ ვიცი"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "comparison-small-wrist-001",
+      "category": "comparison",
+      "question": "CT23 და CT27 რომელია უკეთესი პატარა მაჯისთვის?",
+      "expected": {
+        "must_contain_all": ["CT23", "CT27"],
+        "must_contain_any": ["პატარა", "კომპაქტური"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "comparison-practical-001",
+      "category": "comparison",
+      "question": "Q12 თუ Q21, რომელი უფრო პრაქტიკულია ყოველდღიურად?",
+      "expected": {
+        "must_contain_all": ["Q12", "Q21"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "availability-assumption-001",
+      "category": "availability",
+      "question": "ალბათ 100 ლარამდე GPS მოდელები საერთოდ არ გაქვთ ხომ?",
+      "expected": {
+        "must_contain_any": ["კი", "გვაქვს", "Q19", "Q21"],
+        "must_not_contain": ["არ გვაქვს"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "warranty-001",
+      "category": "policy",
+      "question": "გარანტია რამდენია 2G და 4G საათებზე?",
+      "expected": {
+        "must_contain_all": ["2G", "1", "4G", "3"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "return-001",
+      "category": "policy",
+      "question": "თუ არ მოერგო, დაბრუნება შეიძლება?",
+      "expected": {
+        "must_contain_any": ["დაბრუნ", "შეკვეთ", "კონტაქტ"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "delivery-001",
+      "category": "policy",
+      "question": "მიწოდება გაქვთ და რა დროში მოდის?",
+      "expected": {
+        "must_contain_any": ["მიწოდ", "დღ", "კურიერ", "თბილის"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "hours-001",
+      "category": "company",
+      "question": "რომელ საათებში მუშაობთ?",
+      "expected": {
+        "must_contain_all": ["09:00", "20:00"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "contact-whatsapp-001",
+      "category": "company",
+      "question": "WhatsApp-ზე რომელ ნომერზე მოგწეროთ?",
+      "expected": {
+        "must_contain_any": ["WhatsApp", "wa.me/995501443265", "+995 501 44 32 65"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "contact-email-001",
+      "category": "company",
+      "question": "ელფოსტა რა გაქვთ?",
+      "expected": {
+        "must_contain_all": ["info@mytechnic.ge"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "slider-001",
+      "category": "catalog",
+      "question": "სლაიდერში სხვა მოდელები რატომაა და ქვემოთ სხვა?",
+      "expected": {
+        "must_contain_any": ["გამოვიტანეთ", "სლაიდერ", "მოდელები"],
+        "must_not_contain": ["გამოიტანეთ"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "adult-watch-001",
+      "category": "out_of_domain",
+      "question": "Adult smartwatch მინდა, Apple Watch ან Garmin გაქვთ?",
+      "expected": {
+        "must_contain_any": ["საბავშვო", "კატალოგ", "არ გვაქვს"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "mixed-language-001",
+      "category": "price",
+      "question": "Q12 price pls",
+      "expected": {
+        "must_contain_all": ["Q12", "79"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "find-smallest-001",
+      "category": "recommendation",
+      "question": "ყველაზე პატარა და მსუბუქი რომელია?",
+      "expected": {
+        "must_contain_any": ["CT27", "პატარა", "კომპაქტური"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "video-call-001",
+      "category": "recommendation",
+      "question": "ვიდეო ზარიც რომ ჰქონდეს, რას მირჩევთ?",
+      "expected": {
+        "must_contain_any": ["ვიდეო", "T53", "KT34", "X01", "CT24"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "just-gps-call-001",
+      "category": "recommendation",
+      "question": "სათამაშო ვიდზე არ მინდა, უფრო პრაქტიკული საათი მირჩიე",
+      "expected": {
+        "must_contain_any": ["პრაქტიკ", "CT27", "CT23", "Q21", "KT20"],
+        "must_not_contain": ["არ გვაქვს"],
+        "validation_must_pass": true
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "id": "session-price-color-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "Q12-ის ფასი რამდენია?"},
+        {"question": "და ლურჯი ფერი გაქვთ?"}
+      ],
+      "expected": {
+        "must_contain_any": ["Q12", "ლურჯ", "ფერი"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "session-recommend-filter-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "ორი GPS-იანი მოდელი მირჩიე"},
+        {"question": "კამერის გარეშე რომელი ჯობს?"}
+      ],
+      "expected": {
+        "must_contain_any": ["GPS", "კამერ", "რომელი"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "session-budget-refine-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "100 ლარამდე საათი მინდა"},
+        {"question": "GPS აუცილებელია"}
+      ],
+      "expected": {
+        "must_contain_any": ["100", "GPS", "Q19", "Q21"],
+        "must_not_contain": ["არ გვაქვს"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "session-new-small-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "რა ახალი მოდელები გაქვთ?"},
+        {"question": "ამათგან პატარა მაჯისთვის რომელი ჯობს?"}
+      ],
+      "expected": {
+        "must_contain_any": ["CT27", "პატარა", "მაჯ"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "session-compare-pick-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "CT23 და CT27 შემიდარე"},
+        {"question": "თუ პატარა ბავშვისთვის მინდა, რომელი ავიღო?"}
+      ],
+      "expected": {
+        "must_contain_any": ["CT27", "პატარა", "ბავშვ"],
+        "validation_must_pass": true
+      }
+    },
+    {
+      "id": "session-warranty-return-001",
+      "category": "follow_up",
+      "turns": [
+        {"question": "გარანტია რამდენია?"},
+        {"question": "და თუ პრობლემა აღმოაჩნდა, რა ხდება?"}
+      ],
+      "expected": {
+        "must_contain_any": ["გარანტ", "1", "3", "დაგვიკავშირდ", "კონტაქტ"],
+        "validation_must_pass": true
+      }
+    }
+  ]
+}

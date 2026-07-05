@@ -210,6 +210,24 @@ class InventoryAgent
 
         $response = $completion['reply'];
 
+        if ($this->shouldReplaceWeakCatalogReply($response, $message, $intent)) {
+            $fallback = $this->fallbackStrategy->resolveProviderFailureOutcome(
+                $intent,
+                $validationContext,
+                $sessionContext['recent'] ?? [],
+                $preferences
+            );
+
+            return [
+                'success' => true,
+                'response' => $fallback->reply(),
+                'validation_passed' => $fallback->validationPassed(),
+                'reflection_attempts' => 0,
+                'violations' => $fallback->validationViolations(),
+                'validation_context' => $validationContext,
+            ];
+        }
+
         $this->traceWidget('inventory_agent.model_completed', array_filter([
             'model_reply' => $response,
             'usage' => $completion['usage'] ?? [],
@@ -280,5 +298,47 @@ class InventoryAgent
             })
             ->values()
             ->all();
+    }
+
+    private function shouldReplaceWeakCatalogReply(string $response, string $message, IntentResult $intent): bool
+    {
+        if (!in_array($intent->intent(), ['stock_query', 'price_query', 'recommendation', 'general'], true)) {
+            return false;
+        }
+
+        $normalizedResponse = mb_strtolower($response);
+        $normalizedMessage = mb_strtolower($message);
+
+        $denialPhrases = [
+            'არ გვაქვს',
+            'არ შეიცავს',
+            'კატალოგში არ არის',
+            'ახალი მოდელები ჩვენს კატალოგში არ არის',
+            'ვერ მოვიძიე',
+            'ვერ შემოგთავაზებთ',
+        ];
+
+        $productSeekingSignals = [
+            'ახალი',
+            'მოდელი',
+            'მოდელები',
+            'რა გაქვთ',
+            'ბიუჯეტ',
+            'gps',
+            '2g',
+            '4g',
+        ];
+
+        $hasDenial = collect($denialPhrases)->contains(
+            fn (string $phrase): bool => str_contains($normalizedResponse, $phrase)
+        );
+
+        if (!$hasDenial) {
+            return false;
+        }
+
+        return collect($productSeekingSignals)->contains(
+            fn (string $signal): bool => str_contains($normalizedMessage, $signal)
+        );
     }
 }

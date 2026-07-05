@@ -199,11 +199,29 @@ class ChatbotFallbackStrategyService
                 ->all()
         ))));
         $contextText = trim($query . ' ' . $historyText);
+        $budget = $this->extractBudgetFromContext($contextText, $preferences);
 
-        $contextProducts = $this->normaliseValidationProducts($validationContext);
+        $contextProducts = $this->rankFallbackProducts(
+            $this->normaliseValidationProducts($validationContext),
+            $budget,
+            $contextText,
+            8
+        );
         $catalogProducts = $contextProducts !== []
             ? $contextProducts
-            : $this->fallbackCatalogProducts($preferences, 3);
+            : $this->fallbackCatalogProducts($preferences, $contextText, 8);
+
+        if ($this->looksLikeWarrantyRequest($contextText)) {
+            return $this->buildWarrantyFallbackReply($contextText);
+        }
+
+        if ($this->looksLikeSliderExplanationRequest($contextText)) {
+            return $this->buildSliderExplanationReply();
+        }
+
+        if ($this->looksLikeAvailabilityAssumptionRequest($contextText) && $catalogProducts !== []) {
+            return $this->buildAvailabilitySoftCorrectionReply($catalogProducts);
+        }
 
         if (!$intentResult?->hasSpecificProduct()) {
             $facetReply = $this->buildCatalogFacetReply($contextText);
@@ -213,48 +231,64 @@ class ChatbotFallbackStrategyService
             }
         }
 
+        if ($this->looksLikeNewModelsRequest($contextText)) {
+            $newModelProducts = $this->catalogFacetProducts(false, true, false, 8);
+
+            if ($newModelProducts === []) {
+                $newModelProducts = $catalogProducts;
+            }
+
+            if ($newModelProducts !== []) {
+                return $this->buildNewModelsReply($newModelProducts);
+            }
+        }
+
+        if ($budget !== null && $catalogProducts !== []) {
+            return $this->buildBudgetAwareReply($budget, $catalogProducts);
+        }
+
         if ($intentResult?->intent() === 'recommendation' || $this->looksLikeRecommendationRequest($contextText)) {
             if ($catalogProducts !== []) {
                 return implode("\n", [
-                    'ამ ეტაპზე რამდენიმე აქტიურ მოდელს გირჩევთ:',
-                    $this->formatProductBullets($catalogProducts),
+                    'ახლა აქტიურად ხელმისაწვდომი მოდელებიდან ეს ვარიანტებია:',
+                    $this->formatProductBullets($catalogProducts, 4),
                     '',
-                    'თუ გინდათ, მომწერეთ ბიუჯეტი ან სასურველი ფუნქცია (GPS, SOS, ზარები, კამერა) და უფრო ზუსტად შეგირჩევთ.',
+                    'თუ გინდა, ბიუჯეტით ან ფუნქციებითაც დაგილაგებ.',
                 ]);
             }
 
-            return 'ამ ეტაპზე ზუსტ მოდელს ვერ ვპოულობ. მომწერეთ ბიუჯეტი ან რომელი ფუნქცია გჭირდებათ (GPS, SOS, ზარები, კამერა), და უფრო ზუსტად შეგირჩევთ.';
+            return 'მომწერე ბიუჯეტი ან სასურველი ფუნქცია (GPS, SOS, ზარები, კამერა) და უფრო ზუსტად შეგირჩევ.';
         }
 
         if (in_array($intentResult?->intent(), ['price_query', 'stock_query'], true)) {
             if ($contextProducts !== []) {
                 return implode("\n", [
                     $intentResult?->intent() === 'stock_query'
-                        ? 'მარაგის მიხედვით რამდენიმე ვარიანტია:'
-                        : 'ფასის მიხედვით რამდენიმე ვარიანტია:',
-                    $this->formatProductBullets($contextProducts),
+                        ? 'მარაგის მიხედვით ეს ვარიანტებია:'
+                        : 'ფასის მიხედვით ეს ვარიანტებია:',
+                    $this->formatProductBullets($contextProducts, 4),
                     '',
-                    'თუ კონკრეტულ მოდელს მომწერთ, ფასსა და მარაგს ზუსტად გეტყვით.',
+                    'თუ კონკრეტულ მოდელს მომწერ, ფასსა და მარაგს ზუსტად გეტყვი.',
                 ]);
             }
 
-            return 'თუ კონკრეტულ მოდელს მომწერთ, ფასსა და მარაგს ზუსტად გეტყვით.';
+            return 'თუ კონკრეტულ მოდელს მომწერ, ფასსა და მარაგს ზუსტად გეტყვი.';
         }
 
         if ($intentResult?->intent() === 'comparison') {
             if (count($catalogProducts) >= 2) {
                 return implode("\n", [
-                    'შედარებისთვის შეგიძლიათ გადახედოთ ამ მოდელებს:',
-                    $this->formatProductBullets($catalogProducts),
+                    'შედარებისთვის ეს მოდელები ნახე:',
+                    $this->formatProductBullets($catalogProducts, 4),
                     '',
-                    'თუ ორი კონკრეტული მოდელი გაქვთ მხედველობაში, მომწერეთ და პირდაპირ შევადარებ.',
+                    'თუ ორ კონკრეტულ მოდელს მომწერ, პირდაპირ შევადარებ.',
                 ]);
             }
 
-            return 'თუ ორი კონკრეტული მოდელი გაქვთ მხედველობაში, მომწერეთ და პირდაპირ შევადარებ.';
+            return 'თუ ორ კონკრეტულ მოდელს მომწერ, პირდაპირ შევადარებ.';
         }
 
-        return 'დამეხმარეთ ცოტათი მეტად: მომწერეთ ბიუჯეტი, სასურველი ფუნქცია ან კონკრეტული მოდელი, და ზუსტად შეგირჩევთ.';
+        return 'მომწერე ბიუჯეტი, სასურველი ფუნქცია ან კონკრეტული მოდელი და ზუსტად დაგეხმარები.';
     }
 
     /**
@@ -466,42 +500,28 @@ class ChatbotFallbackStrategyService
      * @param array<string, mixed> $preferences
      * @return array<int, array<string, mixed>>
      */
-    private function fallbackCatalogProducts(array $preferences, int $limit = 3): array
+    private function fallbackCatalogProducts(array $preferences, string $contextText = '', int $limit = 3): array
     {
-        $budget = isset($preferences['budget_max_gel']) && is_numeric($preferences['budget_max_gel'])
-            ? (float) $preferences['budget_max_gel']
-            : null;
+        $budget = $this->extractBudgetFromContext($contextText, $preferences);
 
         $products = Product::query()
             ->active()
             ->withSum('variants as total_stock', 'quantity')
             ->orderByDesc('featured')
             ->orderBy('id')
-            ->limit(12)
+            ->limit(20)
             ->get()
-            ->filter(function (Product $product) use ($budget): bool {
+            ->filter(function (Product $product): bool {
                 $effectivePrice = is_numeric($product->sale_price) && (float) $product->sale_price > 0
                     ? (float) $product->sale_price
                     : (is_numeric($product->price) ? (float) $product->price : null);
 
-                if ($effectivePrice === null || $effectivePrice < 0.5) {
-                    return false;
-                }
-
-                if ($budget === null) {
-                    return true;
-                }
-
-                return $effectivePrice <= $budget * 1.25 || $effectivePrice <= $budget + 100;
+                return $effectivePrice !== null && $effectivePrice >= 0.5;
             })
             ->map(function (Product $product): array {
-                $price = is_numeric($product->sale_price) && (float) $product->sale_price > 0
-                    ? (float) $product->sale_price
-                    : (is_numeric($product->price) ? (float) $product->price : null);
-
                 return [
                     'name' => trim((string) $product->name),
-                    'price' => $price,
+                    'price' => is_numeric($product->price) ? (float) $product->price : null,
                     'sale_price' => is_numeric($product->sale_price) && (float) $product->sale_price > 0
                         ? (float) $product->sale_price
                         : null,
@@ -510,11 +530,176 @@ class ChatbotFallbackStrategyService
                 ];
             })
             ->filter(fn (array $product): bool => $product['name'] !== '')
-            ->take($limit)
             ->values()
             ->all();
 
-        return $products;
+        return $this->rankFallbackProducts($products, $budget, $contextText, $limit);
+    }
+
+    private function buildWarrantyFallbackReply(string $contextText): string
+    {
+        $reply = 'კი, გარანტია გვაქვს. ' . UnifiedAiPolicyService::canonicalWarrantySummary('ka') . '.';
+
+        if ($this->containsAnyNeedle($contextText, ['დაბრუნებ', 'გაცვლ', 'return', 'exchange'])) {
+            $reply .= ' დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული და ორიგინალური შეფუთვა აქვს.';
+        }
+
+        return $reply;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     */
+    private function buildAvailabilitySoftCorrectionReply(array $products): string
+    {
+        return implode("\n", [
+            'კი, გვაქვს. მაგალითად:',
+            $this->formatProductBullets($products, 4),
+            '',
+            'თუ გინდა, 2G, 4G ან ბიუჯეტის მიხედვითაც დაგილაგებ.',
+        ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     */
+    private function buildBudgetAwareReply(float $budget, array $products): string
+    {
+        $label = rtrim(rtrim(number_format($budget, 2, '.', ''), '0'), '.');
+        $withinBudget = collect($products)
+            ->filter(fn (array $product): bool => ($this->effectiveProductPrice($product) ?? INF) <= $budget)
+            ->values()
+            ->all();
+
+        if ($withinBudget !== []) {
+            return implode("\n", [
+                'კი, ' . $label . ' ₾ ფარგლებში გვაქვს რამდენიმე ვარიანტი:',
+                $this->formatProductBullets($withinBudget, 4),
+                '',
+                'თუ გინდა, cheapest-first ან 2G/4G მიხედვითაც დაგილაგებ.',
+            ]);
+        }
+
+        return implode("\n", [
+            'ზუსტად ' . $label . ' ₾ ფარგლებში ვერ ვნახე, მაგრამ უახლოესი ვარიანტებია:',
+            $this->formatProductBullets($products, 3),
+            '',
+            'თუ გინდა, ოდნავ უფრო დაბალ ან მაღალ ბიუჯეტზეც დაგილაგებ ვარიანტებს.',
+        ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     */
+    private function buildNewModelsReply(array $products): string
+    {
+        return implode("\n", [
+            'ახლა აქტიურად ხელმისაწვდომი მოდელებიდან ეს ვარიანტებია:',
+            $this->formatProductBullets($products, 4),
+            '',
+            'თუ გინდა, 2G, 4G ან cheapest-first მიხედვითაც დაგილაგებ.',
+        ]);
+    }
+
+    private function buildSliderExplanationReply(): string
+    {
+        return 'სლაიდერში მსგავსი მოდელებიც გამოვიტანეთ, რომ მარტივად შეადარო ზომა, ფასი და ფუნქციები.';
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     * @return array<int, array<string, mixed>>
+     */
+    private function rankFallbackProducts(array $products, ?float $budget, string $contextText, int $limit = 4): array
+    {
+        $twoG = $this->mentionsTwoGContext($contextText);
+        $fourG = $this->mentionsFourGContext($contextText);
+        $discounted = $this->mentionsDiscountContext($contextText);
+
+        return collect($products)
+            ->filter(function (array $product) use ($twoG, $fourG, $discounted): bool {
+                return $this->productArrayMatchesCatalogFacet($product, $twoG, $fourG, $discounted);
+            })
+            ->sortBy(function (array $product) use ($budget): array {
+                $effectivePrice = $this->effectiveProductPrice($product) ?? INF;
+                $withinBudget = $budget !== null && $effectivePrice <= $budget;
+                $distance = $budget !== null ? abs($effectivePrice - $budget) : $effectivePrice;
+
+                return [
+                    !($product['is_in_stock'] ?? false) ? 1 : 0,
+                    $budget !== null ? ($withinBudget ? 0 : 1) : 0,
+                    $distance,
+                    $effectivePrice,
+                    trim((string) ($product['name'] ?? '')),
+                ];
+            })
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    private function extractBudgetFromContext(string $contextText, array $preferences): ?float
+    {
+        if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(?:₾|ლარ(?:ი|ამდე|ის)?|gel|lari)/iu', $contextText, $matches) === 1) {
+            return (float) str_replace(',', '.', (string) $matches[1]);
+        }
+
+        if (isset($preferences['budget_max_gel']) && is_numeric($preferences['budget_max_gel'])) {
+            return (float) $preferences['budget_max_gel'];
+        }
+
+        return null;
+    }
+
+    private function effectiveProductPrice(array $product): ?float
+    {
+        if (is_numeric($product['sale_price'] ?? null) && (float) $product['sale_price'] > 0) {
+            return (float) $product['sale_price'];
+        }
+
+        return is_numeric($product['price'] ?? null) ? (float) $product['price'] : null;
+    }
+
+    private function looksLikeWarrantyRequest(string $contextText): bool
+    {
+        return $this->containsAnyNeedle($contextText, ['გარანტ', 'warranty', 'return', 'exchange', 'დაბრუნებ', 'გაცვლ']);
+    }
+
+    private function looksLikeNewModelsRequest(string $contextText): bool
+    {
+        return $this->containsAnyNeedle($contextText, ['ახალი მოდელ', 'new model', 'current model', 'ახლა რა გაქვთ']);
+    }
+
+    private function looksLikeSliderExplanationRequest(string $contextText): bool
+    {
+        return $this->containsAnyNeedle($contextText, ['სლაიდერ', 'slider']);
+    }
+
+    private function looksLikeAvailabilityAssumptionRequest(string $contextText): bool
+    {
+        return $this->containsAnyNeedle($contextText, ['პროდუქცია არ გაქვთ', 'არაფერი არ გაქვთ', 'საერთოდ გაქვთ რამე']);
+    }
+
+    private function productArrayMatchesCatalogFacet(array $product, bool $twoG, bool $fourG, bool $discounted): bool
+    {
+        $haystack = $this->normalizeProductText(implode(' ', array_filter([
+            (string) ($product['name'] ?? ''),
+            (string) ($product['slug'] ?? ''),
+        ])));
+
+        if ($discounted && !(is_numeric($product['sale_price'] ?? null) && (float) $product['sale_price'] > 0)) {
+            return false;
+        }
+
+        if ($twoG) {
+            return $this->mentionsTwoGContext($haystack);
+        }
+
+        if ($fourG) {
+            return $this->mentionsFourGContext($haystack);
+        }
+
+        return true;
     }
 
     /**

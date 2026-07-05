@@ -56,7 +56,7 @@ class ChatbotFallbackDecisionFlowTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('debug.fallback_reason', null)
+            ->assertJsonPath('debug.fallback_reason', 'greeting_only')
             ->assertJsonPath('debug.validation_passed', true)
             ->assertJsonPath('debug.georgian_passed', true);
 
@@ -64,7 +64,7 @@ class ChatbotFallbackDecisionFlowTest extends TestCase
         $this->assertMatchesRegularExpression('/\p{Georgian}/u', $reply, 'Greeting reply must be in Georgian');
 
         $botMessage = Message::query()->where('sender_type', 'bot')->firstOrFail();
-        $this->assertNull(data_get($botMessage->metadata, 'fallback_reason'));
+        $this->assertSame('greeting_only', data_get($botMessage->metadata, 'fallback_reason'));
         $this->assertFalse((bool) data_get($botMessage->metadata, 'chatbot_failure'));
     }
 }

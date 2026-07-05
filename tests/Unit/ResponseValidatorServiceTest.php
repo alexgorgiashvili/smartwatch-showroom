@@ -133,4 +133,40 @@ class ResponseValidatorServiceTest extends TestCase
         $this->assertFalse($result->isValid());
         $this->assertSame('misleading_product_link', $result->violations()[0]['type'] ?? null);
     }
+
+    public function testCatalogFacetReplyCannotDenyAvailabilityWhenMatchingProductsExist(): void
+    {
+        $service = new ResponseValidatorService();
+
+        $intent = new IntentResult(
+            'რომელი 2G მოდელები გაქვთ?',
+            'recommendation',
+            null,
+            null,
+            null,
+            null,
+            '2g_catalog',
+            true,
+            ['2G'],
+            false,
+            0.96,
+            0,
+            false
+        );
+
+        $result = $service->validateAll(
+            'ამჟამად ჩვენს კატალოგში 2G სმარტსაათების არჩევანი არ გვაქვს.',
+            [
+                'products' => [
+                    ['name' => 'Q19 2G', 'slug' => 'q19-2g', 'price' => 79.0, 'sale_price' => 59.0, 'is_in_stock' => true],
+                    ['name' => 'Q21 2G', 'slug' => 'q21-2g', 'price' => 79.0, 'sale_price' => null, 'is_in_stock' => true],
+                ],
+                'allowed_urls' => [],
+            ],
+            $intent
+        );
+
+        $this->assertFalse($result->isValid());
+        $this->assertSame('catalog_availability_mismatch', $result->violations()[0]['type'] ?? null);
+    }
 }
