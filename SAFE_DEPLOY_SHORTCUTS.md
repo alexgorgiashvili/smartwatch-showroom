@@ -2,6 +2,11 @@
 
 ეს shortcut-ები აკეთებს მხოლოდ უსაფრთხო Git sync-ს და არ უშვებს მძიმე production ბრძანებებს.
 
+default server values:
+- Host: `142.132.203.78`
+- User: `mytechn1`
+- Path: `/home/mytechn1/public_html/smartwatch-showroom`
+
 არ აკეთებს:
 - `git add .`
 - auto commit
@@ -13,22 +18,7 @@
 
 ## 1. One-command safe sync
 
-საუკეთესო გზა არის პროექტში შექმნა `.deploy.local.ps1` ფაილი ამ მაგალითის მიხედვით:
-
-```powershell
-$DEPLOY_SSH_HOST = "your-server-host"
-$DEPLOY_SSH_USER = "your-ssh-user"
-$DEPLOY_SSH_PATH = "/absolute/path/to/project"
-$DEPLOY_SSH_PORT = "22"
-```
-
-შეგიძლია template აიღო აქედან:
-
-```powershell
-.deploy.local.example.ps1
-```
-
-ან, ალტერნატივად, environment variables PowerShell-ში:
+სურვილის შემთხვევაში შეგიძლია override გაუკეთო environment variables-ით:
 
 ```powershell
 $env:DEPLOY_SSH_HOST = "your-server-host"
