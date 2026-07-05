@@ -46,14 +46,47 @@ class ChatPipelineService
             );
         }
 
+        $directFallbackIntent = $this->directFallbackIntentForMessage($safeIncomingMessage);
+        if ($directFallbackIntent instanceof IntentResult) {
+            $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
+            $validationContext = $this->directFallbackValidationContext();
+
+            $directReply = $fallbackStrategy->resolveProviderFailureOutcome(
+                $directFallbackIntent,
+                $validationContext,
+                [],
+                []
+            )->reply();
+
+            $memory->appendMessage($conversation->id, 'assistant', $directReply);
+
+            return new PipelineResult(
+                $directReply,
+                $conversation->id,
+                '',
+                $directFallbackIntent,
+                $validationContext,
+                true,
+                null,
+                true,
+                [],
+                true,
+                0,
+                null,
+                false,
+                true
+            );
+        }
+
         $sessionContext = $memory->getSessionContext($conversation->id);
         $history = $sessionContext['recent'] ?? [];
         $preferences = $memory->getUserPreferences($customer->id);
+        $scopedPreferences = $memory->scopePreferencesForMessage($preferences, $safeIncomingMessage);
 
         $intentResult = $intentAnalyzer->analyze(
             $safeIncomingMessage,
             $history,
-            $preferences,
+            $scopedPreferences,
             $trace
         );
 
@@ -64,7 +97,7 @@ class ChatPipelineService
             $conversation->id,
             $customer->id,
             $intentResult,
-            $preferences,
+            $scopedPreferences,
             $trace
         );
 
@@ -115,5 +148,83 @@ class ChatPipelineService
             (bool) (($supervisorResult['reflection_attempts'] ?? 0) > 0),
             (bool) ($supervisorResult['success'] ?? false)
         );
+    }
+
+    private function directFallbackIntentForMessage(string $message): ?IntentResult
+    {
+        $normalized = mb_strtolower(trim($message));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if ($this->containsAny($normalized, ['საკონტაქტო', 'კონტაქტ', 'whatsapp', 'messenger', 'ვაცაპ', 'მესენჯერ'])) {
+            return IntentResult::fromArray([
+                'standalone_query' => $message,
+                'intent' => 'general',
+                'entities' => [],
+                'needs_product_data' => false,
+                'search_keywords' => ['contact', 'whatsapp', 'messenger'],
+                'is_out_of_domain' => false,
+                'confidence' => 1.0,
+            ], 0);
+        }
+
+        if ($this->containsAny($normalized, ['რა მოდელები გაქვთ', 'რა საათები გაქვთ', 'რომელი მოდელები გაქვთ'])) {
+            return IntentResult::fromArray([
+                'standalone_query' => $message,
+                'intent' => 'recommendation',
+                'entities' => [],
+                'needs_product_data' => true,
+                'search_keywords' => ['მოდელები', 'catalog'],
+                'is_out_of_domain' => false,
+                'confidence' => 1.0,
+            ], 0);
+        }
+
+        if ($this->containsAny($normalized, ['რა ფასები გაქვთ', 'ფასები გაქვთ', 'ფასები მაჩვენე'])) {
+            return IntentResult::fromArray([
+                'standalone_query' => $message,
+                'intent' => 'price_query',
+                'entities' => [],
+                'needs_product_data' => true,
+                'search_keywords' => ['ფასი', 'catalog'],
+                'is_out_of_domain' => false,
+                'confidence' => 1.0,
+            ], 0);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<int, string> $needles
+     */
+    private function containsAny(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (trim($needle) !== '' && str_contains($haystack, mb_strtolower(trim($needle)))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function directFallbackValidationContext(): array
+    {
+        $contactSettings = \App\Models\ContactSetting::allKeyed();
+        $allowedUrls = array_values(array_unique(array_filter([
+            rtrim(route('home'), '/'),
+            rtrim(route('products.index'), '/'),
+            rtrim(route('contact'), '/'),
+            !empty($contactSettings['whatsapp_url']) ? rtrim((string) $contactSettings['whatsapp_url'], '/') : null,
+            !empty($contactSettings['messenger_url']) ? rtrim((string) $contactSettings['messenger_url'], '/') : null,
+        ])));
+
+        return [
+            'products' => [],
+            'allowed_urls' => $allowedUrls,
+        ];
     }
 }

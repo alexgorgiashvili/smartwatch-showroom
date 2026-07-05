@@ -219,6 +219,10 @@ class ChatbotFallbackStrategyService
             return $this->buildSliderExplanationReply();
         }
 
+        if ($this->looksLikeContactRequest($contextText)) {
+            return $this->buildContactReply();
+        }
+
         if ($this->looksLikeAvailabilityAssumptionRequest($contextText) && $catalogProducts !== []) {
             return $this->buildAvailabilitySoftCorrectionReply($catalogProducts);
         }
@@ -258,6 +262,21 @@ class ChatbotFallbackStrategyService
             }
 
             return 'მომწერე ბიუჯეტი ან სასურველი ფუნქცია (GPS, SOS, ზარები, კამერა) და უფრო ზუსტად შეგირჩევ.';
+        }
+
+        if (
+            in_array($intentResult?->intent(), ['price_query', 'stock_query'], true)
+            && $contextProducts === []
+            && $catalogProducts !== []
+        ) {
+            return implode("\n", [
+                $intentResult?->intent() === 'stock_query'
+                    ? 'მარაგის მიხედვით ეს ვარიანტებია:'
+                    : 'ფასის მიხედვით ეს ვარიანტებია:',
+                $this->formatProductBullets($catalogProducts, 4),
+                '',
+                'თუ კონკრეტულ მოდელს მომწერ, ფასსა და მარაგს ზუსტად გეტყვი.',
+            ]);
         }
 
         if (in_array($intentResult?->intent(), ['price_query', 'stock_query'], true)) {
@@ -303,7 +322,7 @@ class ChatbotFallbackStrategyService
             $reply .= "\n" . $this->formatProductBullets($products);
             $reply .= "\n\n" . 'თუ გინდათ, მომწერეთ ბიუჯეტი ან სასურველი ფუნქცია და უფრო ზუსტად შეგირჩევთ.';
         } else {
-            $contacts = $this->contactInfoLine();
+            $contacts = $this->contactLinksLine();
 
             if ($contacts !== '') {
                 $reply .= ' დამატებითი ინფორმაციისთვის: ' . $contacts . '.';
@@ -606,6 +625,17 @@ class ChatbotFallbackStrategyService
         return 'სლაიდერში მსგავსი მოდელებიც გამოვიტანეთ, რომ მარტივად შეადარო ზომა, ფასი და ფუნქციები.';
     }
 
+    private function buildContactReply(): string
+    {
+        $contacts = $this->contactLinksLine();
+
+        if ($contacts !== '') {
+            return 'მოგვწერეთ პირდაპირ ' . $contacts . ' და იქ უფრო სწრაფად დაგეხმარებით.';
+        }
+
+        return 'დაგვიკავშირდით საკონტაქტო გვერდიდან: ' . route('contact');
+    }
+
     /**
      * @param array<int, array<string, mixed>> $products
      * @return array<int, array<string, mixed>>
@@ -678,6 +708,23 @@ class ChatbotFallbackStrategyService
     private function looksLikeAvailabilityAssumptionRequest(string $contextText): bool
     {
         return $this->containsAnyNeedle($contextText, ['პროდუქცია არ გაქვთ', 'არაფერი არ გაქვთ', 'საერთოდ გაქვთ რამე']);
+    }
+
+    private function looksLikeContactRequest(string $contextText): bool
+    {
+        return $this->containsAnyNeedle($contextText, [
+            'საკონტაქტო',
+            'დაგიკავშირდ',
+            'მოგწერ',
+            'whatsapp',
+            'ვაცაპ',
+            'ვოთსაფ',
+            'wa.me',
+            'messenger',
+            'მესენჯერ',
+            'facebook',
+            'კონტაქტ',
+        ]);
     }
 
     private function productArrayMatchesCatalogFacet(array $product, bool $twoG, bool $fourG, bool $discounted): bool
@@ -791,6 +838,28 @@ class ChatbotFallbackStrategyService
         $normalized = rtrim(rtrim(number_format((float) $regularPrice, 2, '.', ''), '0'), '.');
 
         return $normalized . ' ₾';
+    }
+
+    private function contactLinksLine(): string
+    {
+        $contactSettings = ContactSetting::allKeyed();
+        $parts = [];
+
+        $whatsApp = trim((string) ($contactSettings['whatsapp_url'] ?? ''));
+        if ($whatsApp !== '') {
+            $parts[] = '[WhatsApp](' . $whatsApp . ')';
+        }
+
+        $messenger = trim((string) ($contactSettings['messenger_url'] ?? ''));
+        if ($messenger !== '') {
+            $parts[] = '[Messenger](' . $messenger . ')';
+        }
+
+        if ($parts !== []) {
+            return implode(' ან ', $parts);
+        }
+
+        return trim((string) route('contact'));
     }
 
     private function contactInfoLine(): string

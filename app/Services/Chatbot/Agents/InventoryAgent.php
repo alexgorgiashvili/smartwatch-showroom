@@ -228,6 +228,42 @@ class InventoryAgent
             ];
         }
 
+        if ($this->shouldReplaceBrokenCatalogReply($response, $message)) {
+            $fallback = $this->fallbackStrategy->resolveProviderFailureOutcome(
+                $intent,
+                $validationContext,
+                $sessionContext['recent'] ?? [],
+                $preferences
+            );
+
+            return [
+                'success' => true,
+                'response' => $fallback->reply(),
+                'validation_passed' => $fallback->validationPassed(),
+                'reflection_attempts' => 0,
+                'violations' => $fallback->validationViolations(),
+                'validation_context' => $validationContext,
+            ];
+        }
+
+        if ($this->shouldReplaceDirectContactReply($response, $message)) {
+            $fallback = $this->fallbackStrategy->resolveProviderFailureOutcome(
+                $intent,
+                $validationContext,
+                $sessionContext['recent'] ?? [],
+                $preferences
+            );
+
+            return [
+                'success' => true,
+                'response' => $fallback->reply(),
+                'validation_passed' => $fallback->validationPassed(),
+                'reflection_attempts' => 0,
+                'violations' => $fallback->validationViolations(),
+                'validation_context' => $validationContext,
+            ];
+        }
+
         $this->traceWidget('inventory_agent.model_completed', array_filter([
             'model_reply' => $response,
             'usage' => $completion['usage'] ?? [],
@@ -340,5 +376,45 @@ class InventoryAgent
         return collect($productSeekingSignals)->contains(
             fn (string $signal): bool => str_contains($normalizedMessage, $signal)
         );
+    }
+
+    private function shouldReplaceDirectContactReply(string $response, string $message): bool
+    {
+        $normalizedMessage = mb_strtolower($message);
+        $normalizedResponse = mb_strtolower($response);
+
+        $isContactRequest = collect([
+            'საკონტაქტო',
+            'კონტაქტ',
+            'whatsapp',
+            'messenger',
+            'ვაცაპ',
+            'მესენჯერ',
+            'დაგიკავშირდ',
+            'მოგწერ',
+        ])->contains(fn (string $signal): bool => str_contains($normalizedMessage, mb_strtolower($signal)));
+
+        if (!$isContactRequest) {
+            return false;
+        }
+
+        return collect(['+995', 'info@', 'ელფოსტ', 'ნომერზე'])
+            ->contains(fn (string $signal): bool => str_contains($normalizedResponse, mb_strtolower($signal)));
+    }
+
+    private function shouldReplaceBrokenCatalogReply(string $response, string $message): bool
+    {
+        $normalizedMessage = mb_strtolower($message);
+        $normalizedResponse = mb_strtolower($response);
+
+        $isCatalogRequest = collect(['რა გაქვთ', 'მოდელი', 'მოდელები', 'catalog'])
+            ->contains(fn (string $signal): bool => str_contains($normalizedMessage, mb_strtolower($signal)));
+
+        if (!$isCatalogRequest) {
+            return false;
+        }
+
+        return str_contains($normalizedResponse, 'სმარტსაათები არ არის')
+            || str_contains($normalizedResponse, 'კატალოგში სმარტსაათები არ არის');
     }
 }

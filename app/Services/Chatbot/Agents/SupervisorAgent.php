@@ -72,7 +72,7 @@ class SupervisorAgent
                 $intent,
                 ['products' => []],
                 $sessionContext['recent'] ?? [],
-                $preferences
+                $extractedPreferences
             );
 
             $this->traceWidget('supervisor.circuit_open', [
@@ -211,7 +211,7 @@ class SupervisorAgent
                 $searchContext,
                 $reconciled['products'],
                 $sessionContext,
-                $userPreferences,
+                $extractedPreferences,
                 $trace
             );
 

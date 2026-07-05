@@ -16,15 +16,12 @@
 
 $ErrorActionPreference = "Stop"
 
-$defaultHostName = "142.132.203.78"
-$defaultUserName = "mytechn1"
-$defaultDeployPath = "/home/mytechn1/public_html/smartwatch-showroom"
-$defaultPort = "22"
-
-$hostName = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SSH_HOST)) { $defaultHostName } else { $env:DEPLOY_SSH_HOST }
-$userName = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SSH_USER)) { $defaultUserName } else { $env:DEPLOY_SSH_USER }
-$deployPath = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SSH_PATH)) { $defaultDeployPath } else { $env:DEPLOY_SSH_PATH }
-$port = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SSH_PORT)) { $defaultPort } else { $env:DEPLOY_SSH_PORT }
+. "$PSScriptRoot\deploy-config.ps1"
+$config = Initialize-DeployConfig -ProjectRoot $PSScriptRoot
+$hostName = $config.HostName
+$userName = $config.UserName
+$deployPath = $config.DeployPath
+$port = $config.Port
 $branch = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_BRANCH)) { "main" } else { $env:DEPLOY_BRANCH }
 
 Write-Host ""

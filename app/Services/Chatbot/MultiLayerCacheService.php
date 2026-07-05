@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cache;
 
 class MultiLayerCacheService
 {
-    private const CACHE_KEY_VERSION = 'v4';
+    private const CACHE_KEY_VERSION = 'v5';
     private const EMBEDDING_CACHE_TTL = 3600;
     private const SEMANTIC_CACHE_TTL = 1800;
     private const RESPONSE_CACHE_TTL = 600;

@@ -106,6 +106,10 @@ class ProductContextService
             $allowedUrls[] = rtrim((string) $contactSettings['whatsapp_url'], '/');
         }
 
+        if (!empty($contactSettings['messenger_url'])) {
+            $allowedUrls[] = rtrim((string) $contactSettings['messenger_url'], '/');
+        }
+
         foreach ($productRows as $productRow) {
             if (!empty($productRow['url'])) {
                 $allowedUrls[] = rtrim((string) $productRow['url'], '/');

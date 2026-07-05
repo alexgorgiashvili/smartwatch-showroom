@@ -435,6 +435,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		scrollMessagesToBottom();
 	};
 
+	const getDefaultQuickReplies = () => ([
+		'100 ლარამდე რა გაქვთ?',
+		'4G მოდელები მაჩვენე',
+		'ვიდეო ზარიანი საათი მინდა',
+		'WhatsApp ან Messenger',
+	]);
+
 	// ── Product carousel ──
 	const addCarousel = (products) => {
 		const root = document.createElement('div');
@@ -589,6 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						addCarousel(msg.products);
 					}
 					});
+				addQuickReplies(getDefaultQuickReplies());
 				return;
 			}
 		} catch {
@@ -600,12 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const showGreeting = () => {
 		addMessage('გამარჯობა! MyTechnic ასისტენტი ვარ 👋 სიამოვნებით დაგეხმარებით. რა გაინტერესებთ?', 'bot');
-		addQuickReplies([
-			'🎯 რას გირჩევთ?',
-			'💰 რა ფასები გაქვთ?',
-			'📍 სად ხართ?',
-			'📞 საკონტაქტო',
-		]);
+		addQuickReplies(getDefaultQuickReplies());
 	};
 
 	if (!historyEndpoint) {

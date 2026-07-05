@@ -57,11 +57,7 @@ class ChatController extends Controller
      */
     private function getWidgetConversation(Customer $customer): Conversation
     {
-        $conversation = $customer->conversations()
-            ->where('platform', 'home')
-            ->where('status', 'active')
-            ->latest('last_message_at')
-            ->first();
+        $conversation = $this->findCurrentWidgetConversation($customer);
 
         if (!$conversation) {
             $conversation = Conversation::create([
@@ -72,10 +68,39 @@ class ChatController extends Controller
                 'status' => 'active',
                 'unread_count' => 0,
                 'last_message_at' => now(),
+                'metadata' => [
+                    'widget_version' => $this->currentWidgetConversationVersion(),
+                ],
             ]);
         }
 
         return $conversation;
+    }
+
+    private function findCurrentWidgetConversation(Customer $customer): ?Conversation
+    {
+        $currentVersion = $this->currentWidgetConversationVersion();
+
+        $conversation = $customer->conversations()
+            ->where('platform', 'home')
+            ->where('status', 'active')
+            ->latest('last_message_at')
+            ->first();
+
+        if ($conversation && data_get($conversation->metadata, 'widget_version') === $currentVersion) {
+            return $conversation;
+        }
+
+        return $customer->conversations()
+            ->where('platform', 'home')
+            ->where('status', 'active')
+            ->get()
+            ->first(fn (Conversation $item): bool => data_get($item->metadata, 'widget_version') === $currentVersion);
+    }
+
+    private function currentWidgetConversationVersion(): string
+    {
+        return 'chatbot-mvp-2026-07-05';
     }
 
     public function respond(
@@ -856,17 +881,13 @@ class ChatController extends Controller
             return response()->json(['messages' => [], 'conversation_id' => null]);
         }
 
-        $conversation = $customer->conversations()
-            ->where('platform', 'home')
-            ->where('status', 'active')
-            ->latest('last_message_at')
-            ->first();
+        $conversation = $this->findCurrentWidgetConversation($customer);
 
         if (!$conversation) {
             $widgetTrace->logStep('widget.history.empty', array_filter([
                 'trace_id' => $traceId,
                 'customer_id' => $customer->id,
-                'reason' => 'conversation_not_found',
+                'reason' => 'conversation_not_found_or_stale',
             ], fn ($value) => $value !== null));
 
             return response()->json(['messages' => [], 'conversation_id' => null]);
@@ -953,6 +974,10 @@ class ChatController extends Controller
 
         if (!empty($contactSettings['whatsapp_url'])) {
             $allowedUrls[] = rtrim((string) $contactSettings['whatsapp_url'], '/');
+        }
+
+        if (!empty($contactSettings['messenger_url'])) {
+            $allowedUrls[] = rtrim((string) $contactSettings['messenger_url'], '/');
         }
 
         foreach ($productRows as $productRow) {
