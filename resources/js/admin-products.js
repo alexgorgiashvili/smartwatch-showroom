@@ -476,7 +476,10 @@ const AdminProducts = {
             if (!btn) return;
 
             try {
-                const response = await axios.post(btn.dataset.url, {}, { headers: { Accept: 'application/json' } });
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const response = await axios.post(btn.dataset.url, { _token: csrfToken }, {
+                    headers: { Accept: 'application/json' },
+                });
                 if (typeof window.AdminHelpers !== 'undefined') {
                     window.AdminHelpers.showToast(response.data?.message || 'Primary image updated!', 'success');
                 }
@@ -484,7 +487,9 @@ const AdminProducts = {
                 this._renderImages(response.data?.images || []);
             } catch (error) {
                 if (typeof window.AdminHelpers !== 'undefined') {
-                    window.AdminHelpers.showToast(error.response?.data?.message || 'Failed to set primary image', 'error');
+                    const message = error.response?.data?.message
+                        || (error.response?.status ? `Failed to set primary image (HTTP ${error.response.status})` : 'Failed to set primary image');
+                    window.AdminHelpers.showToast(message, 'error');
                 }
             }
         });
