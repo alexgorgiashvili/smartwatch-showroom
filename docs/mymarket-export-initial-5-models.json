@@ -1,0 +1,378 @@
+{
+    "batch_id": "mymarket-initial-5-models",
+    "generated_at": "2026-07-06T01:19:57+04:00",
+    "generated_from": "http://127.0.0.1:8000",
+    "preset": "initial-5-models",
+    "source_policy": {
+        "primary_source_of_truth": "Production site/admin and current live MyMarket form state",
+        "repo_role": "Fallback only when live values are temporarily unavailable",
+        "must_recheck_live_before_publish": [
+            "price",
+            "sale_price",
+            "variant stock",
+            "active colors",
+            "photo selection order"
+        ]
+    },
+    "listing_defaults": {
+        "category_path_ka": [
+            "ტექნიკა",
+            "მობილურები და აქსესუარები",
+            "სმარტ საათი"
+        ],
+        "condition": "ახალი",
+        "language": "ka",
+        "one_listing_per_model": true,
+        "combine_colors_in_one_listing": true,
+        "include_only_in_stock_variants": true,
+        "online_sales_enabled": false,
+        "installment_enabled": false,
+        "paid_promotion_enabled": false
+    },
+    "models": [
+        {
+            "sequence": 1,
+            "model_code": "Q19",
+            "slug": "2g-network-kids-smart-watch-anti-lost-sos-gps-video-call",
+            "name_ka": "Q19 — 2G საბავშვო სმარტ საათი კამერითა და SOS-ღილაკით",
+            "name_en": "2G Network Kids Smart Watch For Children Anti-lost SOS Button GPS Tracker Smartwatch Video Call Voice Chat",
+            "positioning_angle_ka": "ბიუჯეტური 2G საბავშვო საათი კამერით, SOS-ით და ძირითადი უსაფრთხოების ფუნქციებით",
+            "price_gel": 79,
+            "sale_price_gel": 59,
+            "discount_expected": true,
+            "discount_target_price_gel": 59,
+            "warranty_months": 1,
+            "operating_system": "Android",
+            "screen_size": "1.44",
+            "display_type": "OLED",
+            "screen_resolution": "128*128",
+            "battery_capacity_mah": 400,
+            "battery_life_range": "1-3",
+            "water_resistant": "IP67",
+            "camera_raw": "3 - 7MP",
+            "camera_if_mandatory": "3.2MP",
+            "memory_card_if_mandatory": "არა",
+            "short_description_ka": "Q19 — 2G საბავშვო სმარტ საათი SIM ბრარათის მხარდაჭერით, კამერით, SOS საგანგებო ღილაკით და GPS ტრეკერით. IP67 წყალგამძლეობა, 1.44\" OLED სენსორული ეკრანი.",
+            "functions_ka": [
+                "SIM ბარათი",
+                "SOS საგანგებო ღილაკი",
+                "ხმოვანი ზარი",
+                "კამერა",
+                "ფიტნეს ტრეკერი",
+                "ძილის მონიტორინგი",
+                "მაღვიძარა",
+                "კალენდარი",
+                "მშობლის დისტანციური მართვა",
+                "სენსორული ეკრანი"
+            ],
+            "variants": [
+                {
+                    "color_ka": "მწვანე",
+                    "stock": 10,
+                    "include": true
+                },
+                {
+                    "color_ka": "წითელი",
+                    "stock": 5,
+                    "include": true
+                },
+                {
+                    "color_ka": "იასამნისფერი",
+                    "stock": 6,
+                    "include": true
+                }
+            ],
+            "image_count": 8,
+            "primary_image_url": "/storage/images/products/2g-network-kids-smart-watch-anti-lost-sos-gps-video-call/01_thumb.jpg",
+            "must_emphasize_ka": [
+                "ფასდაკლება",
+                "SOS",
+                "GPS/LBS უსაფრთხოება",
+                "კამერა"
+            ],
+            "must_avoid_ka": [
+                "ზედმეტი ბრენდული დაპირებები",
+                "გამოუდასტურებელი აქსესუარები"
+            ]
+        },
+        {
+            "sequence": 2,
+            "model_code": "X01",
+            "slug": "kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch",
+            "name_ka": "X01 — 4G საბავშვო სმარტ საათი კამერითა და ვიდეო ზარით",
+            "name_en": "Kids Smartwatches Camera Video Phone Call Sos Wifi+lbs Locator Alarm Clock Voice Children's Boys Girls Smart Watch",
+            "positioning_angle_ka": "ხელმისაწვდომი 4G ვიდეოზარიანი მოდელი ყოველდღიური გამოყენებისთვის",
+            "price_gel": 109,
+            "discount_expected": false,
+            "warranty_months": 3,
+            "operating_system": "Android",
+            "screen_size": "36-40მმ",
+            "display_type": "IPS",
+            "screen_resolution": "320x240",
+            "battery_capacity_mah": 650,
+            "battery_life_hours": 96,
+            "water_resistant": "IP67",
+            "camera_raw": "< 3MP",
+            "camera_if_mandatory": "2MP",
+            "memory_card_if_mandatory": "არა",
+            "short_description_ka": "X01 — 4G საბავშვო სმარტ საათი კამერით, ვიდეო ზარით, GPS + WiFi + LBS მდებარეობით, SOS ღილაკით. IP67 წყალგამძლეობა, 650mAh ბატარეა.",
+            "functions_ka": [
+                "GPS + WiFi + LBS მდებარეობა",
+                "SOS საგანგებო ღილაკი",
+                "ხმოვანი ზარი",
+                "ვიდეო ზარი",
+                "კამერა",
+                "ფიტნეს ტრეკერი",
+                "მაღვიძარა",
+                "კალენდარი",
+                "შეტყობინებები (Push)",
+                "მშობლის დისტანციური მართვა",
+                "სენსორული ეკრანი",
+                "4G ქსელი",
+                "SIM ბარათი"
+            ],
+            "variants": [
+                {
+                    "color_ka": "ვარდისფერი",
+                    "stock": 5,
+                    "include": true
+                },
+                {
+                    "color_ka": "თეთრი",
+                    "stock": 0,
+                    "include": false
+                },
+                {
+                    "color_ka": "შავი",
+                    "stock": 5,
+                    "include": true
+                },
+                {
+                    "color_ka": "ლურჯი",
+                    "stock": 3,
+                    "include": true
+                }
+            ],
+            "image_count": 5,
+            "primary_image_url": "/storage/images/products/kids-smartwatches-camera-video-phone-call-sos-wifi-lbs-locator-alarm-clock-voice-childrens-boys-girls-smart-watch/01_thumb.png",
+            "must_emphasize_ka": [
+                "4G",
+                "ვიდეო ზარი",
+                "GPS + WiFi + LBS",
+                "SOS"
+            ],
+            "must_avoid_ka": [
+                "თეთრი ფერის ჩართვა stock=0 შემთხვევაში"
+            ]
+        },
+        {
+            "sequence": 3,
+            "model_code": "CT23",
+            "slug": "wonlex-cheaper-kids-gps-smart-watch-4g-ct23",
+            "name_ka": "Wonlex CT23 — 4G საბავშვო სმარტ საათი GPS-ით",
+            "name_en": "Wonlex Cheaper Kids GPS Smart Watch 4G CT23",
+            "positioning_angle_ka": "ხელმისაწვდომი 4G Wonlex მოდელი მშობლისთვის მნიშვნელოვანი ძირითადი ფუნქციებით",
+            "price_gel": 169,
+            "discount_expected": false,
+            "warranty_months": 3,
+            "operating_system": "RTOS",
+            "screen_size": "1.83 ინჩიანი ფერადი ტაჩსკრინი",
+            "display_type": "IPS",
+            "screen_resolution": "240x280",
+            "battery_capacity_mah": 650,
+            "battery_life_hours": 96,
+            "battery_life_range": "2-4",
+            "water_resistant": "IP67",
+            "camera_raw": "< 3MP",
+            "camera_if_mandatory": "2MP",
+            "memory_card_if_mandatory": "არა",
+            "short_description_ka": "Wonlex CT23 — ხელმისაწვდომი 4G საბავშვო სმარტ საათი GPS ტრეკერით, SOS ღილაკით და ვიდეო ზარით. IP67 წყალგამძლეობა, 1.83\" ფერადი სენსორული ეკრანი, Nano-SIM მხარდაჭერა.",
+            "functions_ka": [
+                "GPS ტრეკერი",
+                "SOS საგანგებო ღილაკი",
+                "ხმოვანი ზარი",
+                "ვიდეო ზარი",
+                "ძილის მონიტორინგი",
+                "ფიტნეს ტრეკერი",
+                "მაღვიძარა",
+                "კალენდარი",
+                "შეტყობინებები (Push)",
+                "მშობლის დისტანციური მართვა",
+                "სენსორული ეკრანი",
+                "4G ქსელი",
+                "Nano-SIM",
+                "კამერა",
+                "მიკროფონი"
+            ],
+            "variants": [
+                {
+                    "color_ka": "ლურჯი",
+                    "stock": 0,
+                    "include": false
+                },
+                {
+                    "color_ka": "შავი",
+                    "stock": 1,
+                    "include": true
+                },
+                {
+                    "color_ka": "ვარდისფერი",
+                    "stock": 0,
+                    "include": false
+                }
+            ],
+            "image_count": 6,
+            "primary_image_url": "/storage/images/products/wonlex-cheaper-kids-gps-smart-watch-4g-ct23/01_thumb.jpg",
+            "must_emphasize_ka": [
+                "Wonlex",
+                "4G",
+                "GPS",
+                "ვიდეო ზარი",
+                "SOS"
+            ],
+            "must_avoid_ka": [
+                "ფასდაკლების მითითება live დადასტურების გარეშე",
+                "stock 25-ის გამეორება live დადასტურების გარეშე"
+            ],
+            "user_note_possible_live_discount": "Older user note said 179 → 149; verify live before publish."
+        },
+        {
+            "sequence": 4,
+            "model_code": "T53",
+            "slug": "yqt-4g-sos-smart-watch-for-kids-video-call-1-83-camera-oem-factory-gps-smartwatch-for-children",
+            "name_ka": "T53 — 4G საბავშვო სმარტ საათი ვიდეო ზარითა და GPS-ით",
+            "name_en": "YQT 4G SOS Smart Watch for Kids Video Call 1.83\" Camera OEM Factory GPS Smartwatch for Children",
+            "positioning_angle_ka": "სასაჩუქრე 4G bundle დამატებითი კომპლექტაციით",
+            "price_gel": 179,
+            "discount_expected": false,
+            "warranty_months": 3,
+            "operating_system": "Android, IOS",
+            "screen_size": "36-40მმ",
+            "display_type": "IPS",
+            "screen_resolution": "320x240",
+            "battery_capacity_mah": 750,
+            "battery_life_range": "3-5",
+            "water_resistant": "IP67",
+            "camera_raw": "< 3MP",
+            "camera_if_mandatory": "2MP",
+            "memory_card_if_mandatory": "არა",
+            "short_description_ka": "T53 — სასაჩუქრე 4G საბავშვო სმარტ საათი ბიჭებისა და გოგოებისთვის, ვიდეო ზარით, GPS ტრეკერით, SOS ღილაკით და ფერების მიხედვით არჩევანით. კომპლექტაციაში შედის 2 ცვლადი სამაჯური და დეკორატიული ჩამოსაკიდი აქსესუარი.",
+            "functions_ka": [
+                "GPS ტრეკერი (GPS + AGPS + LBS + WiFi)",
+                "SOS საგანგებო ღილაკი",
+                "ხმოვანი ზარი",
+                "ვიდეო ზარი",
+                "თერმომეტრი",
+                "LED ფანარი",
+                "ძილის მონიტორინგი",
+                "მაღვიძარა",
+                "კალენდარი",
+                "მუსიკის პლეიერი",
+                "შეტყობინებები (Push)",
+                "მშობლის დისტანციური მართვა",
+                "სენსორული ეკრანი",
+                "4G / 3G ქსელი",
+                "Nano-SIM",
+                "კამერა",
+                "სასაჩუქრე კომპლექტაცია",
+                "ბიჭებისა და გოგოებისთვის",
+                "ფერების მიხედვით არჩევანი",
+                "კომპლექტაციაში 2 ცვლადი სამაჯური",
+                "დეკორატიული ჩამოსაკიდი აქსესუარი"
+            ],
+            "variants": [
+                {
+                    "color_ka": "ვარდისფერი",
+                    "stock": 5,
+                    "include": true
+                },
+                {
+                    "color_ka": "ლურჯი",
+                    "stock": 5,
+                    "include": true
+                }
+            ],
+            "image_count": 7,
+            "primary_image_url": "/storage/images/products/yqt-4g-sos-smart-watch-for-kids-video-call-1-83-camera-oem-factory-gps-smartwatch-for-children/01_thumb.jpg",
+            "must_emphasize_ka": [
+                "სასაჩუქრე ბოქსი",
+                "2 ცვლადი სამაჯური",
+                "დეკორატიული აქსესუარი",
+                "ვიდეო ზარი",
+                "GPS"
+            ],
+            "must_avoid_ka": [
+                "ჩვეულებრივ საათად წარმოდგენა gift-angle-ის გარეშე"
+            ]
+        },
+        {
+            "sequence": 5,
+            "model_code": "KT34",
+            "slug": "newest-style-4g-smart-watch-sos-call-wifi-lbs-gps-tracker-android-smart-watch-kid-sos-camera-alarm-clock-kt34",
+            "name_ka": "Wonlex KT34 — 4G საბავშვო სმარტ საათი GPS ტრეკერით",
+            "name_en": "KT34 4G  AMOLED Android Smart Watch",
+            "positioning_angle_ka": "Android სისტემაზე მომუშავე უფრო ძლიერი მოდელი უფროსი ასაკის ბავშვისთვის",
+            "price_gel": 229,
+            "discount_expected": false,
+            "warranty_months": 3,
+            "operating_system": "Android",
+            "screen_size": "1.85 ინჩი",
+            "display_type": "IPS",
+            "screen_resolution": "240*240",
+            "battery_capacity_mah": 800,
+            "battery_life_hours": 96,
+            "battery_life_range": "3-5",
+            "water_resistant": "IP67",
+            "camera_raw": "< 3MP",
+            "camera_if_mandatory": "2MP",
+            "memory_card_if_mandatory": "არა",
+            "short_description_ka": "Wonlex KT34 — 4G საბავშვო სმარტ საათი რეალურ დროში GPS მონიტორინგით, SOS ღილაკით, ხმოვანი და ვიდეო ზარებით. IP67 წყალგამძლეობა, გულისცემის სენსორი, ძილის მონიტორინგი. იმართება მობილური აპლიკაციით.",
+            "functions_ka": [
+                "GPS ტრეკერი (GPS + WiFi + LBS)",
+                "SOS საგანგებო ღილაკი",
+                "ხმოვანი ზარი",
+                "ვიდეო ზარი",
+                "გულისცემის მონიტორი",
+                "ძილის მონიტორინგი",
+                "მაღვიძარა",
+                "კალენდარი",
+                "შეტყობინებები (Push)",
+                "მშობლის დისტანციური მართვა",
+                "Wi-Fi",
+                "კამერა",
+                "სენსორული ეკრანი",
+                "4G ქსელი"
+            ],
+            "variants": [
+                {
+                    "color_ka": "შავი",
+                    "stock": 0,
+                    "include": false
+                },
+                {
+                    "color_ka": "ლურჯი",
+                    "stock": 3,
+                    "include": true
+                },
+                {
+                    "color_ka": "ვარდისფერი",
+                    "stock": 3,
+                    "include": true
+                }
+            ],
+            "image_count": 6,
+            "primary_image_url": "/storage/images/products/2024-newest-style-4g-smart-watch-sos-call-wifi-lbs-gps-tracker-android-smart-watch-kid-sos-camera-alarm-clock-kt34/01_thumb.jpg",
+            "must_emphasize_ka": [
+                "Android სისტემა",
+                "GPS + WiFi + LBS",
+                "ვიდეო და ხმოვანი ზარი",
+                "გულისცემის მონიტორი",
+                "ძილის მონიტორინგი"
+            ],
+            "must_avoid_ka": [
+                "შავი ფერის ჩართვა stock=0 შემთხვევაში",
+                "მხოლოდ საბაზისო მოდელად წარმოდგენა"
+            ]
+        }
+    ]
+}

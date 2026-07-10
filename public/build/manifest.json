@@ -1,6 +1,6 @@
 {
-  "_bootstrap-Ti-_9NVk.js": {
-    "file": "assets/bootstrap-Ti-_9NVk.js",
+  "_bootstrap-Bjx54H5_.js": {
+    "file": "assets/bootstrap-Bjx54H5_.js",
     "name": "bootstrap",
     "imports": [
       "_vendor-C0Zqfgkc.js"
@@ -37,22 +37,22 @@
     "isEntry": true
   },
   "resources/js/admin.js": {
-    "file": "assets/admin-D3950BeA.js",
+    "file": "assets/admin-Dj4eCNBb.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-Ti-_9NVk.js",
+      "_bootstrap-Bjx54H5_.js",
       "_vendor-C0Zqfgkc.js"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-U5Miuf01.js",
+    "file": "assets/app-CR3GQter.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-Ti-_9NVk.js",
+      "_bootstrap-Bjx54H5_.js",
       "_vendor-C0Zqfgkc.js"
     ],
     "css": [
