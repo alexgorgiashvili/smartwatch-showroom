@@ -14,7 +14,7 @@ class AdminProductPrimaryImageTest extends TestCase
 
     public function test_product_image_casts_foreign_key_to_integer(): void
     {
-        $image = ProductImage::newFromBuilder([
+        $image = (new ProductImage())->newFromBuilder([
             'id' => 1,
             'product_id' => '18',
             'path' => 'images/products/example.jpg',
