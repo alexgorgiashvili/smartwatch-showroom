@@ -14,8 +14,11 @@ class GrizzlySmsService
 
     public function __construct()
     {
-        $this->apiKey = config('services.grizzly_sms.key', '');
-        $this->baseUrl = config('services.grizzly_sms.base_url', 'https://api.grizzlysms.com/stubs/handler_api.php');
+        // `config()` may return null when an optional environment variable is
+        // absent. Keep this service disabled in that case instead of failing
+        // while Laravel resolves routes or unrelated admin requests.
+        $this->apiKey = (string) config('services.grizzly_sms.key', '');
+        $this->baseUrl = (string) config('services.grizzly_sms.base_url', 'https://api.grizzlysms.com/stubs/handler_api.php');
     }
 
     public function isConfigured(): bool
