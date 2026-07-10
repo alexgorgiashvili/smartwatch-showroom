@@ -12,6 +12,17 @@ class AdminProductPrimaryImageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_product_image_casts_foreign_key_to_integer(): void
+    {
+        $image = ProductImage::newFromBuilder([
+            'id' => 1,
+            'product_id' => '18',
+            'path' => 'images/products/example.jpg',
+        ]);
+
+        $this->assertSame(18, $image->product_id);
+    }
+
     public function test_admin_can_set_an_existing_product_image_as_primary(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

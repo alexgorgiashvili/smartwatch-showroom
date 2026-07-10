@@ -20,6 +20,7 @@ class ProductImage extends Model
     ];
 
     protected $casts = [
+        'product_id' => 'integer',
         'is_primary' => 'boolean',
         'sort_order' => 'integer',
     ];
