@@ -223,6 +223,7 @@ class OrderController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.variant_id' => ['required', 'distinct', 'exists:product_variants,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ]);
 
         try {
@@ -267,7 +268,10 @@ class OrderController extends Controller
                         throw new \RuntimeException("Insufficient stock. Available: {$available}");
                     }
 
-                    $unitPrice = $variant->product->sale_price ?? $variant->product->price;
+                    $catalogPrice = $variant->product->sale_price ?? $variant->product->price;
+                    $unitPrice = filled($itemData['unit_price'] ?? null)
+                        ? round((float) $itemData['unit_price'], 2)
+                        : $catalogPrice;
                     $subtotal = $unitPrice * $quantity;
                     $totalAmount += $subtotal;
 

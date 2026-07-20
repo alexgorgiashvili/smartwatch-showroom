@@ -151,7 +151,7 @@ class AdminOrderQuickCreateTest extends TestCase
             'customer_name' => 'Nino Test',
             'customer_phone' => '555123456',
             'items' => [
-                ['variant_id' => $replacementVariant->id, 'quantity' => 2],
+                ['variant_id' => $replacementVariant->id, 'quantity' => 2, 'unit_price' => 59],
             ],
         ]);
 
@@ -160,5 +160,7 @@ class AdminOrderQuickCreateTest extends TestCase
         $this->assertSame(2, $replacementVariant->fresh()->quantity);
         $this->assertSame($replacementVariant->id, $order->fresh()->items->sole()->product_variant_id);
         $this->assertSame(2, $order->fresh()->items->sole()->quantity);
+        $this->assertSame('59.00', $order->fresh()->items->sole()->unit_price);
+        $this->assertSame('118.00', $order->fresh()->total_amount);
     }
 }

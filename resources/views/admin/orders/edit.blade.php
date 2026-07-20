@@ -92,7 +92,7 @@
             <h6 class="card-title mb-3">ნივთები</h6>
             @foreach($order->items as $index => $item)
                 <div class="row g-2 align-items-end {{ $loop->last ? '' : 'mb-3 pb-3 border-bottom' }}">
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <label class="form-label small">მოდელი და ვარიანტი *</label>
                         <select name="items[{{ $index }}][variant_id]" class="form-select @error("items.$index.variant_id") is-invalid @enderror" required>
                             @foreach($products as $product)
@@ -116,8 +116,13 @@
                         <input type="number" name="items[{{ $index }}][quantity]" min="1" class="form-control @error("items.$index.quantity") is-invalid @enderror" value="{{ old("items.$index.quantity", $item->quantity) }}" required>
                     </div>
                     <div class="col-md-2 text-muted small">
-                        მიმდინარე: GEL {{ number_format($item->subtotal, 2) }}
+                        <label class="form-label small text-dark">შეთანხმებული ფასი *</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">GEL</span>
+                            <input type="number" name="items[{{ $index }}][unit_price]" min="0" step="0.01" class="form-control @error("items.$index.unit_price") is-invalid @enderror" value="{{ old("items.$index.unit_price", number_format($item->unit_price, 2, '.', '')) }}" required>
+                        </div>
                     </div>
+                    <div class="col-md-2 text-muted small">კატალოგში: GEL {{ number_format($item->variant?->product?->sale_price ?? $item->variant?->product?->price ?? 0, 2) }}</div>
                 </div>
             @endforeach
         </div></div>
