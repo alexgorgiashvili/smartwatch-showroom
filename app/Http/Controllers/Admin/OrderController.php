@@ -57,11 +57,11 @@ class OrderController extends Controller
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:160'],
             'customer_phone' => ['required', 'string', 'max:50', 'regex:/^(995[0-9]{9}|5[0-9]{8})$/'],
-            'personal_number' => ['required', 'regex:/^\d{11}$/'],
-            'city_id' => ['required', 'integer', 'exists:cities,id'],
-            'exact_address' => ['required', 'string'],
-            'order_source' => ['required', 'in:Facebook,Instagram,Direct,Other'],
-            'payment_type' => ['required', 'integer', 'in:1,2'],
+            'personal_number' => ['nullable', 'regex:/^\d{11}$/'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'exact_address' => ['nullable', 'string'],
+            'order_source' => ['nullable', 'in:Facebook,Instagram,Direct,Other'],
+            'payment_type' => ['nullable', 'integer', 'in:1,2'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.variant_id' => ['required', 'exists:product_variants,id'],
@@ -72,7 +72,9 @@ class OrderController extends Controller
 
         try {
             // Generate order number
-            $city = City::query()->findOrFail((int) $data['city_id']);
+            $city = filled($data['city_id'] ?? null)
+                ? City::query()->findOrFail((int) $data['city_id'])
+                : null;
 
             // Format phone number
             $phone = $data['customer_phone'];
@@ -82,12 +84,14 @@ class OrderController extends Controller
 
             $data['order_number'] = Order::generateOrderNumber();
             $data['status'] = 'pending';
-            $data['payment_type'] = (int) $data['payment_type'];
+            $data['order_source'] = $data['order_source'] ?? 'Direct';
+            $data['payment_type'] = (int) ($data['payment_type'] ?? 2);
             $data['payment_status'] = 'pending';
             $data['currency'] = 'GEL';
             $data['total_amount'] = 0;
-            $data['city'] = $city->name;
-            $data['delivery_address'] = $data['exact_address'];
+            $data['city'] = $city?->name;
+            $data['exact_address'] = filled($data['exact_address'] ?? null) ? $data['exact_address'] : null;
+            $data['delivery_address'] = $data['exact_address'] ?? 'დასაზუსტებელია';
             $data['customer_email'] = null;
             $data['postal_code'] = null;
 

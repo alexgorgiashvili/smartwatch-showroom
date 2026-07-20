@@ -46,17 +46,16 @@
                                 @error('customer_phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label for="personal_number" class="form-label">Personal Number <span class="text-danger">*</span></label>
+                                <label for="personal_number" class="form-label">Personal Number <span class="text-muted small">(optional)</span></label>
                                 <input type="text" class="form-control @error('personal_number') is-invalid @enderror"
-                                       id="personal_number" name="personal_number" value="{{ old('personal_number') }}" placeholder="11 digits" required>
+                                       id="personal_number" name="personal_number" value="{{ old('personal_number') }}" placeholder="11 digits">
                                 @error('personal_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label for="order_source" class="form-label">Order Source <span class="text-danger">*</span></label>
-                                <select class="form-select @error('order_source') is-invalid @enderror" id="order_source" name="order_source" required>
-                                    <option value="">Select...</option>
+                                <label for="order_source" class="form-label">Order Source</label>
+                                <select class="form-select @error('order_source') is-invalid @enderror" id="order_source" name="order_source">
                                     @foreach(['Facebook', 'Instagram', 'Direct', 'Other'] as $src)
-                                    <option value="{{ $src }}" {{ old('order_source') === $src ? 'selected' : '' }}>{{ $src }}</option>
+                                    <option value="{{ $src }}" {{ old('order_source', 'Direct') === $src ? 'selected' : '' }}>{{ $src }}</option>
                                     @endforeach
                                 </select>
                                 @error('order_source') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -73,9 +72,9 @@
                         <h6 class="card-title mb-3">Delivery & Payment</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="city_id" class="form-label">City <span class="text-danger">*</span></label>
-                                <select class="form-select @error('city_id') is-invalid @enderror" id="city_id" name="city_id" required>
-                                    <option value="">Select city...</option>
+                                <label for="city_id" class="form-label">City <span class="text-muted small">(optional)</span></label>
+                                <select class="form-select @error('city_id') is-invalid @enderror" id="city_id" name="city_id">
+                                    <option value="">To be confirmed</option>
                                     @foreach($cities as $city)
                                     <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
                                     @endforeach
@@ -83,18 +82,17 @@
                                 @error('city_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label for="payment_type" class="form-label">Payment Type <span class="text-danger">*</span></label>
-                                <select class="form-select @error('payment_type') is-invalid @enderror" id="payment_type" name="payment_type" required>
-                                    <option value="">Select...</option>
-                                    <option value="1" {{ old('payment_type') == '1' ? 'selected' : '' }}>Online Payment</option>
-                                    <option value="2" {{ old('payment_type') == '2' ? 'selected' : '' }}>Courier (Cash on Delivery)</option>
+                                <label for="payment_type" class="form-label">Payment Type</label>
+                                <select class="form-select @error('payment_type') is-invalid @enderror" id="payment_type" name="payment_type">
+                                    <option value="1" {{ old('payment_type', '2') == '1' ? 'selected' : '' }}>Online Payment</option>
+                                    <option value="2" {{ old('payment_type', '2') == '2' ? 'selected' : '' }}>Courier (Cash on Delivery)</option>
                                 </select>
                                 @error('payment_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
-                                <label for="exact_address" class="form-label">Exact Address <span class="text-danger">*</span></label>
+                                <label for="exact_address" class="form-label">Exact Address <span class="text-muted small">(optional)</span></label>
                                 <textarea class="form-control @error('exact_address') is-invalid @enderror"
-                                          id="exact_address" name="exact_address" rows="2" required>{{ old('exact_address') }}</textarea>
+                                          id="exact_address" name="exact_address" rows="2" placeholder="Leave blank if it will be confirmed later">{{ old('exact_address') }}</textarea>
                                 @error('exact_address') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
@@ -124,11 +122,23 @@
                             <select class="form-select form-select-sm variant-select" name="items[0][variant_id]" required>
                                 <option value="">Select product variant...</option>
                                 @foreach($products as $product)
+                                    @php
+                                        $modelName = trim((string) $product->model);
+                                        $productName = $product->name_ka ?: $product->name_en;
+                                        $productLabel = $modelName !== '' ? $modelName . ' — ' . $productName : $productName;
+                                    @endphp
+                                    <optgroup label="{{ $productLabel }}">
                                     @foreach($product->variants as $variant)
-                                    <option value="{{ $variant->id }}" data-price="{{ $product->sale_price ?? $product->price }}" data-stock="{{ $variant->quantity }}">
-                                        {{ $product->name_en }} — {{ $variant->name }} (Stock: {{ $variant->quantity }})
+                                    @php
+                                        $availableQuantity = $product->isDropship()
+                                            ? (($variant->bridge_stock_status ?? null) === 'outofstock' ? 0 : max(0, (int) ($variant->bridge_stock_quantity ?? 0)))
+                                            : max(0, (int) $variant->quantity);
+                                    @endphp
+                                    <option value="{{ $variant->id }}" data-price="{{ $product->sale_price ?? $product->price }}" data-stock="{{ $availableQuantity }}" {{ $availableQuantity < 1 ? 'disabled' : '' }}>
+                                        {{ $modelName !== '' ? $modelName . ' — ' : '' }}{{ $variant->name }} (Stock: {{ $availableQuantity }})
                                     </option>
                                     @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
                         </div>
