@@ -162,5 +162,10 @@ class AdminOrderQuickCreateTest extends TestCase
         $this->assertSame(2, $order->fresh()->items->sole()->quantity);
         $this->assertSame('59.00', $order->fresh()->items->sole()->unit_price);
         $this->assertSame('118.00', $order->fresh()->total_amount);
+
+        $this->actingAs($admin)
+            ->get(route('admin.orders.show', $order))
+            ->assertOk()
+            ->assertSee('CT23');
     }
 }

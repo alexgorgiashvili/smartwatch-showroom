@@ -211,8 +211,16 @@
                     </thead>
                     <tbody>
                         @foreach($order->items as $item)
+                        @php
+                            $modelName = trim((string) ($item->variant?->product?->model ?? ''));
+                        @endphp
                         <tr>
-                            <td class="fw-bold">{{ $item->product_name }}</td>
+                            <td>
+                                <div class="fw-bold">{{ $modelName !== '' ? $modelName : $item->product_name }}</div>
+                                @if($modelName !== '' && $item->product_name !== $modelName)
+                                    <div class="small text-muted text-truncate" style="max-width: 420px;" title="{{ $item->product_name }}">{{ $item->product_name }}</div>
+                                @endif
+                            </td>
                             <td>{{ $item->variant_name }}</td>
                             <td>{{ $item->quantity }}</td>
                             <td><span class="badge bg-light text-dark">{{ $item->fulfillment_mode ?? '—' }}</span></td>
