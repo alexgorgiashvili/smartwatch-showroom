@@ -183,9 +183,157 @@ class OrderController extends Controller
 
         $view = view('admin.orders.show', [
             'order' => $order,
+            'canEditItems' => $this->canEditItems($order),
         ]);
 
         return $this->renderPjaxView($request, $view);
+    }
+
+    public function edit(Request $request, Order $order): View|RedirectResponse
+    {
+        if (! $this->canEditItems($order)) {
+            return redirect()->route('admin.orders.show', $order)
+                ->with('error', 'This order can no longer be edited.');
+        }
+
+        $order->load('items.variant.product');
+
+        return view('admin.orders.edit', [
+            'order' => $order,
+            'products' => Product::with('variants')->where('is_active', true)->get(),
+            'cities' => City::query()->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function update(Request $request, Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
+    {
+        if (! $this->canEditItems($order)) {
+            return redirect()->route('admin.orders.show', $order)
+                ->with('error', 'This order can no longer be edited.');
+        }
+
+        $data = $request->validate([
+            'customer_name' => ['required', 'string', 'max:160'],
+            'customer_phone' => ['required', 'string', 'max:50', 'regex:/^(995[0-9]{9}|5[0-9]{8})$/'],
+            'personal_number' => ['nullable', 'regex:/^\d{11}$/'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'exact_address' => ['nullable', 'string'],
+            'order_source' => ['nullable', 'in:Facebook,Instagram,Direct,Other'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.variant_id' => ['required', 'distinct', 'exists:product_variants,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            DB::transaction(function () use ($order, $data) {
+                $lockedOrder = Order::query()
+                    ->with(['items.variant.product'])
+                    ->lockForUpdate()
+                    ->findOrFail($order->id);
+
+                if (! $this->canEditItems($lockedOrder)) {
+                    throw new \RuntimeException('This order can no longer be edited.');
+                }
+
+                foreach ($lockedOrder->items as $item) {
+                    if ($item->fulfillment_mode === 'local_stock' && $order->payment_status !== 'rejected') {
+                        $item->variant?->increment('quantity', (int) $item->quantity);
+                        StockAdjustment::create([
+                            'product_variant_id' => $item->product_variant_id,
+                            'quantity_change' => (int) $item->quantity,
+                            'reason' => "Order {$lockedOrder->order_number} item changed",
+                            'notes' => 'Previous item returned before replacement',
+                        ]);
+                    }
+                }
+
+                $variants = ProductVariant::query()
+                    ->with('product')
+                    ->whereIn('id', collect($data['items'])->pluck('variant_id'))
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $lockedOrder->items()->delete();
+                $totalAmount = 0;
+
+                foreach ($data['items'] as $itemData) {
+                    $variant = $variants->get((int) $itemData['variant_id']);
+                    $quantity = (int) $itemData['quantity'];
+
+                    if (! $variant || ! $variant->canFulfillQuantity($quantity)) {
+                        $available = $variant?->available_quantity ?? 0;
+                        throw new \RuntimeException("Insufficient stock. Available: {$available}");
+                    }
+
+                    $unitPrice = $variant->product->sale_price ?? $variant->product->price;
+                    $subtotal = $unitPrice * $quantity;
+                    $totalAmount += $subtotal;
+
+                    OrderItem::create([
+                        'order_id' => $lockedOrder->id,
+                        'product_variant_id' => $variant->id,
+                        'product_name' => $variant->product->name_en,
+                        'variant_name' => $variant->name,
+                        'quantity' => $quantity,
+                        'unit_price' => $unitPrice,
+                        'subtotal' => $subtotal,
+                        'bridge_product_id' => $variant->product->bridge_product_id,
+                        'bridge_variation_id' => $variant->bridge_variation_id,
+                        'fulfillment_mode' => $variant->product->fulfillment_mode,
+                    ]);
+
+                    if ($variant->product->fulfillment_mode === 'local_stock') {
+                        $variant->decrement('quantity', $quantity);
+                        StockAdjustment::create([
+                            'product_variant_id' => $variant->id,
+                            'quantity_change' => -$quantity,
+                            'reason' => "Order {$lockedOrder->order_number} item changed",
+                            'notes' => 'Replacement item reserved',
+                        ]);
+                    }
+                }
+
+                $city = filled($data['city_id'] ?? null)
+                    ? City::query()->findOrFail((int) $data['city_id'])
+                    : null;
+                $phone = $data['customer_phone'];
+                if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
+                    $phone = '995' . $phone;
+                }
+
+                $exactAddress = filled($data['exact_address'] ?? null) ? $data['exact_address'] : null;
+                $lockedOrder->update([
+                    'customer_name' => $data['customer_name'],
+                    'customer_phone' => $phone,
+                    'personal_number' => $data['personal_number'] ?? null,
+                    'city_id' => $city?->id,
+                    'city' => $city?->name,
+                    'exact_address' => $exactAddress,
+                    'delivery_address' => $exactAddress ?? 'დასაზუსტებელია',
+                    'order_source' => $data['order_source'] ?? $lockedOrder->order_source,
+                    'notes' => $data['notes'] ?? null,
+                    'total_amount' => $totalAmount,
+                ]);
+
+                $lockedOrder->load('items');
+                $lockedOrder->update([
+                    'fulfillment_mode' => $this->determineOrderFulfillmentMode($lockedOrder),
+                    'bridge_sync_status' => $this->determineInitialBridgeStatus($lockedOrder),
+                ]);
+            });
+
+            $order->refresh()->load('items.variant.product');
+            if ($order->requiresBridgePush() && $order->isBridgePushAllowed()) {
+                $bridgeOrderSync->pushOrder($order);
+            }
+
+            return redirect()->route('admin.orders.show', $order)
+                ->with('status', 'Order updated and stock adjusted.');
+        } catch (\Throwable $exception) {
+            return redirect()->back()->withInput()->with('error', $exception->getMessage());
+        }
     }
 
     public function updateStatus(Request $request, Order $order, BridgeOrderSyncService $bridgeOrderSync): RedirectResponse
@@ -206,11 +354,11 @@ class OrderController extends Controller
                     $variant = $item->variant;
 
                     // Restore stock
-                    if ($item->fulfillment_mode === 'local_stock') {
+                    if ($item->fulfillment_mode === 'local_stock' && $order->payment_status !== 'rejected') {
                         $variant->increment('quantity', $item->quantity);
                     }
 
-                    if ($item->fulfillment_mode === 'local_stock') {
+                    if ($item->fulfillment_mode === 'local_stock' && $order->payment_status !== 'rejected') {
                         StockAdjustment::create([
                             'product_variant_id' => $variant->id,
                             'quantity_change' => $item->quantity,
@@ -276,7 +424,7 @@ class OrderController extends Controller
         }
 
         // Restore stock if not cancelled
-        if (!$order->isCancelled()) {
+        if (!$order->isCancelled() && $order->payment_status !== 'rejected') {
             foreach ($order->items as $item) {
                 if ($item->fulfillment_mode === 'local_stock') {
                     $item->variant->increment('quantity', $item->quantity);
@@ -328,6 +476,13 @@ class OrderController extends Controller
         $modes = $order->items->pluck('fulfillment_mode')->filter()->unique()->values();
 
         return $modes->count() > 1 ? 'mixed' : ($modes->first() ?: 'local_stock');
+    }
+
+    private function canEditItems(Order $order): bool
+    {
+        return in_array($order->status, ['pending', 'confirmed', 'shipped'], true)
+            && ! $order->bridge_order_id
+            && ! $order->is_gift_order;
     }
 
     private function determineInitialBridgeStatus(Order $order): string

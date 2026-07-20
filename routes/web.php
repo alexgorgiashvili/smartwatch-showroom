@@ -157,6 +157,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	// ── Commerce: Orders ──
 	Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
 	Route::get('/orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
+	Route::get('/orders/{order}/edit', [AdminOrderController::class, 'edit'])->name('orders.edit');
 	Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
 
 	// ── Commerce: Payments ──
@@ -314,6 +315,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		->name('users.toggle-admin');
 	Route::post('/orders', [AdminOrderController::class, 'store'])
 		->name('orders.store');
+	Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])
+		->name('orders.update');
 	Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
 		->name('orders.update-status');
 	Route::patch('/orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])

@@ -10,6 +10,11 @@
             <h4 class="mb-3 mb-md-0">შეკვეთა {{ $order->order_number }}</h4>
         </div>
         <div class="d-flex gap-2">
+            @if($canEditItems)
+                <a href="{{ route('admin.orders.edit', $order) }}" class="btn btn-primary btn-sm" data-pjax>
+                    <i data-feather="edit-2" style="width:14px;height:14px;"></i> რედაქტირება
+                </a>
+            @endif
             <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary btn-sm" data-pjax>
                 <i data-feather="arrow-left" style="width:14px;height:14px;"></i> უკან
             </a>
