@@ -571,6 +571,10 @@ if ($approvedReviews->count() > 0) {
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <input type="hidden" name="selected_color" id="selected-color-input" value="{{ $defaultColor?->color_name }}">
+                            <div aria-hidden="true" style="display:none;">
+                                <label for="inquiry-website">Website</label>
+                                <input id="inquiry-website" type="text" name="website" tabindex="-1" autocomplete="off">
+                            </div>
 
                             @if (session('status'))
                                 <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">

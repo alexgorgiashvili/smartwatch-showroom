@@ -73,5 +73,6 @@ class CardPaymentStockHoldTest extends TestCase
             ->assertJsonPath('order_number', fn ($value) => is_string($value) && str_starts_with($value, 'ORD-'));
 
         $this->assertSame(3, $variant->fresh()->quantity);
+        Event::assertNotDispatched(\App\Events\OrderCreated::class);
     }
 }

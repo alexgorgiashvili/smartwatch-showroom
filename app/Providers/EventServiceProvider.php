@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\OrderCreated;
 use App\Events\PaymentCompleted;
 use App\Listeners\SendOrderSmsNotification;
+use App\Listeners\SendOrderTelegramNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,9 +23,11 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderCreated::class => [
             SendOrderSmsNotification::class,
+            SendOrderTelegramNotification::class,
         ],
         PaymentCompleted::class => [
             SendOrderSmsNotification::class,
+            SendOrderTelegramNotification::class,
         ],
     ];
 

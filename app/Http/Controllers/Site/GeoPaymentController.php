@@ -146,14 +146,15 @@ class GeoPaymentController extends Controller
             if ((int) $data['payment_type'] === 1) {
                 $redirectData = $this->createBogOrder($order->fresh(['items', 'adjustments']));
             } else {
-                // Courier payment - trigger SMS notification
-                event(new OrderCreated($order));
                 $redirectData = [
                     'redirect_url' => route('payment.success', ['order' => $order->order_number, 'method' => 'cod']),
                 ];
             }
 
             DB::commit();
+            if ((int) $data['payment_type'] === 2) {
+                event(new OrderCreated($order->fresh(['items.variant.product'])));
+            }
             $request->session()->forget(['cart', 'gift_cart_groups']);
 
             return response()->json([
