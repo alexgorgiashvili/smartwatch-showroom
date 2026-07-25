@@ -22,12 +22,41 @@ const AdminRouter = {
         if (this._initialized) return;
         this._initialized = true;
 
-        // Capture the event before the legacy sidebar handler runs. On mobile it
-        // also ensures a menu link navigates on its first tap, not after the
-        // drawer has been opened/closed by another click handler.
+        // Some mobile browsers use the first tap on this legacy sidebar only
+        // to focus its link. Handle the completed touch directly so navigation
+        // happens on that first tap, before the synthetic click is emitted.
+        document.addEventListener('touchend', (e) => {
+            if (!window.matchMedia('(max-width: 991px)').matches) return;
+
+            const link = e.target.closest('.sidebar a.nav-link[data-pjax]');
+            if (!link) return;
+
+            this._handlePjaxLink(e, link);
+        }, { capture: true, passive: false });
+
+        // Capture the click before the legacy sidebar handler runs. This also
+        // covers desktop navigation and mobile browsers without touch events.
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a[data-pjax]');
             if (!link) return;
+
+            this._handlePjaxLink(e, link);
+        }, true);
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', () => {
+            this._load(window.location.pathname + window.location.search, false);
+        });
+
+        this._updateSidebarActive(window.location.pathname + window.location.search);
+    },
+
+    /**
+     * Navigate from a PJAX link, regardless of whether it was tapped or clicked.
+     * @param {Event} e
+     * @param {HTMLAnchorElement} link
+     */
+    _handlePjaxLink(e, link) {
 
             // Skip conditions
             if (link.getAttribute('data-pjax') === 'false') return;
@@ -54,14 +83,6 @@ const AdminRouter = {
 
             this._closeMobileSidebar(link);
             this.navigate(href);
-        }, true);
-
-        // Handle browser back/forward
-        window.addEventListener('popstate', () => {
-            this._load(window.location.pathname + window.location.search, false);
-        });
-
-        this._updateSidebarActive(window.location.pathname + window.location.search);
     },
 
     /**
