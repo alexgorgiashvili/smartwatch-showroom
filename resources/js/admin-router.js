@@ -22,7 +22,9 @@ const AdminRouter = {
         if (this._initialized) return;
         this._initialized = true;
 
-        // Intercept clicks on [data-pjax] links
+        // Capture the event before the legacy sidebar handler runs. On mobile it
+        // also ensures a menu link navigates on its first tap, not after the
+        // drawer has been opened/closed by another click handler.
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a[data-pjax]');
             if (!link) return;
@@ -50,8 +52,9 @@ const AdminRouter = {
             // Don't navigate to the same URL
             if (this._normalizeUrl(href) === this._normalizeUrl(window.location.pathname + window.location.search)) return;
 
+            this._closeMobileSidebar(link);
             this.navigate(href);
-        });
+        }, true);
 
         // Handle browser back/forward
         window.addEventListener('popstate', () => {
@@ -279,6 +282,22 @@ const AdminRouter = {
 
             return normalizedPath + (searchPart !== '' ? `?${searchPart}` : '');
         }
+    },
+
+    /**
+     * Close the mobile sidebar after choosing a sidebar destination.
+     * @param {HTMLAnchorElement} link
+     */
+    _closeMobileSidebar(link) {
+        if (!window.matchMedia('(max-width: 991px)').matches || !link.closest('.sidebar')) {
+            return;
+        }
+
+        document.body.classList.remove('sidebar-open');
+        document.querySelectorAll('.sidebar-header .sidebar-toggler').forEach((toggler) => {
+            toggler.classList.remove('active');
+            toggler.classList.add('not-active');
+        });
     },
 
     /**
