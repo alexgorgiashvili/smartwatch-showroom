@@ -16,10 +16,12 @@ class OrderCreated
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public Order $order;
+    public bool $notifyTelegram;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order, bool $notifyTelegram = false)
     {
         $this->order = $order;
+        $this->notifyTelegram = $notifyTelegram;
     }
 
     public function broadcastOn(): array

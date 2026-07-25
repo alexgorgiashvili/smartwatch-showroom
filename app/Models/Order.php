@@ -110,6 +110,21 @@ class Order extends Model
         return !is_null($this->sms_sent_at);
     }
 
+    public function getDialablePhoneAttribute(): ?string
+    {
+        $phone = preg_replace('/\D+/', '', (string) $this->customer_phone);
+
+        if ($phone === '') {
+            return null;
+        }
+
+        if (strlen($phone) === 9 && str_starts_with($phone, '5')) {
+            $phone = '995' . $phone;
+        }
+
+        return '+' . $phone;
+    }
+
     public function markSmsSent(string $reference = null): void
     {
         $this->update([

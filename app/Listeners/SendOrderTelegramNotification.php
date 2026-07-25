@@ -11,6 +11,10 @@ class SendOrderTelegramNotification implements ShouldQueue
 {
     public function handle(OrderCreated|PaymentCompleted $event): void
     {
+        if ($event instanceof OrderCreated && ! $event->notifyTelegram) {
+            return;
+        }
+
         app(TelegramOrderNotifier::class)->send($event->order);
     }
 }

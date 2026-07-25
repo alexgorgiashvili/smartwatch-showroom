@@ -153,7 +153,7 @@ class GeoPaymentController extends Controller
 
             DB::commit();
             if ((int) $data['payment_type'] === 2) {
-                event(new OrderCreated($order->fresh(['items.variant.product'])));
+                event(new OrderCreated($order->fresh(['items.variant.product']), true));
             }
             $request->session()->forget(['cart', 'gift_cart_groups']);
 

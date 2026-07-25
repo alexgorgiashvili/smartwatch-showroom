@@ -103,6 +103,6 @@ class TelegramNotificationTest extends TestCase
         $notifier = $this->mock(TelegramOrderNotifier::class);
         $notifier->shouldReceive('send')->once();
 
-        app(SendOrderTelegramNotification::class)->handle(new OrderCreated(new Order()));
+        app(SendOrderTelegramNotification::class)->handle(new OrderCreated(new Order(), true));
     }
 }

@@ -52,7 +52,11 @@
                             </td>
                             <td>
                                 {{ $order->customer_name }}
-                                <div class="text-muted small">{{ $order->customer_phone }}</div>
+                                <div class="small">
+                                    <a href="tel:{{ $order->dialable_phone }}" class="text-decoration-none" title="დარეკვა">
+                                        <i data-feather="phone-call" style="width:12px;height:12px;"></i> {{ $order->customer_phone }}
+                                    </a>
+                                </div>
                             </td>
                             <td>
                                 {{ $order->items->count() }}

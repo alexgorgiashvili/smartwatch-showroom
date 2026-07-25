@@ -60,7 +60,9 @@
                         </div>
                         <div class="col-sm-6 col-md-4">
                             <div class="text-muted small">ტელეფონი</div>
-                            <div class="fw-bold">{{ $order->customer_phone }}</div>
+                            <a href="tel:{{ $order->dialable_phone }}" class="fw-bold text-decoration-none d-inline-flex align-items-center gap-1" title="დარეკვა">
+                                <i data-feather="phone-call" style="width:14px;height:14px;"></i>{{ $order->customer_phone }}
+                            </a>
                         </div>
                         <div class="col-sm-6 col-md-4">
                             <div class="text-muted small">პირადი ნომერი</div>
