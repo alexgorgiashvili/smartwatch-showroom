@@ -368,7 +368,7 @@
 /* Keep long order lists inside the card, so they do not extend the admin page. */
 @media (min-width: 768px) {
     .orders-table-scroll {
-        max-height: calc(100vh - 290px);
+        max-height: calc(100vh - 292px);
         overflow-y: auto;
     }
 
