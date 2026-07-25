@@ -21,7 +21,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $orders = Order::query()
-            ->with('items')
+            ->with('items.variant.product')
             ->when(
                 $request->filled('payment_status'),
                 fn ($query) => $query->where('payment_status', $request->string('payment_status')->value())

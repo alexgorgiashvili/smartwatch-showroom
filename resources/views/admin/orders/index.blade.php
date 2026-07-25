@@ -30,12 +30,10 @@
                         <tr>
                             <th>შეკვეთა #</th>
                             <th>კლიენტი</th>
-                            <th>ნივთები</th>
+                            <th>მოდელი / ფერი</th>
                             <th>ჯამი</th>
-                            <th>წყარო</th>
                             <th>Order Status</th>
                             <th>Payment</th>
-                            <th>Bridge</th>
                             <th>თარიღი</th>
                             <th style="width:80px;">Actions</th>
                         </tr>
@@ -59,21 +57,24 @@
                                 </div>
                             </td>
                             <td>
-                                {{ $order->items->count() }}
-                                @if($order->requiresBridgePush())
-                                    <div class="small text-muted">{{ $order->dropshipItems()->count() }} bridge</div>
-                                @endif
+                                @foreach($order->items as $item)
+                                    @php
+                                        $modelName = trim((string) ($item->variant?->product?->model ?? ''));
+                                        $colorName = trim((string) ($item->variant?->color_name ?? $item->variant_name ?? ''));
+                                    @endphp
+                                    <div @class(['mb-1' => ! $loop->last])>
+                                        <div class="fw-semibold">{{ $modelName !== '' ? $modelName : $item->product_name }}</div>
+                                        @if($colorName !== '')
+                                            <div class="small text-muted">{{ $colorName }}@if($item->quantity > 1) × {{ $item->quantity }}@endif</div>
+                                        @elseif($item->quantity > 1)
+                                            <div class="small text-muted">× {{ $item->quantity }}</div>
+                                        @endif
+                                    </div>
+                                @endforeach
                             </td>
                             <td class="fw-bold">{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</td>
-                            <td><span class="badge bg-secondary">{{ $order->order_source }}</span></td>
                             <td><span class="badge bg-{{ $statusColors[$order->status] ?? 'secondary' }}">{{ ucfirst($order->status) }}</span></td>
                             <td><span class="badge bg-{{ $payColors[$order->payment_status] ?? 'secondary' }}">{{ ucfirst($order->payment_status) }}</span></td>
-                            <td>
-                                <span class="badge bg-light text-dark">{{ $order->bridge_sync_status ?? '—' }}</span>
-                                @if($order->bridge_order_number)
-                                    <div class="small text-muted">#{{ $order->bridge_order_number }}</div>
-                                @endif
-                            </td>
                             <td class="text-muted small">{{ $order->created_at->format('M d, Y') }}</td>
                             <td>
                                 <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-outline-primary btn-sm p-1" data-pjax title="ნახვა">
@@ -83,7 +84,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-3">შეკვეთები ვერ მოიძებნა</td>
+                            <td colspan="8" class="text-center text-muted py-3">შეკვეთები ვერ მოიძებნა</td>
                         </tr>
                         @endforelse
                     </tbody>
