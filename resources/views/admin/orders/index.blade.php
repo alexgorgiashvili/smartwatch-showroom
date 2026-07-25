@@ -24,7 +24,7 @@
 
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
+            <div class="table-responsive orders-table-scroll">
                 <table class="table table-hover table-sm mb-0">
                     <thead>
                         <tr>

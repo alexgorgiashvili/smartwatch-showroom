@@ -365,6 +365,21 @@
     transition: opacity 0.15s ease;
 }
 
+/* Keep long order lists inside the card, so they do not extend the admin page. */
+@media (min-width: 768px) {
+    .orders-table-scroll {
+        max-height: calc(100vh - 290px);
+        overflow-y: auto;
+    }
+
+    .orders-table-scroll thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: #fff;
+    }
+}
+
 /* ── Card Enhancements ── */
 .card {
     border: 1px solid #e9ecef;
