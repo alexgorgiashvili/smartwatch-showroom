@@ -47,6 +47,7 @@ class OrderController extends Controller
             'order' => new Order(),
             'products' => $products,
             'cities' => $cities,
+            'oldItems' => old('items', [['variant_id' => null, 'quantity' => 1]]),
         ]);
 
         return $this->renderPjaxView($request, $view);

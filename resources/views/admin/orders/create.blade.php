@@ -116,10 +116,11 @@
                 </div>
 
                 <div id="orderItemsContainer">
-                    <div class="order-item-row row g-2 mb-2 align-items-end" data-index="0">
+                    @foreach($oldItems as $index => $oldItem)
+                    <div class="order-item-row row g-2 mb-2 align-items-end" data-index="{{ $index }}">
                         <div class="col-md-5">
                             <label class="form-label small">Product & Variant <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm variant-select" name="items[0][variant_id]" required>
+                            <select class="form-select form-select-sm variant-select @error("items.$index.variant_id") is-invalid @enderror" name="items[{{ $index }}][variant_id]" required>
                                 <option value="">Select product variant...</option>
                                 @foreach($products as $product)
                                     @php
@@ -134,17 +135,19 @@
                                             ? (($variant->bridge_stock_status ?? null) === 'outofstock' ? 0 : max(0, (int) ($variant->bridge_stock_quantity ?? 0)))
                                             : max(0, (int) $variant->quantity);
                                     @endphp
-                                    <option value="{{ $variant->id }}" data-price="{{ $product->sale_price ?? $product->price }}" data-stock="{{ $availableQuantity }}" {{ $availableQuantity < 1 ? 'disabled' : '' }}>
+                                    <option value="{{ $variant->id }}" data-price="{{ $product->sale_price ?? $product->price }}" data-stock="{{ $availableQuantity }}" {{ $availableQuantity < 1 ? 'disabled' : '' }} {{ (int) ($oldItem['variant_id'] ?? 0) === $variant->id ? 'selected' : '' }}>
                                         {{ $modelName !== '' ? $modelName . ' — ' : '' }}{{ $variant->name }} (Stock: {{ $availableQuantity }})
                                     </option>
                                     @endforeach
                                     </optgroup>
                                 @endforeach
                             </select>
+                            @error("items.$index.variant_id") <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Qty <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control form-control-sm item-qty" name="items[0][quantity]" min="1" value="1" required>
+                            <input type="number" class="form-control form-control-sm item-qty @error("items.$index.quantity") is-invalid @enderror" name="items[{{ $index }}][quantity]" min="1" value="{{ $oldItem['quantity'] ?? 1 }}" required>
+                            @error("items.$index.quantity") <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Price</label>
@@ -155,11 +158,12 @@
                             <div class="item-subtotal fw-bold text-primary">—</div>
                         </div>
                         <div class="col-md-1">
-                            <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-remove-item" title="Remove" style="visibility:hidden;">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-remove-item" title="Remove" style="visibility:{{ count($oldItems) > 1 ? 'visible' : 'hidden' }};">
                                 <i data-feather="x" style="width:14px;height:14px;"></i>
                             </button>
                         </div>
                     </div>
+                    @endforeach
                 </div>
 
                 <hr>

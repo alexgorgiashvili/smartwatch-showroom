@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Events\OrderCreated;
+use App\Listeners\SendOrderTelegramNotification;
 use App\Services\TelegramOrderNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -94,5 +96,13 @@ class TelegramNotificationTest extends TestCase
 
         Http::assertSentCount(1);
         Http::assertSent(fn ($request) => str_contains((string) $request['text'], 'ORD-'));
+    }
+
+    public function test_queued_order_listener_resolves_the_notifier_from_the_container(): void
+    {
+        $notifier = $this->mock(TelegramOrderNotifier::class);
+        $notifier->shouldReceive('send')->once();
+
+        app(SendOrderTelegramNotification::class)->handle(new OrderCreated(new Order()));
     }
 }

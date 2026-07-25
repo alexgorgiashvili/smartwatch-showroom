@@ -5,6 +5,8 @@
 const AdminOrders = {
 
     initCreate() {
+        const rows = document.querySelectorAll('#orderItemsContainer .order-item-row');
+        this._itemIndex = rows.length;
         this._bindAddItem();
         this._bindItemChanges();
         this._bindRemoveItem();
@@ -34,9 +36,16 @@ const AdminOrders = {
 
             // Reset values
             const select = clone.querySelector('.variant-select');
-            if (select) select.value = '';
+            if (select) {
+                select.value = '';
+                select.classList.remove('is-invalid');
+            }
             const qty = clone.querySelector('.item-qty');
-            if (qty) qty.value = 1;
+            if (qty) {
+                qty.value = 1;
+                qty.classList.remove('is-invalid');
+            }
+            clone.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
 
             // Reset price/subtotal displays
             const price = clone.querySelector('.item-price');
