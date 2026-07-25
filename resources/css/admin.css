@@ -355,10 +355,6 @@
 }
 
 /* ── Page Content Transition ── */
-#page-content {
-    min-height: calc(100vh - 160px);
-}
-
 #page-content.pjax-loading {
     opacity: 0.5;
     pointer-events: none;
