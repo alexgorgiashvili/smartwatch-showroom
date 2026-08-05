@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
+use App\Models\ChatbotDocument;
 use App\Models\City;
 use App\Models\Faq;
 use App\Models\Product;
@@ -14,6 +15,36 @@ use Tests\TestCase;
 class StorefrontEnglishLocaleTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function testEnglishContentSyncFillsLegacyCitiesAndFaqDocuments(): void
+    {
+        $city = City::query()->create([
+            'name' => 'თბილისი > კოჯორი',
+            'region' => 'თბილისი',
+        ]);
+        $faq = Faq::query()->create([
+            'question' => 'ტესტ კითხვა',
+            'question_en' => 'Test Question',
+            'answer' => 'ტესტ პასუხი',
+            'answer_en' => 'Test Answer',
+            'category' => 'ტესტი',
+            'category_en' => 'Testing',
+            'is_active' => true,
+        ]);
+        $document = ChatbotDocument::query()->create([
+            'key' => 'faq-legacy-test',
+            'type' => 'faq',
+            'title' => $faq->question,
+            'content_ka' => $faq->answer,
+            'is_active' => true,
+        ]);
+
+        $this->artisan('storefront:sync-english-content')->assertExitCode(0);
+
+        $this->assertSame('Tbilisi > Kojori', $city->fresh()->name_en);
+        $this->assertSame('Test Question', $document->fresh()->title_en);
+        $this->assertSame("Question: Test Question\n\nAnswer: Test Answer", $document->fresh()->content_en);
+    }
 
     private Product $product;
     private ProductVariant $variant;

@@ -46,6 +46,50 @@ class ChatbotContentSyncService
         return $synced;
     }
 
+    public function syncLegacyFaqDocuments(bool $syncEmbedding = true): bool
+    {
+        $faqs = Faq::query()
+            ->get()
+            ->keyBy(fn (Faq $faq): string => trim((string) $faq->question));
+        $synced = true;
+
+        ChatbotDocument::query()
+            ->active()
+            ->where('type', 'faq')
+            ->where(function ($query): void {
+                $query->whereNull('title_en')
+                    ->orWhere('title_en', '')
+                    ->orWhereNull('content_en')
+                    ->orWhere('content_en', '');
+            })
+            ->chunkById(100, function ($documents) use ($faqs, $syncEmbedding, &$synced): void {
+                foreach ($documents as $document) {
+                    $faq = $faqs->get(trim((string) $document->title));
+
+                    if (! $faq || blank($faq->question_en) || blank($faq->answer_en)) {
+                        $synced = false;
+                        continue;
+                    }
+
+                    $metadata = is_array($document->metadata) ? $document->metadata : [];
+                    $document->update([
+                        'title_en' => $faq->question_en,
+                        'content_en' => "Question: {$faq->question_en}\n\nAnswer: {$faq->answer_en}",
+                        'metadata' => array_merge($metadata, [
+                            'category_en' => $faq->category_en,
+                            'faq_id' => $faq->id,
+                        ]),
+                    ]);
+
+                    $synced = (! $syncEmbedding || $this->syncDocumentEmbedding($document)) && $synced;
+                }
+            });
+
+        $this->bumpProductContextVersion();
+
+        return $synced;
+    }
+
     public function deactivateFaq(Faq $faq): bool
     {
         ChatbotDocument::query()
