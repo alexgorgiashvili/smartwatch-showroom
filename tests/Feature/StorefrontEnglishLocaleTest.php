@@ -140,6 +140,8 @@ class StorefrontEnglishLocaleTest extends TestCase
         $this->get(route('products.index'))
             ->assertOk()
             ->assertSee('lang="en"', false)
+            ->assertSee(route('locale', 'ka'), false)
+            ->assertSee('Switch to Georgian')
             ->assertSee('Orbit 4G Kids Watch')
             ->assertDontSee('ორბიტა 4G საბავშვო საათი');
     }

@@ -107,6 +107,8 @@
   @endif
   @php
     $cartCount = app(\App\Services\Cart\CartSnapshotService::class)->roughCount(request());
+    $currentLocale = app()->getLocale();
+    $languageSwitcherLabel = $currentLocale === 'en' ? 'Language' : 'ენა';
   @endphp
     <!-- HyperUI Header -->
     <header class="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-gray-950/95 backdrop-blur-sm">
@@ -185,7 +187,7 @@
             </div>
 
             <!-- Navigation Links -->
-            <ul class="flex flex-col flex-grow">
+            <ul class="flex flex-1 flex-col overflow-y-auto">
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('home') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('home') }}">
                   <i class="fa-solid fa-house w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.home') }}
@@ -242,8 +244,13 @@
               </li>
             </ul>
 
-            <!-- Mobile Menu Footer - Social Icons -->
-            <div class="border-t border-white/10 p-6">
+            <!-- Mobile Menu Footer - Language + Social Icons -->
+            <div class="flex-shrink-0 border-t border-white/10 p-5">
+              <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">{{ $languageSwitcherLabel }}</p>
+              <div class="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1" role="group" aria-label="{{ $languageSwitcherLabel }}">
+                <a href="{{ route('locale', 'ka') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'ka' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'ka') aria-current="page" @endif aria-label="{{ $currentLocale === 'en' ? 'Switch to Georgian' : 'ქართულ ენაზე გადართვა' }}">KA</a>
+                <a href="{{ route('locale', 'en') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'en' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'en') aria-current="page" @endif aria-label="Switch to English">EN</a>
+              </div>
               <div class="flex gap-6 justify-center">
                 @if (!empty($contactSettings['whatsapp_url']))
                 <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
@@ -292,7 +299,11 @@
               @endif
             </div>
 
-
+            <!-- Desktop language switcher -->
+            <div class="hidden items-center rounded-full border border-white/15 bg-white/5 p-1 md:flex" role="group" aria-label="{{ $languageSwitcherLabel }}">
+              <a href="{{ route('locale', 'ka') }}" class="rounded-full px-2.5 py-1.5 text-[11px] font-bold tracking-wide transition {{ $currentLocale === 'ka' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-400 hover:text-white' }}" @if ($currentLocale === 'ka') aria-current="page" @endif aria-label="{{ $currentLocale === 'en' ? 'Switch to Georgian' : 'ქართულ ენაზე გადართვა' }}">KA</a>
+              <a href="{{ route('locale', 'en') }}" class="rounded-full px-2.5 py-1.5 text-[11px] font-bold tracking-wide transition {{ $currentLocale === 'en' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:text-white' }}" @if ($currentLocale === 'en') aria-current="page" @endif aria-label="Switch to English">EN</a>
+            </div>
 
             <!-- Mobile menu toggle -->
             <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="{{ __('storefront.common.cart') }}">
