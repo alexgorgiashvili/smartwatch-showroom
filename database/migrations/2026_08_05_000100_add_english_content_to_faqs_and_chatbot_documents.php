@@ -9,26 +9,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('faqs', function (Blueprint $table) {
-            $table->string('question_en', 255)->nullable()->after('question');
-            $table->text('answer_en')->nullable()->after('answer');
-            $table->string('category_en', 120)->nullable()->after('category');
-        });
+        // Production installations can have older table layouts, and MySQL
+        // commits each ALTER TABLE even if a later statement fails. Add every
+        // column independently so the migration can safely resume.
+        $this->addColumnIfMissing('faqs', 'question_en', fn (Blueprint $table) => $table->string('question_en', 255)->nullable());
+        $this->addColumnIfMissing('faqs', 'answer_en', fn (Blueprint $table) => $table->text('answer_en')->nullable());
+        $this->addColumnIfMissing('faqs', 'category_en', fn (Blueprint $table) => $table->string('category_en', 120)->nullable());
 
-        Schema::table('chatbot_documents', function (Blueprint $table) {
-            $table->string('title_en')->nullable()->after('title');
-            $table->text('content_en')->nullable()->after('content_ka');
-        });
+        $this->addColumnIfMissing('chatbot_documents', 'title_en', fn (Blueprint $table) => $table->string('title_en')->nullable());
+        $this->addColumnIfMissing('chatbot_documents', 'content_en', fn (Blueprint $table) => $table->text('content_en')->nullable());
 
-        Schema::table('cities', function (Blueprint $table) {
-            $table->string('name_en')->nullable()->after('name');
-            $table->string('region_en')->nullable()->after('region');
-        });
+        $this->addColumnIfMissing('cities', 'name_en', fn (Blueprint $table) => $table->string('name_en')->nullable());
+        $this->addColumnIfMissing('cities', 'region_en', fn (Blueprint $table) => $table->string('region_en')->nullable());
 
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->string('name_en', 160)->nullable()->after('name');
-            $table->string('color_name_en', 50)->nullable()->after('color_name');
-        });
+        $this->addColumnIfMissing('product_variants', 'name_en', fn (Blueprint $table) => $table->string('name_en', 160)->nullable());
+        $this->addColumnIfMissing('product_variants', 'color_name_en', fn (Blueprint $table) => $table->string('color_name_en', 50)->nullable());
 
         foreach ($this->variantColorTranslations() as $name => $nameEn) {
             DB::table('product_variants')->where('name', $name)->update(['name_en' => $nameEn]);
@@ -78,20 +73,36 @@ return new class extends Migration
             DB::table('contact_settings')->where('key', $key)->delete();
         }
 
-        Schema::table('chatbot_documents', function (Blueprint $table) {
-            $table->dropColumn(['title_en', 'content_en']);
-        });
+        $this->dropColumnIfPresent('chatbot_documents', 'title_en');
+        $this->dropColumnIfPresent('chatbot_documents', 'content_en');
+        $this->dropColumnIfPresent('faqs', 'question_en');
+        $this->dropColumnIfPresent('faqs', 'answer_en');
+        $this->dropColumnIfPresent('faqs', 'category_en');
+        $this->dropColumnIfPresent('cities', 'name_en');
+        $this->dropColumnIfPresent('cities', 'region_en');
+        $this->dropColumnIfPresent('product_variants', 'name_en');
+        $this->dropColumnIfPresent('product_variants', 'color_name_en');
+    }
 
-        Schema::table('faqs', function (Blueprint $table) {
-            $table->dropColumn(['question_en', 'answer_en', 'category_en']);
-        });
+    private function addColumnIfMissing(string $tableName, string $column, callable $definition): void
+    {
+        if (Schema::hasColumn($tableName, $column)) {
+            return;
+        }
 
-        Schema::table('cities', function (Blueprint $table) {
-            $table->dropColumn(['name_en', 'region_en']);
+        Schema::table($tableName, function (Blueprint $table) use ($definition): void {
+            $definition($table);
         });
+    }
 
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->dropColumn(['name_en', 'color_name_en']);
+    private function dropColumnIfPresent(string $tableName, string $column): void
+    {
+        if (! Schema::hasColumn($tableName, $column)) {
+            return;
+        }
+
+        Schema::table($tableName, function (Blueprint $table) use ($column): void {
+            $table->dropColumn($column);
         });
     }
 
