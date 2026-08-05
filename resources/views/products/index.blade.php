@@ -27,14 +27,14 @@
         <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center w-full">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
                 @if(app()->getLocale() === 'ka')
-                    ბავშვის SIM სმარტ საათები — თქვენთვის ყველა ვარიანტი
+                    {{ __('storefront.products.index_heading') }}
                 @else
                     Kids SIM Smartwatches — All Models in Georgia
                 @endif
             </h1>
             <p class="mt-2 text-sm text-gray-500">
                 @if(app()->getLocale() === 'ka')
-                    4G LTE · GPS ტრეკინგი · SOS ღილაკი · ზარები ტელეფონის გარეშე
+                    {{ __('storefront.products.index_subheading') }}
                 @else
                     4G LTE · GPS Tracking · SOS Button · Calls Without a Phone
                 @endif

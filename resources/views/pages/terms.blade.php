@@ -6,6 +6,9 @@
 @section('canonical', url('/terms'))
 
 @section('content')
+@if (app()->getLocale() === 'en')
+  @include('pages.legal.terms-en')
+@else
 <div class="bg-gradient-to-b from-primary-50 to-white">
   <!-- Breadcrumb -->
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -282,4 +285,5 @@
     </div>
   </div>
 </div>
+@endif
 @endsection

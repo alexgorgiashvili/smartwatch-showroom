@@ -35,7 +35,7 @@
 {{-- ── Hero ──────────────────────────────────────────────────────── --}}
 <section class="bg-gradient-to-br from-slate-900 to-slate-800 py-16 text-white">
     <div class="mx-auto max-w-3xl px-4 text-center">
-        <p class="mb-2 text-xs font-medium uppercase tracking-widest text-primary-400">MyTechnic · სახელმძღვანელო</p>
+        <p class="mb-2 text-xs font-medium uppercase tracking-widest text-primary-400">MyTechnic · {{ __('storefront.landing.guide') }}</p>
         <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {{ $ka ? 'SIM ბარათი ბავშვის სმარტ საათისთვის' : 'SIM Card for Kids Smartwatch' }}
         </h1>

@@ -15,7 +15,7 @@ class AiRecommendationsController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $locale = $request->get('lang', 'ka');
+        $locale = $this->resolveLocale($request);
         app()->setLocale($locale);
 
         $query = $request->get('query', '');
@@ -72,11 +72,6 @@ class AiRecommendationsController extends Controller
                     case 'waterproof':
                         $productsQuery->whereNotNull('water_resistant');
                         break;
-                    case 'waterproof':
-                        if ($product->water_resistant) {
-                            $reasons[] = $locale === 'ka' ? 'áƒ¬áƒ§áƒáƒšáƒ’áƒáƒ›áƒ«áƒšáƒ”áƒáƒ‘áƒ' : 'Water resistance';
-                        }
-                        break;
                 }
             }
         }
@@ -118,8 +113,6 @@ class AiRecommendationsController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'name_ka' => $product->name_ka ?? $product->name,
-                    'name_en' => $product->name_en ?? $product->name,
                     'description' => $product->description ?? '',
                     'price' => (float) $price,
                     'original_price' => $product->sale_price ? (float) $product->price : null,
@@ -131,7 +124,7 @@ class AiRecommendationsController extends Controller
                     'image' => $firstImage ? $firstImage->url : null,
                     'features' => $this->featureFlags($product, $locale),
                     'age_range' => ($product->age_min && $product->age_max)
-                        ? "{$product->age_min}-{$product->age_max} years"
+                        ? "{$product->age_min}-{$product->age_max} " . ($locale === 'ka' ? 'წელი' : 'years')
                         : null,
                     'rating' => $this->productRating($product),
                     'recommendation_reason' => $this->generateRecommendationReason($product, $age ?? null, $budget ?? null, $features ?? [], $locale),
@@ -313,5 +306,15 @@ class AiRecommendationsController extends Controller
         }
 
         return null;
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $fallback = in_array(app()->getLocale(), ['ka', 'en'], true)
+            ? app()->getLocale()
+            : 'ka';
+        $locale = strtolower((string) $request->query('lang', $fallback));
+
+        return in_array($locale, ['ka', 'en'], true) ? $locale : $fallback;
     }
 }

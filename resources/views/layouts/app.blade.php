@@ -15,7 +15,7 @@
     <link rel="canonical" href="@yield('canonical', url()->current())">
 
     {{-- ═══ SEO: Meta Description ═══ --}}
-    <meta name="description" content="@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის. 4G LTE, GPS ტრეკინგი, ზარი ტელეფონის გარეშე. ოფიციალური იმპორტიორი საქართველოში.')">
+    <meta name="description" content="@yield('meta_description', __('storefront.meta.default_description'))">
 
     {{-- ═══ SEO: hreflang (session-based locale — same URL serves ka/en) ═══ --}}
     <link rel="alternate" hreflang="ka" href="{{ url()->current() }}">
@@ -29,16 +29,16 @@
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:url" content="@yield('og_url', url()->current())">
     <meta property="og:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
-    <meta property="og:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის. ოფიციალური იმპორტიორი.')@endif">
+    <meta property="og:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', __('storefront.meta.short_description'))@endif">
     <meta property="og:image" content="@yield('og_image', asset('images/og-default.webp'))">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="@yield('og_image_alt', 'MyTechnic სმარტ საათები')">
+    <meta property="og:image:alt" content="@yield('og_image_alt', __('storefront.meta.image_alt'))">
 
     {{-- ═══ SEO: Twitter Card ═══ --}}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@hasSection('og_title')@yield('og_title')@else@yield('title', 'MyTechnic')@endif">
-    <meta name="twitter:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', 'MyTechnic — SIM-იანი სმარტ საათები ბავშვებისთვის.')@endif">
+    <meta name="twitter:description" content="@hasSection('og_description')@yield('og_description')@else@yield('meta_description', __('storefront.meta.short_description'))@endif">
     <meta name="twitter:image" content="@yield('og_image', asset('images/og-default.webp'))">
 
     {{-- ═══ Favicon ═══ --}}
@@ -88,6 +88,10 @@
     </script>
     @endif
 
+    <script>
+      window.StorefrontLocale = @json(app()->getLocale());
+      window.StorefrontI18n = @json(trans('storefront'));
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-x-hidden bg-white text-gray-900">
@@ -120,49 +124,49 @@
             <nav aria-label="Global">
               <ul class="flex items-center gap-1 text-sm">
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('home') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('home') }}">მთავარი</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('home') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('home') }}">{{ __('storefront.common.home') }}</a>
                 </li>
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">კატალოგი</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
                 </li>
                 @if (config('gift_builder.enabled', false))
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">სასაჩუქრე ყუთის აწყობა</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">{{ __('storefront.common.gift_builder') }}</a>
                 </li>
                 @endif
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">კითხვები</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">{{ __('storefront.common.faq') }}</a>
                 </li>
                 {{-- სახელმძღვანელოები dropdown --}}
                 <li class="relative group/guides">
                   <button class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition-colors {{ request()->routeIs('blog.*','landing.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}">
-                    {{ app()->getLocale() === 'ka' ? 'სახელმძღვანელოები' : 'Guides' }}
+                    {{ __('storefront.common.guides') }}
                     <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover/guides:rotate-180"></i>
                   </button>
                   <div class="pointer-events-none absolute left-0 top-full z-50 min-w-[220px] translate-y-1 rounded-xl border border-white/10 bg-gray-900 py-2 opacity-0 shadow-2xl transition-all duration-150 group-hover/guides:pointer-events-auto group-hover/guides:translate-y-0 group-hover/guides:opacity-100">
                     <a href="{{ route('blog.index') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('blog.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
                       <i class="fa-solid fa-newspaper w-4 text-center text-xs text-primary-400"></i>
-                      {{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }}
+                      {{ __('storefront.common.blog') }}
                     </a>
                     <div class="my-1.5 border-t border-white/10"></div>
                     <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white">
                       <i class="fa-solid fa-sim-card w-4 text-center text-xs text-primary-400"></i>
-                      {{ app()->getLocale() === 'ka' ? 'SIM ბარათის გზამკვლევი' : 'SIM Card Guide' }}
+                      {{ __('storefront.common.sim_guide') }}
                     </a>
                     <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white">
                       <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
-                      {{ app()->getLocale() === 'ka' ? 'საჩუქრის გზამკვლევი' : 'Gift Guide' }}
+                      {{ __('storefront.common.gift_guide') }}
                     </a>
                     @if (config('gift_builder.enabled', false))
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
                       <i class="fa-solid fa-box-open w-4 text-center text-xs text-primary-400"></i>
-                      სასაჩუქრე ყუთის აწყობა
+                      {{ __('storefront.common.gift_builder') }}
                     </a>
                     @endif
                   </div>
                 </li>
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('contact') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('contact') }}">კონტაქტი</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('contact') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('contact') }}">{{ __('storefront.common.contact') }}</a>
                 </li>
               </ul>
             </nav>
@@ -175,7 +179,7 @@
               <a class="flex items-center" href="{{ route('home') }}">
                 <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] w-auto object-contain">
               </a>
-              <button id="mobile-menu-close" aria-label="მენიუს დახურვა" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
+              <button id="mobile-menu-close" aria-label="{{ __('storefront.common.menu_close') }}" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
@@ -184,55 +188,55 @@
             <ul class="flex flex-col flex-grow">
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('home') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('home') }}">
-                  <i class="fa-solid fa-house w-4 text-center text-xs opacity-60"></i>მთავარი
+                  <i class="fa-solid fa-house w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.home') }}
                 </a>
               </li>
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('products.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('products.index') }}">
-                  <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>კატალოგი
+                  <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.catalog') }}
                 </a>
               </li>
               @if (config('gift_builder.enabled', false))
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('gift-builder.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('gift-builder.show') }}">
-                  <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>სასაჩუქრე ყუთის აწყობა
+                  <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.gift_builder') }}
                 </a>
               </li>
               @endif
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('faq') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('faq') }}">
-                  <i class="fa-solid fa-circle-question w-4 text-center text-xs opacity-60"></i>კითხვები
+                  <i class="fa-solid fa-circle-question w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.faq') }}
                 </a>
               </li>
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('contact') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('contact') }}">
-                  <i class="fa-solid fa-envelope w-4 text-center text-xs opacity-60"></i>კონტაქტი
+                  <i class="fa-solid fa-envelope w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.contact') }}
                 </a>
               </li>
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('blog.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('blog.index') }}">
-                  <i class="fa-solid fa-newspaper w-4 text-center text-xs opacity-60"></i>{{ app()->getLocale() === 'ka' ? 'ბლოგი' : 'Blog' }}
+                  <i class="fa-solid fa-newspaper w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.blog') }}
                 </a>
               </li>
               {{-- Mobile guides accordion --}}
               <li class="border-b border-white/10">
                 <details class="group/det">
                   <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white">
-                    <span class="flex items-center gap-3"><i class="fa-solid fa-book-open w-4 text-center text-xs opacity-60"></i>{{ app()->getLocale() === 'ka' ? 'სახელმძღვანელოები' : 'Guides' }}</span>
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-book-open w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.guides') }}</span>
                     <i class="fa-solid fa-chevron-down text-xs opacity-50 transition-transform group-open/det:rotate-180"></i>
                   </summary>
                   <div class="bg-gray-900/60 pb-1">
-                    <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'SIM გზამკვლევი' : 'SIM Guide' }}</a>
-                    <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქარი' : 'Gift Guide' }}</a>
+                    <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ __('storefront.common.sim_guide') }}</a>
+                    <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ __('storefront.common.gift_guide') }}</a>
                     @if (config('gift_builder.enabled', false))
-                    <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>სასაჩუქრე ყუთის აწყობა</a>
+                    <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>{{ __('storefront.common.gift_builder') }}</a>
                     @endif
                   </div>
                 </details>
               </li>
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('cart.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('cart.index') }}">
-                  <i class="fa-solid fa-cart-shopping w-4 text-center text-xs opacity-60"></i>კალათა
+                  <i class="fa-solid fa-cart-shopping w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.cart') }}
                   <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
                 </a>
               </li>
@@ -291,7 +295,7 @@
 
 
             <!-- Mobile menu toggle -->
-            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="კალათა">
+            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="{{ __('storefront.common.cart') }}">
               <i class="fa-solid fa-cart-shopping text-sm"></i>
               <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
             </a>
@@ -325,10 +329,10 @@
       <aside class="absolute inset-y-0 right-0 flex h-full w-full max-w-md translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 sm:max-w-xl lg:max-w-[820px]" data-quick-review-panel>
         <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">{{ app()->getLocale() === 'ka' ? 'სწრაფი არჩევა' : 'Quick Review' }}</p>
-            <h2 class="mt-1 text-lg font-bold text-slate-900">{{ app()->getLocale() === 'ka' ? 'აირჩიეთ ვარიანტი' : 'Choose your option' }}</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">{{ __('storefront.quick_review.eyebrow') }}</p>
+            <h2 class="mt-1 text-lg font-bold text-slate-900">{{ __('storefront.quick_review.title') }}</h2>
           </div>
-          <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-900" data-quick-review-close aria-label="{{ app()->getLocale() === 'ka' ? 'დახურვა' : 'Close' }}">
+          <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-900" data-quick-review-close aria-label="{{ __('storefront.common.close') }}">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -352,16 +356,16 @@
     <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}" data-history-endpoint="{{ route('chatbot.history') }}">
       <button type="button" class="chatbot-fab" data-chatbot-toggle aria-expanded="false" aria-controls="chatbot-panel">
         <span class="chatbot-fab-icon">🤖</span>
-        <span class="chatbot-fab-text">დახმარება</span>
+        <span class="chatbot-fab-text">{{ __('storefront.chatbot.help') }}</span>
       </button>
 
       <section id="chatbot-panel" class="chatbot-panel" aria-live="polite" aria-hidden="true">
         <header class="chatbot-header">
           <div>
             <p class="chatbot-title">MyTechnic Assistant</p>
-            <p class="chatbot-subtitle">ონლაინ დახმარება</p>
+            <p class="chatbot-subtitle">{{ __('storefront.chatbot.online_help') }}</p>
           </div>
-          <button type="button" class="chatbot-close" data-chatbot-close aria-label="დახურვა">✕</button>
+          <button type="button" class="chatbot-close" data-chatbot-close aria-label="{{ __('storefront.common.close') }}">✕</button>
         </header>
 
         <div class="chatbot-messages" data-chatbot-messages></div>
@@ -371,11 +375,11 @@
             type="text"
             name="message"
             class="chatbot-input"
-            placeholder="კითხვა მოგვწერე..."
+            placeholder="{{ __('storefront.chatbot.placeholder') }}"
             autocomplete="off"
             required
           />
-          <button type="submit" class="chatbot-send">გაგზავნა</button>
+          <button type="submit" class="chatbot-send">{{ __('storefront.chatbot.send') }}</button>
         </form>
       </section>
     </div>
@@ -383,15 +387,15 @@
     <div id="site-lightbox" class="fixed inset-0 z-[130] hidden" role="dialog" aria-modal="true" aria-hidden="true">
       <div data-site-lightbox-overlay class="absolute inset-0 bg-black/80"></div>
       <div class="relative flex h-full w-full items-center justify-center p-3 sm:p-6">
-        <button type="button" data-site-lightbox-close class="absolute right-3 top-3 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="დახურვა">
+        <button type="button" data-site-lightbox-close class="absolute right-3 top-3 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="{{ __('storefront.common.close') }}">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <button type="button" data-site-lightbox-prev class="absolute left-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="წინა სურათი">
+        <button type="button" data-site-lightbox-prev class="absolute left-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="{{ __('storefront.common.previous_image') }}">
           <i class="fa-solid fa-chevron-left"></i>
         </button>
 
-        <button type="button" data-site-lightbox-next class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="შემდეგი სურათი">
+        <button type="button" data-site-lightbox-next class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="{{ __('storefront.common.next_image') }}">
           <i class="fa-solid fa-chevron-right"></i>
         </button>
 
@@ -565,7 +569,7 @@
                 return res.json().then(function (data) {
                     return { ok: res.ok, data: data };
                 }).catch(function () {
-                    return { ok: false, data: { message: 'სერვერმა არასწორი პასუხი დააბრუნა.' } };
+                    return { ok: false, data: { message: @js(__('storefront.messages.invalid_server_response')) } };
                 });
             })
             .then(function (result) {
@@ -613,18 +617,18 @@
                         return;
                     }
 
-                    showCartToast(data.message || 'პროდუქტი დაემატა კალათაში.', false);
+                    showCartToast(data.message || @js(__('storefront.cart.added')), false);
 
                     var qty = form.querySelector('input[name="quantity"][type="number"]');
                     if (qty) {
                         qty.value = 1;
                     }
                 } else {
-                    showCartToast(data.message || 'შეცდომა მოხდა.', true);
+                    showCartToast(data.message || @js(__('storefront.messages.generic_error')), true);
                 }
             })
             .catch(function () {
-                showCartToast('ქსელური შეცდომა. სცადეთ თავიდან.', true);
+                showCartToast(@js(__('storefront.messages.network_error')), true);
             })
             .finally(function () {
                 if (btn) {
@@ -933,7 +937,7 @@
           +           '<h3 class="text-xl font-bold leading-tight text-slate-900">' + escapeHtml(product.name || '') + '</h3>'
           +           '<p class="mt-2 text-sm leading-relaxed text-slate-500">' + escapeHtml(product.short_description || '') + '</p>'
           +         '</div>'
-          +         '<a href="' + escapeHtml(product.url || '#') + '" class="shrink-0 text-sm font-semibold text-primary-600 hover:text-primary-700">{{ app()->getLocale() === 'ka' ? 'სრული გვერდი' : 'Full page' }}</a>'
+          +         '<a href="' + escapeHtml(product.url || '#') + '" class="shrink-0 text-sm font-semibold text-primary-600 hover:text-primary-700">{{ __('storefront.common.full_page') }}</a>'
           +       '</div>'
           +       '<div class="mt-3 flex items-end gap-2">'
           +         '<p class="text-3xl font-extrabold leading-none text-slate-900">' + escapeHtml(product.price_formatted || '') + '</p>'
@@ -946,22 +950,22 @@
           +     '<input type="hidden" name="variant_id" value="' + defaultVariantId + '" data-quick-review-variant-input>'
           +     '<div>'
           +       '<div class="mb-2 flex items-center justify-between gap-2">'
-          +         '<p class="text-sm font-semibold text-slate-900">{{ app()->getLocale() === 'ka' ? 'ფერი / ვარიანტი' : 'Color / Variant' }}</p>'
+          +         '<p class="text-sm font-semibold text-slate-900">{{ __('storefront.common.color_variant') }}</p>'
           +       '</div>'
           +       '<div class="grid gap-2 sm:grid-cols-2" data-quick-review-variants>' + variantButtons + '</div>'
           +     '</div>'
           +     '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">'
           +       '<div class="flex items-center justify-between gap-3">'
-          +         '<label for="quick-review-quantity" class="text-sm font-semibold text-slate-700">{{ app()->getLocale() === 'ka' ? 'რაოდენობა' : 'Quantity' }}</label>'
+          +         '<label for="quick-review-quantity" class="text-sm font-semibold text-slate-700">{{ __('storefront.common.quantity') }}</label>'
           +         '<input id="quick-review-quantity" type="number" name="quantity" min="1" max="' + maxQuantity + '" value="1" class="w-24 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">'
           +       '</div>'
           +     '</div>'
           +     '<div class="grid gap-2 sm:grid-cols-2">'
           +       '<button type="submit" name="post_add_action" value="cart" class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-600">'
-          +         '<i class="fa-solid fa-cart-shopping text-xs"></i>{{ app()->getLocale() === 'ka' ? 'კალათაში დამატება' : 'Add to Cart' }}'
+          +         '<i class="fa-solid fa-cart-shopping text-xs"></i>{{ __('storefront.common.add_to_cart') }}'
           +       '</button>'
           +       '<button type="submit" name="post_add_action" value="checkout" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition hover:border-primary-300 hover:bg-primary-100">'
-          +         '<i class="fa-solid fa-bag-shopping text-xs"></i>{{ app()->getLocale() === 'ka' ? 'შეკვეთის გაფორმება' : 'Checkout' }}'
+          +         '<i class="fa-solid fa-bag-shopping text-xs"></i>{{ __('storefront.common.checkout') }}'
           +       '</button>'
           +     '</div>'
           +   '</form>'
@@ -1104,7 +1108,7 @@
               return;
             }
 
-            body.innerHTML = '<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">{{ app()->getLocale() === 'ka' ? 'ამ პროდუქტის გახსნა ახლა ვერ მოხერხდა. სცადეთ თავიდან.' : 'We could not open this product right now. Please try again.' }}</div>';
+            body.innerHTML = '<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">{{ __('storefront.quick_review.open_error') }}</div>';
           });
 
           return;

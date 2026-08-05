@@ -52,9 +52,9 @@ class CartController extends Controller
 
         if (! $variant->product || ! $variant->product->is_active || ! $variant->canFulfillQuantity(1)) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'არჩეული პროდუქტი დროებით მიუწვდომელია.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.product_unavailable')], 422);
             }
-            return redirect()->back()->with('cart_error', 'არჩეული პროდუქტი დროებით მიუწვდომელია.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.product_unavailable'));
         }
 
         $quantityToAdd = (int) ($data['quantity'] ?? 1);
@@ -66,16 +66,16 @@ class CartController extends Controller
 
         if ($newQuantity > 10) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'ერთი ვარიანტისთვის მაქსიმუმ 10 ცალი შეგიძლიათ დაამატოთ.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.max_quantity')], 422);
             }
-            return redirect()->back()->with('cart_error', 'ერთი ვარიანტისთვის მაქსიმუმ 10 ცალი შეგიძლიათ დაამატოთ.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.max_quantity'));
         }
 
         if (! $variant->canFulfillQuantity($newQuantity)) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'მარაგში საკმარისი რაოდენობა არ არის.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.insufficient_stock')], 422);
             }
-            return redirect()->back()->with('cart_error', 'მარაგში საკმარისი რაოდენობა არ არის.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.insufficient_stock'));
         }
 
         $cart[$variant->id] = [
@@ -90,7 +90,7 @@ class CartController extends Controller
         if ($returnJson) {
             return response()->json([
                 'success' => true,
-                'message' => 'პროდუქტი დაემატა კალათაში.',
+                'message' => __('storefront.cart.added'),
                 'cart_count' => $newCount,
                 'redirect_url' => $postAddAction === 'checkout' ? route('checkout.index') : null,
             ]);
@@ -100,7 +100,7 @@ class CartController extends Controller
             return redirect()->route('checkout.index');
         }
 
-        return redirect()->back()->with('cart_status', 'პროდუქტი დაემატა კალათაში.');
+        return redirect()->back()->with('cart_status', __('storefront.cart.added'));
     }
 
     public function update(Request $request, CartSnapshotService $snapshot): RedirectResponse|JsonResponse
@@ -116,17 +116,17 @@ class CartController extends Controller
 
         if (! $variant->canFulfillQuantity((int) $data['quantity'])) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'მარაგში საკმარისი რაოდენობა არ არის.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.insufficient_stock')], 422);
             }
 
-            return redirect()->back()->with('cart_error', 'მარაგში საკმარისი რაოდენობა არ არის.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.insufficient_stock'));
         }
 
         $cart = $request->session()->get('cart', []);
 
         if (! array_key_exists((int) $variant->id, $cart)) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'პროდუქტი კალათაში ვერ მოიძებნა.'], 404);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.not_found')], 404);
             }
 
             return redirect()->back();
@@ -147,7 +147,7 @@ class CartController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'კალათა განახლდა.',
+                'message' => __('storefront.messages.cart_updated'),
                 'cart_count' => (int) $summary['count'],
                 'cart_total' => (float) $summary['total'],
                 'cart_total_formatted' => number_format((float) $summary['total'], 2) . ' ' . $currencySymbol,
@@ -156,7 +156,7 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('cart_status', 'კალათა განახლდა.');
+        return redirect()->back()->with('cart_status', __('storefront.messages.cart_updated'));
     }
 
     public function replaceVariant(Request $request, CartSnapshotService $snapshot): RedirectResponse|JsonResponse
@@ -171,10 +171,10 @@ class CartController extends Controller
 
         if (! array_key_exists((int) $data['current_variant_id'], $cart)) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'პროდუქტი კალათაში ვერ მოიძებნა.'], 404);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.not_found')], 404);
             }
 
-            return redirect()->back()->with('cart_error', 'პროდუქტი კალათაში ვერ მოიძებნა.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.not_found'));
         }
 
         $variants = ProductVariant::query()
@@ -188,26 +188,26 @@ class CartController extends Controller
 
         if (! $currentVariant || ! $newVariant || ! $currentVariant->product || ! $newVariant->product) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'ვერ შევცვალეთ ვარიანტი.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.variant_change_failed')], 422);
             }
 
-            return redirect()->back()->with('cart_error', 'ვერ შევცვალეთ ვარიანტი.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.variant_change_failed'));
         }
 
         if ((int) $currentVariant->product_id !== (int) $newVariant->product_id) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'ფერის შეცვლა მხოლოდ ამავე პროდუქტშია შესაძლებელი.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.same_product_only')], 422);
             }
 
-            return redirect()->back()->with('cart_error', 'ფერის შეცვლა მხოლოდ ამავე პროდუქტშია შესაძლებელი.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.same_product_only'));
         }
 
         if (! $newVariant->product->is_active || ! $newVariant->canFulfillQuantity(1)) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'არჩეული ვარიანტი ხელმისაწვდომი აღარ არის.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.variant_unavailable')], 422);
             }
 
-            return redirect()->back()->with('cart_error', 'არჩეული ვარიანტი ხელმისაწვდომი აღარ არის.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.variant_unavailable'));
         }
 
         $currentQuantity = max(1, min(10, (int) ($cart[(int) $currentVariant->id]['quantity'] ?? 1)));
@@ -229,17 +229,17 @@ class CartController extends Controller
         $item = $cartSnapshot['standard_items']->first(fn ($line) => (int) $line['variant']->id === (int) $newVariant->id);
         if (! $item) {
             if ($returnJson) {
-                return response()->json(['success' => false, 'message' => 'ფერის შეცვლის შემდეგ კალათა ვერ განახლდა.'], 422);
+                return response()->json(['success' => false, 'message' => __('storefront.cart.update_after_color_failed')], 422);
             }
 
-            return redirect()->back()->with('cart_error', 'ფერის შეცვლის შემდეგ კალათა ვერ განახლდა.');
+            return redirect()->back()->with('cart_error', __('storefront.cart.update_after_color_failed'));
         }
         $currency = $item['currency'] ?? 'GEL';
         $currencySymbol = $currency === 'GEL' ? '₾' : $currency;
 
         $message = $wasClamped
-            ? 'ფერი შეიცვალა, თუმცა რაოდენობა მარაგის მიხედვით ავტომატურად დაკორექტირდა.'
-            : 'ფერი წარმატებით შეიცვალა.';
+            ? __('storefront.messages.color_changed_clamped')
+            : __('storefront.messages.color_changed');
 
         if ($returnJson) {
             return response()->json([
@@ -250,8 +250,8 @@ class CartController extends Controller
                 'cart_total_formatted' => number_format((float) $summary['total'], 2) . ' ' . $currencySymbol,
                 'item_subtotal_formatted' => number_format((float) ($item['subtotal'] ?? 0), 2) . ' ' . $currencySymbol,
                 'quantity' => (int) ($item['quantity'] ?? $finalQuantity),
-                'variant_label' => $item['variant_label'] ?? $newVariant->name,
-                'color_name' => $item['color_name'] ?? $newVariant->color_name,
+                'variant_label' => $item['variant_label'] ?? $newVariant->localizedName(),
+                'color_name' => $item['color_name'] ?? $newVariant->localizedColorName(),
                 'reload' => true,
             ]);
         }
@@ -270,7 +270,7 @@ class CartController extends Controller
 
         $request->session()->put('cart', $cart);
 
-        return redirect()->back()->with('cart_status', 'პროდუქტი წაიშალა კალათიდან.');
+        return redirect()->back()->with('cart_status', __('storefront.cart.removed'));
     }
 
     public function clear(Request $request): RedirectResponse
@@ -278,7 +278,7 @@ class CartController extends Controller
         $request->session()->forget('cart');
         $request->session()->forget('gift_cart_groups');
 
-        return redirect()->route('cart.index')->with('cart_status', 'კალათა გასუფთავდა.');
+        return redirect()->route('cart.index')->with('cart_status', __('storefront.cart.cleared'));
     }
 
 }

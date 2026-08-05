@@ -265,7 +265,9 @@ class Product extends Model
 
     public function fulfillmentLabel(): string
     {
-        return $this->isDropship() ? 'შეკვეთით / ჩამოტანა' : 'ადგილზეა';
+        return $this->isDropship()
+            ? __('storefront.common.fulfillment_order')
+            : __('storefront.common.fulfillment_local');
     }
 
     private function localizedValue(?string $en, ?string $ka): ?string
@@ -276,6 +278,6 @@ class Product extends Model
             return $ka ?: $en;
         }
 
-        return $en ?: $ka;
+        return filled($en) ? $en : null;
     }
 }

@@ -13,10 +13,10 @@ foreach ($faqCategories as $category => $items) {
     foreach ($items as $faq) {
         $_faqItems[] = [
             '@type' => 'Question',
-            'name' => $faq->question,
+            'name' => $faq->localizedQuestion(),
             'acceptedAnswer' => [
                 '@type' => 'Answer',
-                'text' => $faq->answer,
+                'text' => $faq->localizedAnswer(),
             ],
         ];
     }
@@ -34,17 +34,17 @@ $_faqSchema = [
   <section class="tech-surface overflow-hidden">
     <div class="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
       <header class="text-center">
-        <h1 class="mt-3 text-3xl sm:text-5xl font-semibold tracking-tight text-white">ხშირად დასმული კითხვები</h1>
+        <h1 class="mt-3 text-3xl sm:text-5xl font-semibold tracking-tight text-white">{{ __('storefront.faq.title') }}</h1>
         <p class="mt-4 text-sm sm:text-base text-white/70 max-w-2xl mx-auto">
-          სწრაფი პასუხები MyTechnic სმარტ საათების SIM-კავშირზე, GPS-ზე, მიწოდებასა და გარანტიაზე.
+          {{ __('storefront.faq.subtitle') }}
         </p>
       </header>
 
       <div class="mt-10">
         <div class="grid grid-cols-12 gap-4 items-start content-start" data-accordion-root>
           <article class="col-span-12 lg:col-span-4 glass-card p-5 sm:p-6">
-            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">{{ $contactSettings['faq_support_title'] ?? 'გჭირდებათ სწრაფი დახმარება?' }}</h2>
-            <p class="mt-2 text-sm text-white/70">{{ $contactSettings['faq_support_description'] ?? 'მოგვწერეთ Live Chat-ში, WhatsApp-ზე ან Messenger-ზე და შეძლებისდაგვარად სწრაფად გიპასუხებთ.' }}</p>
+            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">{{ $contactSettings['faq_support_title'] ?? __('storefront.faq.support_title') }}</h2>
+            <p class="mt-2 text-sm text-white/70">{{ $contactSettings['faq_support_description'] ?? __('storefront.faq.support_description') }}</p>
             <div class="mt-5 flex flex-wrap gap-3">
               <button type="button" data-open-chat class="tech-pulse inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
                 <i class="fas fa-comment-dots text-white/90"></i>
@@ -64,20 +64,20 @@ $_faqSchema = [
               @endif
               <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 rounded-full bg-white text-slate-950 px-4 py-2 text-sm font-semibold hover:bg-white/90">
                 <i class="fas fa-envelope"></i>
-                <span>კონტაქტი</span>
+                <span>{{ __('storefront.common.contact') }}</span>
               </a>
             </div>
             <div class="mt-6 tech-hairline"></div>
             <ul class="mt-5 grid grid-cols-2 gap-4 text-sm">
               <li class="rounded-xl bg-white/5 border border-white/10 p-4">
                 <p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">SIM</p>
-                <p class="mt-2 font-semibold text-white">კავშირი 24/7</p>
-                <p class="mt-1 text-xs text-white/70">ზარები + მდებარეობა</p>
+                <p class="mt-2 font-semibold text-white">{{ __('storefront.faq.connection_title') }}</p>
+                <p class="mt-1 text-xs text-white/70">{{ __('storefront.faq.connection_text') }}</p>
               </li>
               <li class="rounded-xl bg-white/5 border border-white/10 p-4">
                 <p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">GPS</p>
-                <p class="mt-2 font-semibold text-white">ტრეკინგი</p>
-                <p class="mt-1 text-xs text-white/70">მშვიდი კონტროლი</p>
+                <p class="mt-2 font-semibold text-white">{{ __('storefront.faq.tracking_title') }}</p>
+                <p class="mt-1 text-xs text-white/70">{{ __('storefront.faq.tracking_text') }}</p>
               </li>
             </ul>
           </article>
@@ -98,7 +98,7 @@ $_faqSchema = [
                   <div>
                     <h2 class="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-white">{{ $category }}</h2>
                   </div>
-                  <p class="text-xs text-white/60">{{ $items->count() }} კითხვა</p>
+                  <p class="text-xs text-white/60">{{ trans_choice('storefront.common.questions_count', $items->count(), ['count' => $items->count()]) }}</p>
                 </div>
 
                 <div class="mt-5 tech-hairline"></div>
@@ -114,7 +114,7 @@ $_faqSchema = [
                         aria-controls="faq-panel-{{ $faq->id }}"
                       >
                         <div class="flex items-start justify-between gap-4">
-                          <h3 class="text-base sm:text-lg font-semibold tracking-tight text-white/95 pr-6">{{ $faq->question }}</h3>
+                          <h3 class="text-base sm:text-lg font-semibold tracking-tight text-white/95 pr-6">{{ $faq->localizedQuestion() }}</h3>
                           <span data-accordion-chevron class="mt-1 inline-flex size-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/70 transition-transform duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
                               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
@@ -125,7 +125,7 @@ $_faqSchema = [
 
                       <div id="faq-panel-{{ $faq->id }}" class="accordion-panel" data-accordion-panel data-open="0" style="display: none; opacity: 0; height: 0; overflow: hidden;">
                         <div class="pt-4 text-sm leading-relaxed text-white/75 whitespace-pre-line">
-                          {{ str_replace(["\\r\\n", "\\n", "\\r"], "\n", $faq->answer) }}
+                          {{ str_replace(["\\r\\n", "\\n", "\\r"], "\n", $faq->localizedAnswer()) }}
                         </div>
                       </div>
                     </li>
@@ -134,7 +134,7 @@ $_faqSchema = [
               </article>
             @empty
               <article class="glass-card p-6 text-center">
-                <p class="text-white/70">FAQ სია ამჟამად ცარიელია. მოგვიანებით შეამოწმეთ კიდევ ერთხელ.</p>
+                <p class="text-white/70">{{ __('storefront.faq.empty') }}</p>
               </article>
             @endforelse
           </div>

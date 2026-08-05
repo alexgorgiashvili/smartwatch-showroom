@@ -127,6 +127,7 @@ class BridgeCatalogSyncService
                     'bridge_variation_id' => (string) ($variation['id'] ?? ''),
                 ], [
                     'name' => $name !== '' ? $name : ('Variant ' . ($variation['id'] ?? '')),
+                    'name_en' => $name !== '' ? $name : ('Variant ' . ($variation['id'] ?? '')),
                     'color_name' => null,
                     'color_hex' => null,
                     'quantity' => (int) ($variation['stock_quantity'] ?? 0),
@@ -155,6 +156,7 @@ class BridgeCatalogSyncService
 
         $variant->fill([
             'name' => 'Default',
+            'name_en' => 'Default',
             'color_name' => null,
             'color_hex' => null,
             'quantity' => (int) ($remoteProduct['stock_quantity'] ?? 0),

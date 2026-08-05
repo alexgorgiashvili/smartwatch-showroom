@@ -95,8 +95,12 @@ class CitiesSeeder extends Seeder
             ['name' => 'ლალი',             'region' => 'სვანეთი'],
         ];
 
-        $now  = now();
+        $now = now();
+        $nameTranslations = config('city-translations.names', []);
+        $regionTranslations = config('city-translations.regions', []);
         $rows = array_map(fn ($c) => array_merge($c, [
+            'name_en' => $nameTranslations[$c['name']] ?? null,
+            'region_en' => $regionTranslations[$c['region']] ?? null,
             'created_at' => $now,
             'updated_at' => $now,
         ]), $cities);

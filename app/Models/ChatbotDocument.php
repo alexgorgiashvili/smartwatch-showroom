@@ -12,7 +12,9 @@ class ChatbotDocument extends Model
         'key',
         'type',
         'title',
+        'title_en',
         'content_ka',
+        'content_en',
         'product_id',
         'metadata',
         'pinecone_id',
@@ -32,5 +34,21 @@ class ChatbotDocument extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    public function localizedTitle(?string $locale = null): ?string
+    {
+        $locale ??= app()->getLocale();
+        $value = $locale === 'en' ? $this->title_en : $this->title;
+
+        return filled($value) ? (string) $value : null;
+    }
+
+    public function localizedContent(?string $locale = null): ?string
+    {
+        $locale ??= app()->getLocale();
+        $value = $locale === 'en' ? $this->content_en : $this->content_ka;
+
+        return filled($value) ? (string) $value : null;
     }
 }

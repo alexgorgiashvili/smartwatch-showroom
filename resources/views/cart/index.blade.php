@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'კალათა')
+@section('title', __('storefront.cart.title'))
 @section('robots', 'noindex, nofollow')
 
 @section('content')
@@ -10,11 +10,11 @@
             {{-- Page heading --}}
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">კალათა</h1>
-                    <p class="text-sm text-gray-500"><span data-cart-count>{{ $cartCount }}</span> პოზიცია</p>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ __('storefront.cart.title') }}</h1>
+                    <p class="text-sm text-gray-500">{{ trans_choice('storefront.common.items_count', $cartCount, ['count' => $cartCount]) }}</p>
                 </div>
                 <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
-                    <i class="fa-solid fa-arrow-left mr-1 text-xs"></i>კატალოგი
+                    <i class="fa-solid fa-arrow-left mr-1 text-xs"></i>{{ __('storefront.cart.catalog') }}
                 </a>
             </div>
 
@@ -34,10 +34,10 @@
                 {{-- Empty state --}}
                 <div class="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
                     <i class="fa-solid fa-cart-shopping mb-4 text-4xl text-gray-300"></i>
-                    <p class="text-lg font-semibold text-gray-800">კალათა ცარიელია</p>
-                    <p class="mt-1 text-sm text-gray-500">დაამატეთ პროდუქტი და გააგრძელეთ შეძენა.</p>
+                    <p class="text-lg font-semibold text-gray-800">{{ __('storefront.cart.empty_title') }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ __('storefront.cart.empty_text') }}</p>
                     <a href="{{ route('products.index') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
-                        <i class="fa-solid fa-shop text-xs"></i>პროდუქტების ნახვა
+                        <i class="fa-solid fa-shop text-xs"></i>{{ __('storefront.cart.view_products') }}
                     </a>
                 </div>
             @else
@@ -54,21 +54,21 @@
                                     <article class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm">
                                         <div class="flex flex-col gap-3 border-b border-primary-100 bg-primary-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
-                                                <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">სასაჩუქრე ყუთი</p>
-                                                <h2 class="text-base font-bold text-gray-900">სასაჩუქრე ყუთი</h2>
-                                                <p class="mt-0.5 text-xs text-gray-600">{{ $group['items_count'] }} პროდუქტი • {{ $group['packaging_label'] }}</p>
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">{{ __('storefront.cart.gift_box') }}</p>
+                                                <h2 class="text-base font-bold text-gray-900">{{ __('storefront.cart.gift_box') }}</h2>
+                                                <p class="mt-0.5 text-xs text-gray-600">{{ trans_choice('storefront.common.products_count', $group['items_count'], ['count' => $group['items_count']]) }} • {{ $group['packaging_label'] }}</p>
                                             </div>
                                             <div class="flex items-center gap-2">
                                                 @if (config('gift_builder.enabled', false))
                                                 <a href="{{ route('gift-builder.show') }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:border-primary-300 hover:bg-primary-50">
-                                                    <i class="fa-solid fa-pen text-[10px]"></i> შეცვლა
+                                                    <i class="fa-solid fa-pen text-[10px]"></i> {{ __('storefront.common.edit') }}
                                                 </a>
                                                 @endif
                                                 <form method="POST" action="{{ route('cart.gift-groups.remove', $group['id']) }}">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-50">
-                                                        <i class="fa-solid fa-trash-can text-[10px]"></i> წაშლა
+                                                        <i class="fa-solid fa-trash-can text-[10px]"></i> {{ __('storefront.common.remove') }}
                                                     </button>
                                                 </form>
                                             </div>
@@ -85,7 +85,7 @@
                                                             <a href="{{ route('products.show', $item['product']) }}" class="truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
                                                                 {{ $item['product']->name }}
                                                             </a>
-                                                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</span>
+                                                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon') }}</span>
                                                         </div>
                                                         <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
                                                             @if (!empty($item['color_hex']))
@@ -101,7 +101,7 @@
 
                                         <div class="space-y-2 bg-slate-50 px-4 py-3 text-sm text-gray-700">
                                             <div class="flex justify-between">
-                                                <span>პროდუქტები</span>
+                                                <span>{{ __('storefront.common.products') }}</span>
                                                 <span>{{ number_format($group['items_subtotal'], 2) }} {{ $groupSym }}</span>
                                             </div>
                                             @if((float) $group['packaging_amount'] > 0)
@@ -112,7 +112,7 @@
                                             @endif
                                             @if((float) $group['discount_amount'] > 0)
                                                 <div class="flex justify-between text-emerald-700">
-                                                    <span>სასაჩუქრე ფასდაკლება</span>
+                                                    <span>{{ __('storefront.cart.gift_discount') }}</span>
                                                     <span>-{{ number_format($group['discount_amount'], 2) }} {{ $groupSym }}</span>
                                                 </div>
                                             @endif
@@ -120,7 +120,7 @@
                                                 <p class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-gray-600">“{{ $group['message'] }}”</p>
                                             @endif
                                             <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-bold text-gray-900">
-                                                <span>ყუთის ჯამი</span>
+                                                <span>{{ __('storefront.cart.box_total') }}</span>
                                                 <span class="text-primary-600">{{ number_format($group['total'], 2) }} {{ $groupSym }}</span>
                                             </div>
                                         </div>
@@ -168,7 +168,7 @@
                                                 @method('PATCH')
                                                 <input type="hidden" name="current_variant_id" value="{{ $item['variant']->id }}">
                                                 <label class="mb-1 block text-[11px] font-medium text-gray-500">
-                                                    {{ app()->getLocale() === 'ka' ? 'ფერის შეცვლა' : 'Change color' }}
+                                                    {{ __('storefront.cart.change_color') }}
                                                 </label>
                                                 <select
                                                     name="new_variant_id"
@@ -177,9 +177,11 @@
                                                 >
                                                     @foreach ($switchableVariants as $variantOption)
                                                         @php
-                                                            $variantOptionLabel = filled($variantOption->name) && filled($variantOption->color_name) && !str_contains(mb_strtolower($variantOption->name), mb_strtolower($variantOption->color_name))
-                                                                ? $variantOption->name . ' • ' . $variantOption->color_name
-                                                                : ($variantOption->color_name ?: $variantOption->name ?: 'Variant');
+                                                            $variantOptionName = $variantOption->localizedName();
+                                                            $variantOptionColor = $variantOption->localizedColorName();
+                                                            $variantOptionLabel = filled($variantOptionName) && filled($variantOptionColor) && !str_contains(mb_strtolower($variantOptionName), mb_strtolower($variantOptionColor))
+                                                                ? $variantOptionName . ' • ' . $variantOptionColor
+                                                                : ($variantOptionColor ?: $variantOptionName ?: __('storefront.common.color_variant'));
                                                         @endphp
                                                         <option value="{{ $variantOption->id }}" {{ $variantOption->id === $item['variant']->id ? 'selected' : '' }}>
                                                             {{ $variantOptionLabel }}
@@ -189,7 +191,7 @@
                                             </form>
                                         @endif
                                         <p class="mt-1 text-[11px] font-semibold text-primary-600">{{ $item['fulfillment_label'] }}</p>
-                                        <p class="mt-1 text-xs font-medium text-gray-600">{{ number_format($item['unit_price'], 2) }} {{ $sym }} / ცალი</p>
+                                        <p class="mt-1 text-xs font-medium text-gray-600">{{ number_format($item['unit_price'], 2) }} {{ $sym }} / {{ __('storefront.cart.per_item') }}</p>
                                     </div>
 
                                     {{-- Qty + subtotal + remove --}}
@@ -206,7 +208,7 @@
                                                 type="button"
                                                 data-cart-qty-minus
                                                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600"
-                                                aria-label="რაოდენობის შემცირება"
+                                                aria-label="{{ __('storefront.cart.decrease_quantity') }}"
                                             >
                                                 −
                                             </button>
@@ -223,7 +225,7 @@
                                                 type="button"
                                                 data-cart-qty-plus
                                                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600"
-                                                aria-label="რაოდენობის გაზრდა"
+                                                aria-label="{{ __('storefront.cart.increase_quantity') }}"
                                             >
                                                 +
                                             </button>
@@ -235,7 +237,7 @@
                                             @method('DELETE')
                                             <input type="hidden" name="variant_id" value="{{ $item['variant']->id }}">
                                             <button type="submit" class="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700">
-                                                <i class="fa-solid fa-trash-can text-[10px]"></i>წაშლა
+                                                <i class="fa-solid fa-trash-can text-[10px]"></i>{{ __('storefront.common.remove') }}
                                             </button>
                                         </form>
                                     </div>
@@ -248,32 +250,32 @@
                     {{-- Order summary sidebar --}}
                     <div class="lg:w-72 xl:w-80">
                         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-base font-bold text-gray-900">შეკვეთის შეჯამება</h2>
+                            <h2 class="text-base font-bold text-gray-900">{{ __('storefront.cart.order_summary') }}</h2>
 
                             <dl class="mt-4 space-y-2 text-sm text-gray-700">
                                 <div class="flex justify-between">
-                                    <dt>პროდუქტები (<span data-cart-count>{{ $cartCount }}</span> ც.)</dt>
+                                    <dt>{{ __('storefront.common.products') }} (<span data-cart-count>{{ $cartCount }}</span> {{ __('storefront.checkout.unit_short') }})</dt>
                                     <dd class="font-medium" data-cart-total>{{ number_format($cartTotal, 2) }} ₾</dd>
                                 </div>
                                 <div class="flex justify-between text-gray-500">
-                                    <dt>მიწოდება</dt>
-                                    <dd>უფასო</dd>
+                                    <dt>{{ __('storefront.cart.delivery') }}</dt>
+                                    <dd>{{ __('storefront.common.free') }}</dd>
                                 </div>
                                 <div class="flex justify-between border-t border-slate-100 pt-2 text-base font-bold text-gray-900">
-                                    <dt>სულ</dt>
+                                    <dt>{{ __('storefront.common.total') }}</dt>
                                     <dd class="text-primary-600" data-cart-total>{{ number_format($cartTotal, 2) }} ₾</dd>
                                 </div>
                             </dl>
 
                             <a href="{{ route('checkout.index') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
-                                <i class="fa-solid fa-lock text-xs"></i>გაგრძელება
+                                <i class="fa-solid fa-lock text-xs"></i>{{ __('storefront.cart.continue') }}
                             </a>
 
                             <form method="POST" action="{{ route('cart.clear') }}" class="mt-3">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 px-5 py-2 text-xs font-medium text-gray-500 hover:border-rose-300 hover:text-rose-500">
-                                    <i class="fa-solid fa-trash text-[10px]"></i>კალათის გასუფთავება
+                                    <i class="fa-solid fa-trash text-[10px]"></i>{{ __('storefront.cart.clear') }}
                                 </button>
                             </form>
                         </div>
@@ -350,7 +352,7 @@
             })
             .then(function (result) {
                 if (!result.ok || !result.data.success) {
-                    showMessage(result.data.message || 'განახლება ვერ შესრულდა.', true);
+                    showMessage(result.data.message || @js(__('storefront.messages.update_failed')), true);
                     return;
                 }
 
@@ -371,10 +373,10 @@
                     setTotals(result.data.cart_total_formatted);
                 }
 
-                showMessage(result.data.message || 'კალათა განახლდა.', false);
+                showMessage(result.data.message || @js(__('storefront.messages.cart_updated')), false);
             })
             .catch(function () {
-                showMessage('ქსელური შეცდომა. სცადეთ თავიდან.', true);
+                showMessage(@js(__('storefront.messages.network_error')), true);
             })
             .finally(function () {
                 if (submitButton) submitButton.disabled = false;
@@ -499,16 +501,16 @@
                 })
                 .then(function (result) {
                     if (!result.ok || !result.data.success) {
-                        showMessage(result.data.message || 'ფერის შეცვლა ვერ მოხერხდა.', true);
+                        showMessage(result.data.message || @js(__('storefront.messages.color_change_failed')), true);
                         select.value = currentVariantInput.value;
                         return;
                     }
 
-                    showMessage(result.data.message || 'ფერი შეიცვალა.', false);
+                    showMessage(result.data.message || @js(__('storefront.messages.color_changed')), false);
                     window.location.reload();
                 })
                 .catch(function () {
-                    showMessage('ქსელური შეცდომა. სცადეთ თავიდან.', true);
+                    showMessage(@js(__('storefront.messages.network_error')), true);
                     select.value = currentVariantInput.value;
                 });
             });

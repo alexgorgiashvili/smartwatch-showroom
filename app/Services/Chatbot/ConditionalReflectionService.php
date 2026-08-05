@@ -95,7 +95,7 @@ class ConditionalReflectionService
 
             $candidateReply = $regenerated['reply'];
 
-            if (!$this->policy->passesStrictGeorgianQa($candidateReply)) {
+            if (!$this->policy->passesLocaleQa($candidateReply)) {
                 continue;
             }
 

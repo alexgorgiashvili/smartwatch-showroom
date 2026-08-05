@@ -46,37 +46,41 @@ class Article extends Model
     {
         return app()->getLocale() === 'ka'
             ? ($this->title_ka ?: $this->title_en)
-            : ($this->title_en ?: $this->title_ka);
+            : $this->title_en;
     }
 
     public function getExcerptAttribute(): ?string
     {
         return app()->getLocale() === 'ka'
             ? ($this->excerpt_ka ?: $this->excerpt_en)
-            : ($this->excerpt_en ?: $this->excerpt_ka);
+            : $this->excerpt_en;
     }
 
     public function getBodyAttribute(): ?string
     {
         return app()->getLocale() === 'ka'
             ? ($this->body_ka ?: $this->body_en)
-            : ($this->body_en ?: $this->body_ka);
+            : $this->body_en;
     }
 
     public function getMetaTitleAttribute(): ?string
     {
         $custom = app()->getLocale() === 'ka'
             ? ($this->meta_title_ka ?: $this->meta_title_en)
-            : ($this->meta_title_en ?: $this->meta_title_ka);
+            : $this->meta_title_en;
 
-        return $custom ?: ($this->title . ' — MyTechnic');
+        if ($custom) {
+            return $custom;
+        }
+
+        return filled($this->title) ? $this->title . ' — MyTechnic' : null;
     }
 
     public function getMetaDescriptionAttribute(): ?string
     {
         $custom = app()->getLocale() === 'ka'
             ? ($this->meta_description_ka ?: $this->meta_description_en)
-            : ($this->meta_description_en ?: $this->meta_description_ka);
+            : $this->meta_description_en;
 
         return $custom ?: $this->excerpt;
     }

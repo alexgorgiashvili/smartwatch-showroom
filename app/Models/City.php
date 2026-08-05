@@ -9,6 +9,9 @@ class City extends Model
 {
     protected $fillable = [
         'name',
+        'name_en',
+        'region',
+        'region_en',
         'state_id',
         'country_id',
         'cost',
@@ -26,5 +29,14 @@ class City extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function localizedName(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        return $locale === 'en'
+            ? ((string) ($this->name_en ?: __('storefront.checkout.city')))
+            : (string) $this->name;
     }
 }

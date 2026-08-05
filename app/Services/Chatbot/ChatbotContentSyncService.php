@@ -19,14 +19,18 @@ class ChatbotContentSyncService
     ) {
     }
 
-    public function syncFaq(Faq $faq): bool
+    public function syncFaq(Faq $faq, bool $syncEmbedding = true): bool
     {
         $document = ChatbotDocument::updateOrCreate(
             ['key' => 'faq-' . $faq->id],
             [
                 'type' => 'faq',
                 'title' => $faq->question,
+                'title_en' => $faq->question_en,
                 'content_ka' => "კითხვა: {$faq->question}\n\nპასუხი: {$faq->answer}",
+                'content_en' => filled($faq->question_en) && filled($faq->answer_en)
+                    ? "Question: {$faq->question_en}\n\nAnswer: {$faq->answer_en}"
+                    : null,
                 'metadata' => [
                     'category' => $faq->category,
                     'source' => 'faq',
@@ -36,7 +40,7 @@ class ChatbotContentSyncService
             ]
         );
 
-        $synced = $this->syncDocumentEmbedding($document);
+        $synced = ! $syncEmbedding || $this->syncDocumentEmbedding($document);
         $this->bumpProductContextVersion();
 
         return $synced;
@@ -53,7 +57,7 @@ class ChatbotContentSyncService
         return true;
     }
 
-    public function syncContacts(?array $settings = null): bool
+    public function syncContacts(?array $settings = null, bool $syncEmbedding = true): bool
     {
         $settings ??= ContactSetting::allKeyed();
 
@@ -68,12 +72,25 @@ class ChatbotContentSyncService
             'Messenger: ' . ($settings['messenger_url'] ?? ''),
         ]));
 
+        $contentEn = implode("\n", array_filter([
+            'Phone: ' . ($settings['phone_display'] ?? ''),
+            'WhatsApp: ' . ($settings['whatsapp_url'] ?? ''),
+            'Email: ' . ($settings['email'] ?? ''),
+            'Location: ' . ($settings['location_en'] ?? $settings['location'] ?? ''),
+            'Working hours: ' . ($settings['hours_en'] ?? ''),
+            'Instagram: ' . ($settings['instagram_url'] ?? ''),
+            'Facebook: ' . ($settings['facebook_url'] ?? ''),
+            'Messenger: ' . ($settings['messenger_url'] ?? ''),
+        ]));
+
         $document = ChatbotDocument::updateOrCreate(
             ['key' => 'contact-main'],
             [
                 'type' => 'support',
                 'title' => 'კონტაქტი',
+                'title_en' => 'Contact',
                 'content_ka' => $content,
+                'content_en' => $contentEn,
                 'metadata' => [
                     'source' => 'contact_settings',
                 ],
@@ -81,13 +98,13 @@ class ChatbotContentSyncService
             ]
         );
 
-        $synced = $this->syncDocumentEmbedding($document);
+        $synced = ! $syncEmbedding || $this->syncDocumentEmbedding($document);
         $this->bumpProductContextVersion();
 
         return $synced;
     }
 
-    public function syncStaticPages(): bool
+    public function syncStaticPages(bool $syncEmbedding = true): bool
     {
         $synced = true;
 
@@ -97,13 +114,15 @@ class ChatbotContentSyncService
                 [
                     'type' => $documentData['type'],
                     'title' => $documentData['title'],
+                    'title_en' => $documentData['title_en'],
                     'content_ka' => $documentData['content_ka'],
+                    'content_en' => $documentData['content_en'],
                     'metadata' => $documentData['metadata'],
                     'is_active' => true,
                 ]
             );
 
-            $synced = $this->syncDocumentEmbedding($document) && $synced;
+            $synced = (! $syncEmbedding || $this->syncDocumentEmbedding($document)) && $synced;
         }
 
         $this->bumpProductContextVersion();
@@ -111,7 +130,7 @@ class ChatbotContentSyncService
         return $synced;
     }
 
-    public function syncProduct(Product $product): bool
+    public function syncProduct(Product $product, bool $syncEmbedding = true): bool
     {
         $product->loadMissing(['variants', 'primaryImage']);
 
@@ -220,13 +239,16 @@ class ChatbotContentSyncService
         $lines[] = 'საერთო მარაგი: ' . $stockStatus;
 
         $content = implode("\n", $lines);
+        $contentEn = $this->buildEnglishProductContent($product, $isInStock);
 
         $document = ChatbotDocument::updateOrCreate(
             ['key' => 'product-' . $product->id],
             [
                 'type' => 'product',
                 'title' => $name,
+                'title_en' => $product->name_en,
                 'content_ka' => $content,
+                'content_en' => $contentEn,
                 'product_id' => $product->id,
                 'metadata' => [
                     'key' => 'product-' . $product->id,
@@ -258,12 +280,14 @@ class ChatbotContentSyncService
                     'total_stock' => max(0, (int) $totalStock),
                     'text' => $content,
                     'content' => $content,
+                    'text_en' => $contentEn,
+                    'content_en' => $contentEn,
                 ],
                 'is_active' => true,
             ]
         );
 
-        $synced = $this->syncDocumentEmbedding($document);
+        $synced = ! $syncEmbedding || $this->syncDocumentEmbedding($document);
         $this->bumpProductContextVersion();
 
         return $synced;
@@ -318,6 +342,71 @@ class ChatbotContentSyncService
         Cache::increment('product_context_version');
     }
 
+    private function buildEnglishProductContent(Product $product, bool $isInStock): string
+    {
+        $price = $product->sale_price
+            ? $product->sale_price . ' GEL (regular price ' . $product->price . ' GEL)'
+            : $product->price . ' GEL';
+
+        $lines = [
+            'Product: ' . $product->name_en,
+            'Slug: ' . $product->slug,
+            'Price: ' . $price,
+        ];
+
+        if ($product->short_description_en) {
+            $lines[] = 'Short description: ' . $product->short_description_en;
+        }
+        if ($product->description_en) {
+            $lines[] = 'Description: ' . $product->description_en;
+        }
+
+        $lines[] = 'SIM support: ' . ($product->sim_support ? 'Yes' : 'No');
+        $lines[] = 'GPS features: ' . ($product->gps_features ? 'Yes' : 'No');
+
+        $specifications = [
+            'Water resistance' => $product->water_resistant,
+            'Battery life' => $product->batteryLifeLabel('en'),
+            'Warranty' => $product->warranty_months ? $product->warranty_months . ' months' : null,
+            'Operating system' => $product->operating_system,
+            'Screen size' => $product->screen_size,
+            'Display type' => $product->display_type,
+            'Resolution' => $product->screen_resolution,
+            'Battery capacity' => $product->battery_capacity_mah ? $product->battery_capacity_mah . ' mAh' : null,
+            'Charging time' => $product->charging_time_hours ? $product->charging_time_hours . ' hours' : null,
+            'Case material' => $product->case_material,
+            'Band material' => $product->band_material,
+            'Camera' => $product->camera,
+        ];
+
+        foreach ($specifications as $label => $value) {
+            if (filled($value)) {
+                $lines[] = $label . ': ' . $value;
+            }
+        }
+
+        if (is_array($product->functions) && $product->functions !== []) {
+            $englishFunctions = array_values(array_filter(
+                $product->functions,
+                fn ($function): bool => preg_match('/\p{Georgian}/u', (string) $function) !== 1
+            ));
+            if ($englishFunctions !== []) {
+                $lines[] = 'Functions: ' . implode(', ', $englishFunctions);
+            }
+        }
+
+        if ($product->variants->isNotEmpty()) {
+            $lines[] = 'Variants:';
+            foreach ($product->variants as $variant) {
+                $lines[] = '- ' . $variant->localizedName('en') . ': ' . ((int) $variant->quantity > 0 ? 'In stock' : 'Out of stock');
+            }
+        }
+
+        $lines[] = 'Overall stock: ' . ($isInStock ? 'In stock' : 'Out of stock');
+
+        return implode("\n", $lines);
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */
@@ -328,12 +417,20 @@ class ChatbotContentSyncService
                 'key' => 'page-about',
                 'type' => 'company',
                 'title' => 'MyTechnic-ის შესახებ',
+                'title_en' => 'About MyTechnic',
                 'content_ka' => implode("\n\n", [
                     'MyTechnic არის საქართველოში SIM-იანი ბავშვთა სმარტ საათების ოფიციალური იმპორტიორი და თბილისში დაფუძნებული გუნდი.',
                     'ჩვენ ვამახვილებთ ყურადღებას ზარზე, GPS-ზე, შეტყობინებებზე, ვიდეო ზარზე, კამერაზე, ბატარეაზე და ყოველდღიურ გამოყენებადობაზე.',
                     'გვინდა, რომ მშობელს ჰქონდეს სიმშვიდე, ბავშვს კი უსაფრთხო და მარტივი კავშირი.',
                     'მნიშვნელოვანი დეტალები: უფასო მიწოდება მთელი საქართველოს მასშტაბით, ' . UnifiedAiPolicyService::canonicalWarrantySummary('ka') . '.',
                     'დაგვიკავშირდით ტელეფონით, WhatsApp-ით ან Messenger-ით — სწრაფად და პირდაპირ.',
+                ]),
+                'content_en' => implode("\n\n", [
+                    'MyTechnic is the official importer of SIM-enabled kids smartwatches in Georgia and a Tbilisi-based team.',
+                    'We focus on calling, GPS, messaging, video calls, cameras, battery life, and practical everyday use.',
+                    'Our goal is to give parents peace of mind and children a safe, simple way to stay connected.',
+                    'Key details: free delivery across Georgia and ' . UnifiedAiPolicyService::canonicalWarrantySummary('en') . '.',
+                    'Contact us by phone, WhatsApp, or Messenger for fast, direct support.',
                 ]),
                 'metadata' => [
                     'source' => 'site_page',
@@ -344,11 +441,18 @@ class ChatbotContentSyncService
                 'key' => 'page-privacy',
                 'type' => 'policy',
                 'title' => 'კონფიდენციალობის პოლიტიკა',
+                'title_en' => 'Privacy Policy',
                 'content_ka' => implode("\n\n", [
                     'ვაგროვებთ მხოლოდ იმ ინფორმაციას, რომელიც საჭიროა შეკვეთისა და მხარდაჭერისთვის: სახელი, ტელეფონი, ელფოსტა, მისამართი, შეკვეთის დეტალები და ვებსაიტთან ან ჩატბოტთან დაკავშირებული აქტივობა.',
                     'ვიყენებთ მონაცემებს შეკვეთების დამუშავებისთვის, მიწოდებისთვის, მომხმარებელთან კომუნიკაციისთვის, ვებსაიტის გაუმჯობესებისთვის და თაღლითობის პრევენციისთვის.',
                     'ჩატბოტთან მიმოწერა შეიძლება გამოყენდეს მხარდაჭერის გაუმჯობესებისთვის. AI პასუხები ავტომატურად გენერირდება და არ წარმოადგენს იურიდიულ ან სამედიცინო რჩევას.',
                     'ვიცავთ მონაცემებს SSL/TLS, უსაფრთხო სერვერებით, წვდომის კონტროლით და რეგულარული მონიტორინგით. პერსონალურ ინფორმაციას მესამე მხარეს არ ვუზიარებთ თქვენი თანხმობის გარეშე.',
+                ]),
+                'content_en' => implode("\n\n", [
+                    'We collect only the information needed to process orders and provide support, such as your name, phone number, email, delivery address, order details, and website or chatbot activity.',
+                    'We use this data to process and deliver orders, communicate with customers, improve the website, and prevent fraud.',
+                    'Chatbot conversations may be used to improve support. AI responses are generated automatically and are not legal or medical advice.',
+                    'We protect data with SSL/TLS, secure servers, access controls, and regular monitoring. We do not share personal information with third parties without consent except when required to deliver the service or comply with law.',
                 ]),
                 'metadata' => [
                     'source' => 'site_page',
@@ -359,6 +463,7 @@ class ChatbotContentSyncService
                 'key' => 'page-terms',
                 'type' => 'policy',
                 'title' => 'მომსახურების პირობები',
+                'title_en' => 'Terms of Service',
                 'content_ka' => implode("\n\n", [
                     'MyTechnic-ის ვებსაიტზე შესვლით და გამოყენებით თქვენ ეთანხმებით ამ პირობებს და საქართველოს მოქმედ კანონმდებლობას.',
                     'ვებსაიტის მასალები განკუთვნილია მხოლოდ პირადი, არაკომერციული გამოყენებისთვის. აკრძალულია კოპირება, გავრცელება, რევერსული ინჟინერია ან სამართლებრივი აღნიშვნების შეცვლა.',
@@ -366,6 +471,14 @@ class ChatbotContentSyncService
                     'გარანტია: ' . UnifiedAiPolicyService::canonicalWarrantySummary('ka') . '. გარანტია არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
                     'დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალური შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი.',
                     'ფასები, მარაგი და მახასიათებლები შეიძლება შეიცვალოს წინასწარი შეტყობინების გარეშე.',
+                ]),
+                'content_en' => implode("\n\n", [
+                    'By accessing and using the MyTechnic website, you agree to these terms and applicable Georgian law.',
+                    'Website materials are provided for personal, non-commercial use. Copying, distribution, reverse engineering, or removal of legal notices is prohibited.',
+                    'Payment is available through Bank of Georgia’s secure online system and, for eligible Tbilisi orders, by cash on delivery. Delivery is free across Georgia.',
+                    'Warranty: ' . UnifiedAiPolicyService::canonicalWarrantySummary('en') . '. The warranty does not cover mechanical damage, water damage caused by misuse, or unauthorized repairs.',
+                    'Returns or exchanges may be requested within 14 calendar days if the product is unused, includes the original packaging, and is accompanied by proof of purchase.',
+                    'Prices, stock, and specifications may change without prior notice.',
                 ]),
                 'metadata' => [
                     'source' => 'site_page',
@@ -389,7 +502,11 @@ class ChatbotContentSyncService
             }
 
             if ($document->type === 'product') {
-                $chunks = $this->chunker->chunk((string) $document->content_ka, 'product');
+                $combinedContent = implode("\n\n", array_filter([
+                    $document->content_ka,
+                    $document->content_en,
+                ]));
+                $chunks = $this->chunker->chunk($combinedContent, 'product');
 
                 if ($chunks === []) {
                     return false;
@@ -459,7 +576,13 @@ class ChatbotContentSyncService
                 return true;
             }
 
-            $vector = $this->embedding->embed($document->title . "\n" . $document->content_ka);
+            $embeddingInput = implode("\n\n", array_filter([
+                $document->title,
+                $document->content_ka,
+                $document->title_en,
+                $document->content_en,
+            ]));
+            $vector = $this->embedding->embed($embeddingInput);
 
             if ($vector === []) {
                 return false;
@@ -469,6 +592,8 @@ class ChatbotContentSyncService
                 'key' => $document->key,
                 'type' => $document->type,
                 'title' => $document->title,
+                'title_en' => $document->title_en,
+                'content_en' => $document->content_en,
                 'product_id' => $document->product_id,
             ];
 

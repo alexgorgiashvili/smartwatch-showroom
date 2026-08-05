@@ -317,15 +317,23 @@ const AdminProducts = {
             html: `
                 <div class="text-start">
                     <div class="mb-2">
-                        <label class="form-label small">Name <span class="text-danger">*</span></label>
+                        <label class="form-label small">Name (KA) <span class="text-danger">*</span></label>
                         <input type="text" id="swal-name" class="form-control form-control-sm" value="${variant?.name || ''}" required>
                     </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Name (EN) <span class="text-danger">*</span></label>
+                        <input type="text" id="swal-name-en" class="form-control form-control-sm" value="${variant?.name_en || ''}" required>
+                    </div>
                     <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small">Color Name</label>
+                        <div class="col-4">
+                            <label class="form-label small">Color (KA)</label>
                             <input type="text" id="swal-color-name" class="form-control form-control-sm" value="${variant?.color_name || ''}">
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
+                            <label class="form-label small">Color (EN)</label>
+                            <input type="text" id="swal-color-name-en" class="form-control form-control-sm" value="${variant?.color_name_en || ''}">
+                        </div>
+                        <div class="col-4">
                             <label class="form-label small">Color Hex</label>
                             <input type="color" id="swal-color-hex" class="form-control form-control-sm form-control-color" value="${variant?.color_hex || '#000000'}" style="height:31px;">
                         </div>
@@ -351,15 +359,17 @@ const AdminProducts = {
             preConfirm: async () => {
                 const data = {
                     name: document.getElementById('swal-name').value,
+                    name_en: document.getElementById('swal-name-en').value,
                     color_name: document.getElementById('swal-color-name').value || null,
+                    color_name_en: document.getElementById('swal-color-name-en').value || null,
                     color_hex: document.getElementById('swal-color-name').value ? document.getElementById('swal-color-hex').value : null,
                     quantity: parseInt(document.getElementById('swal-qty').value, 10),
                     low_stock_threshold: parseInt(document.getElementById('swal-threshold').value, 10),
                     is_listed_separately: document.getElementById('swal-listed-separately').checked,
                 };
 
-                if (!data.name) {
-                    Swal.showValidationMessage('Name is required');
+                if (!data.name || !data.name_en) {
+                    Swal.showValidationMessage('Both Georgian and English names are required');
                     return false;
                 }
 

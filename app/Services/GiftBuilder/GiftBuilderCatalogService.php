@@ -88,14 +88,14 @@ class GiftBuilderCatalogService
             'budget_band' => $product->gift_budget_band ?: $this->budgetBandForPrice($price),
             'compatibility_tags' => array_values((array) ($product->gift_compatibility_tags ?? [])),
             'capacity_units' => max(1, (int) ($product->gift_capacity_units ?: 1)),
-            'badge' => $locale === 'ka' ? ($product->gift_badge_ka ?: $product->gift_badge_en) : ($product->gift_badge_en ?: $product->gift_badge_ka),
-            'note' => $locale === 'ka' ? ($product->gift_builder_note_ka ?: $product->gift_builder_note_en) : ($product->gift_builder_note_en ?: $product->gift_builder_note_ka),
+            'badge' => $locale === 'ka' ? ($product->gift_badge_ka ?: $product->gift_badge_en) : $product->gift_badge_en,
+            'note' => $locale === 'ka' ? ($product->gift_builder_note_ka ?: $product->gift_builder_note_en) : $product->gift_builder_note_en,
             'variants' => $product->variants
                 ->filter(fn (ProductVariant $variant): bool => $variant->available_quantity > 0)
                 ->map(fn (ProductVariant $variant): array => [
                     'id' => (int) $variant->id,
-                    'name' => $variant->name,
-                    'color_name' => $variant->color_name,
+                    'name' => $variant->localizedName($locale),
+                    'color_name' => $variant->localizedColorName($locale),
                     'color_hex' => $variant->color_hex,
                     'available_quantity' => (int) $variant->available_quantity,
                 ])
@@ -147,11 +147,11 @@ class GiftBuilderCatalogService
                 $item['slug'] = $slug;
                 $item['label'] = $locale === 'ka'
                     ? ($item['label_ka'] ?? $item['label_en'] ?? $slug)
-                    : ($item['label_en'] ?? $item['label_ka'] ?? $slug);
+                    : ($item['label_en'] ?? str($slug)->headline()->toString());
                 if (isset($item['description_ka']) || isset($item['description_en'])) {
                     $item['description'] = $locale === 'ka'
                         ? ($item['description_ka'] ?? $item['description_en'] ?? '')
-                        : ($item['description_en'] ?? $item['description_ka'] ?? '');
+                        : ($item['description_en'] ?? '');
                 }
 
                 return $item;

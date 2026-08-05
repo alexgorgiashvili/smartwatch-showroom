@@ -61,7 +61,7 @@ $_productSchema = [
         [
             '@type' => 'PropertyValue',
             'name' => 'AI_CITATION',
-            'value' => 'MyTechnic.ge - ოფიციალური იმპორტიორი საქართველოში',
+            'value' => __('storefront.products.official_importer'),
         ],
         [
             '@type' => 'PropertyValue',
@@ -241,7 +241,7 @@ if ($approvedReviews->count() > 0) {
 													data-index="{{ $loop->index }}"
 													data-src="{{ $image->url }}"
 													data-alt="{{ $image->alt ?: $product->name }}"
-													aria-label="სურათის გადიდება"
+											aria-label="{{ __('storefront.products.zoom_image') }}"
 												>
 													<img
 														src="{{ $image->url }}"
@@ -460,9 +460,9 @@ if ($approvedReviews->count() > 0) {
 
                         @if($colorVariants->isNotEmpty())
                             <div class="mt-6 rounded-xl border border-slate-200 bg-white p-4">
-                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ app()->getLocale() === 'ka' ? 'ფერი' : 'Color' }}</p>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ __('storefront.common.color') }}</p>
                                 <p id="selected-color-label" class="mt-1 text-sm font-semibold text-gray-900">
-                                    {{ app()->getLocale() === 'ka' ? 'არჩეული' : 'Selected' }}: {{ $defaultColor->color_name }}
+                                    {{ __('storefront.common.selected') }}: {{ $defaultColor->localizedColorName() }}
                                 </p>
                                 <div class="mt-3 flex flex-wrap items-center gap-2.5">
                                     @foreach($colorVariants as $index => $variantColor)
@@ -473,8 +473,8 @@ if ($approvedReviews->count() > 0) {
                                             type="button"
                                             class="product-color-swatch relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 transition focus:outline-none focus:ring-2 focus:ring-primary-500 {{ $selectedColorId === $variantColor->id ? 'ring-2 ring-primary-500 ring-offset-2' : '' }} {{ $variantColor->available_quantity <= 0 ? 'opacity-45' : '' }}"
                                             style="background-color: {{ $variantColor->color_hex }};"
-                                            title="{{ $variantColor->color_name }}"
-                                            data-color-name="{{ $variantColor->color_name }}"
+                                            title="{{ $variantColor->localizedColorName() }}"
+                                            data-color-name="{{ $variantColor->localizedColorName() }}"
                                             data-color-hex="{{ strtoupper($variantColor->color_hex) }}"
                                             data-variant-id="{{ $variantColor->id }}"
                                             data-stock="{{ (int) $variantColor->available_quantity }}"
@@ -482,7 +482,7 @@ if ($approvedReviews->count() > 0) {
                                             data-image-url="{{ $variantImage['thumbnail_url'] ?? $variantImage['url'] ?? '' }}"
                                             data-image-alt="{{ $variantImage['alt'] ?? $product->name }}"
                                             aria-pressed="{{ $selectedColorId === $variantColor->id ? 'true' : 'false' }}"
-                                            aria-label="{{ $variantColor->color_name }}"
+                                            aria-label="{{ $variantColor->localizedColorName() }}"
                                         >
                                             @if($variantColor->available_quantity <= 0)
                                                 <span class="pointer-events-none absolute h-px w-9 rotate-45 bg-slate-600" aria-hidden="true"></span>
@@ -507,7 +507,7 @@ if ($approvedReviews->count() > 0) {
                                     <input type="hidden" name="variant_id" id="selected-variant-id" value="{{ $defaultVariant->id }}">
 
                                     <div class="flex items-center gap-2">
-                                        <label for="cart-quantity" class="text-sm font-semibold text-gray-700">რაოდენობა</label>
+                                        <label for="cart-quantity" class="text-sm font-semibold text-gray-700">{{ __('storefront.common.quantity') }}</label>
                                         <input
                                             id="cart-quantity"
                                             type="number"
@@ -527,7 +527,7 @@ if ($approvedReviews->count() > 0) {
                                             data-purchase-button
                                             class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
                                         >
-                                            <i class="fa-solid fa-cart-shopping text-xs"></i>კალათაში დამატება
+                                            <i class="fa-solid fa-cart-shopping text-xs"></i>{{ __('storefront.common.add_to_cart') }}
                                         </button>
                                         <button
                                             type="submit"
@@ -536,7 +536,7 @@ if ($approvedReviews->count() > 0) {
                                             data-purchase-button
                                             class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
                                         >
-                                            <i class="fa-solid fa-bag-shopping text-xs"></i>შეკვეთის გაფორმება
+                                            <i class="fa-solid fa-bag-shopping text-xs"></i>{{ __('storefront.common.checkout') }}
                                         </button>
                                     </div>
                                 </form>
@@ -548,7 +548,7 @@ if ($approvedReviews->count() > 0) {
                                     data-base-url="{{ route('gift-builder.show', ['product' => $product->slug]) }}"
                                     class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-5 py-3 text-sm font-semibold text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100"
                                 >
-                                    <i class="fa-solid fa-box-open text-xs"></i>{{ app()->getLocale() === 'ka' ? 'საჩუქრად აწყობა' : 'Build this as a gift' }}
+                                    <i class="fa-solid fa-box-open text-xs"></i>{{ __('storefront.products.build_as_gift') }}
                                 </a>
                             @endif
                             <button
@@ -570,7 +570,7 @@ if ($approvedReviews->count() > 0) {
                         <form method="POST" action="{{ route('inquiries.store') }}" class="mt-5 space-y-4">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="selected_color" id="selected-color-input" value="{{ $defaultColor?->color_name }}">
+                            <input type="hidden" name="selected_color" id="selected-color-input" value="{{ $defaultColor?->localizedColorName() }}">
                             <div aria-hidden="true" style="display:none;">
                                 <label for="inquiry-website">Website</label>
                                 <input id="inquiry-website" type="text" name="website" tabindex="-1" autocomplete="off">
@@ -611,8 +611,8 @@ if ($approvedReviews->count() > 0) {
             @if(isset($relatedProducts) && $relatedProducts->isNotEmpty())
                 <div class="mt-10">
                     <div class="mb-4 flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-gray-900">{{ app()->getLocale() === 'ka' ? 'მსგავსი პროდუქტები' : 'Related Products' }}</h2>
-                        <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">{{ app()->getLocale() === 'ka' ? 'ყველას ნახვა' : 'View all' }}</a>
+                        <h2 class="text-xl font-bold text-gray-900">{{ __('storefront.products.related') }}</h2>
+                        <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('storefront.common.view_all') }}</a>
                     </div>
 
                     <div id="related-products-splide" class="splide" aria-label="Related products">
@@ -719,7 +719,7 @@ if ($approvedReviews->count() > 0) {
                 targetSwatch.setAttribute('aria-pressed', 'true');
 
                 const colorName = targetSwatch.dataset.colorName || '';
-                const selectedText = "{{ app()->getLocale() === 'ka' ? 'არჩეული' : 'Selected' }}";
+                const selectedText = @js(__('storefront.common.selected'));
                 if (selectedLabel) {
                     selectedLabel.textContent = `${selectedText}: ${colorName}`;
                 }
@@ -751,8 +751,8 @@ if ($approvedReviews->count() > 0) {
                 });
                 if (stockStatus) {
                     stockStatus.textContent = isOutOfStock
-                        ? @js(app()->getLocale() === 'ka' ? 'არჩეული ფერი მარაგში არ არის.' : 'The selected color is out of stock.')
-                        : @js(app()->getLocale() === 'ka' ? 'არჩეული ფერი მარაგშია.' : 'The selected color is in stock.');
+                        ? @js(__('storefront.products.selected_out_of_stock'))
+                        : @js(__('storefront.products.selected_in_stock'));
                     stockStatus.className = `mt-3 text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-emerald-600'}`;
                 }
 

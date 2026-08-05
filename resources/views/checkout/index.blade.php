@@ -1,19 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'შეკვეთის გაფორმება')
+@section('title', __('storefront.checkout.title'))
 @section('robots', 'noindex, nofollow')
 
 @section('content')
     <section class="bg-gray-50 py-8 sm:py-10">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center gap-2 text-sm text-gray-600">
-                <a href="{{ route('cart.index') }}" class="hover:text-primary-600">კალათაში დაბრუნება</a>
+                <a href="{{ route('cart.index') }}" class="hover:text-primary-600">{{ __('storefront.checkout.back_to_cart') }}</a>
             </div>
 
             <div class="grid gap-6 lg:grid-cols-12">
                 <div class="min-w-0 lg:col-span-5">
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h1 class="text-xl font-bold text-gray-900">შეკვეთის დეტალები</h1>
+                        <h1 class="text-xl font-bold text-gray-900">{{ __('storefront.checkout.order_details') }}</h1>
 
                         <div class="mt-4 space-y-3">
                             @foreach($giftGroups as $group)
@@ -23,9 +23,9 @@
                                 <div class="rounded-xl border border-primary-100 bg-primary-50/50 p-3">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
-                                            <p class="text-[11px] font-semibold uppercase text-primary-700">სასაჩუქრე ყუთი</p>
-                                            <p class="text-sm font-bold text-gray-900">სასაჩუქრე ყუთი</p>
-                                            <p class="mt-1 text-xs text-gray-600">{{ $group['items_count'] }} პროდუქტი • {{ $group['packaging_label'] }}</p>
+                                            <p class="text-[11px] font-semibold uppercase text-primary-700">{{ __('storefront.cart.gift_box') }}</p>
+                                            <p class="text-sm font-bold text-gray-900">{{ __('storefront.cart.gift_box') }}</p>
+                                            <p class="mt-1 text-xs text-gray-600">{{ trans_choice('storefront.common.products_count', $group['items_count'], ['count' => $group['items_count']]) }} • {{ $group['packaging_label'] }}</p>
                                         </div>
                                         <p class="shrink-0 text-sm font-bold text-primary-700">{{ number_format($group['total'], 2) }} {{ $groupSym }}</p>
                                     </div>
@@ -40,7 +40,7 @@
                                                         @if (!empty($item['color_hex']))
                                                             <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
                                                         @endif
-                                                        <span>{{ $item['variant_label'] }} • {{ $item['gift_role'] === 'main' ? 'მთავარი' : 'დამატებითი' }}</span>
+                                                        <span>{{ $item['variant_label'] }} • {{ $item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon') }}</span>
                                                     </div>
                                                 </div>
                                                 <p class="text-xs font-semibold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
@@ -64,7 +64,7 @@
                                             @if (!empty($item['color_hex']))
                                                 <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
                                             @endif
-                                            <span>{{ $item['variant_label'] }} • {{ $item['quantity'] }} ც</span>
+                                            <span>{{ $item['variant_label'] }} • {{ $item['quantity'] }} {{ __('storefront.checkout.unit_short') }}</span>
                                         </div>
                                         <p class="mt-1 text-sm font-semibold text-primary-600">{{ number_format($item['subtotal'], 2) }} {{ $item['currency'] === 'GEL' ? '₾' : $item['currency'] }}</p>
                                     </div>
@@ -74,11 +74,11 @@
 
                         <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div class="flex items-center justify-between text-sm text-gray-700">
-                                <span>სულ რაოდენობა</span>
+                                <span>{{ __('storefront.checkout.total_quantity') }}</span>
                                 <span class="font-semibold">{{ $cartCount }}</span>
                             </div>
                             <div class="mt-2 flex items-center justify-between text-base text-gray-900">
-                                <span class="font-semibold">სულ გადასახდელი</span>
+                                <span class="font-semibold">{{ __('storefront.checkout.total_due') }}</span>
                                 <span class="text-right text-xl font-extrabold text-primary-600 sm:text-2xl">{{ number_format($cartTotal, 2) }} {{ $currencySymbol }}</span>
                             </div>
                         </div>
@@ -87,7 +87,7 @@
 
                 <div class="min-w-0 lg:col-span-7">
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 class="text-xl font-bold text-gray-900">მომხმარებლის მონაცემები</h2>
+                        <h2 class="text-xl font-bold text-gray-900">{{ __('storefront.checkout.customer_details') }}</h2>
 
                         <div id="checkout-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
 
@@ -95,22 +95,22 @@
                             @csrf
 
                             <div class="grid gap-3 sm:grid-cols-2">
-                                <input type="text" name="customer_name" required placeholder="სახელი და გვარი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
-                                <input type="tel" name="customer_phone" required inputmode="tel" pattern="(995[0-9]{9}|5[0-9]{8})" maxlength="12" placeholder="ტელეფონი (5XXXXXXX ან 9955XXXXXXX) *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
+                                <input type="text" name="customer_name" required placeholder="{{ __('storefront.checkout.name_placeholder') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
+                                <input type="tel" name="customer_phone" required inputmode="tel" pattern="(995[0-9]{9}|5[0-9]{8})" maxlength="12" placeholder="{{ __('storefront.checkout.phone_placeholder') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
                             </div>
 
-                            <input type="text" name="personal_number" required inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="პირადი ნომერი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
+                            <input type="text" name="personal_number" required inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="{{ __('storefront.checkout.personal_number_placeholder') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
 
                             <div class="relative" id="checkout-city-picker">
                                 <input type="hidden" name="city_id" id="checkout-city-id" required>
                                 <label for="checkout-city-search" class="mb-1 block text-xs font-medium text-gray-500">
-                                    ქალაქი
+                                    {{ __('storefront.checkout.city') }}
                                 </label>
                                 <div class="relative">
                                     <input
                                         type="text"
                                         id="checkout-city-search"
-                                        placeholder="ქალაქი *"
+                                        placeholder="{{ __('storefront.checkout.city_placeholder') }}"
                                         autocomplete="off"
                                         class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 pr-12 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
                                     >
@@ -119,49 +119,49 @@
                                         id="checkout-city-toggle"
                                         class="absolute inline-flex items-center justify-center rounded-md text-gray-400 transition hover:bg-slate-50 hover:text-gray-600"
                                         style="top: 0; right: 0; bottom: 0; width: 2.75rem;"
-                                        aria-label="ქალაქების სიის გახსნა"
+                                        aria-label="{{ __('storefront.checkout.open_city_list') }}"
                                     >
                                         <i class="fa-solid fa-chevron-down text-xs"></i>
                                     </button>
                                     <div id="checkout-city-results" class="absolute z-20 mt-1 hidden max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg" style="top: 100%; left: 0; right: 0;"></div>
                                 </div>
-                                <p class="mt-1 text-[11px] text-gray-400">აირჩიეთ სიიდან</p>
+                                <p class="mt-1 text-[11px] text-gray-400">{{ __('storefront.checkout.select_from_list') }}</p>
                             </div>
 
-                            <textarea name="exact_address" rows="3" required placeholder="ზუსტი მისამართი *" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"></textarea>
+                            <textarea name="exact_address" rows="3" required placeholder="{{ __('storefront.checkout.address_placeholder') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"></textarea>
 
                             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-sm font-semibold text-gray-900">გადახდის მეთოდი</p>
+                                <p class="text-sm font-semibold text-gray-900">{{ __('storefront.checkout.payment_method') }}</p>
                                 <div class="mt-3 space-y-2">
                                     <label class="checkout-bog-option flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
                                         <input type="radio" name="payment_type" value="1" checked class="h-4 w-4 flex-shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500">
                                         <div class="checkout-bog-logo flex h-8 min-w-[112px] flex-shrink-0 items-center justify-center rounded-lg border border-orange-200 bg-orange-50 px-2 shadow-sm">
-                                            <img src="{{ asset('images/payment-method/bog_geo_horizontal.png') }}" alt="საქართველოს ბანკი" class="max-h-5 w-full object-contain" onerror="this.style.display='none'">
+                                            <img src="{{ asset('images/payment-method/bog_geo_horizontal.png') }}" alt="{{ __('storefront.checkout.bog_alt') }}" class="max-h-5 w-full object-contain" onerror="this.style.display='none'">
                                         </div>
-                                        <span class="text-sm text-gray-700">ონლაინ გადახდა</span>
+                                        <span class="text-sm text-gray-700">{{ __('storefront.checkout.online_payment') }}</span>
                                     </label>
                                     <label id="courier-payment-option" class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition">
                                         <input type="radio" name="payment_type" value="2" class="h-4 w-4 flex-shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500">
                                         <span>
-                                            <span class="block text-sm font-medium text-gray-700">კურიერთან გადახდა</span>
-                                            <span class="mt-0.5 block text-xs text-gray-500">ხელმისაწვდომია მხოლოდ თბილისის შეკვეთებისთვის</span>
+                                            <span class="block text-sm font-medium text-gray-700">{{ __('storefront.checkout.cash_on_delivery') }}</span>
+                                            <span class="mt-0.5 block text-xs text-gray-500">{{ __('storefront.checkout.cod_tbilisi_only') }}</span>
                                         </span>
                                     </label>
                                 </div>
                                 <div id="courier-payment-notice" class="mt-3 hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800" role="status" aria-live="polite">
                                     <i class="fa-solid fa-location-dot mr-1.5" aria-hidden="true"></i>
-                                    კურიერთან გადახდისთვის აირჩიეთ ქალაქი თბილისი. სხვა ქალაქებში შეგიძლიათ გადაიხადოთ ონლაინ.
+                                    {{ __('storefront.checkout.cod_city_help') }}
                                 </div>
                             </div>
 
                             <button id="checkout-submit" type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
-                                შეკვეთის დადასტურება
+                                {{ __('storefront.checkout.confirm') }}
                             </button>
                             <p class="px-2 text-center text-xs leading-5 text-gray-500">
-                                შეკვეთის დადასტურებით ეთანხმებით
-                                <a href="{{ route('terms') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">მომსახურების პირობებს</a>
-                                და
-                                <a href="{{ route('privacy') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">კონფიდენციალობის პოლიტიკას</a>.
+                                {{ __('storefront.checkout.agreement') }}
+                                <a href="{{ route('terms') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">{{ __('storefront.checkout.terms') }}</a>
+                                {{ __('storefront.checkout.and') }}
+                                <a href="{{ route('privacy') }}" target="_blank" rel="noopener" class="font-semibold text-primary-600 underline decoration-primary-200 underline-offset-2 hover:text-primary-700">{{ __('storefront.checkout.privacy') }}</a>.
                             </p>
                         </form>
                     </div>
@@ -234,7 +234,16 @@
         const onlinePaymentInput = form?.querySelector('input[name="payment_type"][value="1"]');
         const courierPaymentOption = document.getElementById('courier-payment-option');
         const courierPaymentNotice = document.getElementById('courier-payment-notice');
-        const cities = @json($cities->map(fn ($city) => ['id' => $city->id, 'name' => $city->name])->values());
+        @php
+            $checkoutCityOptions = $cities->map(function ($city): array {
+                return [
+                    'id' => $city->id,
+                    'name' => $city->localizedName(),
+                    'is_tbilisi' => $city->name === 'თბილისი',
+                ];
+            })->values();
+        @endphp
+        const cities = @json($checkoutCityOptions);
         const popularCityIds = @json($popularCityIds->values());
         const cityPageSize = 12;
         let cityVisibleLimit = cityPageSize;
@@ -248,12 +257,7 @@
             const selectedCity = cities.find(function (city) {
                 return String(city.id) === String(cityIdInput?.value || '');
             });
-            const normalizedName = (selectedCity?.name || '').trim().toLowerCase();
-
-            return normalizedName === 'თბილისი'
-                || normalizedName.startsWith('თბილისი >')
-                || normalizedName === 'tbilisi'
-                || normalizedName.startsWith('tbilisi >');
+            return Boolean(selectedCity?.is_tbilisi);
         }
 
         function syncCourierPaymentAvailability(showNotice = false) {
@@ -327,7 +331,7 @@
             const visibleMatches = matches.slice(0, normalized.length === 0 ? cityVisibleLimit : Math.max(cityVisibleLimit, 40));
 
             if (visibleMatches.length === 0) {
-                cityResults.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">ქალაქი ვერ მოიძებნა</div>';
+                cityResults.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">' + @js(__('storefront.messages.city_not_found')) + '</div>';
                 cityResults.classList.remove('hidden');
                 return;
             }
@@ -336,7 +340,7 @@
                 .map(function (city) {
                     const isPopular = normalized.length === 0 && popularCityIds.includes(city.id);
                     const badge = isPopular
-                        ? '<span class="ml-2 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-600">პოპულარული</span>'
+                        ? '<span class="ml-2 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-600">' + @js(__('storefront.messages.popular')) + '</span>'
                         : '';
 
                     return '<button type="button" data-city-id="' + city.id + '" data-city-name="' + city.name + '" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"><span>' + city.name + '</span>' + badge + '</button>';
@@ -410,7 +414,7 @@
         form.addEventListener('submit', async function (event) {
             if (!cityIdInput.value) {
                 event.preventDefault();
-                citySearchInput.setCustomValidity('აირჩიეთ ქალაქი სიიდან');
+                citySearchInput.setCustomValidity(@js(__('storefront.messages.select_city')));
                 citySearchInput.reportValidity();
                 return;
             }
@@ -456,20 +460,20 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.textContent = data.message || 'გადახდის ინიციალიზაცია ვერ შესრულდა.';
+                    errorBox.textContent = data.message || @js(__('storefront.messages.payment_initialization_failed'));
                     errorBox.classList.remove('hidden');
                     return;
                 }
 
                 if (!data.redirect_url) {
-                    errorBox.textContent = 'გადასამისამართებელი ბმული არ დაბრუნდა.';
+                    errorBox.textContent = @js(__('storefront.messages.payment_redirect_missing'));
                     errorBox.classList.remove('hidden');
                     return;
                 }
 
                 window.location.href = data.redirect_url;
             } catch (error) {
-                errorBox.textContent = 'ქსელური შეცდომა. სცადეთ თავიდან.';
+                errorBox.textContent = @js(__('storefront.messages.network_error'));
                 errorBox.classList.remove('hidden');
             } finally {
                 submitButton.disabled = false;

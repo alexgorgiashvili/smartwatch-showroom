@@ -12,7 +12,9 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'name',
+        'name_en',
         'color_name',
+        'color_name_en',
         'color_hex',
         'is_listed_separately',
         'quantity',
@@ -69,6 +71,26 @@ class ProductVariant extends Model
     public function hasColor(): bool
     {
         return filled($this->color_name) && filled($this->color_hex);
+    }
+
+    public function localizedName(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        return $locale === 'en'
+            ? ((string) ($this->name_en ?: __('storefront.common.color_variant')))
+            : (string) $this->name;
+    }
+
+    public function localizedColorName(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        if ($locale === 'en') {
+            return (string) ($this->color_name_en ?: (filled($this->color_hex) ? __('storefront.common.color') : ''));
+        }
+
+        return (string) ($this->color_name ?? '');
     }
 
     public function getAvailableQuantityAttribute(): int

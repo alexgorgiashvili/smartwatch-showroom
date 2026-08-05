@@ -126,9 +126,13 @@ class ChatPipelineService
             $agentResponse = $fallbackStrategy->resolveStaticReason((string) $agentReason)->reply();
         }
 
-        $georgianPassed = $agentResponse === '' || $policy->passesStrictGeorgianQa($agentResponse);
-        if (!$georgianPassed) {
-            $agentResponse = $policy->strictGeorgianFallback();
+        $localePassed = $agentResponse === '' || (
+            app()->getLocale() === 'en'
+                ? $policy->passesLocaleQa($agentResponse, 'en')
+                : $policy->passesStrictGeorgianQa($agentResponse)
+        );
+        if (!$localePassed) {
+            $agentResponse = $policy->localeFallback();
             $agentReason = ChatbotOutcomeReason::STRICT_GEORGIAN;
         }
 
@@ -142,7 +146,7 @@ class ChatPipelineService
             null,
             (bool) ($supervisorResult['validation_passed'] ?? false),
             $supervisorResult['violations'] ?? [],
-            $georgianPassed,
+            $localePassed,
             0,
             $agentReason,
             (bool) (($supervisorResult['reflection_attempts'] ?? 0) > 0),

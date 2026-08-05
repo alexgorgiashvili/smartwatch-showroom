@@ -148,10 +148,15 @@ class HybridSearchService
             $documentFrequency = [];
 
             ChatbotDocument::active()
-                ->select(['id', 'title', 'content_ka'])
+                ->select(['id', 'title', 'title_en', 'content_ka', 'content_en'])
                 ->chunkById(200, function ($documents) use (&$docCount, &$totalLength, &$documentFrequency): void {
                     foreach ($documents as $document) {
-                        $tokens = $this->tokenize(trim(($document->title ?? '') . ' ' . ($document->content_ka ?? '')));
+                        $tokens = $this->tokenize(trim(implode(' ', array_filter([
+                            $document->title,
+                            $document->content_ka,
+                            $document->title_en,
+                            $document->content_en,
+                        ]))));
 
                         if ($tokens === []) {
                             continue;

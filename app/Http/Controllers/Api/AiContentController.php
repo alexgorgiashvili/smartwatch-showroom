@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
@@ -12,9 +13,9 @@ class AiContentController extends Controller
     /**
      * Get product content in markdown format
      */
-    public function showMarkdown(Product $product): Response
+    public function showMarkdown(Request $request, Product $product): Response
     {
-        $locale = request()->get('lang', 'ka');
+        $locale = $this->resolveLocale($request);
         app()->setLocale($locale);
 
         $markdown = $this->generateMarkdown($product, $locale);
@@ -28,8 +29,8 @@ class AiContentController extends Controller
      */
     private function generateMarkdown(Product $product, string $locale): string
     {
-        $name = $locale === 'ka' ? ($product->name_ka ?? $product->name) : ($product->name_en ?? $product->name);
-        $description = $locale === 'ka' ? ($product->description_ka ?? $product->description) : ($product->description_en ?? $product->description);
+        $name = $product->name ?: __('storefront.common.product');
+        $description = $product->description ?? '';
         
         $price = $product->sale_price ?? $product->price;
         $originalPrice = $product->sale_price ? $product->price : null;
@@ -143,5 +144,15 @@ class AiContentController extends Controller
         $product->loadMissing('reviews');
 
         return $product->reviews->count();
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $fallback = in_array(app()->getLocale(), ['ka', 'en'], true)
+            ? app()->getLocale()
+            : 'ka';
+        $locale = strtolower((string) $request->query('lang', $fallback));
+
+        return in_array($locale, ['ka', 'en'], true) ? $locale : $fallback;
     }
 }

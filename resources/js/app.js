@@ -6,6 +6,12 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
 document.addEventListener('DOMContentLoaded', () => {
+	const storefrontI18n = window.StorefrontI18n || {};
+	const translate = (path, fallback = '') => {
+		const value = path.split('.').reduce((current, key) => current?.[key], storefrontI18n);
+		return typeof value === 'string' ? value : fallback;
+	};
+
 	const popularSplide = document.getElementById('popular-splide');
 	if (popularSplide && !popularSplide.classList.contains('is-initialized')) {
 		new Splide('#popular-splide', {
@@ -435,12 +441,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		scrollMessagesToBottom();
 	};
 
-	const getDefaultQuickReplies = () => ([
-		'100 ლარამდე რა გაქვთ?',
-		'4G მოდელები მაჩვენე',
-		'ვიდეო ზარიანი საათი მინდა',
-		'WhatsApp ან Messenger',
-	]);
+	const getDefaultQuickReplies = () => {
+		const replies = storefrontI18n.chatbot?.quick_replies;
+		return Array.isArray(replies) ? replies : [];
+	};
 
 	// ── Product carousel ──
 	const addCarousel = (products) => {
@@ -462,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			card.href = p.url || '#';
 			card.target = '_blank';
 			card.rel = 'noopener noreferrer';
-			const safeName = DOMPurify.sanitize(p.name || 'პროდუქტი');
+			const safeName = DOMPurify.sanitize(p.name || translate('chatbot.product_fallback', 'Product'));
 			const safePrice = p.price ? DOMPurify.sanitize(String(p.price)) : '';
 			const safeImage = p.image ? DOMPurify.sanitize(p.image) : '';
 			const placeholder = `<div class="chatbot-carousel-placeholder" aria-hidden="true">${safeName.charAt(0).toUpperCase()}</div>`;
@@ -607,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 
 	const showGreeting = () => {
-		addMessage('გამარჯობა! MyTechnic ასისტენტი ვარ 👋 სიამოვნებით დაგეხმარებით. რა გაინტერესებთ?', 'bot');
+		addMessage(translate('chatbot.greeting', 'Hello! I am the MyTechnic assistant 👋 How can I help?'), 'bot');
 		addQuickReplies(getDefaultQuickReplies());
 	};
 
@@ -648,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => null);
 				typingBubble.remove();
-				addMessage(errorData?.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+				addMessage(errorData?.message || translate('chatbot.failure', 'I could not answer right now. Please try again shortly.'), 'bot');
 				isSending = false;
 				return;
 			}
@@ -679,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
 							// Update bubble text
 							typingBubble.classList.remove('chatbot-typing');
 							const hasProducts = Array.isArray(data.products) && data.products.length > 0;
-							const responseMessage = data.message || 'ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.';
+							const responseMessage = data.message || translate('chatbot.failure', 'I could not answer right now. Please try again shortly.');
 							typingBubble.innerHTML = renderMarkdown(
 								hasProducts ? withoutProductLinkBlock(responseMessage) : responseMessage
 							);
@@ -709,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		} catch (error) {
 			typingBubble.remove();
-			addMessage('ამ ეტაპზე პასუხის გაცემა ვერ შევძელი. სცადეთ ცოტა მოგვიანებით.', 'bot');
+			addMessage(translate('chatbot.failure', 'I could not answer right now. Please try again shortly.'), 'bot');
 		} finally {
 			isSending = false;
 		}

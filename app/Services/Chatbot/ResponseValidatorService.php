@@ -313,7 +313,9 @@ class ResponseValidatorService
 
     public function integrityFallback(): string
     {
-        return 'ზუსტი ფასი და მარაგი ამ მომენტში დამატებით გადამოწმებას საჭიროებს. გთხოვთ, დაგვიკავშირდეთ და დაუყოვნებლივ დაგიზუსტებთ ინფორმაციას.';
+        return app()->getLocale() === 'en'
+            ? 'Exact price and stock need an additional live check right now. Please contact us and we’ll confirm the details promptly.'
+            : 'ზუსტი ფასი და მარაგი ამ მომენტში დამატებით გადამოწმებას საჭიროებს. გთხოვთ, დაგვიკავშირდეთ და დაუყოვნებლივ დაგიზუსტებთ ინფორმაციას.';
     }
 
     private function shouldEnforceStrictPriceIntegrity(?IntentResult $intentResult): bool

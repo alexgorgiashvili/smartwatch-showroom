@@ -64,7 +64,10 @@ class EmbedChatbotDocuments extends Command
                 $documentMetadata = is_array($document->metadata) ? $document->metadata : [];
 
                 if ($document->type === 'product') {
-                    $chunks = $chunker->chunk((string) $document->content_ka, 'product');
+                    $chunks = $chunker->chunk(implode("\n\n", array_filter([
+                        $document->content_ka,
+                        $document->content_en,
+                    ])), 'product');
                     $inputs = array_map(static function (array $chunk): string {
                         return (string) ($chunk['section'] ?? 'product') . "\n" . (string) ($chunk['text'] ?? '');
                     }, $chunks);
@@ -96,7 +99,12 @@ class EmbedChatbotDocuments extends Command
                         ];
                     }
                 } else {
-                    $embeddingVector = $embedding->embed((string) $document->content_ka);
+                    $embeddingVector = $embedding->embed(implode("\n\n", array_filter([
+                        $document->title,
+                        $document->content_ka,
+                        $document->title_en,
+                        $document->content_en,
+                    ])));
 
                     if ($embeddingVector === []) {
                         $bar->advance();

@@ -85,6 +85,10 @@ class UnifiedAiPolicyService
      */
     public function websiteSystemPrompt(): string
     {
+        if (app()->getLocale() === 'en') {
+            return (string) config('chatbot-prompt.website_english');
+        }
+
         return $this->buildMasterPrompt([
             'identity',
             'language_core',
@@ -171,7 +175,9 @@ class UnifiedAiPolicyService
 
     public function websiteGreetingReply(): string
     {
-        return 'გამარჯობა! სიამოვნებით დაგეხმარებით. მითხარით რა გაინტერესებთ: ფასი, მარაგი, GPS, SOS თუ კონკრეტული მოდელი.';
+        return app()->getLocale() === 'en'
+            ? 'Hello! I’ll be happy to help. Are you interested in pricing, stock, GPS, SOS, or a specific model?'
+            : 'გამარჯობა! სიამოვნებით დაგეხმარებით. მითხარით რა გაინტერესებთ: ფასი, მარაგი, GPS, SOS თუ კონკრეტული მოდელი.';
     }
 
     /**
@@ -255,6 +261,31 @@ class UnifiedAiPolicyService
     public function strictGeorgianFallback(): string
     {
         return 'მადლობა შეტყობინებისთვის. სიამოვნებით დაგეხმარებით — მითხარით რომელი მოდელი ან ფუნქცია გაინტერესებთ (GPS, SOS, ზარები, კამერა) და ზუსტ ინფორმაციას მოგაწვდით.';
+    }
+
+    public function passesLocaleQa(string $response, ?string $locale = null): bool
+    {
+        $locale ??= app()->getLocale();
+
+        if ($locale !== 'en') {
+            return $this->passesStrictGeorgianQa($response);
+        }
+
+        $trimmed = trim($response);
+        if ($trimmed === '' || mb_strlen($trimmed) < 12) {
+            return false;
+        }
+
+        return preg_match('/\p{Georgian}/u', $trimmed) !== 1;
+    }
+
+    public function localeFallback(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        return $locale === 'en'
+            ? 'Thanks for your message. Tell me which model or feature you’re interested in—GPS, SOS, calls, or camera—and I’ll help with verified information.'
+            : $this->strictGeorgianFallback();
     }
 
     public function shouldAutoReplySelectively(string $messageText, bool $hasAttachments = false): bool

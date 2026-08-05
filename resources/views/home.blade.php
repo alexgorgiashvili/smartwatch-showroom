@@ -8,7 +8,7 @@
 @section('og_description', app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათი 4G GPS-ით. მდებარეობის კონტროლი, პირდაპირი ზარი, SOS — ტელეფონის გარეშე. ოფიციალური იმპორტიორი.' : 'Kids SIM smartwatch with 4G GPS tracking. Location control, direct calls, SOS — no phone needed. Official importer.')
 @section('og_url', url('/'))
 @section('og_image', asset('images/og-default.webp'))
-@section('og_image_alt', 'MyTechnic SIM სმარტ საათები — ბავშვთა უსაფრთხოება')
+@section('og_image_alt', __('storefront.meta.image_alt'))
 
 @push('json_ld')
 @php
@@ -20,8 +20,8 @@ $_homeSchema = [
             '@id' => url('/') . '/#website',
             'url' => url('/'),
             'name' => 'MyTechnic',
-            'description' => 'SIM-იანი სმარტ საათები ბავშვებისთვის — 4G LTE, GPS ტრეკინგი, ზარი ტელეფონის გარეშე',
-            'inLanguage' => ['ka', 'en'],
+            'description' => __('storefront.meta.default_description'),
+            'inLanguage' => app()->getLocale(),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => url('/products') . '?search={search_term_string}',
@@ -51,8 +51,8 @@ $_homeSchema = [
             'priceRange' => '₾₾',
             'address' => [
                 '@type' => 'PostalAddress',
-                'addressLocality' => 'თბილისი',
-                'addressRegion' => 'თბილისი',
+                'addressLocality' => app()->getLocale() === 'ka' ? 'თბილისი' : 'Tbilisi',
+                'addressRegion' => app()->getLocale() === 'ka' ? 'თბილისი' : 'Tbilisi',
                 'addressCountry' => 'GE',
             ],
             'geo' => [
@@ -116,11 +116,7 @@ $_homeSchema = [
                     {{-- Headline --}}
                     <h1 class="mt-5 text-[clamp(2.2rem,5vw,3.5rem)] font-extrabold leading-[1.08] tracking-tight text-gray-900"
                         data-reveal="fade-up" data-reveal-delay="1">
-                        @if (app()->getLocale() === 'ka')
-                            ბავშვის SIM-იანი სმარტ საათი<br><span class="text-primary-600">GPS · ზარები · კონტროლი.</span>
-                        @else
-                            Kids SIM Smartwatch<br><span class="text-primary-600">GPS · Calls · Control.</span>
-                        @endif
+                        {{ __('storefront.home.hero_title') }}<br><span class="text-primary-600">{{ __('storefront.home.hero_highlight') }}</span>
                     </h1>
 
                     {{-- Sub-copy --}}
@@ -132,7 +128,7 @@ $_homeSchema = [
                     <div class="mt-12 flex flex-wrap items-center gap-3" data-reveal="fade-up" data-reveal-delay="3">
                         <a href="{{ route('products.index') }}"
                             class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-primary-200 transition-all hover:-translate-y-0.5 hover:bg-primary-700 active:translate-y-0">
-                            {{ app()->getLocale() === 'ka' ? 'მოდელების ნახვა' : 'Browse Models' }}
+                            {{ __('storefront.home.browse_models') }}
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </a>
 
@@ -144,9 +140,9 @@ $_homeSchema = [
                         <span class="flex items-center gap-1.5"><i
                                 class="fa-solid fa-circle-check text-primary-500"></i>{{ __('ui.trust_shipping') }}</span>
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'გარანტია' : 'Warranty' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ __('storefront.home.warranty') }}</span>
                         <span class="flex items-center gap-1.5"><i
-                                class="fa-solid fa-circle-check text-primary-500"></i>{{ app()->getLocale() === 'ka' ? 'ოფ. იმპორტიორი' : 'Official Importer' }}</span>
+                                class="fa-solid fa-circle-check text-primary-500"></i>{{ __('storefront.home.official_importer') }}</span>
                     </div>
                 </div>
 

@@ -124,10 +124,10 @@
                                 {{ $displayName }}
                             </h3>
 
-                            @if ($displayType === 'variant' && $listedVariant && filled($listedVariant->color_name))
+                            @if ($displayType === 'variant' && $listedVariant && filled($listedVariant->localizedColorName()))
                                 <div class="flex items-center gap-2">
                                     <span class="inline-block rounded-full border border-slate-300" style="width:12px;height:12px;background:{{ $listedVariant->color_hex ?: '#000000' }};"></span>
-                                    <span class="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{{ $listedVariant->color_name }}</span>
+                                    <span class="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{{ $listedVariant->localizedColorName() }}</span>
                                 </div>
                             @endif
 
@@ -177,17 +177,17 @@
                                     class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-primary-600"
                                 >
                                     <i class="fa-solid fa-eye text-[10px]"></i>
-                                    {{ app()->getLocale() === 'ka' ? 'სწრაფი ნახვა' : 'Quick View' }}
+                                    {{ __('storefront.common.quick_view') }}
                                 </button>
                             @else
                                 <button disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full border border-red-700 bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm">
-                                    {{ app()->getLocale() === 'ka' ? 'ამოწურულია' : 'Out of Stock' }}
+                                    {{ __('storefront.common.out_of_stock') }}
                                 </button>
                             @endif
 
                             <a href="{{ $detailsUrl }}" class="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50">
                                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                                {{ app()->getLocale() === 'ka' ? 'დეტალები' : 'Details' }}
+                                {{ __('storefront.common.details') }}
                             </a>
                         </div>
 

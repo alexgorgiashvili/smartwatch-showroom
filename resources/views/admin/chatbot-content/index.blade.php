@@ -5,14 +5,17 @@
 @section('content')
 @fragment('content')
 @php
-    $faqHasErrors = $errors->hasAny(['question', 'answer', 'category', 'sort_order', 'is_active', 'faq_id']);
+    $faqHasErrors = $errors->hasAny(['question', 'question_en', 'answer', 'answer_en', 'category', 'category_en', 'sort_order', 'is_active', 'faq_id']);
     $oldFaqId = (int) old('faq_id', 0);
     $oldFaq = $oldFaqId ? $faqs->firstWhere('id', $oldFaqId) : null;
     $faqRestore = [
         'id' => $oldFaqId ?: null,
         'question' => old('question', ''),
+        'question_en' => old('question_en', ''),
         'answer' => old('answer', ''),
+        'answer_en' => old('answer_en', ''),
         'category' => old('category', ''),
+        'category_en' => old('category_en', ''),
         'sort_order' => old('sort_order', 0),
         'is_active' => (bool) old('is_active', false),
     ];
@@ -174,8 +177,11 @@
                                 $faqPayload = [
                                     'id' => $faq->id,
                                     'question' => $faq->question,
+                                    'question_en' => $faq->question_en,
                                     'answer' => $faq->answer,
+                                    'answer_en' => $faq->answer_en,
                                     'category' => $faq->category,
+                                    'category_en' => $faq->category_en,
                                     'sort_order' => $faq->sort_order,
                                     'is_active' => (bool) $faq->is_active,
                                 ];
@@ -271,6 +277,22 @@
                     </div>
 
                     <div class="col-12">
+                        <label for="faqQuestionEn" class="form-label">Question (English)</label>
+                        <input
+                            type="text"
+                            name="question_en"
+                            id="faqQuestionEn"
+                            value="{{ old('question_en') }}"
+                            class="form-control @error('question_en') is-invalid @enderror"
+                            maxlength="255"
+                            required
+                        >
+                        @error('question_en')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-12">
                         <label for="faqAnswer" class="form-label">Answer</label>
                         <textarea
                             name="answer"
@@ -280,6 +302,20 @@
                             required
                         >{{ old('answer') }}</textarea>
                         @error('answer')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-12">
+                        <label for="faqAnswerEn" class="form-label">Answer (English)</label>
+                        <textarea
+                            name="answer_en"
+                            id="faqAnswerEn"
+                            rows="6"
+                            class="form-control @error('answer_en') is-invalid @enderror"
+                            required
+                        >{{ old('answer_en') }}</textarea>
+                        @error('answer_en')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
@@ -297,6 +333,23 @@
                             required
                         >
                         @error('category')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="faqCategoryEn" class="form-label">Category (English)</label>
+                        <input
+                            type="text"
+                            name="category_en"
+                            id="faqCategoryEn"
+                            value="{{ old('category_en') }}"
+                            class="form-control @error('category_en') is-invalid @enderror"
+                            maxlength="120"
+                            placeholder="e.g. Delivery, Warranty, Contact"
+                            required
+                        >
+                        @error('category_en')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
@@ -353,8 +406,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const faqMethod = document.getElementById('faqMethod');
     const faqId = document.getElementById('faqId');
     const faqQuestion = document.getElementById('faqQuestion');
+    const faqQuestionEn = document.getElementById('faqQuestionEn');
     const faqAnswer = document.getElementById('faqAnswer');
+    const faqAnswerEn = document.getElementById('faqAnswerEn');
     const faqCategory = document.getElementById('faqCategory');
+    const faqCategoryEn = document.getElementById('faqCategoryEn');
     const faqSortOrder = document.getElementById('faqSortOrder');
     const faqIsActive = document.getElementById('faqIsActive');
     const faqModalLabel = document.getElementById('faqModalLabel');
@@ -371,8 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
         faqMethod.value = faq && faq.id ? 'PATCH' : '';
         faqId.value = faq && faq.id ? faq.id : '';
         faqQuestion.value = faq && faq.question ? faq.question : '';
+        faqQuestionEn.value = faq && faq.question_en ? faq.question_en : '';
         faqAnswer.value = faq && faq.answer ? faq.answer : '';
+        faqAnswerEn.value = faq && faq.answer_en ? faq.answer_en : '';
         faqCategory.value = faq && faq.category ? faq.category : '';
+        faqCategoryEn.value = faq && faq.category_en ? faq.category_en : '';
         faqSortOrder.value = faq && typeof faq.sort_order !== 'undefined' ? faq.sort_order : 0;
         faqIsActive.checked = !!(faq && faq.is_active);
         faqModalLabel.textContent = faq && faq.id ? 'Edit FAQ' : 'Add FAQ';

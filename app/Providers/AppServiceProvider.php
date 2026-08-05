@@ -48,11 +48,6 @@ class AppServiceProvider extends ServiceProvider
             Vite::createAssetPathsUsing(fn (string $path) => '/'.ltrim($path, '/'));
         }
 
-        if (!app()->runningInConsole()) {
-            session(['locale' => 'ka']);
-            app()->setLocale('ka');
-        }
-
         View::composer('*', function ($view) {
             $settings = ContactSetting::DEFAULTS;
 
@@ -60,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
                 $settings = ContactSetting::allKeyed();
             }
 
-            $view->with('contactSettings', $settings);
+            $view->with('contactSettings', ContactSetting::localized($settings));
         });
     }
 }

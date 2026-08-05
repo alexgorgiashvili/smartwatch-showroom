@@ -170,7 +170,9 @@ class ProductController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
+            'name_en' => ['required', 'string', 'max:160'],
             'color_name' => ['nullable', 'string', 'max:50'],
+            'color_name_en' => ['nullable', 'string', 'max:50'],
             'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_listed_separately' => ['nullable', 'boolean'],
             'quantity' => ['required', 'integer', 'min:0'],
@@ -206,7 +208,9 @@ class ProductController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
+            'name_en' => ['required', 'string', 'max:160'],
             'color_name' => ['nullable', 'string', 'max:50'],
+            'color_name_en' => ['nullable', 'string', 'max:50'],
             'color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_listed_separately' => ['nullable', 'boolean'],
             'quantity' => ['required', 'integer', 'min:0'],
@@ -600,7 +604,9 @@ class ProductController extends Controller
             'id' => (int) $variant->id,
             'product_id' => (int) $variant->product_id,
             'name' => (string) $variant->name,
+            'name_en' => (string) $variant->name_en,
             'color_name' => $variant->color_name,
+            'color_name_en' => $variant->color_name_en,
             'color_hex' => $variant->color_hex ? strtoupper((string) $variant->color_hex) : null,
             'quantity' => (int) $variant->quantity,
             'low_stock_threshold' => (int) $variant->low_stock_threshold,

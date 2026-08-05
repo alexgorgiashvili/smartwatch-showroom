@@ -94,7 +94,7 @@ class RagContextBuilder
                 $document = $documents->get($key);
                 $candidates[] = [
                     'id' => $key,
-                    'text' => trim(($document->title ?? '') . "\n" . ($document->content_ka ?? '')),
+                    'text' => trim(($document->localizedTitle() ?? '') . "\n" . ($document->localizedContent() ?? '')),
                     'metadata' => [
                         'key' => $key,
                     ],
@@ -189,13 +189,15 @@ class RagContextBuilder
 
     private function formatDocument(ChatbotDocument $document): string
     {
-        $label = self::TYPE_LABELS[$document->type] ?? ucfirst($document->type);
-        $header = $document->title ? $document->title : $label;
-        $lines = [$header, $document->content_ka];
+        $label = app()->getLocale() === 'en'
+            ? ucfirst($document->type)
+            : (self::TYPE_LABELS[$document->type] ?? ucfirst($document->type));
+        $header = $document->localizedTitle() ?: $label;
+        $lines = [$header, $document->localizedContent()];
         $metadata = $document->metadata ?? [];
 
         if (!empty($metadata['slug'])) {
-            $lines[] = 'ბმული: ' . url('/products/' . $metadata['slug']);
+            $lines[] = (app()->getLocale() === 'en' ? 'Link: ' : 'ბმული: ') . url('/products/' . $metadata['slug']);
         }
 
         return implode("\n", array_filter($lines));

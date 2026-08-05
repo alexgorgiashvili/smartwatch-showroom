@@ -11,13 +11,16 @@ class FaqController extends Controller
 {
     public function index(): View
     {
+        $locale = app()->getLocale();
         $faqs = $this->deduplicateFaqs(
             Faq::query()
             ->active()
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
-        )->groupBy(fn (Faq $faq) => $faq->category ?: 'სხვა');
+        )
+            ->filter(fn (Faq $faq): bool => filled($faq->localizedQuestion($locale)) && filled($faq->localizedAnswer($locale)))
+            ->groupBy(fn (Faq $faq) => $faq->localizedCategory($locale) ?: __('storefront.faq.uncategorized'));
 
         return view('pages.faq', [
             'faqCategories' => $faqs,
@@ -28,8 +31,8 @@ class FaqController extends Controller
     {
         return $faqs->unique(function (Faq $faq): string {
             return implode('|', [
-                $faq->category ?: 'სხვა',
-                $this->normalizeFaqText($faq->answer),
+                $faq->localizedCategory() ?: __('storefront.faq.uncategorized'),
+                $this->normalizeFaqText($faq->localizedAnswer()),
             ]);
         })->values();
     }

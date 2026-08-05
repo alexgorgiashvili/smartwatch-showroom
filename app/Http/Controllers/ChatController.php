@@ -100,7 +100,7 @@ class ChatController extends Controller
 
     private function currentWidgetConversationVersion(): string
     {
-        return 'chatbot-mvp-2026-07-05';
+        return 'chatbot-mvp-2026-07-05-' . app()->getLocale();
     }
 
     public function respond(
@@ -225,7 +225,10 @@ class ChatController extends Controller
         ], fn ($value) => $value !== null));
 
         if (!$guardResult->allowed()) {
-            $blockedReply = $guardResult->safeReply() ?? 'ბოდიში, ამ შინაარსზე ვერ გავაგრძელებ.';
+            $blockedReply = $guardResult->safeReply() ?? __('storefront.chatbot.blocked');
+            if (! $policy->passesLocaleQa($blockedReply)) {
+                $blockedReply = __('storefront.chatbot.blocked');
+            }
 
             $widgetTrace->logStep('widget.respond.guard_blocked', array_filter([
                 'trace_id' => $traceId,
@@ -248,6 +251,7 @@ class ChatController extends Controller
                         'fallback_reason' => ChatbotOutcomeReason::INPUT_GUARD,
                         'guard_blocked' => true,
                         'guard_reason' => $guardResult->reason(),
+                        'locale' => app()->getLocale(),
                     ],
                 ]);
                 $conversation->update(['last_message_at' => now()]);
@@ -421,6 +425,7 @@ class ChatController extends Controller
                         'fallback_reason' => $pipelineFallbackReason,
                         'regeneration_attempted' => $pipelineRegenerationAttempted,
                         'regeneration_succeeded' => $pipelineRegenerationSucceeded,
+                        'locale' => app()->getLocale(),
                     ],
                 ]);
 
@@ -467,7 +472,7 @@ class ChatController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
-            $failureMessage = 'ბოდიში, დროებით პრობლემა გვაქვს. სცადეთ მოგვიანებით.';
+            $failureMessage = __('storefront.chatbot.failure');
 
             $botMessage = DB::transaction(function () use ($conversation, $customer, $failureMessage, $exception): Message {
                 $message = Message::create([
@@ -483,6 +488,7 @@ class ChatController extends Controller
                         'fallback_reason' => ChatbotOutcomeReason::RUNTIME_EXCEPTION,
                         'exception_class' => $exception::class,
                         'exception_message' => $exception->getMessage(),
+                        'locale' => app()->getLocale(),
                     ],
                 ]);
 

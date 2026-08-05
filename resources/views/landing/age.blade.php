@@ -27,7 +27,7 @@
   "name": {{ Js::from($title) }},
   "description": {{ Js::from($meta) }},
   "url": {{ Js::from($canonicalUrl) }},
-  "inLanguage": "ka",
+  "inLanguage": "{{ $locale }}",
   "publisher": {
     "@type": "Organization",
     "name": "MyTechnic",
@@ -58,7 +58,7 @@
 {{-- ── Hero ─────────────────────────────────────────────────────────── --}}
 <section class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16 text-white">
     <div class="mx-auto max-w-4xl px-4 text-center">
-        <p class="mb-2 text-xs font-medium uppercase tracking-widest text-primary-400">MyTechnic · სმარტ საათები</p>
+        <p class="mb-2 text-xs font-medium uppercase tracking-widest text-primary-400">MyTechnic · {{ __('storefront.landing.smartwatches') }}</p>
         <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">{{ $title }}</h1>
         <p class="mx-auto mt-4 max-w-2xl text-base text-slate-300 sm:text-lg">{{ $intro }}</p>
         @if(!empty($bullets))

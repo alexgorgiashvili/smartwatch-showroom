@@ -213,7 +213,9 @@ class AlibabaImportController extends Controller
 
                 $product->variants()->create([
                     'name' => $name,
+                    'name_en' => trim((string) ($variant['name_en'] ?? $name)),
                     'color_name' => $this->nullableString($variant['color_name'] ?? null),
+                    'color_name_en' => $this->nullableString($variant['color_name_en'] ?? null),
                     'color_hex' => $this->nullableColorHex($variant['color_hex'] ?? null),
                     'quantity' => max(0, (int) ($variant['quantity'] ?? 0)),
                     'low_stock_threshold' => max(0, (int) ($variant['low_stock_threshold'] ?? 5)),

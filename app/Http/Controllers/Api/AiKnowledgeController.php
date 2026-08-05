@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactSetting;
+use App\Models\Faq;
 use App\Services\Chatbot\UnifiedAiPolicyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class AiKnowledgeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $locale = $request->get('lang', 'ka');
+        $locale = $this->resolveLocale($request);
         $topic = $request->get('topic', 'all');
 
         app()->setLocale($locale);
@@ -74,6 +75,24 @@ class AiKnowledgeController extends Controller
      */
     private function getFaqContent(string $locale): array
     {
+        $managedFaqs = Faq::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (Faq $faq): bool => filled($faq->localizedQuestion($locale)) && filled($faq->localizedAnswer($locale)))
+            ->map(fn (Faq $faq): array => [
+                'question' => $faq->localizedQuestion($locale),
+                'answer' => $faq->localizedAnswer($locale),
+                'category' => $faq->localizedCategory($locale),
+            ])
+            ->values()
+            ->all();
+
+        if ($managedFaqs !== []) {
+            return $managedFaqs;
+        }
+
         return [
             [
                 'question' => $locale === 'ka' ? 'რა არის სმარტ საათი?' : 'What is a smart watch?',
@@ -342,7 +361,7 @@ class AiKnowledgeController extends Controller
      */
     private function getContactInfo(): array
     {
-        $settings = ContactSetting::allKeyed();
+        $settings = ContactSetting::localized(ContactSetting::allKeyed());
 
         return [
             'phone' => $settings['phone_display'] ?? null,
@@ -356,6 +375,16 @@ class AiKnowledgeController extends Controller
                 'messenger' => $settings['messenger_url'] ?? null,
             ]),
         ];
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $fallback = in_array(app()->getLocale(), ['ka', 'en'], true)
+            ? app()->getLocale()
+            : 'ka';
+        $locale = strtolower((string) $request->query('lang', $fallback));
+
+        return in_array($locale, ['ka', 'en'], true) ? $locale : $fallback;
     }
 }
 

@@ -97,6 +97,7 @@ class ProductController extends Controller
             ->values();
 
         if ($galleryImages->isEmpty()) {
+            $defaultImageUrl = asset('storage/images/home/smart-watch3.jpg');
             $galleryImages = collect([[
                 'url' => $defaultImageUrl,
                 'thumbnail_url' => $defaultImageUrl,
@@ -151,10 +152,10 @@ class ProductController extends Controller
 
                 return [
                     'id' => (int) $variant->id,
-                    'name' => $variant->name,
-                    'color_name' => $variant->color_name,
+                    'name' => $variant->localizedName(),
+                    'color_name' => $variant->localizedColorName(),
                     'color_hex' => $variant->color_hex ? strtoupper((string) $variant->color_hex) : null,
-                    'label' => $this->variantLabel($variant->name, $variant->color_name),
+                    'label' => $this->variantLabel($variant->localizedName(), $variant->localizedColorName()),
                     'stock' => (int) $variant->available_quantity,
                     'in_stock' => $variant->available_quantity > 0,
                     'image_url' => $imageUrl,
@@ -269,7 +270,7 @@ class ProductController extends Controller
                 : "{$name} • {$colorName}";
         }
 
-        return $colorName !== '' ? $colorName : ($name !== '' ? $name : 'Variant');
+        return $colorName !== '' ? $colorName : ($name !== '' ? $name : __('storefront.common.color_variant'));
     }
 
     /**
@@ -305,7 +306,7 @@ class ProductController extends Controller
                     'type' => 'variant',
                     'product' => $product,
                     'variant' => $variant,
-                    'variant_label' => $this->variantLabel($variant->name, $variant->color_name),
+                    'variant_label' => $this->variantLabel($variant->localizedName(), $variant->localizedColorName()),
                     'variant_image' => $variantImages['variant_images'][$variant->id] ?? $variantImages['default_image'] ?? null,
                 ]);
             }

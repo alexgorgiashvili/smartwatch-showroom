@@ -76,7 +76,7 @@ class GeoPaymentController extends Controller
             }
 
             if ((int) $data['payment_type'] === 2 && ! $this->isTbilisi($city->name)) {
-                throw new RuntimeException('კურიერთან გადახდა ხელმისაწვდომია მხოლოდ თბილისის შეკვეთებისთვის.');
+                throw new RuntimeException(__('storefront.checkout.cod_tbilisi_error'));
             }
 
             // Format phone number
@@ -210,7 +210,7 @@ class GeoPaymentController extends Controller
             }
 
             return redirect()->route('payment.fail', ['order' => $order->order_number])
-                ->with('retry_error', 'ამ შეკვეთაზე ბარათით გადახდის თავიდან დაწყება შეუძლებელია.');
+                ->with('retry_error', __('storefront.payment.retry_unavailable'));
         }
 
         try {
@@ -238,7 +238,7 @@ class GeoPaymentController extends Controller
             }
 
             return redirect()->route('payment.fail', ['order' => $order->order_number])
-                ->with('retry_error', 'ბარათით გადახდის თავიდან დაწყება ვერ შესრულდა.');
+                ->with('retry_error', __('storefront.payment.retry_failed'));
         }
 
         if (! $returnJson) {

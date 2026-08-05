@@ -59,7 +59,7 @@ class GiftBuilderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'სასაჩუქრე ყუთი დაემატა კალათაში.',
+            'message' => __('storefront.cart.gift_added'),
             'group_id' => $result['group_id'],
             'cart_count' => $snapshot->roughCount($request),
             'redirect_url' => route('cart.index'),
@@ -75,6 +75,6 @@ class GiftBuilderController extends Controller
 
         $cart->removeGroup($request, $group);
 
-        return redirect()->back()->with('cart_status', 'სასაჩუქრე ყუთი წაიშალა კალათიდან.');
+        return redirect()->back()->with('cart_status', __('storefront.cart.gift_removed'));
     }
 }

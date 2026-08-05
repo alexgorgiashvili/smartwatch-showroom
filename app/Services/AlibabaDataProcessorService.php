@@ -203,7 +203,9 @@ class AlibabaDataProcessorService
 
             $normalized[] = [
                 'name' => Str::limit($name, 160, ''),
+                'name_en' => Str::limit(trim((string) data_get($variant, 'name_en', $name)), 160, ''),
                 'color_name' => $this->nullableString(data_get($variant, 'color_name')),
+                'color_name_en' => $this->nullableString(data_get($variant, 'color_name_en', data_get($variant, 'color_name'))),
                 'color_hex' => $this->nullableColorHex(data_get($variant, 'color_hex')),
                 'quantity' => max(0, (int) data_get($variant, 'quantity', 0)),
                 'low_stock_threshold' => max(0, (int) data_get($variant, 'low_stock_threshold', 5)),
@@ -213,7 +215,9 @@ class AlibabaDataProcessorService
         if ($normalized === []) {
             $normalized[] = [
                 'name' => 'Default',
+                'name_en' => 'Default',
                 'color_name' => null,
+                'color_name_en' => null,
                 'color_hex' => null,
                 'quantity' => 0,
                 'low_stock_threshold' => 5,
@@ -412,10 +416,12 @@ class AlibabaDataProcessorService
             $colorName = trim((string) ($variant['color_name'] ?? ''));
 
             if ($name !== '') {
+                $variant['name_en'] = $variant['name_en'] ?? $name;
                 $variant['name'] = $translatedMap[$name] ?? $this->translateWithDictionary($name);
             }
 
             if ($colorName !== '') {
+                $variant['color_name_en'] = $variant['color_name_en'] ?? $colorName;
                 $variant['color_name'] = $translatedMap[$colorName] ?? $this->translateWithDictionary($colorName);
             }
 

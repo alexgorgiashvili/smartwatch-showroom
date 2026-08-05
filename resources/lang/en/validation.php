@@ -1,0 +1,42 @@
+<?php
+
+return [
+    'accepted' => 'The :attribute must be accepted.',
+    'array' => 'The :attribute must be a list.',
+    'boolean' => 'The :attribute field must be true or false.',
+    'different' => 'The :attribute and :other must be different.',
+    'email' => 'Enter a valid email address.',
+    'exists' => 'The selected :attribute is invalid.',
+    'in' => 'The selected :attribute is invalid.',
+    'integer' => 'The :attribute must be a whole number.',
+    'max' => [
+        'numeric' => 'The :attribute may not be greater than :max.',
+        'string' => 'The :attribute may not be longer than :max characters.',
+        'array' => 'The :attribute may not contain more than :max items.',
+    ],
+    'min' => [
+        'numeric' => 'The :attribute must be at least :min.',
+        'string' => 'The :attribute must contain at least :min characters.',
+        'array' => 'The :attribute must contain at least :min items.',
+    ],
+    'nullable' => 'The :attribute may be empty.',
+    'numeric' => 'The :attribute must be a number.',
+    'regex' => 'The :attribute format is invalid.',
+    'required' => 'The :attribute field is required.',
+    'required_if' => 'The :attribute field is required.',
+    'string' => 'The :attribute must be text.',
+    'attributes' => [
+        'message' => 'message',
+        'name' => 'name',
+        'customer_name' => 'full name',
+        'customer_phone' => 'phone number',
+        'phone' => 'phone number',
+        'personal_number' => 'personal number',
+        'city_id' => 'city',
+        'exact_address' => 'address',
+        'payment_type' => 'payment method',
+        'variant_id' => 'product variant',
+        'quantity' => 'quantity',
+        'email' => 'email address',
+    ],
+];

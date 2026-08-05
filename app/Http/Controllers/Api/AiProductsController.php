@@ -15,7 +15,7 @@ class AiProductsController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $locale = $request->get('lang', 'ka');
+        $locale = $this->resolveLocale($request);
         app()->setLocale($locale);
 
         $products = Product::active()
@@ -62,12 +62,8 @@ class AiProductsController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'name_ka' => $product->name_ka ?? $product->name,
-                    'name_en' => $product->name_en ?? $product->name,
                     'slug' => $product->slug,
                     'description' => $product->description ?? '',
-                    'description_ka' => $product->description_ka ?? $product->description,
-                    'description_en' => $product->description_en ?? $product->description,
                     'price' => (float) $product->price,
                     'sale_price' => $product->sale_price ? (float) $product->sale_price : null,
                     'discount_percentage' => $product->sale_price 
@@ -95,7 +91,7 @@ class AiProductsController extends Controller
                 ];
             })->values(),
             'total' => $products->count(),
-            'categories' => $this->getCategories($products),
+            'categories' => $this->getCategories($products, $locale),
             'price_range' => [
                 'min' => $products->min('price'),
                 'max' => $products->max('price'),
@@ -114,7 +110,7 @@ class AiProductsController extends Controller
      */
     public function show(Request $request, Product $product): JsonResponse
     {
-        $locale = $request->get('lang', 'ka');
+        $locale = $this->resolveLocale($request);
         app()->setLocale($locale);
 
         $product->load(['images', 'variants', 'reviews']);
@@ -126,12 +122,8 @@ class AiProductsController extends Controller
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
-                'name_ka' => $product->name_ka ?? $product->name,
-                'name_en' => $product->name_en ?? $product->name,
                 'slug' => $product->slug,
                 'description' => $product->description ?? '',
-                'description_ka' => $product->description_ka ?? $product->description,
-                'description_en' => $product->description_en ?? $product->description,
                 'price' => (float) $product->price,
                 'sale_price' => $product->sale_price ? (float) $product->sale_price : null,
                 'in_stock' => $product->stock_quantity > 0,
@@ -218,21 +210,21 @@ class AiProductsController extends Controller
     /**
      * Get product categories
      */
-    private function getCategories($products): array
+    private function getCategories($products, string $locale): array
     {
         $categories = [];
 
         if ($products->where('gps_features', true)->count() > 0) {
-            $categories[] = 'GPS watches';
+            $categories[] = $locale === 'ka' ? 'GPS საათები' : 'GPS watches';
         }
         if ($products->where('sim_support', true)->count() > 0) {
-            $categories[] = 'SIM watches';
+            $categories[] = $locale === 'ka' ? 'SIM საათები' : 'SIM watches';
         }
         if ($products->contains(fn (Product $product): bool => $this->hasVideoCallFeature($product))) {
-            $categories[] = 'Video call watches';
+            $categories[] = $locale === 'ka' ? 'ვიდეო ზარის საათები' : 'Video call watches';
         }
         if ($products->whereNotNull('water_resistant')->count() > 0) {
-            $categories[] = 'Water-resistant watches';
+            $categories[] = $locale === 'ka' ? 'წყალგამძლე საათები' : 'Water-resistant watches';
         }
 
         return $categories;
@@ -312,5 +304,15 @@ class AiProductsController extends Controller
         }
 
         return 0;
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $fallback = in_array(app()->getLocale(), ['ka', 'en'], true)
+            ? app()->getLocale()
+            : 'ka';
+        $locale = strtolower((string) $request->query('lang', $fallback));
+
+        return in_array($locale, ['ka', 'en'], true) ? $locale : $fallback;
     }
 }

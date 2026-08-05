@@ -40,8 +40,10 @@ class HomeController extends Controller
 
     public function locale(Request $request, string $locale): RedirectResponse
     {
-        $request->session()->put('locale', 'ka');
+        abort_unless(in_array($locale, ['ka', 'en'], true), 404);
 
-        return redirect()->back();
+        $request->session()->put('locale', $locale);
+
+        return redirect()->to($request->headers->get('referer') ?: route('home'));
     }
 }

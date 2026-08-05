@@ -190,7 +190,7 @@ class CartSnapshotService
 
             $packagingSlug = (string) ($group['packaging_slug'] ?? 'standard');
             $packaging = (array) config("gift_builder.packaging.{$packagingSlug}", config('gift_builder.packaging.standard', []));
-            $packagingLabel = $group['packaging_label'] ?? $this->localizedLabel($packaging, $packagingSlug);
+            $packagingLabel = $this->localizedLabel($packaging, $packagingSlug);
             $packagingCapacity = (int) ($packaging['capacity_units'] ?? 0);
             if ($enforceStock && $packagingCapacity > 0 && $capacityUnits > $packagingCapacity) {
                 throw new RuntimeException('Selected gift packaging can no longer fit the gift box.');
@@ -255,7 +255,7 @@ class CartSnapshotService
             'variant' => $variant,
             'product' => $product,
             'variant_label' => $this->variantLabel($variant),
-            'color_name' => $variant->color_name,
+            'color_name' => $variant->localizedColorName(),
             'color_hex' => $variant->color_hex,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
@@ -272,8 +272,8 @@ class CartSnapshotService
 
     private function variantLabel(ProductVariant $variant): string
     {
-        $name = trim((string) $variant->name);
-        $colorName = trim((string) $variant->color_name);
+        $name = trim($variant->localizedName());
+        $colorName = trim($variant->localizedColorName());
 
         if ($name !== '' && $colorName !== '') {
             return str_contains(mb_strtolower($name), mb_strtolower($colorName))
@@ -281,7 +281,7 @@ class CartSnapshotService
                 : "{$name} • {$colorName}";
         }
 
-        return $colorName !== '' ? $colorName : ($name !== '' ? $name : 'Variant');
+        return $colorName !== '' ? $colorName : ($name !== '' ? $name : __('storefront.common.color_variant'));
     }
 
     private function giftRoleAllowed($product, string $role): bool
@@ -302,6 +302,6 @@ class CartSnapshotService
 
         return $locale === 'ka'
             ? ($config['label_ka'] ?? $config['label_en'] ?? $fallback)
-            : ($config['label_en'] ?? $config['label_ka'] ?? $fallback);
+            : ($config['label_en'] ?? str($fallback)->headline()->toString());
     }
 }

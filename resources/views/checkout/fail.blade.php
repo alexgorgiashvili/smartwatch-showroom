@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'გადახდა ვერ შესრულდა')
+@section('title', __('storefront.payment.fail_title'))
 @section('robots', 'noindex, nofollow')
 
 @section('content')
@@ -10,8 +10,8 @@
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900">გადახდა ვერ შესრულდა</h1>
-                <p class="mt-2 text-sm text-gray-600">გთხოვთ სცადოთ თავიდან ან გამოიყენოთ სხვა ბარათი.</p>
+                <h1 class="text-2xl font-bold text-gray-900">{{ __('storefront.payment.fail_title') }}</h1>
+                <p class="mt-2 text-sm text-gray-600">{{ __('storefront.payment.fail_text') }}</p>
 
                 @if(session('retry_error'))
                     <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -20,15 +20,15 @@
                 @endif
 
                 @if (!empty($orderNumber))
-                    <p class="mt-4 text-sm text-gray-700">შეკვეთის ნომერი: <span class="font-semibold">{{ $orderNumber }}</span></p>
+                    <p class="mt-4 text-sm text-gray-700">{{ __('storefront.payment.order_number') }}: <span class="font-semibold">{{ $orderNumber }}</span></p>
                 @endif
 
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
                     <a href="{{ $retryUrl ?: route('checkout.index') }}" class="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
-                        თავიდან ცდა
+                        {{ __('storefront.payment.retry') }}
                     </a>
                     <a href="{{ route('products.index') }}" class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600">
-                        კატალოგში დაბრუნება
+                        {{ __('storefront.payment.back_to_catalog') }}
                     </a>
                 </div>
             </div>

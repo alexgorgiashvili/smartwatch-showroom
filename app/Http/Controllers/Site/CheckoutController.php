@@ -18,12 +18,12 @@ class CheckoutController extends Controller
             $cartSnapshot = $snapshot->build($request, ['enforce_stock' => true]);
         } catch (RuntimeException) {
             return redirect()->route('cart.index')
-                ->with('cart_error', 'კალათაში არსებული პროდუქტის მარაგი შეიცვალა. გთხოვთ, განაახლოთ კალათა.');
+                ->with('cart_error', __('storefront.cart.stock_changed'));
         }
         $summary = $cartSnapshot['summary'];
 
         if ((int) $summary['count'] <= 0) {
-            return redirect()->route('cart.index')->with('cart_error', 'კალათა ცარიელია.');
+            return redirect()->route('cart.index')->with('cart_error', __('storefront.cart.empty_error'));
         }
 
         $popularCityNames = [
@@ -35,7 +35,7 @@ class CheckoutController extends Controller
             'ზუგდიდი',
             'ფოთი',
             'თელავი',
-            'კობულეთი',
+            'ქობულეთი',
             'ოზურგეთი',
         ];
 
@@ -45,7 +45,7 @@ class CheckoutController extends Controller
         $currencyCode = $firstItem['currency'] ?? 'GEL';
         $currencySymbol = $currencyCode === 'GEL' ? '₾' : $currencyCode;
 
-        $cities = City::query()->orderBy('name')->get(['id', 'name']);
+        $cities = City::query()->orderBy(app()->getLocale() === 'en' ? 'name_en' : 'name')->get(['id', 'name', 'name_en']);
         $popularCityIds = collect($popularCityNames)
             ->map(fn (string $name) => $cities->firstWhere('name', $name)?->id)
             ->filter()

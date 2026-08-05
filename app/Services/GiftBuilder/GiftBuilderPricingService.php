@@ -19,20 +19,20 @@ class GiftBuilderPricingService
         $mainItems = array_values(array_filter($items, fn (array $item): bool => $item['role'] === 'main'));
         if (count($mainItems) !== 1) {
             throw ValidationException::withMessages([
-                'items' => 'Gift box needs exactly one main product.',
+                'items' => __('storefront.gift_builder.main_required'),
             ]);
         }
 
         if (count($items) > (int) config('gift_builder.max_items', 4)) {
             throw ValidationException::withMessages([
-                'items' => 'Gift box can contain a maximum of ' . config('gift_builder.max_items', 4) . ' products.',
+                'items' => __('storefront.gift_builder.max_products', ['count' => config('gift_builder.max_items', 4)]),
             ]);
         }
 
         $variantIds = collect($items)->pluck('variant_id')->all();
         if (count($variantIds) !== count(array_unique($variantIds))) {
             throw ValidationException::withMessages([
-                'items' => 'The same product variant cannot be selected twice in one gift box.',
+                'items' => __('storefront.gift_builder.duplicate_variant'),
             ]);
         }
 
@@ -52,7 +52,7 @@ class GiftBuilderPricingService
             $variant = $variants->get($item['variant_id']);
             if (! $variant || ! $variant->product) {
                 throw ValidationException::withMessages([
-                    'items' => 'Selected product is no longer available.',
+                    'items' => __('storefront.gift_builder.product_unavailable'),
                 ]);
             }
 
@@ -67,7 +67,7 @@ class GiftBuilderPricingService
             $unitPrice = (float) ($product->sale_price ?? $product->price ?? 0);
             if ($unitPrice <= 0) {
                 throw ValidationException::withMessages([
-                    'items' => 'Selected product has invalid price.',
+                    'items' => __('storefront.gift_builder.invalid_price'),
                 ]);
             }
 
@@ -84,7 +84,7 @@ class GiftBuilderPricingService
                 'unit_price' => $unitPrice,
                 'subtotal' => $subtotal,
                 'product_name' => $product->name,
-                'variant_name' => $variant->name,
+                'variant_name' => $variant->localizedName(),
                 'image' => $product->primaryImage?->url ?? asset('storage/images/home/smart-watch3.jpg'),
                 'compatibility_tags' => array_values((array) ($product->gift_compatibility_tags ?? [])),
                 'capacity_units' => max(1, (int) ($product->gift_capacity_units ?: 1)),
@@ -101,7 +101,7 @@ class GiftBuilderPricingService
                 $addonTags = $pricedItem['compatibility_tags'];
                 if ($addonTags !== [] && array_intersect($mainCompatibilityTags, $addonTags) === []) {
                     throw ValidationException::withMessages([
-                        'items' => 'Selected add-on is not compatible with the main gift.',
+                        'items' => __('storefront.gift_builder.incompatible_addon'),
                     ]);
                 }
             }
@@ -111,14 +111,14 @@ class GiftBuilderPricingService
         $packaging = (array) config("gift_builder.packaging.{$packagingSlug}");
         if ($packaging === []) {
             throw ValidationException::withMessages([
-                'packaging_slug' => 'Selected packaging is unavailable.',
+                'packaging_slug' => __('storefront.gift_builder.packaging_unavailable'),
             ]);
         }
 
         $packagingCapacity = (int) ($packaging['capacity_units'] ?? 0);
         if ($capacityUnits > $packagingCapacity) {
             throw ValidationException::withMessages([
-                'packaging_slug' => 'Selected items need a larger gift box.',
+                'packaging_slug' => __('storefront.gift_builder.larger_box_required'),
             ]);
         }
 
@@ -198,13 +198,13 @@ class GiftBuilderPricingService
 
         if (! $product->is_active || ! $product->gift_builder_enabled || $product->fulfillment_mode !== 'local_stock' || ! $roleAllowed) {
             throw ValidationException::withMessages([
-                'items' => 'Selected product cannot be used in this gift box.',
+                'items' => __('storefront.gift_builder.product_ineligible'),
             ]);
         }
 
         if (! $variant->canFulfillQuantity(1)) {
             throw ValidationException::withMessages([
-                'items' => 'Selected product is out of stock.',
+                'items' => __('storefront.gift_builder.out_of_stock'),
             ]);
         }
     }
@@ -235,7 +235,9 @@ class GiftBuilderPricingService
             return [
                 [
                     'code' => 'budget_overage',
-                    'message' => 'Gift box is ' . number_format($total - (float) $max, 2) . ' ₾ over the selected budget.',
+                    'message' => __('storefront.gift_builder.budget_overage', [
+                        'amount' => number_format($total - (float) $max, 2) . ' ₾',
+                    ]),
                 ],
             ];
         }
@@ -257,6 +259,6 @@ class GiftBuilderPricingService
 
         return $locale === 'ka'
             ? ($config['label_ka'] ?? $config['label_en'] ?? $fallback)
-            : ($config['label_en'] ?? $config['label_ka'] ?? $fallback);
+            : ($config['label_en'] ?? Str::headline($fallback));
     }
 }

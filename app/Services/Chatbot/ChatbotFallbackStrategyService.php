@@ -24,14 +24,17 @@ class ChatbotFallbackStrategyService
 
     public function resolveGuardOutcome(InputGuardResult $guardResult): ChatbotFallbackResolution
     {
-        $reply = $guardResult->safeReply() ?: $this->policy->strictGeorgianFallback();
+        $reply = $guardResult->safeReply() ?: $this->policy->localeFallback();
+        if (! $this->policy->passesLocaleQa($reply)) {
+            $reply = $this->policy->localeFallback();
+        }
 
         return $this->resolution(
             $reply,
             ChatbotOutcomeReason::INPUT_GUARD,
             true,
             [],
-            $this->policy->passesStrictGeorgianQa($reply)
+            $this->policy->passesLocaleQa($reply)
         );
     }
 
@@ -44,7 +47,7 @@ class ChatbotFallbackStrategyService
             ChatbotOutcomeReason::GREETING_ONLY,
             true,
             [],
-            $this->policy->passesStrictGeorgianQa($reply)
+            $this->policy->passesLocaleQa($reply)
         );
     }
 
@@ -61,20 +64,23 @@ class ChatbotFallbackStrategyService
             $reason,
             true,
             [],
-            $this->policy->passesStrictGeorgianQa($reply)
+            $this->policy->passesLocaleQa($reply)
         );
     }
 
     public function resolveStaticReason(string $reason, ?string $reply = null): ChatbotFallbackResolution
     {
         $resolvedReply = $reply ?? $this->replyForReason($reason);
+        if (! $this->policy->passesLocaleQa($resolvedReply)) {
+            $resolvedReply = $this->policy->localeFallback();
+        }
 
         return $this->resolution(
             $resolvedReply,
             $reason,
             true,
             [],
-            $this->policy->passesStrictGeorgianQa($resolvedReply)
+            $this->policy->passesLocaleQa($resolvedReply)
         );
     }
 
@@ -87,17 +93,17 @@ class ChatbotFallbackStrategyService
         $reply = $this->buildProviderFailureReply($intentResult, $validationContext, $history, $preferences);
 
         if (trim($reply) === '') {
-            $reply = $this->policy->strictGeorgianFallback();
+            $reply = $this->policy->localeFallback();
         }
 
-        if (!$this->policy->passesStrictGeorgianQa($reply)) {
-            $reply = $this->policy->strictGeorgianFallback();
+        if (!$this->policy->passesLocaleQa($reply)) {
+            $reply = $this->policy->localeFallback();
         }
 
         $validation = $this->responseValidator->validateAll($reply, $validationContext, $intentResult);
 
         if (!$validation->isValid()) {
-            $reply = $this->policy->strictGeorgianFallback();
+            $reply = $this->policy->localeFallback();
             $validation = $this->responseValidator->validateAll($reply, $validationContext, $intentResult);
         }
 
@@ -106,7 +112,7 @@ class ChatbotFallbackStrategyService
             null,
             $validation->isValid(),
             $validation->violations(),
-            $this->policy->passesStrictGeorgianQa($reply)
+            $this->policy->passesLocaleQa($reply)
         );
     }
 
@@ -122,7 +128,7 @@ class ChatbotFallbackStrategyService
             return $this->resolveStaticReason($initialReason);
         }
 
-        if (!$this->policy->passesStrictGeorgianQa($modelReply)) {
+        if (!$this->policy->passesLocaleQa($modelReply)) {
             return $this->resolveStaticReason(ChatbotOutcomeReason::STRICT_GEORGIAN);
         }
 
@@ -143,7 +149,7 @@ class ChatbotFallbackStrategyService
         if ($regeneratedReason === null) {
             $candidateReply = (string) ($regenerated['reply'] ?? '');
 
-            if ($this->policy->passesStrictGeorgianQa($candidateReply)) {
+            if ($this->policy->passesLocaleQa($candidateReply)) {
                 $candidateValidation = $this->responseValidator->validateAll($candidateReply, $validationContext, $intentResult);
 
                 if ($candidateValidation->isValid()) {
@@ -210,6 +216,10 @@ class ChatbotFallbackStrategyService
         $catalogProducts = $contextProducts !== []
             ? $contextProducts
             : $this->fallbackCatalogProducts($preferences, $contextText, 8);
+
+        if (app()->getLocale() === 'en') {
+            return $this->buildEnglishProviderFailureReply($intentResult, $contextText, $budget, $catalogProducts);
+        }
 
         if ($this->looksLikeWarrantyRequest($contextText)) {
             return $this->buildWarrantyFallbackReply($contextText);
@@ -308,6 +318,49 @@ class ChatbotFallbackStrategyService
         }
 
         return 'მომწერე ბიუჯეტი, სასურველი ფუნქცია ან კონკრეტული მოდელი და ზუსტად დაგეხმარები.';
+    }
+
+    /** @param array<int, array<string, mixed>> $products */
+    private function buildEnglishProviderFailureReply(
+        ?IntentResult $intentResult,
+        string $contextText,
+        ?float $budget,
+        array $products
+    ): string {
+        if ($this->looksLikeWarrantyRequest($contextText)) {
+            return 'Yes, our products include a warranty. ' . UnifiedAiPolicyService::canonicalWarrantySummary('en') . '. Returns or exchanges are available within 14 calendar days when the product is unused and in its original packaging.';
+        }
+
+        if ($this->looksLikeContactRequest($contextText)) {
+            $contacts = $this->contactLinksLine();
+
+            return $contacts !== ''
+                ? 'Contact us directly through ' . $contacts . ' and our team will help you.'
+                : 'Contact us through the contact page: ' . route('contact');
+        }
+
+        if ($products === []) {
+            return 'Tell me your budget, preferred feature, or a specific model and I’ll help you narrow down the best option.';
+        }
+
+        if ($budget !== null) {
+            $heading = 'Here are the closest available options within your budget:';
+        } elseif ($intentResult?->intent() === 'stock_query') {
+            $heading = 'These models are currently available:';
+        } elseif ($intentResult?->intent() === 'price_query') {
+            $heading = 'Here are the available options by price:';
+        } elseif ($intentResult?->intent() === 'comparison') {
+            $heading = 'Here are some models to compare:';
+        } else {
+            $heading = 'Here are some actively available models:';
+        }
+
+        return implode("\n", [
+            $heading,
+            $this->formatProductBullets($products, 4),
+            '',
+            'Share your budget or required features—GPS, SOS, calls, or camera—and I can refine the recommendation.',
+        ]);
     }
 
     /**
@@ -954,8 +1007,20 @@ class ChatbotFallbackStrategyService
 
     private function replyForReason(string $reason): string
     {
+        if (app()->getLocale() === 'en') {
+            return match ($reason) {
+                ChatbotOutcomeReason::CHATBOT_DISABLED => 'The chatbot is temporarily unavailable. Please try again later.',
+                ChatbotOutcomeReason::PROVIDER_UNAVAILABLE => 'Sorry, the assistant service is temporarily unavailable.',
+                ChatbotOutcomeReason::PROVIDER_EXCEPTION => 'Sorry, we’re having a temporary problem. Please try again later.',
+                ChatbotOutcomeReason::EMPTY_MODEL_OUTPUT => 'Sorry, I could not generate a response. Please try once more.',
+                ChatbotOutcomeReason::VALIDATOR_FAILED,
+                ChatbotOutcomeReason::VALIDATOR_RETRY_FAILED => $this->responseValidator->integrityFallback(),
+                default => $this->policy->localeFallback(),
+            };
+        }
+
         return match ($reason) {
-            ChatbotOutcomeReason::STRICT_GEORGIAN => $this->policy->strictGeorgianFallback(),
+            ChatbotOutcomeReason::STRICT_GEORGIAN => $this->policy->localeFallback(),
             ChatbotOutcomeReason::VALIDATOR_FAILED,
             ChatbotOutcomeReason::VALIDATOR_RETRY_FAILED => $this->responseValidator->integrityFallback(),
             default => self::STATIC_REASON_REPLIES[$reason] ?? $this->responseValidator->integrityFallback(),

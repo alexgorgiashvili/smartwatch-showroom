@@ -48,8 +48,8 @@ $_contactSchema = [
 			<div class="mt-10 grid grid-cols-12 gap-4 [grid-auto-flow:dense] items-start content-start">
 				<article class="col-span-12 lg:col-span-5 glass-card p-5 sm:p-6">
 					<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">[FAST] CHANNELS</p>
-					<h2 class="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-white">აირჩიე კონტაქტის გზა</h2>
-					<p class="mt-2 text-sm text-white/70">SIM-იანი სმარტ საათების არჩევაში დაგეხმარებით — მოდელი, ქსელი, ბატარეა, GPS და უსაფრთხოების ფუნქციები.</p>
+					<h2 class="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-white">{{ __('storefront.contact.choose_channel') }}</h2>
+					<p class="mt-2 text-sm text-white/70">{{ __('storefront.contact.intro') }}</p>
 
 					<div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<a href="tel:{{ $contactSettings['phone_link'] ?? '+995555123456' }}" class="glass-card p-4 hover:bg-white/5">
@@ -60,7 +60,7 @@ $_contactSchema = [
 										<i class="fas fa-phone text-white/70"></i>
 									</div>
 									<p class="mt-2 font-semibold text-white break-words">{{ $contactSettings['phone_display'] ?? '+995 555 123 456' }}</p>
-									<p class="mt-1 text-xs text-white/70">სწრაფი კონსულტაცია</p>
+									<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.fast_advice') }}</p>
 								</div>
 							</div>
 						</a>
@@ -73,7 +73,7 @@ $_contactSchema = [
 										<i class="fab fa-whatsapp text-white/70"></i>
 									</div>
 									<p class="mt-2 font-semibold text-white truncate">Chat</p>
-									<p class="mt-1 text-xs text-white/70">ფოტო/ვიდეო + კითხვა</p>
+									<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.photo_video_question') }}</p>
 								</div>
 							</div>
 						</a>
@@ -86,7 +86,7 @@ $_contactSchema = [
 										<i class="fas fa-comment-dots text-white/70"></i>
 									</div>
 									<p class="mt-2 font-semibold text-white truncate">MyTechnic Assistant</p>
-									<p class="mt-1 text-xs text-white/70">ონლაინ დახმარება</p>
+									<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.online_support') }}</p>
 								</div>
 							</div>
 						</button>
@@ -99,7 +99,7 @@ $_contactSchema = [
 										<i class="fas fa-envelope text-white/70"></i>
 									</div>
 									<p class="mt-2 font-semibold text-white break-words">{{ $contactSettings['email'] ?? 'info@mytechnic.ge' }}</p>
-									<p class="mt-1 text-xs text-white/70">დეტალური მოთხოვნა</p>
+									<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.detailed_request') }}</p>
 								</div>
 							</div>
 						</a>
@@ -110,12 +110,12 @@ $_contactSchema = [
 						<div class="rounded-xl bg-white/5 border border-white/10 p-4">
 							<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">LOCATION</p>
 							<p class="mt-2 font-semibold text-white">{{ $contactSettings['location'] ?? 'Tbilisi, Georgia' }}</p>
-							<p class="mt-1 text-xs text-white/70">შეხვედრა შეთანხმებით</p>
+							<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.meeting_by_appointment') }}</p>
 						</div>
 						<div class="rounded-xl bg-white/5 border border-white/10 p-4">
 							<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">HOURS</p>
 							<p class="mt-2 font-semibold text-white">{{ $contactSettings['hours'] ?? __('ui.contact_hours_text') }}</p>
-							<p class="mt-1 text-xs text-white/70">წერილები 24/7</p>
+							<p class="mt-1 text-xs text-white/70">{{ __('storefront.contact.messages_247') }}</p>
 						</div>
 					</div>
 				</article>
@@ -125,14 +125,14 @@ $_contactSchema = [
 						<div>
 							<p class="font-mono text-[11px] uppercase tracking-[0.26em] text-white/60">[FORM] INQUIRY</p>
 							<h2 class="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-white">{{ __('ui.contact_form_title') }}</h2>
-							<p class="mt-2 text-sm text-white/70">მოკლე შეტყობინება — ჩვენ დაგიბრუნდებით ზარით ან WhatsApp-ით.</p>
+							<p class="mt-2 text-sm text-white/70">{{ __('storefront.contact.short_message') }}</p>
 						</div>
 						<span class="text-white/40" aria-hidden="true"><i class="fas fa-sim-card"></i></span>
 					</div>
 
 					@if ($errors->any())
 						<div class="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
-							<p class="text-sm font-medium text-white/90">შეასწორეთ ველები და სცადეთ თავიდან.</p>
+							<p class="text-sm font-medium text-white/90">{{ __('storefront.contact.fix_fields') }}</p>
 							<ul class="mt-2 list-disc list-inside text-sm text-white/70">
 								@foreach ($errors->all() as $error)
 									<li>{{ $error }}</li>
@@ -209,7 +209,7 @@ $_contactSchema = [
 								name="message"
 								rows="5"
 								class="mt-2 w-full resize-none bg-transparent px-0 py-3 text-white placeholder:text-white/35 border-0 border-b border-white/15 focus:border-white/40 focus:ring-0 @error('message') border-b-red-400 @enderror"
-								placeholder="მაგ: რომელი მოდელი ჯობს eSIM/SIM-ზე, GPS სიზუსტე, ბატარეა..."
+								placeholder="{{ __('storefront.contact.message_placeholder') }}"
 							>{{ old('message') }}</textarea>
 							@error('message')
 								<p class="mt-2 text-sm text-red-200">{{ $message }}</p>
@@ -223,7 +223,7 @@ $_contactSchema = [
 									{{ __('ui.form_submit') }}
 								</span>
 							</button>
-							<p class="mt-3 text-xs text-white/60">დაჩქარებისთვის: WhatsApp ან Live Chat.</p>
+							<p class="mt-3 text-xs text-white/60">{{ __('storefront.contact.fastest_channels') }}</p>
 						</div>
 					</form>
 				</article>

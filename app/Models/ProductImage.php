@@ -48,7 +48,7 @@ class ProductImage extends Model
             return $this->alt_ka ?: $this->alt_en;
         }
 
-        return $this->alt_en ?: $this->alt_ka;
+        return $this->alt_en ?: $this->product?->name_en ?: __('storefront.meta.image_alt');
     }
 
     public function getUrlAttribute(): string

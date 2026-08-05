@@ -18,12 +18,16 @@ class ContactSetting extends Model
         'whatsapp_url' => 'https://wa.me/995555123456',
         'email' => 'info@mytechnic.ge',
         'location' => 'Tbilisi, Georgia',
+        'location_en' => 'Tbilisi, Georgia',
+        'hours_en' => 'Every day, 10:00–20:00',
         'hours' => 'ყოველდღე 10:00 - 20:00',
         'instagram_url' => 'https://www.instagram.com/mytechnic.ge',
         'facebook_url' => 'https://www.facebook.com/mytechnic.ge',
         'messenger_url' => 'https://m.me/mytechnic.ge',
         'faq_support_title' => 'გჭირდებათ სწრაფი დახმარება?',
         'faq_support_description' => 'მოგვწერეთ Live Chat-ში, WhatsApp-ზე ან Messenger-ზე და შეძლებისდაგვარად სწრაფად გიპასუხებთ.',
+        'faq_support_title_en' => 'Need quick help?',
+        'faq_support_description_en' => 'Message us on Live Chat, WhatsApp, or Messenger and we’ll reply as quickly as possible.',
     ];
 
     public static function allKeyed(): array
@@ -39,5 +43,22 @@ class ContactSetting extends Model
         }
 
         return array_merge(self::DEFAULTS, $stored);
+    }
+
+    public static function localized(array $settings, ?string $locale = null): array
+    {
+        $locale ??= app()->getLocale();
+        if ($locale !== 'en') {
+            return $settings;
+        }
+
+        foreach (['location', 'hours', 'faq_support_title', 'faq_support_description'] as $key) {
+            $english = trim((string) ($settings[$key . '_en'] ?? ''));
+            if ($english !== '') {
+                $settings[$key] = $english;
+            }
+        }
+
+        return $settings;
     }
 }

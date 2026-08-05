@@ -144,7 +144,7 @@ $_citySchema = [
                     {{ $ka ? '24/7 მხარდაჭერა' : '24/7 Support' }}
                 </h3>
                 <p class="text-sm text-slate-600">
-                    {{ $ka ? 'ქართულ ენაზე' : 'In Georgian language' }}
+                    {{ __('storefront.landing.english_support') }}
                 </p>
             </div>
 
