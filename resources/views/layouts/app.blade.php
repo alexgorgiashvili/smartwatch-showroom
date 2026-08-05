@@ -175,7 +175,7 @@
           </div>
 
           <!-- Mobile Navigation (Slides from right) -->
-          <nav id="mobile-menu" class="fixed inset-y-0 right-0 z-50 flex h-screen w-[85vw] max-w-[320px] translate-x-full transform flex-col bg-gray-950 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden">
+          <nav id="mobile-menu" class="fixed inset-y-0 right-0 z-50 flex h-[100dvh] w-[85vw] max-w-[320px] translate-x-full transform flex-col bg-gray-950 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden">
             <!-- Mobile Menu Header with Logo + Close -->
             <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <a class="flex items-center" href="{{ route('home') }}">
@@ -184,6 +184,34 @@
               <button id="mobile-menu-close" aria-label="{{ __('storefront.common.menu_close') }}" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
+            </div>
+
+            <!-- Mobile language and social shortcuts stay above the scrollable menu -->
+            <div class="flex-shrink-0 border-b border-white/10 p-5">
+              <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">{{ $languageSwitcherLabel }}</p>
+              <div class="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1" role="group" aria-label="{{ $languageSwitcherLabel }}">
+                <a href="{{ route('locale', 'ka') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'ka' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'ka') aria-current="page" @endif aria-label="{{ $currentLocale === 'en' ? 'Switch to Georgian' : 'ქართულ ენაზე გადართვა' }}">KA</a>
+                <a href="{{ route('locale', 'en') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'en' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'en') aria-current="page" @endif aria-label="Switch to English">EN</a>
+              </div>
+              <div class="flex items-center justify-center gap-6">
+                @if (!empty($contactSettings['whatsapp_url']))
+                <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
+                  <i class="fab fa-whatsapp text-2xl"></i>
+                </a>
+                @endif
+
+                @if (!empty($contactSettings['instagram_url']))
+                <a href="{{ $contactSettings['instagram_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
+                  <i class="fab fa-instagram text-2xl"></i>
+                </a>
+                @endif
+
+                @if (!empty($contactSettings['messenger_url']))
+                <a href="{{ $contactSettings['messenger_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
+                  <i class="fab fa-facebook-messenger text-2xl"></i>
+                </a>
+                @endif
+              </div>
             </div>
 
             <!-- Navigation Links -->
@@ -244,33 +272,6 @@
               </li>
             </ul>
 
-            <!-- Mobile Menu Footer - Language + Social Icons -->
-            <div class="flex-shrink-0 border-t border-white/10 p-5">
-              <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">{{ $languageSwitcherLabel }}</p>
-              <div class="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1" role="group" aria-label="{{ $languageSwitcherLabel }}">
-                <a href="{{ route('locale', 'ka') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'ka' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'ka') aria-current="page" @endif aria-label="{{ $currentLocale === 'en' ? 'Switch to Georgian' : 'ქართულ ენაზე გადართვა' }}">KA</a>
-                <a href="{{ route('locale', 'en') }}" class="rounded-lg px-3 py-2 text-center text-xs font-bold tracking-wide transition {{ $currentLocale === 'en' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}" @if ($currentLocale === 'en') aria-current="page" @endif aria-label="Switch to English">EN</a>
-              </div>
-              <div class="flex gap-6 justify-center">
-                @if (!empty($contactSettings['whatsapp_url']))
-                <a href="{{ $contactSettings['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-green-400" title="WhatsApp">
-                  <i class="fab fa-whatsapp text-3xl"></i>
-                </a>
-                @endif
-
-                @if (!empty($contactSettings['instagram_url']))
-                <a href="{{ $contactSettings['instagram_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-pink-400" title="Instagram">
-                  <i class="fab fa-instagram text-3xl"></i>
-                </a>
-                @endif
-
-                @if (!empty($contactSettings['messenger_url']))
-                <a href="{{ $contactSettings['messenger_url'] }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 transition duration-300 hover:text-primary-400" title="Messenger">
-                  <i class="fab fa-facebook-messenger text-3xl"></i>
-                </a>
-                @endif
-              </div>
-            </div>
           </nav>
 
           <!-- Mobile menu overlay -->
