@@ -204,6 +204,68 @@ class Product extends Model
         return $this->localizedValue($this->description_en, $this->description_ka);
     }
 
+    public function localizedSpecificationValue(string $field, mixed $value = null): ?string
+    {
+        $value ??= $this->getAttribute($field);
+
+        if (is_array($value)) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        // A legacy import stored a product weight in the operating-system field.
+        if ($field === 'operating_system' && preg_match('/(?:\p{Georgian}|\b)კგ\b|\bkg\b/iu', $value) === 1) {
+            return null;
+        }
+
+        if (app()->getLocale() !== 'en') {
+            return $value;
+        }
+
+        $translations = trans("storefront.spec_values.{$field}", [], 'en');
+        if (is_array($translations) && array_key_exists($value, $translations)) {
+            return (string) $translations[$value];
+        }
+
+        return $this->translateSpecificationFragments($value);
+    }
+
+    /** @return array<int, string> */
+    public function localizedFunctions(): array
+    {
+        return collect((array) $this->functions)
+            ->map(fn ($function): ?string => $this->localizedSpecificationValue('functions', $function))
+            ->filter(fn (?string $function): bool => filled($function))
+            ->values()
+            ->all();
+    }
+
+    private function translateSpecificationFragments(string $value): string
+    {
+        if (preg_match('/\p{Georgian}/u', $value) !== 1) {
+            return $value;
+        }
+
+        return strtr($value, [
+            'მეგაპიქსელი' => 'megapixels',
+            'ინჩიანი' => '-inch',
+            'ინჩი' => 'inches',
+            'დიუმიანი' => '-inch',
+            'დიუმი' => 'inches',
+            'მმ' => 'mm',
+            'კგ' => 'kg',
+            'სენსორული ეკრანი' => 'touchscreen',
+            'ტაჩსკრინი' => 'touchscreen',
+            'ფერადი' => 'color',
+            'ეკრანი' => 'display',
+            'რეზოლუცია' => 'resolution',
+        ]);
+    }
+
     public function getStockQuantityAttribute(): int
     {
         if ($this->relationLoaded('variants')) {

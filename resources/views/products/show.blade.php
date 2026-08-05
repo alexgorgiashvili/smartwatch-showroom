@@ -205,6 +205,17 @@ if ($approvedReviews->count() > 0) {
             })
             ->unique(fn ($image) => ltrim((string) ($image->path ?? ''), '/'))
             ->values();
+        $specValues = [
+            'battery_life_label' => $product->localizedSpecificationValue('battery_life_label', $product->battery_life_label),
+            'operating_system' => $product->localizedSpecificationValue('operating_system'),
+            'screen_size' => $product->localizedSpecificationValue('screen_size'),
+            'display_type' => $product->localizedSpecificationValue('display_type'),
+            'screen_resolution' => $product->localizedSpecificationValue('screen_resolution'),
+            'case_material' => $product->localizedSpecificationValue('case_material'),
+            'band_material' => $product->localizedSpecificationValue('band_material'),
+            'camera' => $product->localizedSpecificationValue('camera'),
+            'functions' => $product->localizedFunctions(),
+        ];
     @endphp
 
     <section class="bg-gray-50 py-8 sm:py-10">
@@ -289,10 +300,10 @@ if ($approvedReviews->count() > 0) {
                                             <td class="px-2 py-3 text-gray-700">{{ __('ui.yes') }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->battery_life_label)
+                                    @if ($specValues['battery_life_label'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.product_battery') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->battery_life_label }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['battery_life_label'] }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->warranty_months)
@@ -301,28 +312,28 @@ if ($approvedReviews->count() > 0) {
                                             <td class="px-2 py-3 text-gray-700">{{ $product->warranty_months }} {{ __('ui.months') }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->operating_system)
+                                    @if ($specValues['operating_system'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_os') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->operating_system }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['operating_system'] }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->screen_size)
+                                    @if ($specValues['screen_size'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_size }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['screen_size'] }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->display_type)
+                                    @if ($specValues['display_type'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->display_type }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['display_type'] }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->screen_resolution)
+                                    @if ($specValues['screen_resolution'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_resolution') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->screen_resolution }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['screen_resolution'] }}</td>
                                         </tr>
                                     @endif
                                     @if ($product->battery_capacity_mah)
@@ -337,28 +348,28 @@ if ($approvedReviews->count() > 0) {
                                             <td class="px-2 py-3 text-gray-700">{{ $product->charging_time_hours }} h</td>
                                         </tr>
                                     @endif
-                                    @if ($product->case_material)
+                                    @if ($specValues['case_material'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_case') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->case_material }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['case_material'] }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->band_material)
+                                    @if ($specValues['band_material'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_band') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->band_material }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['band_material'] }}</td>
                                         </tr>
                                     @endif
-                                    @if ($product->camera)
+                                    @if ($specValues['camera'])
                                         <tr class="border-b border-gray-100">
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_camera') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ $product->camera }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ $specValues['camera'] }}</td>
                                         </tr>
                                     @endif
-                                    @if (is_array($product->functions) && $product->functions !== [])
+                                    @if ($specValues['functions'] !== [])
                                         <tr>
                                             <td class="px-2 py-3 font-semibold text-gray-900">{{ __('ui.spec_functions') }}</td>
-                                            <td class="px-2 py-3 text-gray-700">{{ implode(', ', $product->functions) }}</td>
+                                            <td class="px-2 py-3 text-gray-700">{{ implode(', ', $specValues['functions']) }}</td>
                                         </tr>
                                     @endif
                                 </tbody>
@@ -437,22 +448,22 @@ if ($approvedReviews->count() > 0) {
                                     <p>{{ __('ui.yes') }}</p>
                                 </div>
                             @endif
-                            @if ($product->battery_life_label)
+                            @if ($specValues['battery_life_label'])
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
                                     <p class="font-semibold text-gray-900">{{ __('ui.product_battery') }}</p>
-                                    <p>{{ $product->battery_life_label }}</p>
+                                    <p>{{ $specValues['battery_life_label'] }}</p>
                                 </div>
                             @endif
-                            @if ($product->screen_size)
+                            @if ($specValues['screen_size'])
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
                                     <p class="font-semibold text-gray-900">{{ __('ui.spec_screen_size') }}</p>
-                                    <p>{{ $product->screen_size }}</p>
+                                    <p>{{ $specValues['screen_size'] }}</p>
                                 </div>
                             @endif
-                            @if ($product->display_type)
+                            @if ($specValues['display_type'])
                                 <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-gray-600">
                                     <p class="font-semibold text-gray-900">{{ __('ui.spec_display_type') }}</p>
-                                    <p>{{ $product->display_type }}</p>
+                                    <p>{{ $specValues['display_type'] }}</p>
                                 </div>
                             @endif
 

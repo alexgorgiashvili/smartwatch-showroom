@@ -146,6 +146,33 @@ class StorefrontEnglishLocaleTest extends TestCase
             ->assertDontSee('ორბიტა 4G საბავშვო საათი');
     }
 
+    public function test_english_product_details_translate_legacy_georgian_specifications(): void
+    {
+        $this->product->update([
+            'operating_system' => '0.150 კგ',
+            'screen_size' => '1.85 ინჩი',
+            'case_material' => 'პლასტმასი',
+            'band_material' => 'სილიკონის გელი',
+            'camera' => '0.3 მეგაპიქსელი',
+            'functions' => ['GPS ტრეკერი', 'SOS საგანგებო ღილაკი'],
+        ]);
+
+        $response = $this->withSession(['locale' => 'en'])
+            ->get(route('products.show', $this->product));
+
+        $response
+            ->assertOk()
+            ->assertSee('1.85 inches')
+            ->assertSee('Plastic')
+            ->assertSee('Silicone gel')
+            ->assertSee('0.3 megapixels')
+            ->assertSee('GPS tracker, SOS emergency button')
+            ->assertDontSee('პლასტმასი')
+            ->assertDontSee('სილიკონის გელი')
+            ->assertDontSee('0.150 kg')
+            ->assertDontSee('0.150 კგ');
+    }
+
     public function test_all_public_english_pages_render_without_georgian_unicode(): void
     {
         $routes = [
