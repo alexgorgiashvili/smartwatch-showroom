@@ -44,7 +44,7 @@
     );
 
     const steps = [
-        { key: 'occasion', label: i18n.steps[1] },
+        { key: 'budget', label: i18n.budget },
         { key: 'main', label: i18n.steps[2] },
         { key: 'addons', label: i18n.steps[3] },
         { key: 'card', label: i18n.steps[4] },
@@ -58,8 +58,8 @@
     const state = {
         step: 0,
         recipient_type: 'other',
-        occasion: config.initial.occasion || first(config.occasions)?.slug || 'just_because',
-        budget_band: config.initial.budget_band || 'all',
+        occasion: 'just_because',
+        budget_band: bySlug(config.budgetBands, config.initial.budget_band)?.slug || first(config.budgetBands)?.slug || 'under_100',
         packaging_slug: config.initial.packaging_slug || first(config.packaging)?.slug || 'standard',
         message: '',
         mainVariantId: config.initial.selected_variant_id || null,
@@ -123,8 +123,7 @@
     }
 
     function budgetMatches(product) {
-        if (!state.budget_band || state.budget_band === 'all') return true;
-        if (product.budget_band && product.budget_band !== 'all') return product.budget_band === state.budget_band;
+        if (!state.budget_band) return true;
 
         const band = bySlug(config.budgetBands, state.budget_band);
         if (!band) return true;
@@ -137,7 +136,6 @@
         return (config.products || [])
             .filter((product) => (product.variants || []).length > 0)
             .filter((product) => roleMatches(product, role))
-            .filter((product) => tagMatches(product.occasion_tags, state.occasion))
             .filter((product) => budgetMatches(product));
     }
 
@@ -248,33 +246,12 @@
         const step = steps[state.step].key;
         let html = '';
 
-        if (step === 'occasion') {
+        if (step === 'budget') {
             html = `
                 <div class="mb-5">
-                    <h2 class="text-xl font-extrabold text-gray-950">${escapeHtml(i18n.occasion_title)}</h2>
-                    <p class="mt-1 text-sm text-gray-500">${escapeHtml(i18n.occasion_text)}</p>
+                    <h2 class="text-xl font-extrabold text-gray-950">${escapeHtml(i18n.budget)}</h2>
                 </div>
-                <div class="mb-6">
-                    <h3 class="mb-3 text-sm font-bold text-gray-900">${escapeHtml(i18n.starter_presets)}</h3>
-                    <div class="grid gap-3 md:grid-cols-3">
-                        ${config.presets.map((preset) => `
-                            <button type="button" data-preset="${preset.slug}" class="rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-primary-200 hover:bg-primary-50/40">
-                                <span class="block text-sm font-bold text-gray-950">${escapeHtml(preset.label)}</span>
-                                ${preset.description ? `<span class="mt-1 block text-xs text-gray-500">${escapeHtml(preset.description)}</span>` : ''}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="grid gap-6 lg:grid-cols-2">
-                    <div>
-                        <h3 class="mb-3 text-sm font-bold text-gray-900">${escapeHtml(i18n.occasion)}</h3>
-                        <div class="grid gap-3 sm:grid-cols-2">${config.occasions.map((option) => optionButton('occasion', option, state.occasion)).join('')}</div>
-                    </div>
-                    <div>
-                        <h3 class="mb-3 text-sm font-bold text-gray-900">${escapeHtml(i18n.budget)}</h3>
-                        <div class="grid gap-3 sm:grid-cols-2">${config.budgetBands.map((option) => optionButton('budget_band', option, state.budget_band)).join('')}</div>
-                    </div>
-                </div>
+                <div class="grid gap-3 sm:grid-cols-3">${config.budgetBands.map((option) => optionButton('budget_band', option, state.budget_band)).join('')}</div>
             `;
         }
 
@@ -349,7 +326,6 @@
                     <div class="space-y-3">${selectedSummaryHtml(false)}</div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <dl class="space-y-2 text-sm text-gray-700">
-                            <div class="flex justify-between"><dt>${escapeHtml(i18n.occasion)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.occasions, state.occasion)?.label || state.occasion)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.budget)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.budgetBands, state.budget_band)?.label || state.budget_band)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.packaging)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.packaging, state.packaging_slug)?.label || state.packaging_slug)}</dd></div>
                             ${state.message ? `<div class="border-t border-slate-200 pt-2"><dt class="mb-1 text-gray-500">${escapeHtml(i18n.message)}</dt><dd class="rounded-xl bg-white p-3 text-gray-700">“${escapeHtml(state.message)}”</dd></div>` : ''}
@@ -480,15 +456,6 @@
         }
     }
 
-    function applyPreset(slug) {
-        const preset = bySlug(config.presets, slug);
-        if (!preset) return;
-        state.occasion = preset.occasion || state.occasion;
-        state.budget_band = preset.budget_band || state.budget_band;
-        state.packaging_slug = preset.packaging_slug || state.packaging_slug;
-        state.step = 1;
-    }
-
     async function addToCart() {
         if (!state.mainVariantId || state.isAdding) return;
         if (!state.priced || state.error) {
@@ -533,14 +500,6 @@
         const option = event.target.closest('[data-option-type]');
         if (option) {
             state[option.getAttribute('data-option-type')] = option.getAttribute('data-option-value');
-            schedulePrice();
-            render();
-            return;
-        }
-
-        const preset = event.target.closest('[data-preset]');
-        if (preset) {
-            applyPreset(preset.getAttribute('data-preset'));
             schedulePrice();
             render();
             return;

@@ -67,7 +67,7 @@ class GiftBuilderFlowTest extends TestCase
             ->postJson(route('gift-builder.add-to-cart'), [
                 'recipient_type' => 'child_8_12',
                 'occasion' => 'birthday',
-                'budget_band' => '150_250',
+                'budget_band' => 'under_250',
                 'packaging_slug' => 'standard',
                 'message' => '<b>Congrats</b>',
                 'items' => [

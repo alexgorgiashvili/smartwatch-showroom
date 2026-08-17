@@ -198,11 +198,6 @@ class GiftBuilderCatalogService
             return true;
         }
 
-        $configured = $product->gift_budget_band;
-        if ($configured && $configured !== 'all') {
-            return $configured === $budget;
-        }
-
         $price = (float) ($product->sale_price ?? $product->price ?? 0);
         $band = (array) config("gift_builder.budget_bands.{$budget}", []);
 
@@ -222,14 +217,14 @@ class GiftBuilderCatalogService
 
     private function budgetBandForPrice(float $price): string
     {
-        if ($price <= 150) {
-            return 'under_150';
+        if ($price <= 50) {
+            return 'under_50';
         }
 
-        if ($price <= 250) {
-            return '150_250';
+        if ($price <= 100) {
+            return 'under_100';
         }
 
-        return '250_plus';
+        return 'under_250';
     }
 }

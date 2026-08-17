@@ -70,7 +70,7 @@ class GiftBuilderPricingServiceTest extends TestCase
             ['variant_id' => $main->id, 'role' => 'main'],
             ['variant_id' => $addon->id, 'role' => 'addon'],
         ], [
-            'budget_band' => 'under_150',
+            'budget_band' => 'under_100',
             'packaging_slug' => 'premium',
             'message' => '<b>Happy</b>    birthday',
         ]));

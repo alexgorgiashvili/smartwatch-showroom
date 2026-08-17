@@ -46,29 +46,23 @@ return [
     ],
 
     'budget_bands' => [
-        'under_150' => [
-            'label_ka' => '150₾-მდე',
-            'label_en' => 'Under 150₾',
+        'under_50' => [
+            'label_ka' => '50₾-მდე',
+            'label_en' => 'Up to 50₾',
             'min' => null,
-            'max' => 150,
+            'max' => 50,
         ],
-        '150_250' => [
-            'label_ka' => '150-250₾',
-            'label_en' => '150-250₾',
-            'min' => 150,
+        'under_100' => [
+            'label_ka' => '100₾-მდე',
+            'label_en' => 'Up to 100₾',
+            'min' => null,
+            'max' => 100,
+        ],
+        'under_250' => [
+            'label_ka' => '250₾-მდე',
+            'label_en' => 'Up to 250₾',
+            'min' => null,
             'max' => 250,
-        ],
-        '250_plus' => [
-            'label_ka' => '250₾+',
-            'label_en' => '250₾+',
-            'min' => 250,
-            'max' => null,
-        ],
-        'all' => [
-            'label_ka' => 'ყველა ბიუჯეტი',
-            'label_en' => 'All budgets',
-            'min' => null,
-            'max' => null,
         ],
     ],
 
@@ -101,7 +95,7 @@ return [
             'description_en' => 'A smartwatch, standard box, and greeting card.',
             'recipient_type' => 'child_5_7',
             'occasion' => 'just_because',
-            'budget_band' => 'all',
+            'budget_band' => 'under_100',
         ],
         'birthday_ready' => [
             'label_ka' => 'Birthday Ready Box',
@@ -110,7 +104,7 @@ return [
             'description_en' => 'A birthday-ready gift setup.',
             'recipient_type' => 'child_8_12',
             'occasion' => 'birthday',
-            'budget_band' => '150_250',
+            'budget_band' => 'under_250',
         ],
         'premium_care' => [
             'label_ka' => 'Premium Care Box',
@@ -119,7 +113,7 @@ return [
             'description_en' => 'A more complete gift with premium packaging.',
             'recipient_type' => 'teen',
             'occasion' => 'new_year',
-            'budget_band' => '250_plus',
+            'budget_band' => 'under_250',
             'packaging_slug' => 'premium',
         ],
     ],
