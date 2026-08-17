@@ -46,7 +46,37 @@ class GiftBuilderFlowTest extends TestCase
             ->assertSessionHas('gift_builder_preview_access', true);
 
         $this->get(route('gift-builder.show'))->assertOk();
+        $this->get(route('gift-builder.boxes'))->assertOk();
         $this->getJson(route('gift-builder.products'))->assertOk();
+    }
+
+    public function test_ready_box_page_links_to_a_preselected_builder(): void
+    {
+        $main = $this->giftVariant('Ready Box Watch', 'main', 79);
+        $addon = $this->giftVariant('Ready Box Add-on', 'addon', 29);
+
+        config()->set('gift_builder.ready_boxes', [
+            'ready-test' => [
+                'label_ka' => 'მზა სატესტო ყუთი',
+                'label_en' => 'Ready Test Box',
+                'description_ka' => 'მზა კომბინაცია.',
+                'description_en' => 'Ready combination.',
+                'main_product' => $main->product->slug,
+                'addon_products' => [$addon->product->slug],
+                'budget_band' => 'under_100',
+                'packaging_slug' => 'standard',
+            ],
+        ]);
+
+        $this->get(route('gift-builder.boxes'))
+            ->assertOk()
+            ->assertSee('მზა სატესტო ყუთი')
+            ->assertSee(route('gift-builder.show', ['box' => 'ready-test']), false);
+
+        $this->get(route('gift-builder.show', ['box' => 'ready-test']))
+            ->assertOk()
+            ->assertSee((string) $main->id)
+            ->assertSee((string) $addon->id);
     }
 
     public function test_add_to_cart_creates_gift_group_without_touching_standard_cart(): void

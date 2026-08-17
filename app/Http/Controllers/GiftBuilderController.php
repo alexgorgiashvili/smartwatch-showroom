@@ -28,6 +28,19 @@ class GiftBuilderController extends Controller
         ]);
     }
 
+    public function boxes(Request $request, GiftBuilderCatalogService $catalog): View|RedirectResponse
+    {
+        if ($this->grantPreviewAccess($request)) {
+            return redirect()->route('gift-builder.boxes');
+        }
+
+        $this->ensureAccess($request);
+
+        return view('gift-builder.boxes', [
+            'readyBoxes' => $catalog->readyBoxes(),
+        ]);
+    }
+
     public function products(Request $request, GiftBuilderCatalogService $catalog): JsonResponse
     {
         $this->ensureAccess($request);

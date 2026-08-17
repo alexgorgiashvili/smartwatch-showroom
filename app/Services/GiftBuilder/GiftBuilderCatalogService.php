@@ -17,6 +17,7 @@ class GiftBuilderCatalogService
         ]);
 
         $preselected = $this->preselectedProduct($request);
+        $readyBox = $preselected ? null : $this->readyBoxSelection($request, $products);
 
         return [
             'maxItems' => (int) config('gift_builder.max_items', 4),
@@ -30,18 +31,59 @@ class GiftBuilderCatalogService
             'initial' => [
                 'recipient_type' => $preselected['recipient_type'] ?? null,
                 'occasion' => $preselected['occasion'] ?? null,
-                'budget_band' => $preselected['budget_band'] ?? 'all',
-                'packaging_slug' => $preselected['packaging_slug'] ?? 'standard',
-                'selected_variant_id' => $preselected['selected_variant_id'] ?? null,
+                'budget_band' => $preselected['budget_band'] ?? $readyBox['budget_band'] ?? 'under_250',
+                'packaging_slug' => $preselected['packaging_slug'] ?? $readyBox['packaging_slug'] ?? 'standard',
+                'selected_variant_id' => $preselected['selected_variant_id'] ?? $readyBox['selected_variant_id'] ?? null,
+                'addon_variant_ids' => $readyBox['addon_variant_ids'] ?? [],
+                'ready_box' => $readyBox['slug'] ?? null,
                 'template' => $request->query('template'),
             ],
             'routes' => [
+                'boxes' => route('gift-builder.boxes'),
                 'products' => route('gift-builder.products'),
                 'price' => route('gift-builder.price'),
                 'addToCart' => route('gift-builder.add-to-cart'),
                 'cart' => route('cart.index'),
             ],
         ];
+    }
+
+    public function readyBoxes(): array
+    {
+        $products = $this->products([
+            'role' => 'all',
+            'budget_band' => 'all',
+        ])->keyBy('slug');
+        $packaging = collect($this->localizedConfig('gift_builder.packaging'))->keyBy('slug');
+
+        return collect($this->localizedConfig('gift_builder.ready_boxes'))
+            ->map(function (array $box) use ($products, $packaging): ?array {
+                $main = $products->get($box['main_product'] ?? '');
+                $addonSlugs = array_values((array) ($box['addon_products'] ?? []));
+                $addons = collect($addonSlugs)->map(fn (string $slug) => $products->get($slug))->filter()->values();
+
+                if (
+                    ! $main
+                    || ! in_array($main['role'], ['main', 'both'], true)
+                    || count($addonSlugs) !== $addons->count()
+                    || $addons->contains(fn (array $product): bool => ! in_array($product['role'], ['addon', 'both'], true))
+                ) {
+                    return null;
+                }
+
+                $package = $packaging->get($box['packaging_slug'] ?? 'standard');
+                $items = collect([$main])->concat($addons)->values();
+
+                return array_merge($box, [
+                    'items' => $items->all(),
+                    'total' => $items->sum(fn (array $product): float => (float) $product['price']) + (float) ($package['price'] ?? 0),
+                    'packaging_label' => $package['label'] ?? '',
+                    'builder_url' => route('gift-builder.show', ['box' => $box['slug']]),
+                ]);
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function products(array $filters = []): Collection
@@ -135,6 +177,55 @@ class GiftBuilderCatalogService
         return [
             'selected_variant_id' => (int) $variant->id,
             'budget_band' => $product->gift_budget_band ?: $this->budgetBandForPrice((float) ($product->sale_price ?? $product->price ?? 0)),
+        ];
+    }
+
+    private function readyBoxSelection(Request $request, Collection $products): ?array
+    {
+        $slug = $request->query('box');
+        if (! is_string($slug) || $slug === '') {
+            return null;
+        }
+
+        $box = (array) config("gift_builder.ready_boxes.{$slug}", []);
+        if ($box === []) {
+            return null;
+        }
+
+        $main = $products->firstWhere('slug', $box['main_product'] ?? null);
+        if (! $main || ! in_array($main['role'], ['main', 'both'], true)) {
+            return null;
+        }
+
+        $mainVariant = $main['variants'][0] ?? null;
+        if (! $mainVariant) {
+            return null;
+        }
+
+        $addonSlugs = array_values((array) ($box['addon_products'] ?? []));
+        $addonVariantIds = collect($addonSlugs)
+            ->map(function (string $productSlug) use ($products): ?int {
+                $product = $products->firstWhere('slug', $productSlug);
+                if (! $product || ! in_array($product['role'], ['addon', 'both'], true)) {
+                    return null;
+                }
+
+                return isset($product['variants'][0]['id']) ? (int) $product['variants'][0]['id'] : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if (count($addonVariantIds) !== count($addonSlugs)) {
+            return null;
+        }
+
+        return [
+            'slug' => $slug,
+            'selected_variant_id' => (int) $mainVariant['id'],
+            'addon_variant_ids' => $addonVariantIds,
+            'budget_band' => $box['budget_band'] ?? 'under_250',
+            'packaging_slug' => $box['packaging_slug'] ?? 'standard',
         ];
     }
 

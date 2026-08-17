@@ -94,6 +94,7 @@ return [
         'steps' => ['მიმღები', 'შემთხვევა', 'მთავარი საჩუქარი', 'დამატებები', 'ბარათი', 'შეჯამება'],
         'selected' => 'არჩეულია', 'choose_main_action' => 'მთავარი საჩუქრის არჩევა', 'add_to_box' => 'ყუთში დამატება',
         'starter_presets' => 'მზა ვარიანტები', 'occasion' => 'შემთხვევა', 'budget' => 'ბიუჯეტი',
+        'budget_filter' => 'საათის ფასის ფილტრი', 'ready_boxes' => 'მზა ყუთები',
         'local_products' => ':count პროდუქტი ადგილობრივ მარაგში', 'selected_count' => 'არჩეულია :count',
         'packaging' => 'შეფუთვა', 'capacity' => 'ტევადობა: :count ერთეული', 'card_message' => 'მისალოცი ბარათის ტექსტი', 'optional' => 'არასავალდებულო',
         'review' => 'შეჯამება', 'recipient' => 'მიმღები', 'message' => 'ტექსტი', 'back' => 'უკან', 'continue' => 'გაგრძელება',

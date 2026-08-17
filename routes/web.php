@@ -90,6 +90,7 @@ Route::get('/smartwatches/bavshvis-saati-{range}', [LandingPageController::class
 Route::get('/sim-card-guide', [LandingPageController::class, 'simGuide'])->name('landing.sim-guide');
 Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('landing.gift-guide');
 Route::get('/gift-box-builder', [GiftBuilderController::class, 'show'])->name('gift-builder.show');
+Route::get('/gift-boxes', [GiftBuilderController::class, 'boxes'])->name('gift-builder.boxes');
 Route::get('/gift-box-builder/products', [GiftBuilderController::class, 'products'])->name('gift-builder.products');
 Route::post('/gift-box-builder/price', [GiftBuilderController::class, 'price'])->name('gift-builder.price');
 Route::post('/gift-box-builder/add-to-cart', [GiftBuilderController::class, 'addToCart'])->name('gift-builder.add-to-cart');

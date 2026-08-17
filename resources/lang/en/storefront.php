@@ -216,6 +216,7 @@ return [
         'steps' => ['Recipient', 'Occasion', 'Main Gift', 'Add-ons', 'Card', 'Review'],
         'selected' => 'Selected', 'choose_main_action' => 'Choose main gift', 'add_to_box' => 'Add to box',
         'starter_presets' => 'Starter presets', 'occasion' => 'Occasion', 'budget' => 'Budget',
+        'budget_filter' => 'Watch price filter', 'ready_boxes' => 'Ready-made boxes',
         'local_products' => ':count local-stock products', 'selected_count' => ':count selected',
         'packaging' => 'Packaging', 'capacity' => 'Capacity: :count units', 'card_message' => 'Greeting card message', 'optional' => 'Optional',
         'review' => 'Review', 'recipient' => 'Recipient', 'message' => 'Message', 'back' => 'Back', 'continue' => 'Continue',

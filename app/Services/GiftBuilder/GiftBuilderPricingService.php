@@ -127,7 +127,9 @@ class GiftBuilderPricingService
         $total = max(0, $itemsSubtotal + $packagingAmount - $discountAmount);
         $message = $this->sanitizeMessage((string) ($payload['message'] ?? ''));
 
-        $warnings = $this->warnings((string) $payload['budget_band'], $total);
+        $mainPricedItem = collect($pricedItems)->firstWhere('role', 'main');
+        $mainPrice = (float) ($mainPricedItem['unit_price'] ?? 0);
+        $warnings = $this->warnings((string) $payload['budget_band'], $mainPrice);
 
         return [
             'recipient_type' => (string) $payload['recipient_type'],
@@ -226,17 +228,17 @@ class GiftBuilderPricingService
         return min($itemsSubtotal, $amount);
     }
 
-    private function warnings(string $budgetBand, float $total): array
+    private function warnings(string $budgetBand, float $mainPrice): array
     {
         $band = (array) config("gift_builder.budget_bands.{$budgetBand}", []);
         $max = Arr::get($band, 'max');
 
-        if ($max !== null && $total > (float) $max) {
+        if ($max !== null && $mainPrice > (float) $max) {
             return [
                 [
                     'code' => 'budget_overage',
                     'message' => __('storefront.gift_builder.budget_overage', [
-                        'amount' => number_format($total - (float) $max, 2) . ' ₾',
+                        'amount' => number_format($mainPrice - (float) $max, 2) . ' ₾',
                     ]),
                 ],
             ];

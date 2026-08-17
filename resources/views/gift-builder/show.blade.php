@@ -12,9 +12,9 @@
                     <h1 class="mt-1 text-2xl font-extrabold text-gray-950 sm:text-3xl">{{ __('storefront.gift_builder.title') }}</h1>
                     <p class="mt-2 max-w-2xl text-sm text-gray-600">{{ __('storefront.gift_builder.subtitle') }}</p>
                 </div>
-                <a href="{{ route('landing.gift-guide') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
-                    <i class="fa-solid fa-book-open text-xs"></i>
-                    Gift Guide
+                <a href="{{ route('gift-builder.boxes') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
+                    <i class="fa-solid fa-box-open text-xs"></i>
+                    {{ __('storefront.gift_builder.ready_boxes') }}
                 </a>
             </div>
 
@@ -44,7 +44,6 @@
     );
 
     const steps = [
-        { key: 'budget', label: i18n.budget },
         { key: 'main', label: i18n.steps[2] },
         { key: 'addons', label: i18n.steps[3] },
         { key: 'card', label: i18n.steps[4] },
@@ -63,7 +62,7 @@
         packaging_slug: config.initial.packaging_slug || first(config.packaging)?.slug || 'standard',
         message: '',
         mainVariantId: config.initial.selected_variant_id || null,
-        addonVariantIds: new Set(),
+        addonVariantIds: new Set(config.initial.addon_variant_ids || []),
         priced: null,
         warnings: [],
         error: null,
@@ -136,7 +135,7 @@
         return (config.products || [])
             .filter((product) => (product.variants || []).length > 0)
             .filter((product) => roleMatches(product, role))
-            .filter((product) => budgetMatches(product));
+            .filter((product) => role !== 'main' || budgetMatches(product));
     }
 
     function canSelectAddon(product) {
@@ -246,15 +245,6 @@
         const step = steps[state.step].key;
         let html = '';
 
-        if (step === 'budget') {
-            html = `
-                <div class="mb-5">
-                    <h2 class="text-xl font-extrabold text-gray-950">${escapeHtml(i18n.budget)}</h2>
-                </div>
-                <div class="grid gap-3 sm:grid-cols-3">${config.budgetBands.map((option) => optionButton('budget_band', option, state.budget_band)).join('')}</div>
-            `;
-        }
-
         if (step === 'main') {
             const products = productsFor('main');
             html = `
@@ -264,6 +254,15 @@
                         <p class="mt-1 text-sm text-gray-500">${escapeHtml(i18n.main_text)}</p>
                     </div>
                     <span class="text-xs font-semibold text-gray-500">${escapeHtml(tr('local_products', { count: products.length }))}</span>
+                </div>
+                <div class="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                    <p class="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500 sm:mb-0">${escapeHtml(i18n.budget_filter)}</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${config.budgetBands.map((option) => {
+                            const selected = option.slug === state.budget_band;
+                            return `<button type="button" data-option-type="budget_band" data-option-value="${option.slug}" class="rounded-full border px-4 py-2 text-xs font-bold transition ${selected ? 'border-primary-600 bg-primary-600 text-white shadow-sm' : 'border-slate-200 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-700'}">${escapeHtml(option.label)}</button>`;
+                        }).join('')}
+                    </div>
                 </div>
                 ${products.length ? `<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">${products.map((product) => productCard(product, 'main')).join('')}</div>` : `<p class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-gray-500">${escapeHtml(i18n.no_products)}</p>`}
             `;
@@ -326,7 +325,7 @@
                     <div class="space-y-3">${selectedSummaryHtml(false)}</div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <dl class="space-y-2 text-sm text-gray-700">
-                            <div class="flex justify-between"><dt>${escapeHtml(i18n.budget)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.budgetBands, state.budget_band)?.label || state.budget_band)}</dd></div>
+                            <div class="flex justify-between"><dt>${escapeHtml(i18n.budget_filter)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.budgetBands, state.budget_band)?.label || state.budget_band)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.packaging)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.packaging, state.packaging_slug)?.label || state.packaging_slug)}</dd></div>
                             ${state.message ? `<div class="border-t border-slate-200 pt-2"><dt class="mb-1 text-gray-500">${escapeHtml(i18n.message)}</dt><dd class="rounded-xl bg-white p-3 text-gray-700">“${escapeHtml(state.message)}”</dd></div>` : ''}
                         </dl>
@@ -500,6 +499,12 @@
         const option = event.target.closest('[data-option-type]');
         if (option) {
             state[option.getAttribute('data-option-type')] = option.getAttribute('data-option-value');
+            if (option.getAttribute('data-option-type') === 'budget_band') {
+                const mainProduct = productForVariant(state.mainVariantId);
+                if (mainProduct && !budgetMatches(mainProduct)) {
+                    state.mainVariantId = null;
+                }
+            }
             schedulePrice();
             render();
             return;
