@@ -32,6 +32,23 @@ class GiftBuilderFlowTest extends TestCase
         $response->assertSee((string) $main->id);
     }
 
+    public function test_private_preview_requires_key_then_persists_access_in_session(): void
+    {
+        config()->set('gift_builder.public_enabled', false);
+        config()->set('gift_builder.preview_key', 'private-preview-key');
+
+        $this->get(route('gift-builder.show'))->assertNotFound();
+
+        $this->get(route('gift-builder.show', ['preview' => 'wrong-key']))->assertNotFound();
+
+        $this->get(route('gift-builder.show', ['preview' => 'private-preview-key']))
+            ->assertRedirect(route('gift-builder.show'))
+            ->assertSessionHas('gift_builder_preview_access', true);
+
+        $this->get(route('gift-builder.show'))->assertOk();
+        $this->getJson(route('gift-builder.products'))->assertOk();
+    }
+
     public function test_add_to_cart_creates_gift_group_without_touching_standard_cart(): void
     {
         $standard = $this->standardVariant('Standard Cart Watch', 99);

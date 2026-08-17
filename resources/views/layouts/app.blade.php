@@ -131,7 +131,7 @@
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
                 </li>
-                @if (config('gift_builder.enabled', false))
+                @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">{{ __('storefront.common.gift_builder') }}</a>
                 </li>
@@ -159,7 +159,7 @@
                       <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
                       {{ __('storefront.common.gift_guide') }}
                     </a>
-                    @if (config('gift_builder.enabled', false))
+                    @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
                       <i class="fa-solid fa-box-open w-4 text-center text-xs text-primary-400"></i>
                       {{ __('storefront.common.gift_builder') }}
@@ -226,7 +226,7 @@
                   <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.catalog') }}
                 </a>
               </li>
-              @if (config('gift_builder.enabled', false))
+              @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('gift-builder.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('gift-builder.show') }}">
                   <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.gift_builder') }}
@@ -258,7 +258,7 @@
                   <div class="bg-gray-900/60 pb-1">
                     <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ __('storefront.common.sim_guide') }}</a>
                     <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ __('storefront.common.gift_guide') }}</a>
-                    @if (config('gift_builder.enabled', false))
+                    @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>{{ __('storefront.common.gift_builder') }}</a>
                     @endif
                   </div>

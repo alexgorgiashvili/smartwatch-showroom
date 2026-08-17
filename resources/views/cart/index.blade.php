@@ -59,7 +59,7 @@
                                                 <p class="mt-0.5 text-xs text-gray-600">{{ trans_choice('storefront.common.products_count', $group['items_count'], ['count' => $group['items_count']]) }} • {{ $group['packaging_label'] }}</p>
                                             </div>
                                             <div class="flex items-center gap-2">
-                                                @if (config('gift_builder.enabled', false))
+                                                @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
                                                 <a href="{{ route('gift-builder.show') }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:border-primary-300 hover:bg-primary-50">
                                                     <i class="fa-solid fa-pen text-[10px]"></i> {{ __('storefront.common.edit') }}
                                                 </a>

@@ -13,9 +13,15 @@ use Illuminate\View\View;
 
 class GiftBuilderController extends Controller
 {
-    public function show(Request $request, GiftBuilderCatalogService $catalog): View
+    private const PREVIEW_SESSION_KEY = 'gift_builder_preview_access';
+
+    public function show(Request $request, GiftBuilderCatalogService $catalog): View|RedirectResponse
     {
-        abort_unless(config('gift_builder.enabled', false), 404);
+        if ($this->grantPreviewAccess($request)) {
+            return redirect()->route('gift-builder.show');
+        }
+
+        $this->ensureAccess($request);
 
         return view('gift-builder.show', [
             'builderConfig' => $catalog->builderConfig($request),
@@ -24,7 +30,7 @@ class GiftBuilderController extends Controller
 
     public function products(Request $request, GiftBuilderCatalogService $catalog): JsonResponse
     {
-        abort_unless(config('gift_builder.enabled', false), 404);
+        $this->ensureAccess($request);
 
         return response()->json([
             'products' => $catalog->products([
@@ -38,7 +44,7 @@ class GiftBuilderController extends Controller
 
     public function price(Request $request, GiftBuilderPricingService $pricing): JsonResponse
     {
-        abort_unless(config('gift_builder.enabled', false), 404);
+        $this->ensureAccess($request);
 
         return response()->json([
             'success' => true,
@@ -52,7 +58,7 @@ class GiftBuilderController extends Controller
         GiftBuilderCartService $cart,
         CartSnapshotService $snapshot
     ): JsonResponse {
-        abort_unless(config('gift_builder.enabled', false), 404);
+        $this->ensureAccess($request);
 
         $priced = $pricing->price($request->all());
         $result = $cart->addGroup($request, $priced);
@@ -71,10 +77,36 @@ class GiftBuilderController extends Controller
         string $group,
         GiftBuilderCartService $cart
     ): RedirectResponse {
-        abort_unless(config('gift_builder.enabled', false), 404);
+        $this->ensureAccess($request);
 
         $cart->removeGroup($request, $group);
 
         return redirect()->back()->with('cart_status', __('storefront.cart.gift_removed'));
+    }
+
+    private function grantPreviewAccess(Request $request): bool
+    {
+        $configuredKey = trim((string) config('gift_builder.preview_key', ''));
+        $providedKey = trim((string) $request->query('preview', ''));
+
+        if ($configuredKey !== '' && $providedKey !== '' && hash_equals($configuredKey, $providedKey)) {
+            $request->session()->put(self::PREVIEW_SESSION_KEY, true);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function ensureAccess(Request $request): void
+    {
+        abort_unless(config('gift_builder.enabled', false), 404);
+
+        $publicEnabled = config('gift_builder.public_enabled');
+        if ($publicEnabled === null) {
+            $publicEnabled = config('gift_builder.enabled', false);
+        }
+
+        abort_unless($publicEnabled || (bool) $request->session()->get(self::PREVIEW_SESSION_KEY), 404);
     }
 }

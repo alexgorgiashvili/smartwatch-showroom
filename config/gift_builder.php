@@ -2,6 +2,8 @@
 
 return [
     'enabled' => env('GIFT_BUILDER_ENABLED', false),
+    'public_enabled' => env('GIFT_BUILDER_PUBLIC_ENABLED'),
+    'preview_key' => env('GIFT_BUILDER_PREVIEW_KEY'),
     'max_items' => 4,
     'message_max_length' => 300,
 

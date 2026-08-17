@@ -552,7 +552,7 @@ if ($approvedReviews->count() > 0) {
                                     </div>
                                 </form>
                             @endif
-                        @if($giftBuilderEligible && config('gift_builder.enabled', false))
+                        @if($giftBuilderEligible && (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false)))
                             <a
                                 href="{{ route('gift-builder.show', ['product' => $product->slug, 'variant_id' => $defaultVariant->id]) }}"
                                 id="build-gift-link"

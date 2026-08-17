@@ -413,7 +413,7 @@ $_homeSchema = [
                     </div>
                     <i class="fa-solid fa-arrow-right ml-auto text-xs text-gray-300 transition group-hover:text-primary-500"></i>
                 </a>
-                @if (config('gift_builder.enabled', false))
+                @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
                 <a href="{{ route('gift-builder.show') }}"
                    class="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md">
                     <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-100">
