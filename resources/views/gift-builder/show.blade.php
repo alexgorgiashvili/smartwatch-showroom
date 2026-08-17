@@ -44,7 +44,6 @@
     );
 
     const steps = [
-        { key: 'recipient', label: i18n.steps[0] },
         { key: 'occasion', label: i18n.steps[1] },
         { key: 'main', label: i18n.steps[2] },
         { key: 'addons', label: i18n.steps[3] },
@@ -58,7 +57,7 @@
 
     const state = {
         step: 0,
-        recipient_type: config.initial.recipient_type || first(config.recipients)?.slug || 'other',
+        recipient_type: 'other',
         occasion: config.initial.occasion || first(config.occasions)?.slug || 'just_because',
         budget_band: config.initial.budget_band || 'all',
         packaging_slug: config.initial.packaging_slug || first(config.packaging)?.slug || 'standard',
@@ -138,7 +137,6 @@
         return (config.products || [])
             .filter((product) => (product.variants || []).length > 0)
             .filter((product) => roleMatches(product, role))
-            .filter((product) => tagMatches(product.recipient_tags, state.recipient_type))
             .filter((product) => tagMatches(product.occasion_tags, state.occasion))
             .filter((product) => budgetMatches(product));
     }
@@ -250,16 +248,6 @@
         const step = steps[state.step].key;
         let html = '';
 
-        if (step === 'recipient') {
-            html = `
-                <div class="mb-5">
-                    <h2 class="text-xl font-extrabold text-gray-950">${escapeHtml(i18n.recipient_title)}</h2>
-                    <p class="mt-1 text-sm text-gray-500">${escapeHtml(i18n.recipient_text)}</p>
-                </div>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">${config.recipients.map((option) => optionButton('recipient_type', option, state.recipient_type)).join('')}</div>
-            `;
-        }
-
         if (step === 'occasion') {
             html = `
                 <div class="mb-5">
@@ -361,7 +349,6 @@
                     <div class="space-y-3">${selectedSummaryHtml(false)}</div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <dl class="space-y-2 text-sm text-gray-700">
-                            <div class="flex justify-between"><dt>${escapeHtml(i18n.recipient)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.recipients, state.recipient_type)?.label || state.recipient_type)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.occasion)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.occasions, state.occasion)?.label || state.occasion)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.budget)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.budgetBands, state.budget_band)?.label || state.budget_band)}</dd></div>
                             <div class="flex justify-between"><dt>${escapeHtml(i18n.packaging)}</dt><dd class="font-semibold">${escapeHtml(bySlug(config.packaging, state.packaging_slug)?.label || state.packaging_slug)}</dd></div>
@@ -496,11 +483,10 @@
     function applyPreset(slug) {
         const preset = bySlug(config.presets, slug);
         if (!preset) return;
-        state.recipient_type = preset.recipient_type || state.recipient_type;
         state.occasion = preset.occasion || state.occasion;
         state.budget_band = preset.budget_band || state.budget_band;
         state.packaging_slug = preset.packaging_slug || state.packaging_slug;
-        state.step = 2;
+        state.step = 1;
     }
 
     async function addToCart() {
