@@ -122,6 +122,17 @@ class ProductController extends Controller
 
     public function destroy(Request $request, Product $product, ChatbotContentSyncService $contentSync): RedirectResponse|JsonResponse
     {
+        if (Schema::hasTable('ready_gift_box_items') && $product->readyGiftBoxItems()->exists()) {
+            $message = 'This product cannot be deleted while it is used in a ready gift box.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 409);
+            }
+
+            return redirect()->route('admin.products.edit', $product)
+                ->with('status', $message);
+        }
+
         if ($this->productHasOrderHistory($product)) {
             $message = 'This product cannot be deleted because it is already used in one or more orders.';
 

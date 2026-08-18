@@ -111,6 +111,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function readyGiftBoxItems(): HasMany
+    {
+        return $this->hasMany(ReadyGiftBoxItem::class);
+    }
+
     public function competitorMappings(): HasMany
     {
         return $this->hasMany(\App\Models\CompetitorMapping::class);

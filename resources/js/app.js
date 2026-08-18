@@ -5,6 +5,12 @@ import '@splidejs/splide/css';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
+if (document.querySelector('[data-gift-box-experience]')) {
+	import('./gift-box-experience').catch((error) => {
+		console.error('Gift box experience could not be initialized.', error);
+	});
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 	const storefrontI18n = window.StorefrontI18n || {};
 	const translate = (path, fallback = '') => {

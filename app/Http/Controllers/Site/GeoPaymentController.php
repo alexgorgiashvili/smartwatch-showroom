@@ -391,6 +391,14 @@ class GeoPaymentController extends Controller
                 'packaging_label' => $group['packaging_label'],
                 'packaging_amount' => (float) $group['packaging_amount'],
                 'discount_amount' => (float) $group['discount_amount'],
+                'discount_source' => $group['discount_source'] ?? 'none',
+                'discount_type' => $group['discount_type'] ?? null,
+                'discount_value' => (float) ($group['discount_value'] ?? 0),
+                'discount_retained' => (bool) ($group['discount_retained'] ?? false),
+                'ready_box' => $group['ready_box'] ?? null,
+                'campaign' => collect((array) ($group['campaign'] ?? []))
+                    ->only(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'])
+                    ->all(),
                 'message' => $group['message'],
                 'items_count' => (int) $group['items_count'],
                 'items_subtotal' => (float) $group['items_subtotal'],
@@ -426,6 +434,12 @@ class GeoPaymentController extends Controller
                     'amount' => -1 * (float) $group['discount_amount'],
                     'metadata' => [
                         'budget_band' => $group['budget_band'],
+                        'discount_source' => $group['discount_source'] ?? 'none',
+                        'discount_type' => $group['discount_type'] ?? null,
+                        'discount_value' => (float) ($group['discount_value'] ?? 0),
+                        'discount_retained' => (bool) ($group['discount_retained'] ?? false),
+                        'ready_box_slug' => $group['ready_box']['slug'] ?? null,
+                        'ready_box_title' => $group['ready_box']['title'] ?? null,
                     ],
                 ]);
             }

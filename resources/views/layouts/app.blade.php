@@ -109,9 +109,32 @@
     $cartCount = app(\App\Services\Cart\CartSnapshotService::class)->roughCount(request());
     $currentLocale = app()->getLocale();
     $languageSwitcherLabel = $currentLocale === 'en' ? 'Language' : 'ენა';
+    $isGiftExperience = request()->routeIs('gift-builder.*');
   @endphp
+    @if($isGiftExperience)
+    <header class="gift-site-header">
+      <div class="gift-site-header-inner">
+        <a href="{{ route('gift-builder.boxes') }}" class="gift-site-logo" aria-label="MyTechnic Gift Box">
+          <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" width="550" height="310">
+          <span>Gift Box</span>
+        </a>
+        <div class="gift-site-header-actions">
+          <span class="gift-header-delivery"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i>{{ __('storefront.gift_boxes.free_delivery') }}</span>
+          <a href="{{ route('contact') }}" class="gift-header-help"><i class="fa-regular fa-circle-question" aria-hidden="true"></i><span>{{ __('storefront.gift_boxes.help') }}</span></a>
+          <div class="gift-header-language" role="group" aria-label="{{ $languageSwitcherLabel }}">
+            <a href="{{ route('locale', 'ka') }}" @if($currentLocale === 'ka') aria-current="page" @endif>KA</a>
+            <a href="{{ route('locale', 'en') }}" @if($currentLocale === 'en') aria-current="page" @endif>EN</a>
+          </div>
+          <a href="{{ route('cart.index') }}" class="gift-header-cart" aria-label="{{ __('storefront.common.cart') }}">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }}">{{ $cartCount }}</span>
+          </a>
+        </div>
+      </div>
+    </header>
+    @endif
     <!-- HyperUI Header -->
-    <header class="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-gray-950/95 backdrop-blur-sm">
+    <header class="{{ $isGiftExperience ? 'hidden' : '' }} fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-gray-950/95 backdrop-blur-sm">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
           <!-- Logo -->
@@ -131,7 +154,7 @@
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
                 </li>
-                @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
+                @if (config('gift_builder.public_enabled') === true)
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">{{ __('storefront.common.gift_builder') }}</a>
                 </li>
@@ -159,7 +182,7 @@
                       <i class="fa-solid fa-gift w-4 text-center text-xs text-primary-400"></i>
                       {{ __('storefront.common.gift_guide') }}
                     </a>
-                    @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
+                    @if (config('gift_builder.public_enabled') === true)
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 bg-primary-600/20' : '' }}">
                       <i class="fa-solid fa-box-open w-4 text-center text-xs text-primary-400"></i>
                       {{ __('storefront.common.gift_builder') }}
@@ -226,7 +249,7 @@
                   <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.catalog') }}
                 </a>
               </li>
-              @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
+              @if (config('gift_builder.public_enabled') === true)
               <li class="border-b border-white/10">
                 <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('gift-builder.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('gift-builder.show') }}">
                   <i class="fa-solid fa-box-open w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.gift_builder') }}
@@ -258,7 +281,7 @@
                   <div class="bg-gray-900/60 pb-1">
                     <a href="{{ route('landing.sim-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-sim-card text-xs text-primary-400"></i>{{ __('storefront.common.sim_guide') }}</a>
                     <a href="{{ route('landing.gift-guide') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-gift text-xs text-primary-400"></i>{{ __('storefront.common.gift_guide') }}</a>
-                    @if (config('gift_builder.public_enabled') ?? config('gift_builder.enabled', false))
+                    @if (config('gift_builder.public_enabled') === true)
                     <a href="{{ route('gift-builder.show') }}" class="flex items-center gap-3 py-2.5 pl-10 pr-5 text-sm text-gray-400 hover:text-white"><i class="fa-solid fa-box-open text-xs text-primary-400"></i>{{ __('storefront.common.gift_builder') }}</a>
                     @endif
                   </div>
@@ -324,12 +347,12 @@
     </header>
 
     <!-- Main content -->
-    <main class="pt-16">
+    <main class="{{ $isGiftExperience ? 'pt-[68px]' : 'pt-16' }}">
         @yield('content')
     </main>
 
     <!-- Footer -->
-    <footer>
+    <footer class="{{ $isGiftExperience ? 'gift-site-footer' : '' }}">
         @include('components.footer')
     </footer>
 
@@ -365,7 +388,7 @@
       </aside>
     </div>
 
-    <div id="chatbot-widget" data-endpoint="{{ route('chatbot.respond') }}" data-history-endpoint="{{ route('chatbot.history') }}">
+    <div id="chatbot-widget" class="{{ $isGiftExperience ? 'hidden' : '' }}" data-endpoint="{{ route('chatbot.respond') }}" data-history-endpoint="{{ route('chatbot.history') }}">
       <button type="button" class="chatbot-fab" data-chatbot-toggle aria-expanded="false" aria-controls="chatbot-panel">
         <span class="chatbot-fab-icon">🤖</span>
         <span class="chatbot-fab-text">{{ __('storefront.chatbot.help') }}</span>
@@ -437,8 +460,17 @@
             return payload && typeof payload === 'object' ? payload : {};
         }
 
-        function track(eventName, payload) {
-            var safePayload = normalizePayload(payload);
+        function dispatchAnalytics(eventName, payload, isCustom) {
+            var normalizedPayload = normalizePayload(payload);
+            var customKeys = ['page_path', 'box_slug', 'gift_mode', 'gift_path', 'step_number', 'step_name', 'item_type', 'product_id', 'variant_id', 'selected', 'packaging_slug', 'budget_band', 'error_stage', 'value', 'currency', 'num_items'];
+            var safePayload = isCustom
+                ? customKeys.reduce(function (result, key) {
+                    if (Object.prototype.hasOwnProperty.call(normalizedPayload, key) && normalizedPayload[key] !== null && typeof normalizedPayload[key] !== 'undefined') {
+                        result[key] = normalizedPayload[key];
+                    }
+                    return result;
+                }, {})
+                : normalizedPayload;
             window.dataLayer = window.dataLayer || [];
 
             window.dataLayer.push(Object.assign({
@@ -448,23 +480,31 @@
 
             if (typeof window.fbq === 'function') {
                 var metaPayload = {};
-                ['content_ids', 'content_name', 'content_type', 'contents', 'currency', 'num_items', 'transaction_id', 'value'].forEach(function (key) {
+                var metaKeys = isCustom
+                    ? customKeys
+                    : ['content_ids', 'content_name', 'content_type', 'contents', 'currency', 'num_items', 'transaction_id', 'value'];
+                metaKeys.forEach(function (key) {
                     if (Object.prototype.hasOwnProperty.call(safePayload, key) && safePayload[key] !== null && typeof safePayload[key] !== 'undefined') {
                         metaPayload[key] = safePayload[key];
                     }
                 });
 
-                window.fbq('track', eventName, metaPayload);
+                window.fbq(isCustom ? 'trackCustom' : 'track', eventName, metaPayload);
             }
         }
 
         window.storefrontAnalytics = {
-            track: track
+            track: function (eventName, payload) {
+                dispatchAnalytics(eventName, payload, false);
+            },
+            trackCustom: function (eventName, payload) {
+                dispatchAnalytics(eventName, payload, true);
+            }
         };
 
         var flashEvent = @json($analyticsFlashEvent);
         if (flashEvent && flashEvent.name) {
-            track(flashEvent.name, flashEvent.payload || {});
+            window.storefrontAnalytics.track(flashEvent.name, flashEvent.payload || {});
         }
     }());
     </script>

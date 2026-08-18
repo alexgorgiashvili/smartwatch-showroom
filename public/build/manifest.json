@@ -26,13 +26,19 @@
     "file": "assets/fa-v4compatibility-DD84SGiu.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
+  "node_modules/three/build/three.module.js": {
+    "file": "assets/three.module-COlGrOZU.js",
+    "name": "three.module",
+    "src": "node_modules/three/build/three.module.js",
+    "isDynamicEntry": true
+  },
   "resources/css/admin.css": {
     "file": "assets/admin-Cc12xTXe.css",
     "src": "resources/css/admin.css",
     "isEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-CItpgjNf.css",
+    "file": "assets/app-CdCT3eWA.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -47,7 +53,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BEkk8aiQ.js",
+    "file": "assets/app-Bds2i0Ts.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -55,8 +61,25 @@
       "_bootstrap-Bjx54H5_.js",
       "_vendor-C0Zqfgkc.js"
     ],
+    "dynamicImports": [
+      "resources/js/gift-box-experience.js"
+    ],
     "css": [
       "assets/app-D7wrQ6zr.css"
+    ]
+  },
+  "resources/js/gift-box-experience.js": {
+    "file": "assets/gift-box-experience-IanzeR3p.js",
+    "name": "gift-box-experience",
+    "src": "resources/js/gift-box-experience.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_bootstrap-Bjx54H5_.js",
+      "_vendor-C0Zqfgkc.js"
+    ],
+    "dynamicImports": [
+      "node_modules/three/build/three.module.js"
     ]
   }
 }

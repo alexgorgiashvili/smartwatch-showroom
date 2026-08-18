@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\ReadyGiftBox;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,6 +17,7 @@ class GiftBuilderFlowTest extends TestCase
         parent::setUp();
 
         config()->set('gift_builder.enabled', true);
+        config()->set('gift_builder.public_enabled', true);
     }
 
     public function test_builder_page_loads_with_config_and_pdp_preselect(): void
@@ -55,17 +57,21 @@ class GiftBuilderFlowTest extends TestCase
         $main = $this->giftVariant('Ready Box Watch', 'main', 79);
         $addon = $this->giftVariant('Ready Box Add-on', 'addon', 29);
 
-        config()->set('gift_builder.ready_boxes', [
-            'ready-test' => [
-                'label_ka' => 'მზა სატესტო ყუთი',
-                'label_en' => 'Ready Test Box',
-                'description_ka' => 'მზა კომბინაცია.',
-                'description_en' => 'Ready combination.',
-                'main_product' => $main->product->slug,
-                'addon_products' => [$addon->product->slug],
-                'budget_band' => 'under_100',
-                'packaging_slug' => 'standard',
-            ],
+        $box = ReadyGiftBox::query()->create([
+            'slug' => 'ready-test',
+            'title_ka' => 'მზა სატესტო ყუთი',
+            'title_en' => 'Ready Test Box',
+            'short_description_ka' => 'მზა კომბინაცია.',
+            'short_description_en' => 'Ready combination.',
+            'theme_key' => 'grape',
+            'packaging_slug' => 'standard',
+            'discount_type' => 'none',
+            'discount_value' => 0,
+            'is_active' => true,
+        ]);
+        $box->items()->createMany([
+            ['product_id' => $main->product_id, 'default_variant_id' => $main->id, 'role' => 'main', 'sort_order' => 0],
+            ['product_id' => $addon->product_id, 'default_variant_id' => $addon->id, 'role' => 'addon', 'sort_order' => 1],
         ]);
 
         $this->get(route('gift-builder.boxes'))

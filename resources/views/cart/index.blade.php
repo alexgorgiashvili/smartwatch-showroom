@@ -55,7 +55,7 @@
                                         <div class="flex flex-col gap-3 border-b border-primary-100 bg-primary-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
                                                 <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">{{ __('storefront.cart.gift_box') }}</p>
-                                                <h2 class="text-base font-bold text-gray-900">{{ __('storefront.cart.gift_box') }}</h2>
+                                                <h2 class="text-base font-bold text-gray-900">{{ data_get($group, 'ready_box.title') ?: __('storefront.cart.gift_box') }}</h2>
                                                 <p class="mt-0.5 text-xs text-gray-600">{{ trans_choice('storefront.common.products_count', $group['items_count'], ['count' => $group['items_count']]) }} • {{ $group['packaging_label'] }}</p>
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -115,6 +115,11 @@
                                                     <span>{{ __('storefront.cart.gift_discount') }}</span>
                                                     <span>-{{ number_format($group['discount_amount'], 2) }} {{ $groupSym }}</span>
                                                 </div>
+                                            @endif
+                                            @if(!empty($group['preset_discount_removed']))
+                                                <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                                                    {{ __('ready_gift_boxes.discount_removed') }}
+                                                </p>
                                             @endif
                                             @if($group['message'])
                                                 <p class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-gray-600">“{{ $group['message'] }}”</p>

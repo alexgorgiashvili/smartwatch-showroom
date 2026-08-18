@@ -50,6 +50,12 @@
                     <span class="link-title">პროდუქტები</span>
                 </a>
             </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.gift-boxes.*')])>
+                <a href="{{ route('admin.gift-boxes.index') }}" class="nav-link" data-pjax>
+                    <i class="link-icon" data-feather="gift"></i>
+                    <span class="link-title">სასაჩუქრე ყუთები</span>
+                </a>
+            </li>
 
             <li @class(['nav-item', 'active' => request()->routeIs('admin.bridge.*')])>
                 <a href="{{ route('admin.bridge.index') }}" class="nav-link" data-pjax>

@@ -24,8 +24,11 @@
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <p class="text-[11px] font-semibold uppercase text-primary-700">{{ __('storefront.cart.gift_box') }}</p>
-                                            <p class="text-sm font-bold text-gray-900">{{ __('storefront.cart.gift_box') }}</p>
+                                            <p class="text-sm font-bold text-gray-900">{{ data_get($group, 'ready_box.title') ?: __('storefront.cart.gift_box') }}</p>
                                             <p class="mt-1 text-xs text-gray-600">{{ trans_choice('storefront.common.products_count', $group['items_count'], ['count' => $group['items_count']]) }} • {{ $group['packaging_label'] }}</p>
+                                            @if(!empty($group['preset_discount_removed']))
+                                                <p class="mt-2 text-xs font-medium text-amber-800">{{ __('ready_gift_boxes.discount_removed') }}</p>
+                                            @endif
                                         </div>
                                         <p class="shrink-0 text-sm font-bold text-primary-700">{{ number_format($group['total'], 2) }} {{ $groupSym }}</p>
                                     </div>

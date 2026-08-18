@@ -55,6 +55,7 @@ class StorefrontEnglishLocaleTest extends TestCase
         parent::setUp();
 
         config()->set('gift_builder.enabled', true);
+        config()->set('gift_builder.public_enabled', true);
 
         $this->product = Product::query()->create([
             'name_en' => 'Orbit 4G Kids Watch',

@@ -50,6 +50,11 @@ class ProductVariant extends Model
         return $this->hasMany(OrderItem::class, 'product_variant_id');
     }
 
+    public function readyGiftBoxDefaults(): HasMany
+    {
+        return $this->hasMany(ReadyGiftBoxItem::class, 'default_variant_id');
+    }
+
     public function images(): BelongsToMany
     {
         return $this->belongsToMany(ProductImage::class, 'product_variant_images')

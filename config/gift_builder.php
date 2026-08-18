@@ -2,7 +2,7 @@
 
 return [
     'enabled' => env('GIFT_BUILDER_ENABLED', false),
-    'public_enabled' => env('GIFT_BUILDER_PUBLIC_ENABLED'),
+    'public_enabled' => env('GIFT_BUILDER_PUBLIC_ENABLED', false),
     'preview_key' => env('GIFT_BUILDER_PREVIEW_KEY'),
     'max_items' => 4,
     'message_max_length' => 300,
@@ -118,36 +118,4 @@ return [
         ],
     ],
 
-    'ready_boxes' => [
-        'smart_start' => [
-            'label_ka' => 'Smart Start ყუთი',
-            'label_en' => 'Smart Start Box',
-            'description_ka' => 'საბავშვო სმარტ საათი და კომპაქტური უსადენო დინამიკი.',
-            'description_en' => 'A kids smartwatch paired with a compact wireless speaker.',
-            'main_product' => '2g-smart-watch-children-android-sos-lbs-tracking',
-            'addon_products' => ['test-a9-mini-wireless-speaker'],
-            'budget_band' => 'under_100',
-            'packaging_slug' => 'standard',
-        ],
-        'camera_fun' => [
-            'label_ka' => 'Camera Fun ყუთი',
-            'label_en' => 'Camera Fun Box',
-            'description_ka' => 'სმარტ საათი და საბავშვო მინი კამერა მხიარული საჩუქრისთვის.',
-            'description_en' => 'A smartwatch and a kids mini camera for a playful gift.',
-            'main_product' => 'q21-children-smartwatch',
-            'addon_products' => ['test-kids-x2-mini-camera'],
-            'budget_band' => 'under_100',
-            'packaging_slug' => 'standard',
-        ],
-        'premium_music' => [
-            'label_ka' => 'Premium Music ყუთი',
-            'label_en' => 'Premium Music Box',
-            'description_ka' => '4G სმარტ საათი, კატის ყურებიანი ყურსასმენი და პრემიუმ შეფუთვა.',
-            'description_en' => 'A 4G smartwatch, cat-ear headphones, and premium packaging.',
-            'main_product' => 'ct27-ultra-small-4g-rtos-gps-watch',
-            'addon_products' => ['test-p47-cat-ear-headphones'],
-            'budget_band' => 'under_250',
-            'packaging_slug' => 'premium',
-        ],
-    ],
 ];

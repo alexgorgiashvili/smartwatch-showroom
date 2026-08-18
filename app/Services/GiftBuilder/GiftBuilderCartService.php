@@ -20,6 +20,12 @@ class GiftBuilderCartService
             'packaging_label' => $pricedGiftBox['packaging_label'],
             'packaging_amount' => (float) $pricedGiftBox['packaging_amount'],
             'discount_amount' => (float) $pricedGiftBox['discount_amount'],
+            'discount_source' => $pricedGiftBox['discount_source'] ?? 'none',
+            'discount_type' => $pricedGiftBox['discount_type'] ?? null,
+            'discount_value' => (float) ($pricedGiftBox['discount_value'] ?? 0),
+            'discount_retained' => (bool) ($pricedGiftBox['discount_retained'] ?? false),
+            'ready_box' => $pricedGiftBox['ready_box'] ?? null,
+            'campaign' => (array) $request->session()->get('gift_campaign', []),
             'message' => $pricedGiftBox['message'],
             'items' => collect($pricedGiftBox['items'])->map(fn (array $item): array => [
                 'variant_id' => (int) $item['variant_id'],

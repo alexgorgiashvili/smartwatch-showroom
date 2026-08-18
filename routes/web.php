@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductQualityController as AdminProductQualityController;
+use App\Http\Controllers\Admin\ReadyGiftBoxController as AdminReadyGiftBoxController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\AlibabaImportController as AdminAlibabaImportController;
 use App\Http\Controllers\Admin\CompetitorMonitorController as AdminCompetitorMonitorController;
@@ -91,6 +92,8 @@ Route::get('/sim-card-guide', [LandingPageController::class, 'simGuide'])->name(
 Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('landing.gift-guide');
 Route::get('/gift-box-builder', [GiftBuilderController::class, 'show'])->name('gift-builder.show');
 Route::get('/gift-boxes', [GiftBuilderController::class, 'boxes'])->name('gift-builder.boxes');
+Route::get('/gift-boxes/{box}/options', [GiftBuilderController::class, 'readyBoxOptions'])->name('gift-boxes.options');
+Route::post('/gift-boxes/{box}/add-to-cart', [GiftBuilderController::class, 'addReadyBoxToCart'])->name('gift-boxes.add-to-cart');
 Route::get('/gift-box-builder/products', [GiftBuilderController::class, 'products'])->name('gift-builder.products');
 Route::post('/gift-box-builder/price', [GiftBuilderController::class, 'price'])->name('gift-builder.price');
 Route::post('/gift-box-builder/add-to-cart', [GiftBuilderController::class, 'addToCart'])->name('gift-builder.add-to-cart');
@@ -173,6 +176,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
 	Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
 	Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+	Route::get('/gift-boxes', [AdminReadyGiftBoxController::class, 'index'])->name('gift-boxes.index');
+	Route::get('/gift-boxes/create', [AdminReadyGiftBoxController::class, 'create'])->name('gift-boxes.create');
+	Route::get('/gift-boxes/preview', [AdminReadyGiftBoxController::class, 'preview'])->name('gift-boxes.preview');
+	Route::get('/gift-boxes/{giftBox}/preview', [AdminReadyGiftBoxController::class, 'previewBox'])->name('gift-boxes.preview-box');
+	Route::get('/gift-boxes/{giftBox}/edit', [AdminReadyGiftBoxController::class, 'edit'])->name('gift-boxes.edit');
 	Route::get('/bridge', [AdminBridgeController::class, 'index'])->name('bridge.index');
 
 	// ── Messaging: Inbox ──
@@ -347,6 +355,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::resource('products', AdminProductController::class)
 		->only(['store', 'update', 'destroy'])
 		->names('products');
+	Route::post('/gift-boxes', [AdminReadyGiftBoxController::class, 'store'])->name('gift-boxes.store');
+	Route::put('/gift-boxes/{giftBox}', [AdminReadyGiftBoxController::class, 'update'])->name('gift-boxes.update');
+	Route::patch('/gift-boxes/{giftBox}/status', [AdminReadyGiftBoxController::class, 'toggleStatus'])->name('gift-boxes.toggle-status');
+	Route::delete('/gift-boxes/{giftBox}', [AdminReadyGiftBoxController::class, 'destroy'])->name('gift-boxes.destroy');
 	Route::resource('articles', AdminArticleController::class)
 		->only(['store', 'update', 'destroy'])
 		->names('articles');
