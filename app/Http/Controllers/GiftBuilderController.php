@@ -179,7 +179,8 @@ class GiftBuilderController extends Controller
 
         abort_unless(
             (bool) config('gift_builder.public_enabled', false)
-                || (bool) $request->session()->get(self::PREVIEW_SESSION_KEY),
+                || (bool) $request->session()->get(self::PREVIEW_SESSION_KEY)
+                || (bool) $request->user()?->is_admin,
             404
         );
     }

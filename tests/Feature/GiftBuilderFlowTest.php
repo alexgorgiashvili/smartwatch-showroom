@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ReadyGiftBox;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -50,6 +51,28 @@ class GiftBuilderFlowTest extends TestCase
         $this->get(route('gift-builder.show'))->assertOk();
         $this->get(route('gift-builder.boxes'))->assertOk();
         $this->getJson(route('gift-builder.products'))->assertOk();
+    }
+
+    public function test_logged_in_admin_can_open_private_gift_pages_without_preview_key(): void
+    {
+        config()->set('gift_builder.public_enabled', false);
+        config()->set('gift_builder.preview_key', 'private-preview-key');
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $customer = User::factory()->create(['is_admin' => false]);
+
+        $this->actingAs($admin)
+            ->get(route('gift-builder.boxes'))
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+
+        $this->actingAs($admin)
+            ->get(route('gift-builder.show'))
+            ->assertOk();
+
+        $this->actingAs($customer)
+            ->get(route('gift-builder.boxes'))
+            ->assertNotFound();
     }
 
     public function test_ready_box_page_links_to_a_preselected_builder(): void
