@@ -6,7 +6,8 @@
 @section('robots', config('gift_builder.public_enabled') === true ? 'index, follow' : 'noindex, nofollow, noarchive')
 
 @push('head_meta')
-    <link rel="preload" as="image" href="{{ asset('images/gift-box/hero-poster.webp') }}" type="image/webp" fetchpriority="high">
+    <link rel="preload" as="image" href="{{ asset('images/gift-box/hero-mobile-closed-v2.webp') }}" type="image/webp" media="(max-width: 767px)" fetchpriority="high">
+    <link rel="preload" as="image" href="{{ asset('images/gift-box/hero-poster.webp') }}" type="image/webp" media="(min-width: 768px)" fetchpriority="high">
 @endpush
 
 @section('content')
@@ -41,14 +42,25 @@
                     </div>
                 </div>
 
-                <div class="gift-hero-visual" aria-hidden="true">
+                <div class="gift-hero-visual" data-gift-stage data-gift-state="static_closed" data-renderer="static">
                     <picture class="gift-hero-poster">
+                        <source media="(max-width: 767px)" srcset="{{ asset('images/gift-box/hero-mobile-closed-v2.webp') }}" type="image/webp">
                         <source srcset="{{ asset('images/gift-box/hero-poster.webp') }}" type="image/webp">
                         <img src="{{ asset('images/gift-builder/hero-gift-box-v2.jpg') }}" width="1600" height="900" alt="" fetchpriority="high" decoding="async">
                     </picture>
+                    <img class="gift-hero-open-poster" src="{{ asset('images/gift-box/hero-mobile-open-v2.webp') }}" width="1370" height="1712" alt="" decoding="async" aria-hidden="true">
                     <div class="gift-canvas" data-gift-canvas></div>
-                    <span class="gift-float-chip gift-float-chip-one"><i class="fa-solid fa-truck-fast"></i>{{ __('storefront.gift_boxes.free_delivery_short') }}</span>
-                    <span class="gift-float-chip gift-float-chip-two"><i class="fa-solid fa-gift"></i>{{ __('storefront.gift_boxes.gift_ready') }}</span>
+                    <button type="button" class="gift-open-trigger" data-gift-open aria-describedby="gift-open-status">
+                        <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+                        <span data-gift-open-label>{{ __('storefront.gift_boxes.touch_to_open') }}</span>
+                    </button>
+                    <button type="button" class="gift-effects-toggle" data-gift-effects aria-pressed="false">
+                        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                        <span>{{ __('storefront.gift_boxes.disable_effects') }}</span>
+                    </button>
+                    <p id="gift-open-status" class="sr-only" data-gift-open-status role="status" aria-live="polite">{{ __('storefront.gift_boxes.box_closed_status') }}</p>
+                    <span class="gift-float-chip gift-float-chip-one" aria-hidden="true"><i class="fa-solid fa-truck-fast"></i>{{ __('storefront.gift_boxes.free_delivery_short') }}</span>
+                    <span class="gift-float-chip gift-float-chip-two" aria-hidden="true"><i class="fa-solid fa-gift"></i>{{ __('storefront.gift_boxes.gift_ready') }}</span>
                 </div>
             </div>
         </section>
@@ -82,6 +94,9 @@
                         {{ __('storefront.gift_boxes.or_build_yours') }}
                         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </a>
+                    @if(config('gift_builder.recommender_enabled'))
+                        <button type="button" class="gift-help-link" data-gift-help-open>{{ __('storefront.gift_builder.help_choose') }}</button>
+                    @endif
                 </div>
 
                 <div class="gift-box-grid">
@@ -147,7 +162,9 @@
 
                                 <ul class="gift-box-items">
                                     @foreach($items as $item)
-                                        @php($product = data_get($item, 'product', $item))
+                                        @php
+                                            $product = data_get($item, 'product', $item);
+                                        @endphp
                                         <li>
                                             <span><i class="fa-solid {{ data_get($item, 'role') === 'main' ? 'fa-clock' : 'fa-check' }}" aria-hidden="true"></i></span>
                                             <p><strong>{{ data_get($product, 'name', data_get($item, 'name')) }}</strong>@if(data_get($item, 'role') === 'main')<small>{{ __('storefront.gift_boxes.main_gift') }}</small>@endif</p>
@@ -215,10 +232,14 @@
             </div>
         </section>
 
-        <div class="gift-mobile-landing-cta" aria-label="{{ __('storefront.gift_boxes.choose_path') }}">
+        <div class="gift-mobile-landing-cta" data-gift-mobile-cta aria-label="{{ __('storefront.gift_boxes.choose_path') }}" hidden>
             <a href="#ready-gift-boxes" class="gift-primary-button" data-gift-path="ready_boxes_sticky">{{ __('storefront.gift_boxes.choose_ready_short') }}</a>
-            <a href="{{ route('gift-builder.show') }}" class="gift-mobile-builder-link" data-gift-path="custom_builder_sticky" aria-label="{{ __('storefront.gift_boxes.build_myself') }}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></a>
+            <a href="{{ route('gift-builder.show') }}" class="gift-mobile-builder-link" data-gift-path="custom_builder_sticky"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>{{ __('storefront.gift_boxes.build_myself') }}</span></a>
         </div>
+
+        @if(config('gift_builder.recommender_enabled'))
+            @include('gift-builder._recommendation-sheet', ['recommendationRoute' => route('gift-builder.recommendations')])
+        @endif
 
         <div class="gift-quick-modal" data-gift-quick-modal aria-hidden="true">
             <section class="gift-quick-panel" data-gift-quick-panel role="dialog" aria-modal="true" aria-labelledby="gift-quick-title" tabindex="-1">
@@ -239,7 +260,11 @@
 @endsection
 
 @push('scripts')
-    <script>
-        window.GiftBoxCopy = @json(trans('storefront.gift_boxes.quick'));
-    </script>
+    @php
+        $giftBoxCopyPayload = [
+            'quick' => trans('storefront.gift_boxes.quick'),
+            'experience' => trans('storefront.gift_boxes.experience'),
+        ];
+    @endphp
+    <script type="application/json" id="gift-box-copy">{!! json_encode($giftBoxCopyPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
 @endpush

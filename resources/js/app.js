@@ -11,6 +11,18 @@ if (document.querySelector('[data-gift-box-experience]')) {
 	});
 }
 
+if (document.querySelector('[data-gift-builder-experience]')) {
+	import('./gift-builder').catch((error) => {
+		console.error('Gift box builder could not be initialized.', error);
+	});
+}
+
+if (document.querySelector('[data-gift-recommender]')) {
+	import('./gift-recommender').catch((error) => {
+		console.error('Gift recommendations could not be initialized.', error);
+	});
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 	const storefrontI18n = window.StorefrontI18n || {};
 	const translate = (path, fallback = '') => {

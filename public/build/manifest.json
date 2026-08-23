@@ -26,6 +26,12 @@
     "file": "assets/fa-v4compatibility-DD84SGiu.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
+  "node_modules/canvas-confetti/dist/confetti.module.mjs": {
+    "file": "assets/confetti.module-DX0toIYy.js",
+    "name": "confetti.module",
+    "src": "node_modules/canvas-confetti/dist/confetti.module.mjs",
+    "isDynamicEntry": true
+  },
   "node_modules/three/build/three.module.js": {
     "file": "assets/three.module-COlGrOZU.js",
     "name": "three.module",
@@ -38,7 +44,7 @@
     "isEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-CdCT3eWA.css",
+    "file": "assets/app-B0teEpM3.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -53,7 +59,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bds2i0Ts.js",
+    "file": "assets/app-BU0zwVpw.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -62,14 +68,16 @@
       "_vendor-C0Zqfgkc.js"
     ],
     "dynamicImports": [
-      "resources/js/gift-box-experience.js"
+      "resources/js/gift-box-experience.js",
+      "resources/js/gift-builder.js",
+      "resources/js/gift-recommender.js"
     ],
     "css": [
       "assets/app-D7wrQ6zr.css"
     ]
   },
   "resources/js/gift-box-experience.js": {
-    "file": "assets/gift-box-experience-IanzeR3p.js",
+    "file": "assets/gift-box-experience-BK0c_bLV.js",
     "name": "gift-box-experience",
     "src": "resources/js/gift-box-experience.js",
     "isDynamicEntry": true,
@@ -81,5 +89,25 @@
     "dynamicImports": [
       "node_modules/three/build/three.module.js"
     ]
+  },
+  "resources/js/gift-builder.js": {
+    "file": "assets/gift-builder-BpgRKW02.js",
+    "name": "gift-builder",
+    "src": "resources/js/gift-builder.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_bootstrap-Bjx54H5_.js",
+      "_vendor-C0Zqfgkc.js"
+    ],
+    "dynamicImports": [
+      "node_modules/canvas-confetti/dist/confetti.module.mjs"
+    ]
+  },
+  "resources/js/gift-recommender.js": {
+    "file": "assets/gift-recommender-B8zZHo0W.js",
+    "name": "gift-recommender",
+    "src": "resources/js/gift-recommender.js",
+    "isDynamicEntry": true
   }
 }
