@@ -1171,6 +1171,7 @@ body.gift-modal-open { overflow: hidden; }
 .gift-recommender-status { margin-top: 0.65rem; text-align: center; font-size: 0.68rem; color: var(--gift-muted); }
 
 .gift-completion { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; align-content: center; gap: 0.8rem; background: rgba(255, 250, 243, 0.96); color: var(--gift-grape-dark); }
+.gift-completion[hidden] { display: none; }
 .gift-completion-box { display: grid; width: 100px; height: 90px; place-items: center; border-radius: 22px; background: var(--gift-grape); box-shadow: 0 18px 44px rgba(66, 32, 99, 0.28); font-size: 2rem; color: #fff; animation: gift-completion-tie 600ms cubic-bezier(.2,.8,.2,1) both; }
 .gift-completion strong { font-size: 1.15rem; }
 @keyframes gift-completion-tie { from { transform: scale(0.7) rotate(-5deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
