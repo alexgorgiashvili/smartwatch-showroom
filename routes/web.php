@@ -96,6 +96,7 @@ Route::get('/gift-boxes/{box}/options', [GiftBuilderController::class, 'readyBox
 Route::post('/gift-boxes/{box}/add-to-cart', [GiftBuilderController::class, 'addReadyBoxToCart'])->name('gift-boxes.add-to-cart');
 Route::get('/gift-box-builder/products', [GiftBuilderController::class, 'products'])->name('gift-builder.products');
 Route::post('/gift-box-builder/price', [GiftBuilderController::class, 'price'])->name('gift-builder.price');
+Route::post('/gift-box-builder/recommendations', [GiftBuilderController::class, 'recommendations'])->name('gift-builder.recommendations');
 Route::post('/gift-box-builder/add-to-cart', [GiftBuilderController::class, 'addToCart'])->name('gift-builder.add-to-cart');
 
 // City landing pages — local SEO

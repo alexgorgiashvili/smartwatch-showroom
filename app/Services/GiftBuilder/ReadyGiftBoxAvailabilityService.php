@@ -88,8 +88,9 @@ class ReadyGiftBoxAvailabilityService
         $roleAllowed = $item->role === 'main'
             ? in_array($productRole, ['main', 'both'], true)
             : in_array($productRole, ['addon', 'both'], true);
+        $visibilityAllowed = $product->is_active || ($item->role === 'addon' && $productRole === 'addon');
 
-        if (! $product->is_active) {
+        if (! $visibilityAllowed) {
             $reasons[] = $this->reason('inactive_product_'.$product->id, "„{$prefix}“ არააქტიურია.");
         }
 

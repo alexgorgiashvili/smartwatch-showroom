@@ -7,6 +7,7 @@ use App\Services\Cart\CartSnapshotService;
 use App\Services\GiftBuilder\GiftBuilderCartService;
 use App\Services\GiftBuilder\GiftBuilderCatalogService;
 use App\Services\GiftBuilder\GiftBuilderPricingService;
+use App\Services\GiftBuilder\GiftRecommendationService;
 use App\Services\GiftBuilder\ReadyGiftBoxAvailabilityService;
 use App\Services\GiftBuilder\ReadyGiftBoxPurchaseService;
 use Illuminate\Http\JsonResponse;
@@ -70,6 +71,25 @@ class GiftBuilderController extends Controller
             'success' => true,
             'gift_box' => $pricing->price($request->all()),
         ]);
+    }
+
+    public function recommendations(Request $request, GiftRecommendationService $recommendations): JsonResponse
+    {
+        $this->ensureAccess($request);
+        abort_unless(config('gift_builder.recommender_enabled', false), 404);
+
+        $validated = $request->validate([
+            'budget_band' => ['required', 'string', 'in:'.implode(',', array_keys((array) config('gift_builder.budget_bands', [])))],
+            'priority' => ['required', 'string', 'in:'.implode(',', array_keys((array) config('gift_builder.recommendation_priorities', [])))],
+            'shown_product_ids' => ['sometimes', 'array', 'max:50'],
+            'shown_product_ids.*' => ['integer', 'distinct', 'min:1'],
+        ]);
+
+        return response()->json($recommendations->recommend(
+            $validated['budget_band'],
+            $validated['priority'],
+            $validated['shown_product_ids'] ?? [],
+        ));
     }
 
     public function addToCart(

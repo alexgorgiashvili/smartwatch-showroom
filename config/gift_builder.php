@@ -3,9 +3,29 @@
 return [
     'enabled' => env('GIFT_BUILDER_ENABLED', false),
     'public_enabled' => env('GIFT_BUILDER_PUBLIC_ENABLED', false),
+    'recommender_enabled' => env('GIFT_BUILDER_RECOMMENDER_ENABLED', false),
     'preview_key' => env('GIFT_BUILDER_PREVIEW_KEY'),
     'max_items' => 4,
     'message_max_length' => 300,
+
+    'recommendation_priorities' => [
+        'safety_connection' => [
+            'label_ka' => 'უსაფრთხოება და კავშირი',
+            'label_en' => 'Safety and connection',
+        ],
+        'music_entertainment' => [
+            'label_ka' => 'მუსიკა და გართობა',
+            'label_en' => 'Music and entertainment',
+        ],
+        'everyday' => [
+            'label_ka' => 'ყოველდღიური გამოყენება',
+            'label_en' => 'Everyday use',
+        ],
+        'best_price' => [
+            'label_ka' => 'საუკეთესო ფასი',
+            'label_en' => 'Best price',
+        ],
+    ],
 
     'recipients' => [
         'child_5_7' => [

@@ -19,6 +19,7 @@ class GiftBuilderCatalogService
 
     public function builderConfig(Request $request): array
     {
+        $recommenderEnabled = (bool) config('gift_builder.recommender_enabled', false);
         $products = $this->products([
             'role' => 'all',
             'budget_band' => 'all',
@@ -52,6 +53,10 @@ class GiftBuilderCatalogService
                 'price' => route('gift-builder.price'),
                 'addToCart' => route('gift-builder.add-to-cart'),
                 'cart' => route('cart.index'),
+            ],
+            'recommender' => [
+                'enabled' => $recommenderEnabled,
+                'route' => $recommenderEnabled ? route('gift-builder.recommendations') : null,
             ],
         ];
     }
@@ -175,7 +180,10 @@ class GiftBuilderCatalogService
         $budget = (string) ($filters['budget_band'] ?? 'all');
 
         return Product::query()
-            ->active()
+            ->where(function ($query): void {
+                $query->where('is_active', true)
+                    ->orWhere('gift_builder_role', 'addon');
+            })
             ->where('gift_builder_enabled', true)
             ->where('fulfillment_mode', 'local_stock')
             ->whereRaw('COALESCE(sale_price, price, 0) > 0')
@@ -217,6 +225,7 @@ class GiftBuilderCatalogService
             'occasion_tags' => array_values((array) ($product->gift_occasion_tags ?? [])),
             'budget_band' => $product->gift_budget_band ?: $this->budgetBandForPrice($price),
             'compatibility_tags' => array_values((array) ($product->gift_compatibility_tags ?? [])),
+            'recommendation_tags' => array_values((array) ($product->gift_recommendation_tags ?? [])),
             'capacity_units' => max(1, (int) ($product->gift_capacity_units ?: 1)),
             'badge' => $locale === 'ka' ? ($product->gift_badge_ka ?: $product->gift_badge_en) : $product->gift_badge_en,
             'note' => $locale === 'ka' ? ($product->gift_builder_note_ka ?: $product->gift_builder_note_en) : $product->gift_builder_note_en,

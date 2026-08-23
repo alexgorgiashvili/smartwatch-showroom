@@ -82,6 +82,32 @@ class GiftBuilderPricingServiceTest extends TestCase
         $this->assertSame('budget_overage', $result['warnings'][0]['code']);
     }
 
+    public function test_it_allows_inactive_addon_only_products_inside_the_builder(): void
+    {
+        $main = $this->giftVariant('Active Main', 'main', 120);
+        $addon = $this->giftVariant('Builder-only Addon', 'addon', 35);
+        $addon->product()->update(['is_active' => false]);
+
+        $result = app(GiftBuilderPricingService::class)->price($this->payload([
+            ['variant_id' => $main->id, 'role' => 'main'],
+            ['variant_id' => $addon->id, 'role' => 'addon'],
+        ]));
+
+        $this->assertSame(155.0, $result['total']);
+    }
+
+    public function test_it_still_rejects_an_inactive_main_product(): void
+    {
+        $main = $this->giftVariant('Inactive Main', 'main', 120);
+        $main->product()->update(['is_active' => false]);
+
+        $this->expectException(ValidationException::class);
+
+        app(GiftBuilderPricingService::class)->price($this->payload([
+            ['variant_id' => $main->id, 'role' => 'main'],
+        ]));
+    }
+
     private function payload(array $items, array $overrides = []): array
     {
         return array_replace([

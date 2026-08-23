@@ -383,6 +383,8 @@ class ProductController extends Controller
             'gift_occasion_tags' => ['nullable'],
             'gift_budget_band' => ['nullable', 'in:' . implode(',', array_keys((array) config('gift_builder.budget_bands', [])))],
             'gift_compatibility_tags' => ['nullable'],
+            'gift_recommendation_tags' => ['nullable', 'array'],
+            'gift_recommendation_tags.*' => ['string', 'in:' . implode(',', array_keys((array) config('gift_builder.recommendation_priorities', [])))],
             'gift_capacity_units' => ['nullable', 'integer', 'min:1', 'max:20'],
             'gift_badge_ka' => ['nullable', 'string', 'max:80'],
             'gift_badge_en' => ['nullable', 'string', 'max:80'],
@@ -406,6 +408,10 @@ class ProductController extends Controller
         $data['gift_occasion_tags'] = $this->normalizeTags($request->input('gift_occasion_tags'));
         $data['gift_budget_band'] = $request->input('gift_budget_band') ?: 'all';
         $data['gift_compatibility_tags'] = $this->normalizeTags($request->input('gift_compatibility_tags'));
+        $data['gift_recommendation_tags'] = collect((array) $request->input('gift_recommendation_tags', []))
+            ->filter(fn ($tag): bool => is_string($tag) && array_key_exists($tag, (array) config('gift_builder.recommendation_priorities', [])))
+            ->values()
+            ->all();
         $data['gift_capacity_units'] = max(1, (int) ($request->input('gift_capacity_units') ?: 1));
         $data['gift_sort_order'] = max(0, (int) ($request->input('gift_sort_order') ?: 0));
 
@@ -414,6 +420,9 @@ class ProductController extends Controller
         }
         if (! Schema::hasColumn('products', 'home_sort_order')) {
             unset($data['home_sort_order']);
+        }
+        if (! Schema::hasColumn('products', 'gift_recommendation_tags')) {
+            unset($data['gift_recommendation_tags']);
         }
 
         return $data;

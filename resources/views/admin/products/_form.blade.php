@@ -274,6 +274,8 @@
             $recipientOptions = config('gift_builder.recipients', []);
             $occasionOptions = config('gift_builder.occasions', []);
             $budgetOptions = config('gift_builder.budget_bands', []);
+            $recommendationOptions = config('gift_builder.recommendation_priorities', []);
+            $recommendationTags = collect(old('gift_recommendation_tags', $product->gift_recommendation_tags ?? []))->filter()->all();
         @endphp
 
         <div class="card">
@@ -281,7 +283,7 @@
                 <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
                     <div>
                         <h6 class="mb-1">Gift Box Builder visibility</h6>
-                        <p class="text-muted small mb-0">Only active, local-stock, gift-enabled products are shown in the public builder.</p>
+                        <p class="text-muted small mb-0">Main gifts must be active. Add-on only products may stay inactive in the regular storefront and still appear exclusively in Gift Builder.</p>
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="gift_builder_enabled" name="gift_builder_enabled" value="1"
@@ -352,6 +354,20 @@
                                   placeholder="gps, camera, school, starter">{{ $compatibilityTags }}</textarea>
                         <div class="form-text">Add-ons with tags must overlap the main gift tags. Empty add-on tags are compatible with all.</div>
                         @error('gift_compatibility_tags') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Gift recommendation priorities</label>
+                        <div class="d-flex flex-wrap gap-3 rounded border p-3">
+                            @foreach($recommendationOptions as $value => $option)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="gift_recommendation_tags[]" value="{{ $value }}" id="gift-recommendation-{{ $value }}" @checked(in_array($value, $recommendationTags, true))>
+                                    <label class="form-check-label" for="gift-recommendation-{{ $value }}">{{ $option['label_en'] ?? $value }}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="form-text">Fixed tags used by the private Gift Match recommender. Empty means neutral priority.</div>
+                        @error('gift_recommendation_tags') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-md-6">

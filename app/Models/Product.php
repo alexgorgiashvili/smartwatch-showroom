@@ -62,6 +62,7 @@ class Product extends Model
         'gift_occasion_tags',
         'gift_budget_band',
         'gift_compatibility_tags',
+        'gift_recommendation_tags',
         'gift_capacity_units',
         'gift_badge_ka',
         'gift_badge_en',
@@ -85,6 +86,7 @@ class Product extends Model
         'gift_recipient_tags' => 'array',
         'gift_occasion_tags' => 'array',
         'gift_compatibility_tags' => 'array',
+        'gift_recommendation_tags' => 'array',
         'gift_capacity_units' => 'integer',
         'gift_sort_order' => 'integer',
     ];

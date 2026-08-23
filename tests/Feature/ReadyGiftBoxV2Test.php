@@ -102,6 +102,25 @@ class ReadyGiftBoxV2Test extends TestCase
         $this->assertNull($config['initial']['selected_variant_id']);
     }
 
+    public function test_inactive_addon_only_product_is_available_in_builder_and_ready_boxes(): void
+    {
+        $main = $this->giftVariant('Active Builder Watch', 'main', 120);
+        $addon = $this->giftVariant('Hidden Storefront Add-on', 'addon', 35);
+        $addon->product()->update(['is_active' => false]);
+        $box = $this->readyBox('builder-only-addon-box', $main, [$addon]);
+
+        $builder = $this->get(route('gift-builder.show'))->assertOk();
+        $products = collect($builder->viewData('builderConfig')['products']);
+        $this->assertContains((int) $addon->product_id, $products->pluck('id')->all());
+
+        $boxes = $this->get(route('gift-builder.boxes'))->assertOk();
+        $this->assertContains('builder-only-addon-box', collect($boxes->viewData('readyBoxes'))->pluck('slug')->all());
+
+        $this->getJson(route('gift-boxes.options', $box))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
     public function test_quick_buy_requires_every_configured_item_id_and_rejects_cross_product_variant(): void
     {
         $main = $this->giftVariant('Strict Watch', 'main', 100);

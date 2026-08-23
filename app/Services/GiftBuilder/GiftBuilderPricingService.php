@@ -269,8 +269,9 @@ class GiftBuilderPricingService
         $roleAllowed = $role === 'main'
             ? in_array($productRole, ['main', 'both'], true)
             : in_array($productRole, ['addon', 'both'], true);
+        $visibilityAllowed = $product->is_active || ($role === 'addon' && $productRole === 'addon');
 
-        if (! $product->is_active || ! $product->gift_builder_enabled || $product->fulfillment_mode !== 'local_stock' || ! $roleAllowed) {
+        if (! $visibilityAllowed || ! $product->gift_builder_enabled || $product->fulfillment_mode !== 'local_stock' || ! $roleAllowed) {
             throw ValidationException::withMessages([
                 'items' => __('storefront.gift_builder.product_ineligible'),
             ]);

@@ -75,6 +75,62 @@ class GiftBuilderFlowTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_recommendations_remain_404_behind_their_own_flag(): void
+    {
+        config()->set('gift_builder.recommender_enabled', false);
+
+        $this->postJson(route('gift-builder.recommendations'), [
+            'budget_band' => 'under_100',
+            'priority' => 'safety_connection',
+        ])->assertNotFound();
+    }
+
+    public function test_recommendations_validate_input_and_return_canonically_priced_custom_start(): void
+    {
+        config()->set('gift_builder.recommender_enabled', true);
+
+        $main = $this->giftVariant('Safety Watch', 'main', 69, compatibilityTags: ['starter']);
+        $main->product->update(['gift_recommendation_tags' => ['safety_connection']]);
+        $addon = $this->giftVariant('Safety Strap', 'addon', 20, compatibilityTags: ['starter']);
+        $addon->product->update(['gift_recommendation_tags' => ['safety_connection']]);
+
+        $this->postJson(route('gift-builder.recommendations'), [
+            'budget_band' => 'invalid',
+            'priority' => 'private-data',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['budget_band', 'priority']);
+
+        $response = $this->postJson(route('gift-builder.recommendations'), [
+            'budget_band' => 'under_100',
+            'priority' => 'safety_connection',
+            'shown_product_ids' => [],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('priority', 'safety_connection')
+            ->assertJsonPath('custom_start.main_variant_id', $main->id)
+            ->assertJsonPath('custom_start.budget_band', 'under_100')
+            ->assertJsonPath('custom_start.total', 89);
+
+        $this->assertContains($addon->id, $response->json('custom_start.addon_variant_ids'));
+        $this->assertLessThanOrEqual(100, $response->json('custom_start.canonical_pricing.total'));
+    }
+
+    public function test_recommendations_offer_the_next_budget_instead_of_a_dead_end(): void
+    {
+        config()->set('gift_builder.recommender_enabled', true);
+        $main = $this->giftVariant('Everyday Watch', 'main', 69);
+        $main->product->update(['gift_recommendation_tags' => ['everyday']]);
+
+        $this->postJson(route('gift-builder.recommendations'), [
+            'budget_band' => 'under_50',
+            'priority' => 'everyday',
+        ])->assertOk()
+            ->assertJsonPath('custom_start', null)
+            ->assertJsonPath('next_budget_band', 'under_100');
+    }
+
     public function test_ready_box_page_links_to_a_preselected_builder(): void
     {
         $main = $this->giftVariant('Ready Box Watch', 'main', 79);

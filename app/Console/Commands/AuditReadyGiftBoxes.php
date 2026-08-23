@@ -76,7 +76,8 @@ class AuditReadyGiftBoxes extends Command
             }
 
             $allowedRoles = $role === 'main' ? ['main', 'both'] : ['addon', 'both'];
-            if (! $product->is_active || ! $product->gift_builder_enabled || $product->fulfillment_mode !== 'local_stock' || ! in_array($product->gift_builder_role, $allowedRoles, true)) {
+            $visibilityAllowed = $product->is_active || ($role === 'addon' && $product->gift_builder_role === 'addon');
+            if (! $visibilityAllowed || ! $product->gift_builder_enabled || $product->fulfillment_mode !== 'local_stock' || ! in_array($product->gift_builder_role, $allowedRoles, true)) {
                 $issues[] = [$boxSlug, $productSlug, 'ineligible', "Product is not eligible for role {$role}."];
             }
         }
