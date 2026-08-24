@@ -38,6 +38,39 @@
                 <div id="gift-builder-app" class="gift-builder-grid">
                     <div class="gift-builder-main">
                         <nav id="gift-progress" class="gift-progress" aria-label="{{ __('storefront.gift_builder.progress_label') }}"></nav>
+                        <section id="gift-live-preview" class="gift-live-preview" aria-labelledby="gift-live-preview-title">
+                            <header class="gift-live-preview-header">
+                                <div>
+                                    <p>{{ __('storefront.gift_builder.your_box') }}</p>
+                                    <h2 id="gift-live-preview-title">{{ __('storefront.gift_builder.my_box') }}</h2>
+                                </div>
+                                <span class="gift-live-preview-count" data-gift-live-count>0/4</span>
+                            </header>
+                            <p class="sr-only" data-gift-live-status role="status" aria-live="polite"></p>
+                            <div class="gift-live-box" data-gift-live-box data-packaging="standard" aria-hidden="true">
+                                <div class="gift-live-box-lid"></div>
+                                <div class="gift-live-box-ribbon"></div>
+                                <div class="gift-live-box-base">
+                                    <div class="gift-live-box-tissue"></div>
+                                    <div class="gift-live-slot gift-live-slot-main" data-gift-slot="main" data-flip-id="gift-slot-main">
+                                        <span>{{ __('storefront.gift_builder.main_gift') }}</span>
+                                        <div class="gift-live-slot-media"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
+                                    </div>
+                                    <div class="gift-live-slot gift-live-slot-addon gift-live-slot-addon-1" data-gift-slot="addon-1" data-flip-id="gift-slot-addon-1">
+                                        <span>{{ __('storefront.gift_builder.addon') }} 1</span>
+                                        <div class="gift-live-slot-media"><i class="fa-solid fa-plus" aria-hidden="true"></i></div>
+                                    </div>
+                                    <div class="gift-live-slot gift-live-slot-addon gift-live-slot-addon-2" data-gift-slot="addon-2" data-flip-id="gift-slot-addon-2">
+                                        <span>{{ __('storefront.gift_builder.addon') }} 2</span>
+                                        <div class="gift-live-slot-media"><i class="fa-solid fa-plus" aria-hidden="true"></i></div>
+                                    </div>
+                                    <div class="gift-live-slot gift-live-slot-addon gift-live-slot-addon-3" data-gift-slot="addon-3" data-flip-id="gift-slot-addon-3">
+                                        <span>{{ __('storefront.gift_builder.addon') }} 3</span>
+                                        <div class="gift-live-slot-media"><i class="fa-solid fa-plus" aria-hidden="true"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                         <div id="gift-content" class="gift-builder-content"></div>
                     </div>
                     <aside id="gift-summary" class="gift-builder-summary" aria-label="{{ __('storefront.gift_builder.summary') }}"></aside>
