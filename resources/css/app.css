@@ -964,6 +964,8 @@ body.gift-modal-open { overflow: hidden; }
 .gift-builder-promise span { display: flex; flex-direction: column; font-size: 0.65rem; }
 .gift-builder-promise strong { font-size: 0.72rem; }
 .gift-builder-workspace { padding-block: 1.4rem; }
+.gift-preset-overview[hidden],
+.gift-draft-restore[hidden] { display: none !important; }
 .gift-preset-overview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; margin-bottom: 1rem; border: 1px solid #d7c5eb; border-radius: 22px; background: linear-gradient(100deg, #f1e8ff, #fff); padding: 0.9rem 1rem; box-shadow: 0 8px 24px rgba(70, 38, 96, 0.06); }
 .gift-preset-icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 16px; background: var(--gift-grape); color: #fff; }
 .gift-preset-copy > p { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gift-grape); }
