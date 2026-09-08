@@ -62,19 +62,21 @@
 
     @php
         $gtmId = config('storefront_analytics.gtm_id');
+        $gtmSecondaryId = config('storefront_analytics.gtm_secondary_id');
+        $gtmIds = array_values(array_unique(array_filter([$gtmId, $gtmSecondaryId])));
         $metaPixelId = config('storefront_analytics.meta_pixel_id');
         $analyticsFlashEvent = session('analytics_event');
         $shouldLoadMetaPixel = filled($metaPixelId) && ! app()->environment('local');
     @endphp
 
-    @if ($gtmId)
+    @foreach ($gtmIds as $containerId)
     <script>
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
         var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
         j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer',@js($gtmId));
+        })(window,document,'script','dataLayer',@js($containerId));
     </script>
-    @endif
+    @endforeach
 
     @if ($shouldLoadMetaPixel)
     <script>
@@ -98,11 +100,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-x-hidden bg-white text-gray-900">
-  @if ($gtmId)
+  @foreach ($gtmIds as $containerId)
   <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode($gtmId) }}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    <iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode($containerId) }}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
   </noscript>
-  @endif
+  @endforeach
   @if ($shouldLoadMetaPixel)
   <noscript>
     <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ urlencode($metaPixelId) }}&ev=PageView&noscript=1" alt="">
@@ -482,7 +484,7 @@
 
         function dispatchAnalytics(eventName, payload, isCustom) {
             var normalizedPayload = normalizePayload(payload);
-            var customKeys = ['page_path', 'box_slug', 'gift_mode', 'gift_path', 'step_number', 'step_name', 'item_type', 'product_id', 'variant_id', 'selected', 'packaging_slug', 'budget_band', 'error_stage', 'value', 'currency', 'num_items', 'transaction_id', 'event_id', 'payment_method', 'contact_channel', 'generation', 'sort', 'search_term'];
+            var customKeys = ['page_path', 'box_slug', 'gift_mode', 'gift_path', 'step_number', 'step_name', 'item_type', 'product_id', 'variant_id', 'selected', 'packaging_slug', 'budget_band', 'error_stage', 'value', 'currency', 'num_items', 'transaction_id', 'event_id', 'payment_method', 'contact_channel', 'generation', 'sort', 'search_term', 'items'];
             var safePayload = isCustom
                 ? customKeys.reduce(function (result, key) {
                     if (Object.prototype.hasOwnProperty.call(normalizedPayload, key) && normalizedPayload[key] !== null && typeof normalizedPayload[key] !== 'undefined') {
