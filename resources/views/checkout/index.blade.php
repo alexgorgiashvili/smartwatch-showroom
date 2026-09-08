@@ -408,6 +408,17 @@
 
         courierPaymentInput?.addEventListener('change', function () {
             syncCourierPaymentAvailability(!isTbilisiSelected());
+            window.storefrontAnalytics?.trackCustom('checkout_payment_method_selected', {
+                payment_method: 'cash_on_delivery',
+                page_path: window.location.pathname
+            });
+        });
+
+        onlinePaymentInput?.addEventListener('change', function () {
+            window.storefrontAnalytics?.trackCustom('checkout_payment_method_selected', {
+                payment_method: 'bank_card',
+                page_path: window.location.pathname
+            });
         });
 
         document.addEventListener('click', function (event) {

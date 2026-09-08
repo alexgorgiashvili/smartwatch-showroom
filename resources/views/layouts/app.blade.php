@@ -456,16 +456,33 @@
             AddToCart: 'add_to_cart',
             Lead: 'generate_lead',
             InitiateCheckout: 'begin_checkout',
-            Purchase: 'purchase'
+            Purchase: 'purchase',
+            order_placed: 'order_placed',
+            payment_completed: 'payment_completed'
         };
 
         function normalizePayload(payload) {
             return payload && typeof payload === 'object' ? payload : {};
         }
 
+        function toGa4Ecommerce(payload) {
+            var ecommerce = {};
+            ['currency', 'value', 'transaction_id'].forEach(function (key) {
+                if (Object.prototype.hasOwnProperty.call(payload, key)) {
+                    ecommerce[key] = payload[key];
+                }
+            });
+
+            if (Array.isArray(payload.items)) {
+                ecommerce.items = payload.items;
+            }
+
+            return Object.keys(ecommerce).length ? ecommerce : undefined;
+        }
+
         function dispatchAnalytics(eventName, payload, isCustom) {
             var normalizedPayload = normalizePayload(payload);
-            var customKeys = ['page_path', 'box_slug', 'gift_mode', 'gift_path', 'step_number', 'step_name', 'item_type', 'product_id', 'variant_id', 'selected', 'packaging_slug', 'budget_band', 'error_stage', 'value', 'currency', 'num_items'];
+            var customKeys = ['page_path', 'box_slug', 'gift_mode', 'gift_path', 'step_number', 'step_name', 'item_type', 'product_id', 'variant_id', 'selected', 'packaging_slug', 'budget_band', 'error_stage', 'value', 'currency', 'num_items', 'transaction_id', 'event_id', 'payment_method', 'contact_channel', 'generation', 'sort', 'search_term'];
             var safePayload = isCustom
                 ? customKeys.reduce(function (result, key) {
                     if (Object.prototype.hasOwnProperty.call(normalizedPayload, key) && normalizedPayload[key] !== null && typeof normalizedPayload[key] !== 'undefined') {
@@ -476,10 +493,15 @@
                 : normalizedPayload;
             window.dataLayer = window.dataLayer || [];
 
-            window.dataLayer.push(Object.assign({
+            var dataLayerEvent = Object.assign({
                 event: eventName,
                 ga4_event_name: ga4EventMap[eventName] || eventName
-            }, safePayload));
+            }, safePayload);
+            var ecommerce = toGa4Ecommerce(safePayload);
+            if (ecommerce) {
+                dataLayerEvent.ecommerce = ecommerce;
+            }
+            window.dataLayer.push(dataLayerEvent);
 
             if (typeof window.fbq === 'function') {
                 var metaPayload = {};
@@ -492,7 +514,8 @@
                     }
                 });
 
-                window.fbq(isCustom ? 'trackCustom' : 'track', eventName, metaPayload);
+                var metaOptions = safePayload.event_id ? { eventID: safePayload.event_id } : undefined;
+                window.fbq(isCustom ? 'trackCustom' : 'track', eventName, metaPayload, metaOptions);
             }
         }
 
@@ -509,6 +532,27 @@
         if (flashEvent && flashEvent.name) {
             window.storefrontAnalytics.track(flashEvent.name, flashEvent.payload || {});
         }
+
+        document.addEventListener('click', function (event) {
+            var link = event.target.closest('a[href]');
+            if (!link || !window.storefrontAnalytics) {
+                return;
+            }
+
+            var href = link.getAttribute('href') || '';
+            var channel = href.indexOf('wa.me/') !== -1 ? 'whatsapp'
+                : href.indexOf('m.me/') !== -1 ? 'messenger'
+                : href.indexOf('instagram.com/') !== -1 ? 'instagram'
+                : href.indexOf('tel:') === 0 ? 'phone'
+                : null;
+
+            if (channel) {
+                window.storefrontAnalytics.trackCustom('contact_click', {
+                    contact_channel: channel,
+                    page_path: window.location.pathname
+                });
+            }
+        });
     }());
     </script>
 

@@ -13,7 +13,7 @@ class PurchaseAnalyticsEventTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_success_page_emits_a_valid_purchase_payload(): void
+    public function test_success_page_emits_a_valid_completed_payment_payload(): void
     {
         $product = Product::query()->create([
             'name_en' => 'Test Watch',
@@ -53,9 +53,10 @@ class PurchaseAnalyticsEventTest extends TestCase
         ]));
 
         $response->assertOk();
-        $response->assertViewHas('purchaseEvent', function (array $event) use ($variant): bool {
+        $response->assertViewHas('paymentCompletedEvent', function (array $event) use ($variant): bool {
             return $event['value'] === 199.9
                 && $event['currency'] === 'GEL'
+                && $event['event_id'] === 'payment_ORD-ANALYTICS-1'
                 && $event['content_ids'] === [(string) $variant->id]
                 && $event['contents'][0]['id'] === (string) $variant->id
                 && $event['items'][0]['item_id'] === (string) $variant->id;
@@ -82,7 +83,53 @@ class PurchaseAnalyticsEventTest extends TestCase
         ]));
 
         $response->assertOk();
-        $response->assertViewHas('purchaseEvent', null);
+        $response->assertViewHas('paymentCompletedEvent', null);
         $response->assertDontSee("storefrontAnalytics.track('Purchase'", false);
+    }
+
+    public function test_success_page_emits_order_placed_for_a_non_cancelled_cod_order(): void
+    {
+        $order = Order::query()->create([
+            'order_number' => 'ORD-ANALYTICS-COD',
+            'customer_name' => 'Analytics Test',
+            'customer_phone' => '555000000',
+            'delivery_address' => 'Test Address',
+            'payment_type' => 2,
+            'status' => 'pending',
+            'payment_status' => 'pending',
+            'total_amount' => 99.95,
+            'currency' => 'GEL',
+        ]);
+
+        $response = $this->get(route('payment.success', [
+            'order' => $order->order_number,
+            'method' => 'cod',
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('orderPlacedEvent', fn (array $event): bool => $event['event_id'] === 'order_ORD-ANALYTICS-COD'
+            && $event['payment_method'] === 'cash_on_delivery');
+        $response->assertViewHas('paymentCompletedEvent', null);
+    }
+
+    public function test_success_page_does_not_emit_purchase_for_an_unpaid_card_order(): void
+    {
+        $order = Order::query()->create([
+            'order_number' => 'ORD-ANALYTICS-PENDING',
+            'customer_name' => 'Analytics Test',
+            'customer_phone' => '555000000',
+            'delivery_address' => 'Test Address',
+            'payment_type' => 1,
+            'status' => 'pending',
+            'payment_status' => 'pending',
+            'total_amount' => 99.95,
+            'currency' => 'GEL',
+        ]);
+
+        $response = $this->get(route('payment.success', ['order' => $order->order_number]));
+
+        $response->assertOk();
+        $response->assertViewHas('paymentCompletedEvent', null);
+        $response->assertViewHas('orderPlacedEvent', null);
     }
 }

@@ -68,6 +68,7 @@ class InquiryController extends Controller
         return $this->successResponse(array_filter([
                 'name' => 'Lead',
                 'payload' => array_filter([
+                    'event_id' => 'lead_' . $inquiry->id,
                     'content_name' => $inquiry->product?->name,
                     'content_ids' => $inquiry->product ? [(string) $inquiry->product->id] : null,
                     'content_type' => $inquiry->product ? 'product' : 'inquiry',

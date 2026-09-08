@@ -358,6 +358,18 @@
                 grid.innerHTML = payload.html || '';
                 setActiveFilter(generation);
                 setActiveSort(sort);
+                if (triggerType === 'filter') {
+                    window.storefrontAnalytics?.trackCustom('catalog_filter', {
+                        generation: generation,
+                        page_path: window.location.pathname
+                    });
+                }
+                if (triggerType === 'search') {
+                    window.storefrontAnalytics?.trackCustom('catalog_search', {
+                        search_term: (searchInput?.value || '').trim(),
+                        page_path: window.location.pathname
+                    });
+                }
                 if (generationField) {
                     generationField.value = generation;
                 }

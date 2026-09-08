@@ -34,7 +34,7 @@
     </section>
 @endsection
 
-@if (!empty($purchaseEvent))
+@if (!empty($orderPlacedEvent) || !empty($paymentCompletedEvent))
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -42,16 +42,32 @@
             return;
         }
 
-        const eventKey = 'purchase:' + @js($purchaseEvent['transaction_id'] ?? $orderNumber);
-        if (window.sessionStorage && window.sessionStorage.getItem(eventKey)) {
-            return;
-        }
+        const events = [
+            @if (!empty($orderPlacedEvent))
+            { name: 'order_placed', payload: @json($orderPlacedEvent), custom: true },
+            @endif
+            @if (!empty($paymentCompletedEvent))
+            { name: 'Purchase', payload: @json($paymentCompletedEvent), custom: false },
+            { name: 'payment_completed', payload: @json($paymentCompletedEvent), custom: true },
+            @endif
+        ];
 
-        window.storefrontAnalytics.track('Purchase', @json($purchaseEvent));
+        events.forEach(function (event) {
+            const eventKey = event.name + ':' + event.payload.transaction_id;
+            if (window.sessionStorage && window.sessionStorage.getItem(eventKey)) {
+                return;
+            }
 
-        if (window.sessionStorage) {
-            window.sessionStorage.setItem(eventKey, '1');
-        }
+            if (event.custom) {
+                window.storefrontAnalytics.trackCustom(event.name, event.payload);
+            } else {
+                window.storefrontAnalytics.track(event.name, event.payload);
+            }
+
+            if (window.sessionStorage) {
+                window.sessionStorage.setItem(eventKey, '1');
+            }
+        });
     });
 </script>
 @endpush

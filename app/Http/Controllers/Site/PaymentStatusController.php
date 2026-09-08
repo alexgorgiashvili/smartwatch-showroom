@@ -16,11 +16,13 @@ class PaymentStatusController extends Controller
             ->with('items')
             ->where('order_number', $orderNumber)
             ->first();
-        $purchaseEvent = null;
+        $orderPlacedEvent = null;
+        $paymentCompletedEvent = null;
 
         if ($order && (float) $order->total_amount > 0) {
-            $purchaseEvent = [
+            $orderEvent = [
                 'transaction_id' => $order->order_number,
+                'event_id' => 'order_' . $order->order_number,
                 'value' => (float) $order->total_amount,
                 'currency' => strtoupper($order->currency ?: 'GEL'),
                 'content_type' => 'product',
@@ -39,12 +41,26 @@ class PaymentStatusController extends Controller
                 ]))->values()->all(),
                 'num_items' => (int) $order->items->sum('quantity'),
             ];
+
+            if ((int) $order->payment_type === 2 && ! $order->isCancelled()) {
+                $orderPlacedEvent = array_merge($orderEvent, [
+                    'payment_method' => 'cash_on_delivery',
+                ]);
+            }
+
+            if ((int) $order->payment_type === 1 && $order->payment_status === 'completed') {
+                $paymentCompletedEvent = array_merge($orderEvent, [
+                    'event_id' => 'payment_' . $order->order_number,
+                    'payment_method' => 'bank_card',
+                ]);
+            }
         }
 
         return view('checkout.success', [
             'orderNumber' => $orderNumber,
             'paymentMethod' => $request->string('method')->toString(),
-            'purchaseEvent' => $purchaseEvent,
+            'orderPlacedEvent' => $orderPlacedEvent,
+            'paymentCompletedEvent' => $paymentCompletedEvent,
         ]);
     }
 
