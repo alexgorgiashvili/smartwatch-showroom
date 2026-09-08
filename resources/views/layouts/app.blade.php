@@ -117,18 +117,18 @@
     @if($isGiftExperience)
     <header class="gift-site-header">
       <div class="gift-site-header-inner">
-        <a href="{{ route('gift-builder.boxes') }}" class="gift-site-logo" aria-label="MyTechnic Gift Box">
+        <a href="{{ \App\Support\StorefrontUrl::route('gift-builder.boxes') }}" class="gift-site-logo" aria-label="MyTechnic Gift Box">
           <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" width="550" height="310">
           <span>Gift Box</span>
         </a>
         <div class="gift-site-header-actions">
           <span class="gift-header-delivery"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i>{{ __('storefront.gift_boxes.free_delivery') }}</span>
-          <a href="{{ route('contact') }}" class="gift-header-help"><i class="fa-regular fa-circle-question" aria-hidden="true"></i><span>{{ __('storefront.gift_boxes.help') }}</span></a>
+          <a href="{{ \App\Support\StorefrontUrl::route('contact') }}" class="gift-header-help"><i class="fa-regular fa-circle-question" aria-hidden="true"></i><span>{{ __('storefront.gift_boxes.help') }}</span></a>
           <div class="gift-header-language" role="group" aria-label="{{ $languageSwitcherLabel }}">
             <a href="{{ route('locale', 'ka') }}" @if($currentLocale === 'ka') aria-current="page" @endif>KA</a>
             <a href="{{ route('locale', 'en') }}" @if($currentLocale === 'en') aria-current="page" @endif>EN</a>
           </div>
-          <a href="{{ route('cart.index') }}" class="gift-header-cart" aria-label="{{ __('storefront.common.cart') }}">
+          <a href="{{ \App\Support\StorefrontUrl::route('cart.index') }}" class="gift-header-cart" aria-label="{{ __('storefront.common.cart') }}">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
             <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }}">{{ $cartCount }}</span>
           </a>
@@ -142,7 +142,7 @@
         <div class="flex h-16 items-center justify-between">
           <!-- Logo -->
           <div class="md:flex md:items-center md:gap-12">
-            <a class="flex items-center" href="{{ route('home') }}" aria-label="MyTechnic">
+            <a class="flex items-center" href="{{ \App\Support\StorefrontUrl::route('home') }}" aria-label="MyTechnic">
               <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] md:h-[100px] w-auto object-contain">
             </a>
           </div>
@@ -152,18 +152,18 @@
             <nav aria-label="Global">
               <ul class="flex items-center gap-1 text-sm">
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('home') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('home') }}">{{ __('storefront.common.home') }}</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('home', 'en.home') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('home') }}">{{ __('storefront.common.home') }}</a>
                 </li>
                 <li>
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*', 'en.products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
                 </li>
                 @if (config('gift_builder.public_enabled') === true)
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('gift-builder.show') }}">{{ __('storefront.common.gift_builder') }}</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('gift-builder.*', 'en.gift-builder.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('gift-builder.show') }}">{{ __('storefront.common.gift_builder') }}</a>
                 </li>
                 @endif
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('faq') }}">{{ __('storefront.common.faq') }}</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('faq', 'en.faq') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('faq') }}">{{ __('storefront.common.faq') }}</a>
                 </li>
                 {{-- სახელმძღვანელოები dropdown --}}
                 <li class="relative group/guides">
@@ -194,7 +194,7 @@
                   </div>
                 </li>
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('contact') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('contact') }}">{{ __('storefront.common.contact') }}</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('contact', 'en.contact') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('contact') }}">{{ __('storefront.common.contact') }}</a>
                 </li>
               </ul>
             </nav>
@@ -204,7 +204,7 @@
           <nav id="mobile-menu" class="fixed inset-y-0 right-0 z-50 flex h-[100dvh] w-[85vw] max-w-[320px] translate-x-full transform flex-col bg-gray-950 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden">
             <!-- Mobile Menu Header with Logo + Close -->
             <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
-              <a class="flex items-center" href="{{ route('home') }}">
+              <a class="flex items-center" href="{{ \App\Support\StorefrontUrl::route('home') }}">
                 <img src="{{ asset('images/logo.webp') }}" alt="MyTechnic" class="block h-[80px] w-auto object-contain">
               </a>
               <button id="mobile-menu-close" aria-label="{{ __('storefront.common.menu_close') }}" class="flex size-8 items-center justify-center rounded-full text-gray-300 transition hover:bg-white/10 hover:text-white">
@@ -243,7 +243,7 @@
             <!-- Navigation Links -->
             <ul class="flex flex-1 flex-col overflow-y-auto">
               <li class="border-b border-white/10">
-                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('home') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('home') }}">
+                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('home', 'en.home') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ \App\Support\StorefrontUrl::route('home') }}">
                   <i class="fa-solid fa-house w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.home') }}
                 </a>
               </li>
@@ -291,7 +291,7 @@
                 </details>
               </li>
               <li class="border-b border-white/10">
-                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('cart.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('cart.index') }}">
+                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('cart.*', 'en.cart.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ \App\Support\StorefrontUrl::route('cart.index') }}">
                   <i class="fa-solid fa-cart-shopping w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.cart') }}
                   <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
                 </a>
@@ -333,7 +333,7 @@
             </div>
 
             <!-- Mobile menu toggle -->
-            <a href="{{ route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="{{ __('storefront.common.cart') }}">
+            <a href="{{ \App\Support\StorefrontUrl::route('cart.index') }}" class="relative mr-[5px] inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-gray-200 transition hover:border-white/30 hover:text-white md:ml-0" aria-label="{{ __('storefront.common.cart') }}">
               <i class="fa-solid fa-cart-shopping text-sm"></i>
               <span data-cart-badge class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">{{ $cartCount }}</span>
             </a>

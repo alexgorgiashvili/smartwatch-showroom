@@ -130,6 +130,30 @@ Route::post('/bog/payment/callback', [GeoPaymentController::class, 'bogPaymentCa
 Route::get('/payment/success', [PaymentStatusController::class, 'success'])->name('payment.success');
 Route::get('/payment/fail', [PaymentStatusController::class, 'fail'])->name('payment.fail');
 
+// Public, persistent English equivalents. Write/API endpoints intentionally
+// remain unprefixed so payment providers and existing integrations are stable.
+Route::prefix('en')->name('en.')->group(function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+    Route::get('/faq', [FaqController::class, 'index'])->name('faq');
+    Route::get('/about', fn () => view('pages.about'))->name('about');
+    Route::get('/privacy', fn () => view('pages.privacy'))->name('privacy');
+    Route::get('/terms', fn () => view('pages.terms'))->name('terms');
+    Route::get('/blog', [ArticleController::class, 'index'])->name('blog.index');
+    Route::get('/blog/{article:slug}', [ArticleController::class, 'show'])->name('blog.show');
+    Route::get('/smartwatches/bavshvis-saati-{range}', [LandingPageController::class, 'age'])->name('landing.age')->where('range', '4-6|7-10|11-14');
+    Route::get('/sim-card-guide', [LandingPageController::class, 'simGuide'])->name('landing.sim-guide');
+    Route::get('/gift-guide', [LandingPageController::class, 'giftGuide'])->name('landing.gift-guide');
+    Route::get('/city/{city}', [\App\Http\Controllers\CityLandingController::class, 'show'])->name('landing.city')->where('city', 'tbilisi|batumi|kutaisi|rustavi|gori');
+    Route::get('/gift-box-builder', [GiftBuilderController::class, 'show'])->name('gift-builder.show');
+    Route::get('/gift-boxes', [GiftBuilderController::class, 'boxes'])->name('gift-builder.boxes');
+    Route::get('/gift-boxes/{box}/options', [GiftBuilderController::class, 'readyBoxOptions'])->name('gift-boxes.options');
+    Route::get('/cart', [CartController::class, 'show'])->name('cart.index');
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.index');
+    Route::get('/payment/success', [PaymentStatusController::class, 'success'])->name('payment.success');
+    Route::get('/payment/fail', [PaymentStatusController::class, 'fail'])->name('payment.fail');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Facebook Webhook Routes

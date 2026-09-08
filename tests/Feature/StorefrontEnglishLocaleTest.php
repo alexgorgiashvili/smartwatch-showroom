@@ -170,6 +170,28 @@ class StorefrontEnglishLocaleTest extends TestCase
         $back->assertRedirect('/products/' . $this->product->slug);
     }
 
+    public function test_public_pages_have_persistent_english_urls(): void
+    {
+        $urls = [
+            '/en', '/en/contact', '/en/faq', '/en/about', '/en/privacy', '/en/terms',
+            '/en/blog', '/en/blog/' . $this->article->slug, '/en/sim-card-guide',
+            '/en/gift-guide', '/en/city/tbilisi', '/en/gift-box-builder', '/en/gift-boxes',
+            '/en/cart', '/en/checkout',
+        ];
+
+        foreach ($urls as $url) {
+            $response = $this->withSession(['locale' => 'ka'])->get($url);
+            $this->assertContains($response->getStatusCode(), [200, 302], $url);
+
+            if ($response->isOk()) {
+                $response->assertSee('lang="en"', false);
+            }
+        }
+
+        $this->from('/contact')->get(route('locale', 'en'))->assertRedirect('/en/contact');
+        $this->from('/en/contact')->get(route('locale', 'ka'))->assertRedirect('/contact');
+    }
+
     public function test_english_product_details_translate_legacy_georgian_specifications(): void
     {
         $this->product->update([

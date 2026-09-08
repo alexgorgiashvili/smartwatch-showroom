@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('robots', 'noindex, nofollow')
+
 @section('title', __('storefront.checkout.title'))
 @section('robots', 'noindex, nofollow')
 

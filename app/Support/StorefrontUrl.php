@@ -5,9 +5,19 @@ namespace App\Support;
 class StorefrontUrl
 {
     private const ENGLISH_ROUTES = [
+        'home' => 'en.home',
         'products.index' => 'en.products.index',
         'products.show' => 'en.products.show',
         'products.quick-review' => 'en.products.quick-review',
+        'contact' => 'en.contact', 'faq' => 'en.faq', 'about' => 'en.about',
+        'privacy' => 'en.privacy', 'terms' => 'en.terms',
+        'blog.index' => 'en.blog.index', 'blog.show' => 'en.blog.show',
+        'landing.age' => 'en.landing.age', 'landing.sim-guide' => 'en.landing.sim-guide',
+        'landing.gift-guide' => 'en.landing.gift-guide', 'landing.city' => 'en.landing.city',
+        'gift-builder.show' => 'en.gift-builder.show', 'gift-builder.boxes' => 'en.gift-builder.boxes',
+        'gift-boxes.options' => 'en.gift-boxes.options',
+        'cart.index' => 'en.cart.index', 'checkout.index' => 'en.checkout.index',
+        'payment.success' => 'en.payment.success', 'payment.fail' => 'en.payment.fail',
     ];
 
     public static function route(string $name, mixed $parameters = [], bool $absolute = true): string
@@ -55,10 +65,10 @@ class StorefrontUrl
         }
 
         $path = '/' . ltrim($path, '/');
-        if ($locale === 'en' && preg_match('#^/products(?:/|$)#', $path)) {
+        if ($locale === 'en' && ! str_starts_with($path, '/en')) {
             $path = '/en' . $path;
         }
-        if ($locale === 'ka' && preg_match('#^/en/products(?:/|$)#', $path)) {
+        if ($locale === 'ka' && ($path === '/en' || str_starts_with($path, '/en/'))) {
             $path = substr($path, 3);
         }
 
