@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Product\VariantImageResolver;
+use App\Support\StorefrontUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -194,7 +195,7 @@ class ProductController extends Controller
             'product' => [
                 'id' => (int) $product->id,
                 'name' => $product->name,
-                'url' => route('products.show', $product),
+                'url' => StorefrontUrl::route('products.show', $product),
                 'image' => $defaultImageUrl,
                 'image_alt' => $defaultVariantImage['alt'] ?? $product->name,
                 'short_description' => $product->short_description,

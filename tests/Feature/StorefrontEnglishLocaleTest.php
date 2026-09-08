@@ -135,7 +135,7 @@ class StorefrontEnglishLocaleTest extends TestCase
     {
         $response = $this->from('/products?sort=newest')->get(route('locale', 'en'));
 
-        $response->assertRedirect('/products?sort=newest');
+        $response->assertRedirect('/en/products?sort=newest');
         $response->assertSessionHas('locale', 'en');
 
         $this->get(route('products.index'))
@@ -145,6 +145,29 @@ class StorefrontEnglishLocaleTest extends TestCase
             ->assertSee('Switch to Georgian')
             ->assertSee('Orbit 4G Kids Watch')
             ->assertDontSee('ორბიტა 4G საბავშვო საათი');
+    }
+
+    public function test_persistent_english_product_urls_override_a_georgian_session_and_expose_alternates(): void
+    {
+        $catalog = $this->withSession(['locale' => 'ka'])->get('/en/products?sort=newest');
+
+        $catalog->assertOk()
+            ->assertSee('lang="en"', false)
+            ->assertSee('href="' . route('products.index') . '?sort=newest"', false)
+            ->assertSee('href="' . route('en.products.index') . '?sort=newest"', false);
+
+        $product = $this->withSession(['locale' => 'ka'])->get('/en/products/' . $this->product->slug);
+        $product->assertOk()
+            ->assertSee('lang="en"', false)
+            ->assertSee('rel="canonical" href="' . route('en.products.show', $this->product) . '"', false)
+            ->assertSee('hreflang="ka" href="' . route('products.show', $this->product) . '"', false)
+            ->assertSee('hreflang="en" href="' . route('en.products.show', $this->product) . '"', false);
+
+        $switch = $this->from('/products/' . $this->product->slug)->get(route('locale', 'en'));
+        $switch->assertRedirect('/en/products/' . $this->product->slug);
+
+        $back = $this->from('/en/products/' . $this->product->slug)->get(route('locale', 'ka'));
+        $back->assertRedirect('/products/' . $this->product->slug);
     }
 
     public function test_english_product_details_translate_legacy_georgian_specifications(): void

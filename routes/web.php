@@ -72,6 +72,11 @@ Route::get('/sitemap-ai.xml', [\App\Http\Controllers\AiSitemapController::class,
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/products/{product:slug}/quick-review', [ProductController::class, 'quickReview'])->name('products.quick-review');
+Route::prefix('en')->name('en.')->group(function () {
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+    Route::get('/products/{product:slug}/quick-review', [ProductController::class, 'quickReview'])->name('products.quick-review');
+});
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 Route::get('/about', fn () => view('pages.about'))->name('about');

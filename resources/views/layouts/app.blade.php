@@ -11,6 +11,9 @@
     <title>@yield('title', 'MyTechnic')</title>
 
     {{-- ═══ SEO: Robots & Canonical ═══ --}}
+    @php
+        $localeAlternates = \App\Support\StorefrontUrl::alternates();
+    @endphp
     <meta name="robots" content="@yield('robots', 'index, follow')">
     <link rel="canonical" href="@yield('canonical', url()->current())">
 
@@ -18,9 +21,9 @@
     <meta name="description" content="@yield('meta_description', __('storefront.meta.default_description'))">
 
     {{-- ═══ SEO: hreflang (session-based locale — same URL serves ka/en) ═══ --}}
-    <link rel="alternate" hreflang="ka" href="{{ url()->current() }}">
-    <link rel="alternate" hreflang="en" href="{{ url()->current() }}">
-    <link rel="alternate" hreflang="x-default" href="{{ url()->current() }}">
+    <link rel="alternate" hreflang="ka" href="{{ $localeAlternates['ka'] }}">
+    <link rel="alternate" hreflang="en" href="{{ $localeAlternates['en'] }}">
+    <link rel="alternate" hreflang="x-default" href="{{ $localeAlternates['x_default'] }}">
 
     {{-- ═══ SEO: Open Graph ═══ --}}
     <meta property="og:site_name" content="MyTechnic">
@@ -152,7 +155,7 @@
                   <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('home') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('home') }}">{{ __('storefront.common.home') }}</a>
                 </li>
                 <li>
-                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
+                  <a class="rounded-lg px-3 py-2 transition-colors {{ request()->routeIs('products.*', 'en.products.*') ? 'text-primary-300 font-semibold bg-primary-600/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }}" href="{{ \App\Support\StorefrontUrl::route('products.index') }}">{{ __('storefront.common.catalog') }}</a>
                 </li>
                 @if (config('gift_builder.public_enabled') === true)
                 <li>
@@ -245,7 +248,7 @@
                 </a>
               </li>
               <li class="border-b border-white/10">
-                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('products.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ route('products.index') }}">
+                <a class="flex items-center gap-3 px-5 py-4 text-sm font-medium transition-colors {{ request()->routeIs('products.*', 'en.products.*') ? 'bg-primary-600/20 text-primary-300' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}" href="{{ \App\Support\StorefrontUrl::route('products.index') }}">
                   <i class="fa-solid fa-table-cells-large w-4 text-center text-xs opacity-60"></i>{{ __('storefront.common.catalog') }}
                 </a>
               </li>

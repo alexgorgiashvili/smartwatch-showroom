@@ -126,7 +126,7 @@ $_homeSchema = [
 
                     {{-- CTAs --}}
                     <div class="mt-12 flex flex-wrap items-center gap-3" data-reveal="fade-up" data-reveal-delay="3">
-                        <a href="{{ route('products.index') }}"
+                        <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}"
                             class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-primary-200 transition-all hover:-translate-y-0.5 hover:bg-primary-700 active:translate-y-0">
                             {{ __('storefront.home.browse_models') }}
                             <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -238,7 +238,7 @@ $_homeSchema = [
                         {{ app()->getLocale() === 'ka' ? 'პოპულარული მოდელები' : 'Popular Models' }}
                     </h2>
                 </div>
-                <a href="{{ route('products.index') }}"
+                <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}"
                     class="hidden items-center gap-1.5 rounded-full border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-600 sm:inline-flex">
                     {{ app()->getLocale() === 'ka' ? 'ყველა მოდელი' : 'All Models' }}
                     <i class="fa-solid fa-arrow-right text-[11px]"></i>
@@ -266,7 +266,7 @@ $_homeSchema = [
                                 <div
                                     class="group w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.13)]">
 
-                                    <a href="{{ route('products.show', $product) }}" class="block">
+                                    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $product) }}" class="block">
                                         {{-- Image --}}
                                         <div class="relative aspect-square overflow-hidden rounded-t-2xl bg-gray-50">
                                             @if ($hasDiscount)
@@ -316,7 +316,7 @@ $_homeSchema = [
                                             || $availableVariants->contains(fn ($variant) => filled($variant->color_name));
                                     @endphp
                                     <div class="space-y-2 px-3.5 pb-3.5 lg:px-4 lg:pb-4">
-                                        <a href="{{ route('products.show', $product) }}"
+                                        <a href="{{ \App\Support\StorefrontUrl::route('products.show', $product) }}"
                                             class="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-[11px] font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600 sm:text-xs">
                                             <i class="fa-solid fa-circle-info text-[10px]"></i>
                                             {{ app()->getLocale() === 'ka' ? 'დეტალურად' : 'Details' }}
@@ -326,7 +326,7 @@ $_homeSchema = [
                                                 <button
                                                     type="button"
                                                     data-product-quick-review-trigger
-                                                    data-product-quick-review-url="{{ route('products.quick-review', $product) }}"
+                                                    data-product-quick-review-url="{{ \App\Support\StorefrontUrl::route('products.quick-review', $product) }}"
                                                     class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-[11px] font-semibold text-white transition-colors group-hover:bg-primary-600 sm:text-xs"
                                                 >
                                                     <i class="fa-solid fa-eye text-[10px]"></i>
@@ -367,7 +367,7 @@ $_homeSchema = [
             </div>
 
             <div class="mt-5 text-center sm:hidden" data-reveal="fade-up" data-reveal-delay="2">
-                <a href="{{ route('products.index') }}"
+                <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}"
                     class="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-primary-300 hover:text-primary-600">
                     {{ app()->getLocale() === 'ka' ? 'ყველა მოდელის ნახვა' : 'View All Models' }}
                     <i class="fa-solid fa-arrow-right text-[11px]"></i>
@@ -470,7 +470,7 @@ $_homeSchema = [
                             {{ app()->getLocale() === 'ka' ? 'კონსულტაციის მიღება' : 'Get Consultation' }}
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </a>
-                        <a href="{{ route('products.index') }}"
+                        <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}"
                             class="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/10">
                             {{ app()->getLocale() === 'ka' ? 'კატალოგის ნახვა' : 'Open Catalog' }}
                         </a>

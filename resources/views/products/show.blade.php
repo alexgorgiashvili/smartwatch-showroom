@@ -2,11 +2,11 @@
 
 @section('title', $product->meta_title ?? ($product->name . ' — MyTechnic'))
 @section('meta_description', $product->meta_description ?? $product->short_description ?? '')
-@section('canonical', url('/products/' . $product->slug))
+@section('canonical', \App\Support\StorefrontUrl::route('products.show', $product))
 @section('og_type', 'product')
 @section('og_title', $product->meta_title ?? $product->name)
 @section('og_description', $product->meta_description ?? $product->short_description ?? '')
-@section('og_url', url('/products/' . $product->slug))
+@section('og_url', \App\Support\StorefrontUrl::route('products.show', $product))
 @section('og_image', $product->primaryImage?->url ?? asset('images/og-default.webp'))
 @section('og_image_alt', $product->name)
 
@@ -26,13 +26,13 @@ $_breadcrumbSchema = [
             '@type' => 'ListItem',
             'position' => 2,
             'name' => app()->getLocale() === 'ka' ? 'ბავშვის სმარტ საათები' : 'Smartwatches',
-            'item' => url('/products'),
+            'item' => \App\Support\StorefrontUrl::route('products.index'),
         ],
         [
             '@type' => 'ListItem',
             'position' => 3,
             'name' => $product->name ?? '',
-            'item' => url('/products/' . ($product->slug ?? '')),
+            'item' => \App\Support\StorefrontUrl::route('products.show', $product),
         ],
     ],
 ];
@@ -79,7 +79,7 @@ $_productSchema = [
 if ($hasMultipleOffers) {
     $_productSchema['offers'] = [
         '@type' => 'AggregateOffer',
-        'url' => url('/products/' . ($product->slug ?? '')),
+        'url' => \App\Support\StorefrontUrl::route('products.show', $product),
         'priceCurrency' => $product->currency ?? 'GEL',
         'lowPrice' => (string) $variantPrices->min(),
         'highPrice' => (string) $variantPrices->max(),
@@ -89,7 +89,7 @@ if ($hasMultipleOffers) {
 } else {
     $_productSchema['offers'] = [
         '@type' => 'Offer',
-        'url' => url('/products/' . ($product->slug ?? '')),
+        'url' => \App\Support\StorefrontUrl::route('products.show', $product),
         'priceCurrency' => $product->currency ?? 'GEL',
         'price' => (string) ($product->sale_price ?? $product->price ?? '0'),
         'availability' => $availability,
@@ -229,7 +229,7 @@ if ($approvedReviews->count() > 0) {
                     </li>
                     <li><i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i></li>
                     <li>
-                        <a href="{{ route('products.index') }}" class="hover:text-primary-600">{{ __('ui.nav_catalog') }}</a>
+                        <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="hover:text-primary-600">{{ __('ui.nav_catalog') }}</a>
                     </li>
                     <li><i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i></li>
                     <li class="min-w-0 break-words text-gray-700">{{ $product->name }}</li>
@@ -569,7 +569,7 @@ if ($approvedReviews->count() > 0) {
                             >
                                 <i class="fa-solid fa-message text-xs"></i>{{ __('ui.form_submit') }}
                             </button>
-                            <a href="{{ route('products.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600">
+                            <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-400 hover:text-primary-600">
                                 <i class="fa-solid fa-arrow-left text-xs"></i>{{ __('ui.product_back') }}
                             </a>
                         </div>
@@ -623,7 +623,7 @@ if ($approvedReviews->count() > 0) {
                 <div class="mt-10">
                     <div class="mb-4 flex items-center justify-between">
                         <h2 class="text-xl font-bold text-gray-900">{{ __('storefront.products.related') }}</h2>
-                        <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('storefront.common.view_all') }}</a>
+                        <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('storefront.common.view_all') }}</a>
                     </div>
 
                     <div id="related-products-splide" class="splide" aria-label="Related products">
@@ -638,7 +638,7 @@ if ($approvedReviews->count() > 0) {
                                         $relatedCurrency = $related->currency === 'GEL' ? '₾' : $related->currency;
                                     @endphp
                                     <li class="splide__slide">
-                                        <a href="{{ route('products.show', $related) }}" class="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                                        <a href="{{ \App\Support\StorefrontUrl::route('products.show', $related) }}" class="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
                                             <div class="aspect-square overflow-hidden bg-gray-100">
                                                 <img src="{{ $relatedImage?->url ?: asset('storage/images/home/smart-watch3.jpg') }}" alt="{{ $related->name }}" class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
                                             </div>

@@ -27,7 +27,7 @@
                     <a href="{{ $retryUrl ?: route('checkout.index') }}" class="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
                         {{ __('storefront.payment.retry') }}
                     </a>
-                    <a href="{{ route('products.index') }}" class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600">
+                    <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:border-primary-400 hover:text-primary-600">
                         {{ __('storefront.payment.back_to_catalog') }}
                     </a>
                 </div>

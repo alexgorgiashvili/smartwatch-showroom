@@ -12,8 +12,14 @@ class SetLocale
     {
         $locale = $request->is('admin', 'admin/*')
             ? 'ka'
-            : $request->session()->get('locale', config('app.locale', 'ka'));
+            : ($request->is('en', 'en/*')
+                ? 'en'
+                : $request->session()->get('locale', config('app.locale', 'ka')));
         $locale = in_array($locale, ['ka', 'en'], true) ? $locale : 'ka';
+
+        if ($request->is('en', 'en/*')) {
+            $request->session()->put('locale', 'en');
+        }
 
         app()->setLocale($locale);
 

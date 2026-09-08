@@ -2,9 +2,9 @@
 
 @section('title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — ყველა მოდელი | MyTechnic' : 'Kids SIM Smartwatches — All Models in Georgia | MyTechnic')
 @section('meta_description', app()->getLocale() === 'ka' ? 'MyTechnic-ის ბავშვის SIM სმარტ საათების კატალოგი — 4G GPS, ბავშვთა უსაფრთხოება. ნახეთ ყველა მოდელი, ფასები, მახასიათებლები.' : 'Browse MyTechnic SIM smartwatch catalog — 4G GPS, child safety. All models, prices and specs.')
-@section('canonical', url('/products'))
+@section('canonical', \App\Support\StorefrontUrl::route('products.index'))
 @section('og_title', app()->getLocale() === 'ka' ? 'ბავშვის SIM სმარტ საათები — MyTechnic' : 'Kids SIM Smartwatches — MyTechnic')
-@section('og_url', url('/products'))
+@section('og_url', \App\Support\StorefrontUrl::route('products.index'))
 @section('og_image', asset('images/og-default.webp'))
 
 @section('header')
@@ -81,7 +81,7 @@
     <section class="bg-white overflow-hidden">
         <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 w-full">
             <div class="mx-auto mt-8 max-w-2xl w-full">
-                <form action="{{ route('products.index') }}" method="GET" class="flex gap-2">
+                <form action="{{ \App\Support\StorefrontUrl::route('products.index') }}" method="GET" class="flex gap-2">
                     <div class="relative flex-1">
                         <input
                             type="text"
@@ -104,7 +104,7 @@
                     </button>
                     @if ($search || $generation !== 'all')
                         <a
-                            href="{{ route('products.index') }}"
+                            href="{{ \App\Support\StorefrontUrl::route('products.index') }}"
                             data-products-reset
                             class="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
                             title="{{ __('ui.filter_reset') }}"
@@ -199,7 +199,7 @@
         const filterButtons = Array.from(document.querySelectorAll('[data-product-filter]'));
         const sortButtons = Array.from(document.querySelectorAll('[data-sort-option]'));
         const searchInput = document.querySelector('input[name="search"]');
-        const searchForm = document.querySelector('form[action="{{ route('products.index') }}"]');
+        const searchForm = document.querySelector('form[action="{{ \App\Support\StorefrontUrl::route('products.index') }}"]');
         const resetButton = document.querySelector('[data-products-reset]');
         const searchSubmitButton = document.querySelector('[data-search-submit]');
         const searchSpinner = document.querySelector('[data-search-spinner]');

@@ -70,7 +70,7 @@
                 }
 
                 $hasAvailableVariants = $availableVariants->isNotEmpty();
-                $detailsUrl = route('products.show', $product);
+                $detailsUrl = \App\Support\StorefrontUrl::route('products.show', $product);
 
                 $displayName = $displayType === 'variant' && $variantLabel
                     ? $product->name . ' - ' . $variantLabel
@@ -78,7 +78,7 @@
             @endphp
             <li>
                 <div class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
-                    <a href="{{ route('products.show', $product) }}" class="block">
+                    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $product) }}" class="block">
                         <div class="relative isolate overflow-hidden">
                             <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-2 sm:p-3">
                                 <div class="flex flex-wrap gap-1.5">
@@ -173,7 +173,7 @@
                                 <button
                                     type="button"
                                     data-product-quick-review-trigger
-                                    data-product-quick-review-url="{{ route('products.quick-review', $product) }}"
+                                    data-product-quick-review-url="{{ \App\Support\StorefrontUrl::route('products.quick-review', $product) }}"
                                     class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-primary-600"
                                 >
                                     <i class="fa-solid fa-eye text-[10px]"></i>

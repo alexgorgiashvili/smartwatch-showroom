@@ -6,7 +6,7 @@
         $hasDiscount = $salePrice !== null && $basePrice !== null && $salePrice < $basePrice;
     @endphp
 
-    <a href="{{ route('products.show', $product) }}" class="text-decoration-none">
+    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $product) }}" class="text-decoration-none">
         <div class="card h-100">
             @if ($image)
                 <img src="{{ $image->url }}" alt="{{ $image->alt ?? $product->name }}" loading="lazy" decoding="async" class="card-img-top" style="height: 240px; object-fit: cover;">

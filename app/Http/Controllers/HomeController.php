@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Support\StorefrontUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -44,6 +45,6 @@ class HomeController extends Controller
 
         $request->session()->put('locale', $locale);
 
-        return redirect()->to($request->headers->get('referer') ?: route('home'));
+        return redirect()->to(StorefrontUrl::switchLocaleUrl($locale, $request->headers->get('referer')));
     }
 }

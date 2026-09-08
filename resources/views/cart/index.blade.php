@@ -13,7 +13,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">{{ __('storefront.cart.title') }}</h1>
                     <p class="text-sm text-gray-500">{{ trans_choice('storefront.common.items_count', $cartCount, ['count' => $cartCount]) }}</p>
                 </div>
-                <a href="{{ route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
                     <i class="fa-solid fa-arrow-left mr-1 text-xs"></i>{{ __('storefront.cart.catalog') }}
                 </a>
             </div>
@@ -36,7 +36,7 @@
                     <i class="fa-solid fa-cart-shopping mb-4 text-4xl text-gray-300"></i>
                     <p class="text-lg font-semibold text-gray-800">{{ __('storefront.cart.empty_title') }}</p>
                     <p class="mt-1 text-sm text-gray-500">{{ __('storefront.cart.empty_text') }}</p>
-                    <a href="{{ route('products.index') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
+                    <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
                         <i class="fa-solid fa-shop text-xs"></i>{{ __('storefront.cart.view_products') }}
                     </a>
                 </div>
@@ -77,12 +77,12 @@
                                         <div class="divide-y divide-slate-100">
                                             @foreach($group['items'] as $item)
                                                 <div class="flex items-center gap-4 p-4">
-                                                    <a href="{{ route('products.show', $item['product']) }}" class="block flex-shrink-0">
+                                                    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $item['product']) }}" class="block flex-shrink-0">
                                                         <img src="{{ $item['image'] }}" alt="{{ $item['product']->name }}" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl border border-slate-100 object-cover">
                                                     </a>
                                                     <div class="min-w-0 flex-1">
                                                         <div class="flex flex-wrap items-center gap-2">
-                                                            <a href="{{ route('products.show', $item['product']) }}" class="truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
+                                                            <a href="{{ \App\Support\StorefrontUrl::route('products.show', $item['product']) }}" class="truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
                                                                 {{ $item['product']->name }}
                                                             </a>
                                                             <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon') }}</span>
@@ -141,7 +141,7 @@
                                 <div class="flex items-center gap-4 p-4 sm:p-5" data-cart-row data-variant-id="{{ $item['variant']->id }}">
 
                                     {{-- Product image --}}
-                                    <a href="{{ route('products.show', $item['product']) }}" class="block flex-shrink-0">
+                                    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $item['product']) }}" class="block flex-shrink-0">
                                         <img
                                             src="{{ $item['image'] }}"
                                             alt="{{ $item['product']->name }}"
@@ -153,7 +153,7 @@
 
                                     {{-- Name + variant + unit price --}}
                                     <div class="min-w-0 flex-1">
-                                        <a href="{{ route('products.show', $item['product']) }}" class="block truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
+                                        <a href="{{ \App\Support\StorefrontUrl::route('products.show', $item['product']) }}" class="block truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
                                             {{ $item['product']->name }}
                                         </a>
                                         <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-500">

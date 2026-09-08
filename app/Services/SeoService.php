@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Article;
+use App\Support\StorefrontUrl;
 
 class SeoService
 {
@@ -174,11 +175,11 @@ class SeoService
             ],
             [
                 'name' => $isKa ? 'პროდუქტები' : 'Products',
-                'url' => route('products.index'),
+                'url' => StorefrontUrl::route('products.index'),
             ],
             [
                 'name' => $product->name,
-                'url' => route('products.show', $product),
+                'url' => StorefrontUrl::route('products.show', $product),
             ],
         ];
     }

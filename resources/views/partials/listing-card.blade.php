@@ -17,10 +17,10 @@
     ]), 0, 3);
     $availableVariants = $product->variants->filter(fn ($variant) => $variant->available_quantity > 0)->values();
     $hasAvailableVariants = $availableVariants->isNotEmpty();
-    $detailsUrl = route('products.show', $product);
+    $detailsUrl = \App\Support\StorefrontUrl::route('products.show', $product);
 @endphp
 <div class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
-    <a href="{{ route('products.show', $product) }}" class="block">
+    <a href="{{ \App\Support\StorefrontUrl::route('products.show', $product) }}" class="block">
         <div class="relative isolate overflow-hidden">
             <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-2">
                 <div>@if($product->featured)<span class="rounded-full bg-slate-900/80 px-2 py-1 text-[10px] font-medium text-white">Featured</span>@endif</div>
@@ -55,7 +55,7 @@
                 <button
                     type="button"
                     data-product-quick-review-trigger
-                    data-product-quick-review-url="{{ route('products.quick-review', $product) }}"
+                    data-product-quick-review-url="{{ \App\Support\StorefrontUrl::route('products.quick-review', $product) }}"
                     class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
                 >
                     <i class="fa-solid fa-eye text-[10px]"></i>

@@ -37,7 +37,7 @@
             </a>
           </li>
           <li>
-            <a href="{{ route('products.index') }}" class="hover:text-white transition">
+            <a href="{{ \App\Support\StorefrontUrl::route('products.index') }}" class="hover:text-white transition">
               {{ __('ui.nav_catalog') }}
             </a>
           </li>
