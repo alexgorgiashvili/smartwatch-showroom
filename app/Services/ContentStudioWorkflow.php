@@ -42,7 +42,7 @@ class ContentStudioWorkflow
                 'fingerprint' => $fingerprint,
                 'payload' => $payload,
                 'evidence' => $evidence,
-                'validation' => $this->checklist($item->channel, $payload),
+                'validation' => $this->checklist($item->channel, $payload, $evidence),
                 'submitted_by_user_id' => $actor?->id,
                 'submitted_at' => now(),
             ]);
@@ -101,9 +101,9 @@ class ContentStudioWorkflow
         ContentAuditEvent::create(['content_item_id' => $item->id, 'content_revision_id' => $revision?->id, 'actor_id' => $actor?->id, 'event' => $event, 'from_status' => $from, 'to_status' => $to, 'metadata' => $metadata, 'occurred_at' => now()]);
     }
 
-    public function checklist(string $channel, array $payload): array
+    public function checklist(string $channel, array $payload, array $evidence = []): array
     {
-        $checks = ['evidence_attached' => !empty($payload['evidence'])];
+        $checks = ['evidence_attached' => !empty($evidence)];
         if ($channel === 'article') {
             foreach (['title_ka', 'title_en', 'excerpt_ka', 'excerpt_en', 'body_ka', 'body_en', 'meta_title_ka', 'meta_title_en', 'meta_description_ka', 'meta_description_en'] as $field) $checks[$field] = filled($payload[$field] ?? null);
             $checks['seo_ready'] = !in_array(false, [$checks['meta_title_ka'], $checks['meta_title_en'], $checks['meta_description_ka'], $checks['meta_description_en']], true);

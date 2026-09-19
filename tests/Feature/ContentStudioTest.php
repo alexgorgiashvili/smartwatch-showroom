@@ -26,7 +26,7 @@ class ContentStudioTest extends TestCase
         Sanctum::actingAs($agent, ['content-studio:submit']);
         $campaign = $this->postJson('/api/content-studio/campaigns', ['name' => 'Weekly', 'week_key' => '2026-W38', 'idempotency_key' => 'campaign-1'])->assertCreated()->json('campaign');
         $item = $this->postJson('/api/content-studio/campaigns/'.$campaign['id'].'/items', ['channel' => 'article', 'idempotency_key' => 'article-1'])->assertCreated()->json('item');
-        $this->postJson('/api/content-studio/items/'.$item['id'].'/revisions', ['payload' => $this->payload(), 'evidence' => ['sources' => ['https://example.test/source']]])->assertCreated();
+        $this->postJson('/api/content-studio/items/'.$item['id'].'/revisions', ['payload' => $this->payload(), 'evidence' => $this->evidence()])->assertCreated();
         $this->post('/admin/content-studio/'.$item['id'].'/approve-now')->assertRedirect(route('admin.login'));
     }
 
@@ -53,6 +53,26 @@ class ContentStudioTest extends TestCase
         $first->update(['revision_number' => 99]);
     }
 
+    public function test_revision_validation_marks_separate_evidence_as_attached(): void
+    {
+        $owner = User::factory()->create(['is_admin' => true]);
+        $campaign = ContentCampaign::create(['name' => 'Weekly', 'week_key' => '2026-W38', 'fingerprint' => hash('sha256', 'evidence-campaign')]);
+        $item = ContentItem::create(['campaign_id' => $campaign->id, 'channel' => 'article', 'fingerprint' => hash('sha256', 'evidence-item'), 'status' => 'generated']);
+
+        $revision = app(ContentStudioWorkflow::class)->submitRevision($item, $this->payload(), ['sources' => ['https://example.test/source']], $owner);
+
+        $this->assertTrue($revision->validation['evidence_attached']);
+    }
+
+    public function test_agent_intake_requires_generation_provenance(): void
+    {
+        Sanctum::actingAs(User::factory()->create(), ['content-studio:submit']);
+        $campaign = ContentCampaign::create(['name' => 'Weekly', 'week_key' => '2026-W38', 'fingerprint' => hash('sha256', 'provenance-campaign')]);
+        $item = ContentItem::create(['campaign_id' => $campaign->id, 'channel' => 'article', 'fingerprint' => hash('sha256', 'provenance-item'), 'status' => 'generated']);
+
+        $this->postJson('/api/content-studio/items/'.$item->id.'/revisions', ['payload' => $this->payload(), 'evidence' => ['sources' => ['https://example.test/source']]])->assertUnprocessable()->assertJsonValidationErrors(['evidence.generation', 'evidence.claim_verification']);
+    }
+
     public function test_instagram_requires_public_https_media(): void
     {
         Sanctum::actingAs(User::factory()->create(), ['content-studio:submit']);
@@ -71,5 +91,10 @@ class ContentStudioTest extends TestCase
         $workflow->submitRevision($item->fresh(), array_merge($this->payload(), ['title_en' => 'Changed']), [], $owner);
         $this->actingAs($owner)->get(route('admin.content-studio.index', ['status' => 'ready_for_owner', 'channel' => 'article']))->assertOk()->assertSee('Weekly');
         $this->actingAs($owner)->get(route('admin.content-studio.show', $item))->assertOk()->assertSee('ცვლილებების diff')->assertSee('Changed');
+    }
+
+    private function evidence(): array
+    {
+        return ['sources' => ['https://example.test/source'], 'generation' => ['provider' => 'chatgpt_browser', 'model' => 'ChatGPT browser', 'generated_at' => now()->toIso8601String()], 'claim_verification' => 'Verified against the supplied source.'];
     }
 }

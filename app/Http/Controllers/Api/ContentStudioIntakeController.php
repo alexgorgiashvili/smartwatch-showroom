@@ -42,10 +42,20 @@ class ContentStudioIntakeController extends Controller
 
     public function storeRevision(Request $request, ContentItem $item): JsonResponse
     {
-        $payload = $request->validate(['payload' => ['required', 'array'], 'evidence' => ['nullable', 'array']])['payload'];
+        $data = $request->validate([
+            'payload' => ['required', 'array'],
+            'evidence' => ['required', 'array', 'min:1'],
+            'evidence.sources' => ['required', 'array', 'min:1'],
+            'evidence.generation' => ['required', 'array'],
+            'evidence.generation.provider' => ['required', Rule::in(['chatgpt_browser', 'codex_fallback'])],
+            'evidence.generation.model' => ['required', 'string', 'max:120'],
+            'evidence.generation.generated_at' => ['required', 'date'],
+            'evidence.claim_verification' => ['required', 'string', 'max:2000'],
+        ]);
+        $payload = $data['payload'];
         $this->validatePayload($item->channel, $payload);
         if (isset($payload['media_url'])) $this->media->validatePublicUrl($payload['media_url'], $item->channel);
-        $revision = $this->workflow->submitRevision($item, $payload, $request->input('evidence', []), $request->user());
+        $revision = $this->workflow->submitRevision($item, $payload, $data['evidence'], $request->user());
         return response()->json(['revision' => $revision, 'item' => $item->fresh()], 201);
     }
 
