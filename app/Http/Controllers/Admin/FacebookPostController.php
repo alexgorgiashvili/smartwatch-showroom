@@ -10,6 +10,7 @@ use App\Services\AiPostGeneratorService;
 use App\Services\Chatbot\ModelCompletionService;
 use App\Services\FacebookPageService;
 use App\Services\InstagramPageService;
+use App\Services\SocialPostPublisher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class FacebookPostController extends Controller
         private FacebookPageService $facebookService,
         private InstagramPageService $instagramService,
         private AiPostGeneratorService $aiService,
+        private SocialPostPublisher $publisher,
     ) {}
 
     private function resolveAuthorId(Request $request): int
@@ -350,81 +352,6 @@ class FacebookPostController extends Controller
 
     private function publishPost(FacebookPost $post, Request $request = null)
     {
-        $errors = [];
-        $successes = [];
-        $fbPostId = $post->facebook_post_id;
-        $igPostId = $post->instagram_post_id;
-        $mediaType = $post->media_type ?: ($post->video_url ? 'video' : ($post->image_url ? 'image' : 'none'));
-
-        // Publish to Facebook
-        if ($post->post_to_facebook) {
-            if (!$this->facebookService->isConfigured()) {
-                $errors[] = 'Facebook API არ არის კონფიგურირებული';
-            } else {
-                $post->forceFill(['facebook_publish_status' => 'publishing'])->save();
-
-                $fbResult = $this->facebookService->publishPost(
-                    $post->message,
-                    $mediaType === 'image' ? $post->image_url : null,
-                    $mediaType === 'video' ? $post->video_url : null,
-                );
-                if ($fbResult['success']) {
-                    $fbPostId = $fbResult['post_id'];
-                    $successes[] = 'Facebook';
-                    $post->forceFill([
-                        'facebook_post_id' => $fbPostId,
-                        'facebook_publish_status' => 'published',
-                        'facebook_error' => null,
-                    ])->save();
-                } else {
-                    $errors[] = 'Facebook: ' . $fbResult['error'];
-                    $post->forceFill([
-                        'facebook_publish_status' => 'failed',
-                        'facebook_error' => $fbResult['error'],
-                    ])->save();
-                }
-            }
-        }
-
-        // Publish to Instagram
-        if ($post->post_to_instagram) {
-            if (!$this->instagramService->isConfigured()) {
-                $errors[] = 'Instagram API არ არის კონფიგურირებული (INSTAGRAM_BUSINESS_ACCOUNT_ID)';
-            } elseif ($mediaType === 'none') {
-                $errors[] = 'Instagram-ისთვის სურათი ან ვიდეო აუცილებელია';
-            } else {
-                $post->forceFill(['instagram_publish_status' => 'publishing'])->save();
-
-                $mediaUrl = $mediaType === 'video' ? $post->video_url : $post->image_url;
-                $igResult = $this->instagramService->publishPost($post->message, (string) $mediaUrl, $mediaType);
-
-                if ($igResult['success']) {
-                    $igPostId = $igResult['post_id'];
-                    $successes[] = 'Instagram';
-                    $post->forceFill([
-                        'instagram_post_id' => $igPostId,
-                        'instagram_container_id' => $igResult['container_id'] ?? null,
-                        'instagram_publish_status' => 'published',
-                        'instagram_error' => null,
-                    ])->save();
-                } else {
-                    $isRetryable = !empty($igResult['retryable']);
-
-                    $post->forceFill([
-                        'instagram_container_id' => $igResult['container_id'] ?? null,
-                        'instagram_publish_status' => $isRetryable ? 'publishing' : 'failed',
-                        'instagram_error' => $isRetryable ? null : ($igResult['error'] ?? 'Instagram publish failed'),
-                    ])->save();
-
-                    if ($isRetryable) {
-                        $successes[] = 'Instagram (processing)';
-                    } else {
-                        $errors[] = 'Instagram: ' . ($igResult['error'] ?? 'Publish failed');
-                    }
-                }
-            }
-        }
-
         if (!$post->post_to_facebook && !$post->post_to_instagram) {
             if ($request && $request->wantsJson()) {
                 return response()->json(['success' => false, 'error' => 'აირჩიეთ მინიმუმ ერთი პლატფორმა']);
@@ -433,53 +360,9 @@ class FacebookPostController extends Controller
                 ->route('admin.facebook-posts.index')
                 ->with('error', 'აირჩიეთ მინიმუმ ერთი პლატფორმა');
         }
-
-        $post->refresh();
-
-        $hasAnyPlatformProgress = ($post->facebook_publish_status === 'published')
-            || ($post->instagram_publish_status === 'published')
-            || ($post->instagram_publish_status === 'publishing');
-
-        if ($hasAnyPlatformProgress) {
-            $post->update([
-                'status' => 'published',
-                'facebook_post_id' => $fbPostId,
-                'instagram_post_id' => $igPostId,
-                'published_at' => $post->published_at ?: now(),
-                'error_message' => !empty($errors) ? implode('; ', $errors) : null,
-                'last_publish_check_at' => now(),
-            ]);
-
-            $msg = implode(' & ', $successes) . '-ზე წარმატებით გამოქვეყნდა!';
-            if (!empty($errors)) {
-                $msg .= ' (შეცდომა: ' . implode('; ', $errors) . ')';
-            }
-
-            if ($request && $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $msg,
-                    'redirect' => route('admin.facebook-posts.index')
-                ]);
-            }
-
-            return redirect()
-                ->route('admin.facebook-posts.index')
-                ->with('success', $msg);
-        }
-
-        $post->update([
-            'status' => 'failed',
-            'error_message' => implode('; ', $errors),
-            'last_publish_check_at' => now(),
-        ]);
-
-        if ($request && $request->wantsJson()) {
-            return response()->json(['success' => false, 'error' => 'გამოქვეყნება ვერ მოხერხდა: ' . implode('; ', $errors)]);
-        }
-
-        return redirect()
-            ->route('admin.facebook-posts.index')
-            ->with('error', 'გამოქვეყნება ვერ მოხერხდა: ' . implode('; ', $errors));
+        $result = $this->publisher->publish($post);
+        $message = $result['success'] ? 'პოსტი გამოქვეყნდა: '.implode(', ', $result['successes']) : 'გამოქვეყნება ვერ მოხერხდა: '.implode('; ', $result['errors']);
+        if ($request && $request->wantsJson()) return response()->json(['success' => $result['success'], $result['success'] ? 'message' : 'error' => $message, 'redirect' => route('admin.facebook-posts.index')], $result['success'] ? 200 : 422);
+        return redirect()->route('admin.facebook-posts.index')->with($result['success'] ? 'success' : 'error', $message);
     }
 }

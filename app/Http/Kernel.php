@@ -71,5 +71,7 @@ class Kernel extends HttpKernel
         'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
         'webhook.meta' => \App\Http\Middleware\VerifyMetaWebhookSignature::class,
         'validate.inbox' => \App\Http\Middleware\ValidateInboxInput::class,
+        'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+        'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
     ];
 }

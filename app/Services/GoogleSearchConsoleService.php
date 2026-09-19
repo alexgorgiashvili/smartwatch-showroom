@@ -20,6 +20,10 @@ class GoogleSearchConsoleService
     private function initializeClient(): void
     {
         try {
+            if (!class_exists(Client::class) || !class_exists(SearchConsole::class)) {
+                Log::notice('Google Search Console client dependency is not installed.');
+                return;
+            }
             $credentialsPath = config('services.google.search_console_credentials');
             
             if (!$credentialsPath || !file_exists($credentialsPath)) {
@@ -34,7 +38,7 @@ class GoogleSearchConsoleService
 
             $this->service = new SearchConsole($this->client);
         } catch (\Exception $e) {
-            Log::error('Failed to initialize Google Search Console client: ' . $e->getMessage());
+            Log::error('Failed to initialize Google Search Console client.');
         }
     }
 
@@ -59,15 +63,22 @@ class GoogleSearchConsoleService
 
                 $response = $this->service->searchanalytics->query($siteUrl, $request);
 
+                $rows = collect($response->getRows() ?? [])->map(fn ($row) => [
+                    'keys' => $row->getKeys() ?? [],
+                    'clicks' => (float) ($row->getClicks() ?? 0),
+                    'impressions' => (float) ($row->getImpressions() ?? 0),
+                    'ctr' => (float) ($row->getCtr() ?? 0),
+                    'position' => (float) ($row->getPosition() ?? 0),
+                ])->values();
                 return [
-                    'rows' => $response->getRows() ?? [],
-                    'total_clicks' => collect($response->getRows())->sum('clicks'),
-                    'total_impressions' => collect($response->getRows())->sum('impressions'),
-                    'average_ctr' => collect($response->getRows())->avg('ctr'),
-                    'average_position' => collect($response->getRows())->avg('position'),
+                    'rows' => $rows->all(),
+                    'total_clicks' => $rows->sum('clicks'),
+                    'total_impressions' => $rows->sum('impressions'),
+                    'average_ctr' => $rows->avg('ctr'),
+                    'average_position' => $rows->avg('position'),
                 ];
             } catch (\Exception $e) {
-                Log::error('GSC Search Analytics error: ' . $e->getMessage());
+                Log::error('GSC Search Analytics request failed.');
                 return null;
             }
         });
@@ -101,7 +112,7 @@ class GoogleSearchConsoleService
                 ])
                 ->toArray();
         } catch (\Exception $e) {
-            Log::error('GSC Top Queries error: ' . $e->getMessage());
+            Log::error('GSC Top Queries request failed.');
             return [];
         }
     }
@@ -133,34 +144,10 @@ class GoogleSearchConsoleService
                         ->toArray(),
                 ];
             } catch (\Exception $e) {
-                Log::error('GSC Indexing Status error: ' . $e->getMessage());
+            Log::error('GSC Indexing Status request failed.');
                 return null;
             }
         });
-    }
-
-    /**
-     * Submit URL for indexing
-     */
-    public function submitUrl(string $url): bool
-    {
-        if (!$this->service) {
-            return false;
-        }
-
-        try {
-            $urlNotification = new SearchConsole\UrlNotification();
-            $urlNotification->setUrl($url);
-            $urlNotification->setType('URL_UPDATED');
-
-            $this->service->urlNotifications->publish($urlNotification);
-            
-            Log::info("URL submitted to GSC: {$url}");
-            return true;
-        } catch (\Exception $e) {
-            Log::error("GSC URL submission error for {$url}: " . $e->getMessage());
-            return false;
-        }
     }
 
     /**

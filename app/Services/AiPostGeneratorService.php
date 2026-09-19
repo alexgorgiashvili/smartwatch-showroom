@@ -15,12 +15,12 @@ class AiPostGeneratorService
 
     public function __construct()
     {
-        $this->apiKey = config('services.openai.key');
+        $this->apiKey = (string) config('services.openai.key', '');
         // Use a fast model for initial generation
-        $this->generationModel = config('services.openai.model', 'gpt-4o-mini');
+        $this->generationModel = (string) config('services.openai.model', 'gpt-4o-mini');
         // Use a stronger model for linguistic review
-        $this->reviewModel = config('services.openai.review_model', 'gpt-4o');
-        $this->baseUrl = config('services.openai.base_url', 'https://api.openai.com/v1');
+        $this->reviewModel = (string) config('services.openai.review_model', 'gpt-4o');
+        $this->baseUrl = (string) config('services.openai.base_url', 'https://api.openai.com/v1');
     }
 
     /**
