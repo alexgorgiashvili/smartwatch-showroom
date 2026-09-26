@@ -1,5 +1,11 @@
 # Website chatbot: conversation-based upgrade
 
+## Owner-directed widget model switch, 2026-09-26
+
+The owner explicitly directed switching the website widget to `gpt-6-luna` without further comparative evaluation. This supersedes the model-comparison and staged-percentage gates below for this release; those sections remain as the original evaluation plan and describe the evidence that is still missing. Set `CHATBOT_WIDGET_V2_PERCENT=100` only for the website widget. Keep `CHATBOT_SUPERVISOR_MODEL=gpt-4.1-mini` for Messenger, Instagram, WhatsApp, and other omnichannel callers. Do not run shared RAG policy sync or production migrations as part of the model switch. Monitor widget provider failures, fallback and validator rates, p95 latency, and spend. Roll back the widget by setting its percentage to zero and rebuilding the existing config cache.
+
+The 120-pair model-only comparison found lower Luna generation cost and p95 latency, but it did not establish end-to-end quality, full cost per successful answer, or zero critical unsupported claims. The owner accepted that uncertainty for this switch. Do not report the candidate as having met the original quality gates.
+
 ## Scope and release state
 
 The website widget keeps its existing `/chatbot` request and response contract. `CHATBOT_WIDGET_V2_PERCENT=0` is the safe default. The candidate cohort alone receives the versioned policy context and `CHATBOT_WIDGET_V2_MODEL`; Messenger, Instagram, and WhatsApp continue to use `CHATBOT_SUPERVISOR_MODEL`. No production DB migration, policy sync, Meta permission change, or deployment is part of this local package.
