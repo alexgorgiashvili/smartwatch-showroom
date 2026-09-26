@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('messages', function (Blueprint $table) {
             // Modify the sender_type enum to include 'bot'
             DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin', 'bot')");
@@ -22,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('messages', function (Blueprint $table) {
             // Revert to original enum values
             DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin')");

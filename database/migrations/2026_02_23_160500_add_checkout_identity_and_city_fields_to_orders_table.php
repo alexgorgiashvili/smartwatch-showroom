@@ -22,12 +22,12 @@ return new class extends Migration
         });
 
         // Add FK separately (cities table is guaranteed to exist via earlier migration)
-        $hasFk = DB::select("
+        $hasFk = DB::getDriverName() === 'mysql' ? DB::select("
             SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'
             AND CONSTRAINT_NAME = 'orders_city_id_foreign'
-        ");
-        if (empty($hasFk)) {
+        ") : [];
+        if (DB::getDriverName() === 'mysql' && empty($hasFk)) {
             Schema::table('orders', function (Blueprint $table) {
                 $table->foreign('city_id')->references('id')->on('cities')->nullOnDelete();
             });

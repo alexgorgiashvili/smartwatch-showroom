@@ -80,12 +80,14 @@ class ModelCompletionService
             $toolCalls = data_get($message, 'tool_calls', []);
 
             if ($reply === '' && empty($toolCalls)) {
+                $emptyUsage = data_get($response->json(), 'usage', []);
+                $emptyUsage = is_array($emptyUsage) ? $emptyUsage : [];
                 $this->langfuse()->recordGeneration(
                     $langfuseName,
                     $model,
                     $messages,
                     '',
-                    data_get($response->json(), 'usage', []),
+                    $emptyUsage,
                     array_merge($langfuseMetadata, [
                         'provider' => 'openai',
                         'reason' => ChatbotOutcomeReason::EMPTY_MODEL_OUTPUT,
@@ -98,7 +100,8 @@ class ModelCompletionService
                 return [
                     'reply' => '',
                     'reason' => ChatbotOutcomeReason::EMPTY_MODEL_OUTPUT,
-                    'usage' => [],
+                    'usage' => $emptyUsage,
+                    'estimated_cost_usd' => $this->estimateCostUsd($model, $emptyUsage),
                 ];
             }
 

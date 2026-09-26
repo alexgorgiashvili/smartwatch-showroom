@@ -111,10 +111,6 @@ class ChatPipelineService
         }
 
         $validationPassed = (bool) ($supervisorResult['validation_passed'] ?? false);
-        if ($supervisorResult['success'] ?? false) {
-            $memory->appendMessage($conversation->id, 'assistant', (string) ($supervisorResult['response'] ?? ''));
-        }
-
         $agentResponse = (string) ($supervisorResult['response'] ?? '');
         $agentReason = $supervisorResult['reason'] ?? null;
 
@@ -137,16 +133,34 @@ class ChatPipelineService
             $agentReason = ChatbotOutcomeReason::STRICT_GEORGIAN;
         }
 
+        $validationContext = $supervisorResult['validation_context'] ?? ['products' => []];
+        $violations = $supervisorResult['violations'] ?? [];
+        if (($validationContext['require_live_catalog_evidence'] ?? false) && $agentReason === null) {
+            $validator = app(ResponseValidatorService::class);
+            $priceCheck = $validator->validatePriceIntegrity($agentResponse, $validationContext);
+            $stockCheck = $validator->validateStockClaims($agentResponse, $validationContext);
+            if (!$priceCheck->isValid() || !$stockCheck->isValid()) {
+                $violations = array_merge($violations, $priceCheck->violations(), $stockCheck->violations());
+                $agentResponse = $validator->integrityFallback();
+                $agentReason = ChatbotOutcomeReason::VALIDATOR_FAILED;
+                $validationPassed = false;
+            }
+        }
+
+        if ($supervisorResult['success'] ?? false) {
+            $memory->appendMessage($conversation->id, 'assistant', $agentResponse);
+        }
+
         return new PipelineResult(
             $agentResponse,
             $conversation->id,
             '',
             $intentResult,
-            $supervisorResult['validation_context'] ?? ['products' => []],
+            $validationContext,
             true,
             null,
-            (bool) ($supervisorResult['validation_passed'] ?? false),
-            $supervisorResult['violations'] ?? [],
+            $validationPassed,
+            $violations,
             $localePassed,
             0,
             $agentReason,

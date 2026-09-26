@@ -16,7 +16,15 @@ class ResponseValidatorService
         $allowedPrices = $this->collectAllowedPrices($ragContext);
 
         if ($allowedPrices === []) {
-            return ValidationResult::pass();
+            if (!($ragContext['require_live_catalog_evidence'] ?? false)) {
+                return ValidationResult::pass();
+            }
+
+            $unverifiedPrices = array_values(array_diff($mentionedPrices, $budgetPrices));
+
+            return $unverifiedPrices === []
+                ? ValidationResult::pass()
+                : ValidationResult::fail([['type' => 'price_without_live_catalog']]);
         }
 
         $violations = [];
@@ -34,7 +42,8 @@ class ResponseValidatorService
                 return abs($mentionedPrice - $allowedPrice) <= $tolerance;
             });
 
-            if (!$matchesKnown && $this->isWithinReasonableCatalogRange($mentionedPrice, $minAllowed, $maxAllowed)) {
+            if (!$matchesKnown && !($ragContext['require_live_catalog_evidence'] ?? false)
+                && $this->isWithinReasonableCatalogRange($mentionedPrice, $minAllowed, $maxAllowed)) {
                 continue;
             }
 
@@ -55,7 +64,14 @@ class ResponseValidatorService
         $products = $ragContext['products'] ?? [];
 
         if (!is_array($products) || $products === []) {
-            return ValidationResult::pass();
+            $catalogIntent = (string) ($ragContext['catalog_intent'] ?? '');
+            $needsEvidence = ($ragContext['require_live_catalog_evidence'] ?? false)
+                && in_array($catalogIntent, ['price_query', 'stock_query', 'recommendation', 'comparison'], true);
+            $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|\bin stock\b|\bout of stock\b/iu', $normalized) === 1;
+
+            return $needsEvidence && $claimsStock
+                ? ValidationResult::fail([['type' => 'stock_without_live_catalog']])
+                : ValidationResult::pass();
         }
 
         $hasInStock = collect($products)->contains(fn (array $product): bool => (bool) ($product['is_in_stock'] ?? false));
@@ -292,7 +308,8 @@ class ResponseValidatorService
     {
         $results = [];
 
-        if ($this->shouldEnforceStrictPriceIntegrity($intentResult)) {
+        if (($ragContext['require_live_catalog_evidence'] ?? false)
+            || $this->shouldEnforceStrictPriceIntegrity($intentResult)) {
             $results[] = $this->validatePriceIntegrity($response, $ragContext);
         }
 
@@ -544,4 +561,3 @@ class ResponseValidatorService
         return !$intentResult->mentionsTwoGCatalog() && !$intentResult->mentionsFourGCatalog();
     }
 }
-

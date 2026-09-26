@@ -48,7 +48,11 @@ class GeneralAgent
         $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
 
         $contactSettings = \App\Models\ContactSetting::allKeyed();
-        $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
+        $validationContext = $this->withWidgetValidationGuard(
+            $this->productContext->buildValidationContext($selectedProducts, $contactSettings),
+            $runtime,
+            $intent->intent()
+        );
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'ზოგადი რეჟიმი: მიეცი მომხმარებელს სასარგებლო, ბუნებრივი პასუხები. ფოკუსირდი მომხმარებლის საჭიროებების გაგებაზე და პერსონალიზებულ რეკომენდაციებზე. შეინარჩუნე პირველი პირის, customer-facing ტონი და მოერიდე მესამე პირს.';

@@ -8,6 +8,40 @@ use Tests\TestCase;
 
 class ResponseValidatorServiceTest extends TestCase
 {
+    public function testWidgetV2RejectsPriceWithoutLiveCatalogEvidence(): void
+    {
+        $service = new ResponseValidatorService();
+        $context = ['products' => [], 'require_live_catalog_evidence' => true];
+
+        $result = $service->validatePriceIntegrity('ეს მოდელი ღირს 199 ₾.', $context);
+        $this->assertFalse($result->isValid());
+        $this->assertSame('price_without_live_catalog', $result->violations()[0]['type']);
+
+        $budget = $service->validatePriceIntegrity('თქვენი ბიუჯეტი 200 ლარამდეა.', $context);
+        $this->assertTrue($budget->isValid());
+    }
+
+    public function testWidgetV2RejectsUnsupportedStockAndInexactCatalogPrice(): void
+    {
+        $service = new ResponseValidatorService();
+        $empty = [
+            'products' => [],
+            'require_live_catalog_evidence' => true,
+            'catalog_intent' => 'stock_query',
+        ];
+
+        $stock = $service->validateStockClaims('ეს საათი მარაგშია.', $empty);
+        $this->assertFalse($stock->isValid());
+        $this->assertSame('stock_without_live_catalog', $stock->violations()[0]['type']);
+
+        $priced = $service->validatePriceIntegrity('საათი ღირს 150 ₾.', [
+            'products' => [['price' => 100], ['price' => 200]],
+            'require_live_catalog_evidence' => true,
+        ]);
+        $this->assertFalse($priced->isValid());
+        $this->assertSame('price_mismatch', $priced->violations()[0]['type']);
+    }
+
     public function testBudgetPhraseDoesNotTriggerPriceMismatch(): void
     {
         $service = new ResponseValidatorService();

@@ -10,7 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         // Extend status enum to include 'scheduled'
-        DB::statement("ALTER TABLE facebook_posts MODIFY COLUMN status ENUM('draft','scheduled','published','failed') NOT NULL DEFAULT 'draft'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE facebook_posts MODIFY COLUMN status ENUM('draft','scheduled','published','failed') NOT NULL DEFAULT 'draft'");
+        }
 
         Schema::table('facebook_posts', function (Blueprint $table) {
             $table->timestamp('scheduled_at')->nullable()->after('published_at');
@@ -37,6 +39,8 @@ return new class extends Migration
             ]);
         });
 
-        DB::statement("ALTER TABLE facebook_posts MODIFY COLUMN status ENUM('draft','published','failed') NOT NULL DEFAULT 'draft'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE facebook_posts MODIFY COLUMN status ENUM('draft','published','failed') NOT NULL DEFAULT 'draft'");
+        }
     }
 };

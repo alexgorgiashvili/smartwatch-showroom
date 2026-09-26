@@ -19,7 +19,11 @@ return new class extends Migration
             $table->foreignId('customer_id')
                 ->constrained('customers')
                 ->onDelete('cascade');
-            $table->enum('sender_type', ['customer', 'admin'])->index();
+            if (DB::getDriverName() === 'sqlite') {
+                $table->string('sender_type')->index();
+            } else {
+                $table->enum('sender_type', ['customer', 'admin'])->index();
+            }
             $table->unsignedBigInteger('sender_id')->comment('Admin user_id if sender_type=admin, customer_id if sender_type=customer');
             $table->string('sender_name')->index();
             $table->longText('content');

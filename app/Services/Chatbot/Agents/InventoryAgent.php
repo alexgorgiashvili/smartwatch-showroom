@@ -48,7 +48,11 @@ class InventoryAgent
         $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
 
         $contactSettings = \App\Models\ContactSetting::allKeyed();
-        $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
+        $validationContext = $this->withWidgetValidationGuard(
+            $this->productContext->buildValidationContext($selectedProducts, $contactSettings),
+            $runtime,
+            $intent->intent()
+        );
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'ინვენტარის რეჟიმი: უპასუხე ზუსტად ფასზე, მარაგზე და ხელმისაწვდომობაზე. არ მოიგონო ინფორმაცია, რომელიც კონტექსტში არ ჩანს.';

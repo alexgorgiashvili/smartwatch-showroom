@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('conversations', function (Blueprint $table) {
             // Modify the platform enum to include 'messenger'
             // Using raw SQL as Laravel doesn't have a clean way to modify enums in PostgreSQL
@@ -23,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('conversations', function (Blueprint $table) {
             DB::statement("ALTER TABLE conversations MODIFY COLUMN platform ENUM('facebook', 'instagram', 'whatsapp')");
         });

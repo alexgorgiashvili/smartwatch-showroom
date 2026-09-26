@@ -48,7 +48,11 @@ class ComparisonAgent
         $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
 
         $contactSettings = \App\Models\ContactSetting::allKeyed();
-        $validationContext = $this->productContext->buildValidationContext($selectedProducts, $contactSettings);
+        $validationContext = $this->withWidgetValidationGuard(
+            $this->productContext->buildValidationContext($selectedProducts, $contactSettings),
+            $runtime,
+            $intent->intent()
+        );
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'შედარების რეჟიმი: გააკეთე დეტალური შედარება პროდუქტებს შორის. გამოკვეთე მთავარი განსხვავებები ფუნქციებში, ფასში და სხვადასხვა გამოყენების შემთხვევისთვის შესაბამისობაში.';

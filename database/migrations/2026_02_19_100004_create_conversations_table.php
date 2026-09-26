@@ -14,7 +14,11 @@ return new class extends Migration
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->enum('platform', ['facebook', 'instagram', 'whatsapp'])->index();
+            if (DB::getDriverName() === 'sqlite') {
+                $table->string('platform')->index();
+            } else {
+                $table->enum('platform', ['facebook', 'instagram', 'whatsapp'])->index();
+            }
             $table->string('platform_conversation_id')->unique()->index();
             $table->string('subject')->nullable();
             $table->enum('status', ['active', 'archived', 'closed'])->default('active')->index();

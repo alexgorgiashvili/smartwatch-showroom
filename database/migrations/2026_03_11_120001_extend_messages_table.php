@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin', 'bot', 'system') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin', 'bot', 'system') NOT NULL");
+        }
         
         Schema::table('messages', function (Blueprint $table) {
             $table->foreignId('reply_to_id')
@@ -36,6 +38,8 @@ return new class extends Migration
             $table->dropColumn(['reply_to_id', 'delivery_status']);
         });
         
-        DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE messages MODIFY COLUMN sender_type ENUM('customer', 'admin') NOT NULL");
+        }
     }
 };
