@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
 
 class GeneralAgent
 {
+    use UsesVerifiedWidgetKnowledge;
+
     public function __construct(
         private ProductContextService $productContext,
         private PromptBuilderService $promptBuilder,
@@ -35,7 +37,8 @@ class GeneralAgent
         Collection $products,
         array $sessionContext,
         array $preferences,
-        array $trace = []
+        array $trace = [],
+        array $runtime = []
     ): array {
         $this->traceWidget('general_agent.started', [
             'intent' => $intent->intent(),
@@ -51,6 +54,8 @@ class GeneralAgent
         $modeInstruction = 'ზოგადი რეჟიმი: მიეცი მომხმარებელს სასარგებლო, ბუნებრივი პასუხები. ფოკუსირდი მომხმარებლის საჭიროებების გაგებაზე და პერსონალიზებულ რეკომენდაციებზე. შეინარჩუნე პირველი პირის, customer-facing ტონი და მოერიდე მესამე პირს.';
         $modeInstruction .= ' როცა მოდელებს ან ვარიანტებს სთავაზობ, გამოიყენე „შემოგთავაზოთ" და არა „გთავაზოთ".';
         $systemPrompt .= "\n\n" . $modeInstruction;
+        $systemPrompt = $this->withVerifiedWidgetKnowledge($systemPrompt, $runtime);
+        $model = (string) ($runtime['model'] ?? config('chatbot.supervisor.model', 'gpt-4.1-mini'));
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -99,13 +104,13 @@ class GeneralAgent
         ], fn ($value) => $value !== null), $trace);
 
         $this->traceWidget('general_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            'model' => $model,
             'message_count' => count($messages),
             'has_summary' => isset($sessionContext['summary']),
         ], $trace);
 
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            $model,
             $messages,
             [
                 'max_tokens' => 300,

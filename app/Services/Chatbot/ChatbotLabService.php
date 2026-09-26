@@ -24,6 +24,7 @@ class ChatbotLabService
     public function runManualTest(string $prompt, string $previousPrompts = '', $conversationId = null, bool $continueSession = false)
     {
         try {
+            $startedAt = hrtime(true);
             if ($conversationId && $continueSession) {
                 $conversation = \App\Models\Conversation::findOrFail($conversationId);
             } else {
@@ -65,6 +66,8 @@ class ChatbotLabService
                 app(ChatbotFallbackStrategyService::class)
             );
             $response = $pipelineResult->response();
+            $intent = $pipelineResult->intentResult();
+            $responseTimeMs = max(1, (int) round((hrtime(true) - $startedAt) / 1_000_000));
 
             \App\Models\Message::create([
                 'conversation_id' => $conversation->id,
@@ -83,12 +86,27 @@ class ChatbotLabService
                 'success' => true,
                 'response' => $response ?? 'No response generated',
                 'session' => $continueSession ? ['conversation_id' => $conversation->id] : [],
-                'metadata' => [],
+                'metadata' => [
+                    'response_time_ms' => $responseTimeMs,
+                    'rag_context_text' => $pipelineResult->ragContextText(),
+                    'fallback_reason' => $pipelineResult->fallbackReason(),
+                    'validation_passed' => $pipelineResult->validationPassed(),
+                    'georgian_passed' => $pipelineResult->georgianPassed(),
+                    'regeneration_attempted' => $pipelineResult->regenerationAttempted(),
+                    'regeneration_succeeded' => $pipelineResult->regenerationSucceeded(),
+                    'intent' => $intent ? [
+                        'type' => $intent->intent(),
+                        'confidence' => $intent->confidence(),
+                        'latency_ms' => $intent->latencyMs(),
+                        'standalone_query' => $intent->standaloneQuery(),
+                        'product_slug_hint' => $intent->productSlugHint(),
+                        'fallback' => $intent->isFallback(),
+                    ] : null,
+                ],
             ];
         } catch (\Exception $e) {
             Log::error('ChatbotLabService manual test failed', [
-                'error' => $e->getMessage(),
-                'prompt' => $prompt,
+                'exception_class' => $e::class,
             ]);
 
             return [

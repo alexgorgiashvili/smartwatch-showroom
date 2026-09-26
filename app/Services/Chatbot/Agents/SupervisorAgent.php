@@ -12,6 +12,8 @@ use App\Services\Chatbot\ParallelExecutionService;
 use App\Services\Chatbot\SmartSearchOrchestrator;
 use App\Services\Chatbot\BifurcatedMemoryService;
 use App\Services\Chatbot\WidgetTraceLogger;
+use App\Services\Chatbot\WidgetKnowledgeService;
+use App\Services\Chatbot\WidgetModelSelector;
 use Illuminate\Support\Collection;
 
 class SupervisorAgent
@@ -43,12 +45,31 @@ class SupervisorAgent
         array $trace = [],
         string $executionMode = 'single_agent'
     ): array {
+        $runtime = $this->runtimeFor($conversationId, $message, $intent, $trace);
+        $cacheContext = [
+            'channel' => $runtime['channel'],
+            'model' => $runtime['model'],
+            'knowledge_version' => $runtime['knowledge_version'],
+            'catalog_version' => (string) config('chatbot.caching.catalog_version', 'v1'),
+        ];
+        if ($runtime['cohort'] === 'v2') {
+            $cacheContext['conversation_id'] = $conversationId;
+        }
+        $dynamicCatalogQuestion = $intent->requiresSearch()
+            || in_array($intent->intent(), ['price_query', 'stock_query'], true)
+            || preg_match('/ფას|ღირს|მარაგ|გაქვთ|ხელმისაწვდომ|price|stock|available/iu', $message) === 1;
+        $cacheAllowed = $runtime['channel'] !== 'evaluation'
+            && !($runtime['cohort'] === 'v2' && $dynamicCatalogQuestion);
+
         $this->langfuse()->updateTrace([
             'conversation_id' => $conversationId,
             'customer_id' => $customerId,
             'intent' => $intent->intent(),
             'intent_confidence' => $intent->confidence(),
             'execution_mode' => $executionMode,
+            'channel' => $runtime['channel'],
+            'model_cohort' => $runtime['cohort'],
+            'response_model' => $runtime['model'],
         ], null, 'chatbot.widget.response');
 
         $spanId = $this->langfuse()->startSpan('supervisor.orchestrate', [
@@ -62,6 +83,10 @@ class SupervisorAgent
         $this->traceWidget('supervisor.started', [
             'intent' => $intent->intent(),
             'confidence' => $intent->confidence(),
+            'channel' => $runtime['channel'],
+            'model_cohort' => $runtime['cohort'],
+            'response_model' => $runtime['model'],
+            'knowledge_version' => $runtime['knowledge_version'],
         ], $trace);
 
         $extractedPreferences = $this->memory->scopePreferencesForMessage($preferences, $message);
@@ -105,7 +130,12 @@ class SupervisorAgent
             ];
         }
 
-        $cachedResponse = $this->cache->getCachedResponse($message, $intent);
+        $cachedResponse = null;
+        if ($cacheAllowed) {
+            $cachedResponse = $runtime['channel'] === 'omnichannel'
+                ? $this->cache->getCachedResponse($message, $intent)
+                : $this->cache->getCachedResponse($message, $intent, $cacheContext);
+        }
         if ($cachedResponse && !$this->shouldBypassCache($message, $intent, $cachedResponse)) {
             $this->traceWidget('supervisor.cache_hit', [
                 'cache_layer' => $cachedResponse['cache_layer'],
@@ -212,7 +242,8 @@ class SupervisorAgent
                 $reconciled['products'],
                 $sessionContext,
                 $extractedPreferences,
-                $trace
+                $trace,
+                $runtime
             );
 
             // Mocked generation of alternative suggestions when in suggestion_generation mode
@@ -235,16 +266,23 @@ class SupervisorAgent
             // Only cache fully validated model outputs. Fallback replies are
             // cheap to regenerate and should not poison exact-match cache.
             if (
+                $cacheAllowed
+                &&
                 $agentResult['success']
                 && is_string($agentResult['response'] ?? null)
                 && ($agentResult['validation_passed'] ?? false)
                 && ($agentResult['reason'] ?? null) === null
             ) {
-                $this->cache->cacheResponse($message, $intent, $agentResult['response'], [
+                $metadata = [
                     'agent' => get_class($agent),
                     'validation_passed' => $agentResult['validation_passed'] ?? false,
                     'validation_context' => $agentResult['validation_context'] ?? ['products' => []],
-                ]);
+                ];
+                if ($runtime['channel'] === 'omnichannel') {
+                    $this->cache->cacheResponse($message, $intent, $agentResult['response'], $metadata);
+                } else {
+                    $this->cache->cacheResponse($message, $intent, $agentResult['response'], $metadata, $cacheContext);
+                }
             }
 
             $this->traceWidget('supervisor.completed', [
@@ -266,11 +304,11 @@ class SupervisorAgent
                 'extracted_preferences' => $extractedPreferences,
             ]);
         } catch (\Throwable $e) {
-            $this->circuitBreaker->recordFailure($e->getMessage());
+            $this->circuitBreaker->recordFailure($e::class);
             $this->langfuse()->endSpan($spanId, [
                 'success' => false,
-                'error' => $e->getMessage(),
-            ], null, $e->getMessage());
+                'exception_class' => $e::class,
+            ]);
             throw $e;
         }
     }
@@ -325,6 +363,39 @@ class SupervisorAgent
     private function langfuse(): LangfuseService
     {
         return app(LangfuseService::class);
+    }
+
+    /** @return array{channel: string, cohort: string, model: string, knowledge_context: string, knowledge_version: string} */
+    private function runtimeFor(int $conversationId, string $message, IntentResult $intent, array $trace): array
+    {
+        $channel = (string) ($trace['channel'] ?? 'omnichannel');
+        $selection = app(WidgetModelSelector::class)->select($conversationId, $channel);
+        $knowledgeContext = '';
+        $knowledgeVersion = 'none';
+
+        // Explicit evaluation context is only supplied by trusted local runners.
+        if ($channel === 'evaluation') {
+            $baseline = (string) config('chatbot.supervisor.model', 'gpt-4.1-mini');
+            $candidate = (string) config('chatbot.widget_v2.model', 'gpt-6-luna');
+            $requested = (string) ($trace['evaluation_model'] ?? '');
+            $selection = [
+                'channel' => 'evaluation',
+                'cohort' => 'evaluation',
+                'model' => in_array($requested, [$baseline, $candidate], true) ? $requested : $baseline,
+            ];
+            $knowledgeContext = is_string($trace['evaluation_knowledge_context'] ?? null)
+                ? trim($trace['evaluation_knowledge_context']) : '';
+            $knowledgeVersion = $knowledgeContext !== '' ? hash('sha256', $knowledgeContext) : 'none';
+        } elseif ($selection['channel'] === 'widget' && $selection['cohort'] === 'v2') {
+            $knowledge = app(WidgetKnowledgeService::class);
+            $knowledgeContext = $knowledge->contextFor($message, $intent);
+            $knowledgeVersion = $knowledge->version();
+        }
+
+        return $selection + [
+            'knowledge_context' => $knowledgeContext,
+            'knowledge_version' => $knowledgeVersion,
+        ];
     }
 
     /**

@@ -513,7 +513,7 @@ class ChatbotContentSyncService
                     'ვებსაიტის მასალები განკუთვნილია მხოლოდ პირადი, არაკომერციული გამოყენებისთვის. აკრძალულია კოპირება, გავრცელება, რევერსული ინჟინერია ან სამართლებრივი აღნიშვნების შეცვლა.',
                     'გადახდა შესაძლებელია საქართველოს ბანკის უსაფრთხო ონლაინ სისტემით ან კურიერთან ნაღდი ანგარიშსწორებით თბილისში. მიწოდება უფასოა მთელი საქართველოს მასშტაბით.',
                     'გარანტია: ' . UnifiedAiPolicyService::canonicalWarrantySummary('ka') . '. გარანტია არ ფარავს მექანიკურ დაზიანებას, წყალში გამოყენებას ან არაავტორიზებულ შეკეთებას.',
-                    'დაბრუნება/გაცვლა შესაძლებელია 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალური შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი.',
+                    'მხოლოდ მოდელის გაცვლა შესაძლებელია მიღებიდან 14 კალენდარული დღის განმავლობაში, თუ პროდუქტი არ არის გამოყენებული, აქვს ორიგინალური შეფუთვა და თან ახლავს ყიდვის დამადასტურებელი დოკუმენტი. ქარხნული წუნის შემთხვევაში მოქმედებს შესაბამისი საგარანტიო პირობა.',
                     'ფასები, მარაგი და მახასიათებლები შეიძლება შეიცვალოს წინასწარი შეტყობინების გარეშე.',
                 ]),
                 'content_en' => implode("\n\n", [
@@ -521,7 +521,7 @@ class ChatbotContentSyncService
                     'Website materials are provided for personal, non-commercial use. Copying, distribution, reverse engineering, or removal of legal notices is prohibited.',
                     'Payment is available through Bank of Georgia’s secure online system and, for eligible Tbilisi orders, by cash on delivery. Delivery is free across Georgia.',
                     'Warranty: ' . UnifiedAiPolicyService::canonicalWarrantySummary('en') . '. The warranty does not cover mechanical damage, water damage caused by misuse, or unauthorized repairs.',
-                    'Returns or exchanges may be requested within 14 calendar days if the product is unused, includes the original packaging, and is accompanied by proof of purchase.',
+                    'A model exchange may be requested within 14 calendar days of receipt if the product is unused, includes the original packaging, and is accompanied by proof of purchase. Manufacturing defects are handled under the applicable warranty.',
                     'Prices, stock, and specifications may change without prior notice.',
                 ]),
                 'metadata' => [

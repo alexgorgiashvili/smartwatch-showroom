@@ -1,0 +1,137 @@
+{
+    "schema_version": 1,
+    "purpose": "Aggregate conversation coverage and customer interests. No raw message text or identifiers.",
+    "coverage": {
+        "local": {
+            "status": "complete",
+            "messages_seen": 296
+        },
+        "verified_webhook_echoes": {
+            "status": "complete",
+            "echoes_seen": 11
+        },
+        "facebook_graph": {
+            "status": "complete",
+            "conversations": 416,
+            "messages_seen": 4909,
+            "conversations_truncated": 0,
+            "messages_without_text": 227,
+            "has_more_conversations": false,
+            "http_status": null,
+            "meta_error_code": null
+        },
+        "instagram_graph": {
+            "status": "no_confirmed_history",
+            "conversations": 0,
+            "messages_seen": 0,
+            "conversations_truncated": 0,
+            "messages_without_text": 0,
+            "has_more_conversations": false,
+            "http_status": 401,
+            "meta_error_code": 190,
+            "api_path": "instagram_conversations",
+            "page_probe": {
+                "status": "empty_unverified",
+                "http_status": null,
+                "meta_error_code": null,
+                "conversations": 0
+            }
+        },
+        "whatsapp_graph": {
+            "status": "not_configured",
+            "history": "no_general_history_endpoint_in_this_integration"
+        },
+        "meta_get_requests": 434
+    },
+    "message_counts": {
+        "facebook": {
+            "admin": 5,
+            "customer": 2192,
+            "page": 2718
+        },
+        "home": {
+            "admin": 3,
+            "bot": 122,
+            "customer": 122
+        },
+        "instagram": {
+            "admin": 7,
+            "customer": 15,
+            "page": 10
+        },
+        "whatsapp": {
+            "customer": 2
+        }
+    },
+    "source_counts": {
+        "local_messages": 296,
+        "meta_graph": 4889,
+        "verified_webhook_echo": 11
+    },
+    "topic_counts": {
+        "battery": 2,
+        "calling": 40,
+        "comparison": 8,
+        "connectivity": 117,
+        "delivery": 45,
+        "location": 15,
+        "payment": 7,
+        "price": 460,
+        "recommendation": 9,
+        "setup": 19,
+        "stock": 82,
+        "tracking": 4,
+        "unclassified": 1329,
+        "warranty": 16,
+        "waterproof": 3
+    },
+    "business_reply_signal_counts": {
+        "asks_for_contact": 452,
+        "includes_link": 219,
+        "mentions_availability": 231,
+        "mentions_delivery": 567,
+        "mentions_payment": 364,
+        "mentions_price": 839,
+        "mentions_warranty_or_return": 10
+    },
+    "bot_reply_signal_counts": {
+        "asks_for_contact": 10,
+        "includes_link": 69,
+        "mentions_availability": 80,
+        "mentions_delivery": 8,
+        "mentions_payment": 2,
+        "mentions_price": 83,
+        "mentions_warranty_or_return": 3
+    },
+    "bot_fallback_like_count": 7,
+    "customer_question_like_count": 764,
+    "unclassified_question_like_count": 361,
+    "customer_short_message_count": 1176,
+    "date_spans": {
+        "facebook": {
+            "first": "2025-12-16",
+            "last": "2026-09-25"
+        },
+        "home": {
+            "first": "2026-03-11",
+            "last": "2026-07-05"
+        },
+        "instagram": {
+            "first": "2026-03-11",
+            "last": "2026-03-12"
+        },
+        "whatsapp": {
+            "first": "2026-07-05",
+            "last": "2026-07-05"
+        }
+    },
+    "duplicate_messages_skipped": 20,
+    "messages_with_detectable_pii": 333,
+    "frozen_scenario_count": 120,
+    "warnings": [
+        "Business Page replies may have been sent by any team member and are not verified owner-approved answers.",
+        "No observed reply is automatically promoted to a policy, product claim, or expected answer.",
+        "Scenario wording is controlled synthetic text. Raw transcripts and source identifiers stay out of Git.",
+        "Current prices, stock, delivery, warranty, and returns require independent authoritative verification."
+    ]
+}

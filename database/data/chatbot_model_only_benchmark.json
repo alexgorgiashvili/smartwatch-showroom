@@ -1,0 +1,4022 @@
+{
+    "baseline_model": "gpt-4.1-mini",
+    "candidate_model": "gpt-6-luna",
+    "dataset_cases": 120,
+    "completed_pairs": 120,
+    "graded_pairs": 0,
+    "release_graded_pairs": 0,
+    "minimum_graded_pairs": 100,
+    "judge_available": false,
+    "budget_usd": 2.99,
+    "total_cost_usd": 0.0366949,
+    "budget_verified": true,
+    "stopped_reason": null,
+    "decision": "insufficient_evidence",
+    "acceptance": null,
+    "models": {
+        "gpt-4.1-mini": {
+            "cost_usd": 0.0301748,
+            "mean_latency_ms": 1657.4,
+            "p95_latency_ms": 2347,
+            "measured_latency_count": 120,
+            "mean_quality_score": null,
+            "graded_count": 0,
+            "successful_answers": 0,
+            "grounded_success_pct": null,
+            "georgian_ok_pct": null,
+            "critical_unverified_claim_count": 0,
+            "cost_per_success_usd": null
+        },
+        "gpt-6-luna": {
+            "cost_usd": 0.0065201,
+            "mean_latency_ms": 1536,
+            "p95_latency_ms": 1962,
+            "measured_latency_count": 120,
+            "mean_quality_score": null,
+            "graded_count": 0,
+            "successful_answers": 0,
+            "grounded_success_pct": null,
+            "georgian_ok_pct": null,
+            "critical_unverified_claim_count": 0,
+            "cost_per_success_usd": null
+        }
+    },
+    "cases": [
+        {
+            "id": "conv-001",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000404,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 3374,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 9.99e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 158
+                },
+                "latency_ms": 2676,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-002",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001736,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 57
+                },
+                "latency_ms": 1320,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.05e-5,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 40
+                },
+                "latency_ms": 1836,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-003",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000228,
+                "usage": {
+                    "input_tokens": 202,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 92
+                },
+                "latency_ms": 1479,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.71e-5,
+                "usage": {
+                    "input_tokens": 201,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1480,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-004",
+            "category": "comparison",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004032,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2904,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 9.22e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 143
+                },
+                "latency_ms": 1999,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-005",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000298,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 134
+                },
+                "latency_ms": 2042,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.83e-5,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1962,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-006",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004032,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2483,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.72e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1536,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-007",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002228,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 88
+                },
+                "latency_ms": 1449,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.59e-5,
+                "usage": {
+                    "input_tokens": 204,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 51
+                },
+                "latency_ms": 1421,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-008",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001624,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 50
+                },
+                "latency_ms": 1262,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.45e-5,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 68
+                },
+                "latency_ms": 1508,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-009",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004068,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2347,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 9.06e-5,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 138
+                },
+                "latency_ms": 2020,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-010",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004032,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2241,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.82e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1348,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-011",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002172,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 83
+                },
+                "latency_ms": 1566,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.85e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1576,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-012",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001544,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 45
+                },
+                "latency_ms": 1162,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.55e-5,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 50
+                },
+                "latency_ms": 1398,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-013",
+            "category": "comparison",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003836,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 186
+                },
+                "latency_ms": 2177,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 7.69e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 111
+                },
+                "latency_ms": 1769,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-014",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004024,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2174,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.7e-5,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1242,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-015",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001684,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 52
+                },
+                "latency_ms": 1244,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.42e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 46
+                },
+                "latency_ms": 1528,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-016",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003312,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 155
+                },
+                "latency_ms": 1873,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.72e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1200,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-017",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000194,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 70
+                },
+                "latency_ms": 1283,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.69e-5,
+                "usage": {
+                    "input_tokens": 204,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1432,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-018",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004024,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2056,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 0.0001205,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2367,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-019",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001872,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1260,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.56e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 49
+                },
+                "latency_ms": 1402,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-020",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001616,
+                "usage": {
+                    "input_tokens": 204,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 50
+                },
+                "latency_ms": 1200,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.88e-5,
+                "usage": {
+                    "input_tokens": 203,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 57
+                },
+                "latency_ms": 1528,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-021",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004044,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2450,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.75e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1154,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-022",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003352,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 157
+                },
+                "latency_ms": 1822,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.09e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1406,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-023",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000238,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 97
+                },
+                "latency_ms": 1620,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.76e-5,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1318,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-024",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003456,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 162
+                },
+                "latency_ms": 2178,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 8.1e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 119
+                },
+                "latency_ms": 1805,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-025",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000202,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1351,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.31e-5,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 63
+                },
+                "latency_ms": 1460,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-026",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001744,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 57
+                },
+                "latency_ms": 1252,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.67e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 52
+                },
+                "latency_ms": 1526,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-027",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003072,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 140
+                },
+                "latency_ms": 1901,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.22e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 83
+                },
+                "latency_ms": 1736,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-028",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001896,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1351,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.39e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1653,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-029",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001984,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1330,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.57e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 70
+                },
+                "latency_ms": 1514,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-030",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001712,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1240,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.77e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1344,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-031",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001904,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1323,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.07e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1496,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-032",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001608,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 48
+                },
+                "latency_ms": 1156,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.49e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 48
+                },
+                "latency_ms": 1363,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-033",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000174,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 57
+                },
+                "latency_ms": 1253,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.66e-5,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 52
+                },
+                "latency_ms": 1469,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-034",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003516,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 168
+                },
+                "latency_ms": 2289,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.11e-5,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 61
+                },
+                "latency_ms": 1572,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-035",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000314,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 143
+                },
+                "latency_ms": 1855,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.82e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1539,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-036",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002244,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 88
+                },
+                "latency_ms": 1474,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.38e-5,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1605,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-037",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003764,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 182
+                },
+                "latency_ms": 2065,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.12e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1361,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-038",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001956,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 68
+                },
+                "latency_ms": 1387,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.51e-5,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1444,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-039",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002424,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 98
+                },
+                "latency_ms": 1543,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.68e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 91
+                },
+                "latency_ms": 1687,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-040",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002568,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 107
+                },
+                "latency_ms": 1564,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.33e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1596,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-041",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000276,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 120
+                },
+                "latency_ms": 1664,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.74e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1426,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-042",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002652,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 113
+                },
+                "latency_ms": 1633,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.05e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1432,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-043",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003056,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 138
+                },
+                "latency_ms": 1995,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.56e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 69
+                },
+                "latency_ms": 1731,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-044",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001788,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1243,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.2e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 42
+                },
+                "latency_ms": 1444,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-045",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002204,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 84
+                },
+                "latency_ms": 1428,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.14e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1847,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-046",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003468,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 164
+                },
+                "latency_ms": 2070,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.7e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 52
+                },
+                "latency_ms": 1242,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-047",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002328,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 93
+                },
+                "latency_ms": 1521,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.04e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1536,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-048",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001508,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 42
+                },
+                "latency_ms": 1287,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.23e-5,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 43
+                },
+                "latency_ms": 1265,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-049",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002128,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 80
+                },
+                "latency_ms": 1476,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.66e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 71
+                },
+                "latency_ms": 1503,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-050",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002236,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 86
+                },
+                "latency_ms": 1703,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.39e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 65
+                },
+                "latency_ms": 1512,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-051",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002648,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 113
+                },
+                "latency_ms": 1697,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.99e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 58
+                },
+                "latency_ms": 1535,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-052",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003708,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 180
+                },
+                "latency_ms": 2594,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.91e-5,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 57
+                },
+                "latency_ms": 1373,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-053",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001984,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 70
+                },
+                "latency_ms": 1402,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.8e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 73
+                },
+                "latency_ms": 1461,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-054",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000322,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 148
+                },
+                "latency_ms": 2329,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.47e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1663,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-055",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003364,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 157
+                },
+                "latency_ms": 2163,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.72e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 52
+                },
+                "latency_ms": 1310,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-056",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001996,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 71
+                },
+                "latency_ms": 1380,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.14e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1320,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-057",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002412,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 97
+                },
+                "latency_ms": 1552,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.04e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 58
+                },
+                "latency_ms": 1663,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-058",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000188,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 65
+                },
+                "latency_ms": 1418,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.79e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1452,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-059",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.00027,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 116
+                },
+                "latency_ms": 1845,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.45e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1556,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-060",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000368,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 177
+                },
+                "latency_ms": 2008,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.81e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1424,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-061",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003036,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 137
+                },
+                "latency_ms": 1961,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.4e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1412,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-062",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004044,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2348,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.8e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1264,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-063",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000192,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1406,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.9e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1375,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-064",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003824,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 186
+                },
+                "latency_ms": 2300,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.91e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 76
+                },
+                "latency_ms": 1433,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-065",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002012,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1378,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.49e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 47
+                },
+                "latency_ms": 1313,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-066",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004052,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2283,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 9.02e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 138
+                },
+                "latency_ms": 2111,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-067",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002504,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 104
+                },
+                "latency_ms": 1675,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.79e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1875,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-068",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001624,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 49
+                },
+                "latency_ms": 1571,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.09e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 80
+                },
+                "latency_ms": 1583,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-069",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000132,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 31
+                },
+                "latency_ms": 1092,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.05e-5,
+                "usage": {
+                    "input_tokens": 205,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1467,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-070",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002228,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 85
+                },
+                "latency_ms": 1433,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.91e-5,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1408,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-071",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002328,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 92
+                },
+                "latency_ms": 1566,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.13e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1377,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-072",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002352,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 93
+                },
+                "latency_ms": 1777,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.45e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1725,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-073",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002008,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 73
+                },
+                "latency_ms": 1489,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.24e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 43
+                },
+                "latency_ms": 1626,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-074",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002312,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 91
+                },
+                "latency_ms": 1449,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.53e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 48
+                },
+                "latency_ms": 1451,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-075",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002676,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 114
+                },
+                "latency_ms": 1613,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.77e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 73
+                },
+                "latency_ms": 1497,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-076",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004048,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2160,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 0.0001211,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2554,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-077",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002008,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1454,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.08e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 79
+                },
+                "latency_ms": 1780,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-078",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002208,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 85
+                },
+                "latency_ms": 1555,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.31e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1439,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-079",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002668,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 115
+                },
+                "latency_ms": 1524,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.66e-5,
+                "usage": {
+                    "input_tokens": 206,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 92
+                },
+                "latency_ms": 1685,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-080",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004064,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2340,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.4e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 65
+                },
+                "latency_ms": 1469,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-081",
+            "category": "comparison",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003096,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 140
+                },
+                "latency_ms": 1826,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.48e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 87
+                },
+                "latency_ms": 1616,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-082",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003284,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 152
+                },
+                "latency_ms": 1964,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 7.52e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 108
+                },
+                "latency_ms": 1773,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-083",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003144,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 143
+                },
+                "latency_ms": 1980,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.58e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 69
+                },
+                "latency_ms": 1506,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-084",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002084,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 77
+                },
+                "latency_ms": 1434,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.47e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1413,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-085",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001608,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 47
+                },
+                "latency_ms": 1249,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.18e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 61
+                },
+                "latency_ms": 1373,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-086",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004056,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2253,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.78e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 93
+                },
+                "latency_ms": 1851,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-087",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002272,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 89
+                },
+                "latency_ms": 1446,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.41e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 46
+                },
+                "latency_ms": 1354,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-088",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001864,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1314,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.29e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 44
+                },
+                "latency_ms": 1358,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-089",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000268,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 114
+                },
+                "latency_ms": 1753,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.88e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1336,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-090",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001648,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 49
+                },
+                "latency_ms": 1210,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.65e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 70
+                },
+                "latency_ms": 1599,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-091",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002008,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1360,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.08e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1502,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-092",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002456,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 101
+                },
+                "latency_ms": 2002,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.89e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 96
+                },
+                "latency_ms": 1827,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-093",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002124,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 80
+                },
+                "latency_ms": 1499,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.8e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 74
+                },
+                "latency_ms": 1515,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-094",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0003108,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 141
+                },
+                "latency_ms": 1911,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.27e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 63
+                },
+                "latency_ms": 1606,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-095",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001808,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1218,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.81e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 74
+                },
+                "latency_ms": 1659,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-096",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002012,
+                "usage": {
+                    "input_tokens": 219,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 71
+                },
+                "latency_ms": 1489,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.18e-5,
+                "usage": {
+                    "input_tokens": 218,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1440,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-097",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000276,
+                "usage": {
+                    "input_tokens": 218,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 118
+                },
+                "latency_ms": 1676,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.07e-5,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 58
+                },
+                "latency_ms": 1609,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-098",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001724,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 54
+                },
+                "latency_ms": 1587,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.19e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 61
+                },
+                "latency_ms": 1472,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-099",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001744,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 55
+                },
+                "latency_ms": 1298,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.9e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 75
+                },
+                "latency_ms": 1574,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-100",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001896,
+                "usage": {
+                    "input_tokens": 218,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1470,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.27e-5,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 62
+                },
+                "latency_ms": 1364,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-101",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000188,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 65
+                },
+                "latency_ms": 1612,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.29e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 44
+                },
+                "latency_ms": 1214,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-102",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.00016,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 46
+                },
+                "latency_ms": 1175,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.15e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1515,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-103",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001808,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1518,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.05e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 58
+                },
+                "latency_ms": 1338,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-104",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001768,
+                "usage": {
+                    "input_tokens": 218,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 56
+                },
+                "latency_ms": 1285,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 3.72e-5,
+                "usage": {
+                    "input_tokens": 217,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 31
+                },
+                "latency_ms": 1266,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-105",
+            "category": "general",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001876,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 64
+                },
+                "latency_ms": 1442,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.47e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 47
+                },
+                "latency_ms": 1281,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-106",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001708,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1359,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.69e-5,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 71
+                },
+                "latency_ms": 1607,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-107",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001696,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 53
+                },
+                "latency_ms": 1296,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.36e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 45
+                },
+                "latency_ms": 1205,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-108",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000192,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 68
+                },
+                "latency_ms": 1269,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.42e-5,
+                "usage": {
+                    "input_tokens": 207,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 47
+                },
+                "latency_ms": 1694,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-109",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002492,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 103
+                },
+                "latency_ms": 1547,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.7e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 72
+                },
+                "latency_ms": 1664,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-110",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002352,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 94
+                },
+                "latency_ms": 1454,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.41e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 66
+                },
+                "latency_ms": 1393,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-111",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002248,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 87
+                },
+                "latency_ms": 1734,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.03e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 58
+                },
+                "latency_ms": 1474,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-112",
+            "category": "recommendation",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0004064,
+                "usage": {
+                    "input_tokens": 216,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 200
+                },
+                "latency_ms": 2121,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 7.15e-5,
+                "usage": {
+                    "input_tokens": 215,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 100
+                },
+                "latency_ms": 1792,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-113",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002152,
+                "usage": {
+                    "input_tokens": 214,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 81
+                },
+                "latency_ms": 1449,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.33e-5,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 44
+                },
+                "latency_ms": 1312,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-114",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000206,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 76
+                },
+                "latency_ms": 1584,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.15e-5,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 41
+                },
+                "latency_ms": 1255,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-115",
+            "category": "features",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0002944,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 131
+                },
+                "latency_ms": 1668,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 6.01e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 78
+                },
+                "latency_ms": 1698,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-116",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.000192,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1264,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.46e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 67
+                },
+                "latency_ms": 1386,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-117",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001636,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 50
+                },
+                "latency_ms": 1158,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.23e-5,
+                "usage": {
+                    "input_tokens": 208,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 43
+                },
+                "latency_ms": 1586,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-118",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.00021,
+                "usage": {
+                    "input_tokens": 213,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 78
+                },
+                "latency_ms": 1407,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.37e-5,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 45
+                },
+                "latency_ms": 1345,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-119",
+            "category": "price_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.0001792,
+                "usage": {
+                    "input_tokens": 212,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1226,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 5.06e-5,
+                "usage": {
+                    "input_tokens": 211,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 59
+                },
+                "latency_ms": 1475,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        },
+        {
+            "id": "conv-120",
+            "category": "stock_query",
+            "baseline": {
+                "model": "gpt-4.1-mini",
+                "cost_usd": 0.00018,
+                "usage": {
+                    "input_tokens": 210,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 60
+                },
+                "latency_ms": 1299,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "candidate": {
+                "model": "gpt-6-luna",
+                "cost_usd": 4.04e-5,
+                "usage": {
+                    "input_tokens": 209,
+                    "cached_input_tokens": 0,
+                    "cache_write_tokens": 0,
+                    "output_tokens": 39
+                },
+                "latency_ms": 1262,
+                "intent": null,
+                "fallback_reason": null,
+                "quality_score": null
+            },
+            "graded": false
+        }
+    ],
+    "scope": "model_only_identical_public_context",
+    "release_gate": "never_sufficient_without_full_pipeline_and_independent_grounded_judgments",
+    "screen": {
+        "gpt-4.1-mini": {
+            "responses": 120,
+            "georgian_like": 120,
+            "potential_unverified_price_or_stock": 9,
+            "potential_policy_conflict": 0
+        },
+        "gpt-6-luna": {
+            "responses": 120,
+            "georgian_like": 120,
+            "potential_unverified_price_or_stock": 2,
+            "potential_policy_conflict": 0
+        }
+    }
+}

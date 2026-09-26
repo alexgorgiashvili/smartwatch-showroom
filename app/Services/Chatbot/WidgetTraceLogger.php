@@ -14,7 +14,7 @@ class WidgetTraceLogger
 
     public function payloadsEnabled(): bool
     {
-        return (bool) config('chatbot-monitoring.widget_trace.include_payloads', true);
+        return $this->enabled() && (bool) config('chatbot-monitoring.widget_trace.include_payloads', false);
     }
 
     public function newTraceId(): string
@@ -28,10 +28,48 @@ class WidgetTraceLogger
             return;
         }
 
+        if (!$this->payloadsEnabled()) {
+            $context = $this->safeContext($context);
+        }
+
         Log::channel($this->channel())->info('chatbot.widget.trace', [
             'step' => $step,
             'context' => $this->normalize($context),
         ]);
+    }
+
+    /** Keep only bounded operational fields when payload tracing is disabled. */
+    private function safeContext(array $context): array
+    {
+        $stringKeys = [
+            'trace_id', 'channel', 'model_cohort', 'response_model', 'model',
+            'knowledge_version', 'intent', 'agent_basename', 'cache_layer',
+            'reason', 'fallback_reason', 'exception_class',
+        ];
+        $numericKeys = [
+            'confidence', 'duration_ms', 'total_duration_ms', 'latency_ms',
+            'response_time_ms', 'message_count', 'history_count', 'product_count',
+            'search_product_count', 'reflection_attempts', 'provider_status',
+            'input_tokens', 'output_tokens', 'estimated_cost_usd',
+        ];
+        $booleanKeys = [
+            'success', 'cached', 'validation_passed', 'georgian_passed',
+            'regeneration_attempted', 'regeneration_succeeded', 'has_rag_context',
+            'should_reflect',
+        ];
+        $safe = [];
+        foreach ($context as $key => $value) {
+            if (in_array($key, $stringKeys, true) && is_string($value)
+                && preg_match('/^[A-Za-z0-9_.:\\-]{1,100}$/D', $value) === 1) {
+                $safe[$key] = $value;
+            } elseif (in_array($key, $numericKeys, true) && is_numeric($value)) {
+                $safe[$key] = $value;
+            } elseif (in_array($key, $booleanKeys, true) && is_bool($value)) {
+                $safe[$key] = $value;
+            }
+        }
+
+        return $safe;
     }
 
     private function channel(): string

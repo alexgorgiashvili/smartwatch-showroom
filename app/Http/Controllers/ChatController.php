@@ -461,7 +461,6 @@ class ChatController extends Controller
                 'trace_id' => $traceId,
                 'conversation_id' => $conversation->id,
                 'customer_id' => $customer->id,
-                'error' => $exception->getMessage(),
                 'exception_class' => $exception::class,
                 'next_step' => 'persist_runtime_fallback',
             ], fn ($value) => $value !== null));
@@ -469,7 +468,7 @@ class ChatController extends Controller
             Log::error('Widget chatbot pipeline failed', [
                 'conversation_id' => $conversation->id,
                 'customer_id' => $customer->id,
-                'error' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
 
             $failureMessage = __('storefront.chatbot.failure');
@@ -487,7 +486,6 @@ class ChatController extends Controller
                         'chatbot_failure' => true,
                         'fallback_reason' => ChatbotOutcomeReason::RUNTIME_EXCEPTION,
                         'exception_class' => $exception::class,
-                        'exception_message' => $exception->getMessage(),
                         'locale' => app()->getLocale(),
                     ],
                 ]);
@@ -514,7 +512,7 @@ class ChatController extends Controller
                 'conversation_id' => $conversation->id,
                 'customer_id' => $customer->id,
                 'fallback_reason' => ChatbotOutcomeReason::RUNTIME_EXCEPTION,
-                'error' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ], $failureMessage);
         }
 
@@ -1146,4 +1144,3 @@ class ChatController extends Controller
         return $expansions;
     }
 }
-

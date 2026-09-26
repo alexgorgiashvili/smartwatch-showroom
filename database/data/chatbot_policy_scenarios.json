@@ -1,0 +1,25 @@
+[
+  {"id":"policy-001","category":"delivery","question":"საქართველოში მიტანის საფასური რამდენია?","expected":{"facts":["delivery_free_georgia"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:131-147"},
+  {"id":"policy-002","category":"delivery","question":"თბილისში დაახლოებით როდის მომიტანთ შეკვეთას?","expected":{"facts":["tbilisi_estimate_one_business_day"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:139-147"},
+  {"id":"policy-003","category":"delivery","question":"რეგიონულ ქალაქში მიწოდება რა ვადაში ხდება?","expected":{"facts":["regional_city_estimate_one_to_three_business_days"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:139-147"},
+  {"id":"policy-004","category":"delivery","question":"სოფელში შეკვეთის მიღებას რამდენი დღე სჭირდება?","expected":{"facts":["village_estimate_two_to_five_business_days"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:139-147"},
+  {"id":"policy-005","category":"delivery","question":"დღესვე აუცილებლად მომიტანთ საათს?","expected":{"facts":["same_day_requires_confirmation"],"must_not_claim":["unconditional_same_day_delivery"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:139-147"},
+
+  {"id":"policy-006","category":"payment","question":"ონლაინ ბარათით როგორ გადავიხადო?","expected":{"facts":["bank_of_georgia_online_payment"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:104-125"},
+  {"id":"policy-007","category":"payment","question":"თბილისში კურიერთან ნაღდი გადახდა შეიძლება?","expected":{"facts":["cash_on_delivery_tbilisi_only"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:104-125"},
+  {"id":"policy-008","category":"payment","question":"რეგიონში კურიერთან ნაღდი გადახდა შეიძლება?","expected":{"facts":["cash_on_delivery_tbilisi_only"],"must_not_claim":["regional_cash_on_delivery"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:104-125"},
+  {"id":"policy-009","category":"payment","question":"კურიერთან გადახდის პირობა ყველა მისამართზე მოქმედებს?","expected":{"facts":["cash_on_delivery_tbilisi_only"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:104-125"},
+  {"id":"policy-010","category":"payment","question":"გადახდის რომელი დადასტურებული გზებია საიტზე?","expected":{"facts":["bank_of_georgia_online_payment","cash_on_delivery_tbilisi_only"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:104-125"},
+
+  {"id":"policy-011","category":"warranty","question":"2G საათზე რამდენი ხნით მოქმედებს გარანტია?","expected":{"facts":["warranty_2g_one_month"],"must_not_claim":["warranty_2g_twelve_months"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:154-179"},
+  {"id":"policy-012","category":"warranty","question":"4G მოდელის გარანტია რამდენი თვეა?","expected":{"facts":["warranty_4g_three_months"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:154-179"},
+  {"id":"policy-013","category":"warranty","question":"გარანტია ქარხნულ დეფექტს მოიცავს?","expected":{"facts":["manufacturing_defect_covered"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:154-179"},
+  {"id":"policy-014","category":"warranty","question":"საბავშვო საათზე ერთი წელი გარანტიაა?","expected":{"facts":["warranty_depends_on_2g_or_4g"],"must_not_claim":["general_one_year_warranty"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:154-179"},
+  {"id":"policy-015","category":"warranty","question":"გარანტიის ვადა 2G-სა და 4G-ზე ერთნაირია?","expected":{"facts":["warranty_2g_one_month","warranty_4g_three_months"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:154-179"},
+
+  {"id":"policy-016","category":"exchange","question":"სხვა მოდელით გაცვლა რამდენ დღეში შეიძლება?","expected":{"facts":["model_exchange_within_fourteen_calendar_days","exchange_conditions_apply"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:184-187"},
+  {"id":"policy-017","category":"exchange","question":"გამოყენებული საათის სხვა მოდელით გაცვლა შეიძლება?","expected":{"facts":["exchange_requires_unused_item"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:184-187"},
+  {"id":"policy-018","category":"exchange","question":"გაცვლისთვის ორიგინალი შეფუთვა აუცილებელია?","expected":{"facts":["exchange_requires_original_packaging"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:184-187"},
+  {"id":"policy-019","category":"exchange","question":"ყიდვის დამადასტურებელი დოკუმენტის გარეშე გაცვლა შეიძლება?","expected":{"facts":["exchange_requires_purchase_proof"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:184-187"},
+  {"id":"policy-020","category":"exchange","question":"თუ არ მომეწონა, ფულის დაბრუნებას აუცილებლად მივიღებ?","expected":{"facts":["only_conditional_model_exchange_confirmed","refund_requires_support_review"],"must_not_claim":["unconditional_refund"],"critical":true},"source_ref":"resources/views/pages/terms.blade.php:184-187"}
+]

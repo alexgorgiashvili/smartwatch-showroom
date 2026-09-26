@@ -46,7 +46,7 @@ class EmbeddingService
         if (!$response->successful()) {
             Log::warning('OpenAI embeddings request failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'error_code' => $response->json('error.code'),
             ]);
 
             throw new \RuntimeException('Embedding request failed.');

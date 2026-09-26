@@ -15,7 +15,7 @@ return [
     'widget_trace' => [
         'enabled' => env('CHATBOT_WIDGET_TRACE_ENABLED', false),
         'channel' => env('CHATBOT_WIDGET_TRACE_CHANNEL', 'chatbot_widget_trace'),
-        'include_payloads' => env('CHATBOT_WIDGET_TRACE_INCLUDE_PAYLOADS', true),
+        'include_payloads' => env('CHATBOT_WIDGET_TRACE_INCLUDE_PAYLOADS', false),
         'max_chars' => env('CHATBOT_WIDGET_TRACE_MAX_CHARS', 800),
         'max_items' => env('CHATBOT_WIDGET_TRACE_MAX_ITEMS', 8),
     ],

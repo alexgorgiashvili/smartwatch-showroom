@@ -66,17 +66,38 @@ class TestRunnerService
      * @param array<string, mixed> $case
      * @return array<string, mixed>
      */
-    public function callPipeline(string $question, ?int $conversationId = null): array
+    public function callPipeline(string $question, ?int $conversationId = null, bool $keepSession = false): array
     {
         $lab = app(ChatbotLabService::class);
-        $result = $lab->runManualTest($question, '', $conversationId, $conversationId !== null);
+        $startedAt = hrtime(true);
+        $result = $lab->runManualTest($question, '', $conversationId, $keepSession);
+        $metadata = is_array($result['metadata'] ?? null) ? $result['metadata'] : [];
+        $measuredMs = max(1, (int) round((hrtime(true) - $startedAt) / 1_000_000));
+
+        if (!($result['success'] ?? false)) {
+            return [
+                'response' => '',
+                'conversation_id' => $conversationId,
+                'rag_context_text' => null,
+                'response_time_ms' => $measuredMs,
+                'fallback_reason' => 'lab_runtime_exception',
+                'error' => true,
+                'intent' => null,
+            ];
+        }
 
         return [
             'response' => (string) ($result['response'] ?? ''),
-            'conversation_id' => (int) data_get($result, 'session.conversation_id', $conversationId ?? 0),
-            'rag_context_text' => '',
-            'response_time_ms' => 0,
-            'fallback_reason' => null,
+            'conversation_id' => data_get($result, 'session.conversation_id', $conversationId),
+            'rag_context_text' => $metadata['rag_context_text'] ?? null,
+            'response_time_ms' => $measuredMs,
+            'fallback_reason' => $metadata['fallback_reason'] ?? null,
+            'validation_passed' => $metadata['validation_passed'] ?? null,
+            'georgian_passed' => $metadata['georgian_passed'] ?? null,
+            'regeneration_attempted' => $metadata['regeneration_attempted'] ?? null,
+            'regeneration_succeeded' => $metadata['regeneration_succeeded'] ?? null,
+            'intent' => $metadata['intent'] ?? null,
+            'error' => false,
         ];
     }
 
@@ -90,10 +111,11 @@ class TestRunnerService
         $normalizedResponse = mb_strtolower($response);
         $mustContainAny = $this->stringList($expected['must_contain_any'] ?? []);
         $mustNotContain = $this->stringList($expected['must_not_contain'] ?? []);
-        $productSlug = trim((string) ($expected['product_slug'] ?? ''));
         $stockClaim = trim((string) ($expected['stock_claim'] ?? ''));
         $guardrailShouldPass = (bool) ($expected['guardrail_should_pass'] ?? true);
         $georgianOnly = (bool) ($expected['georgian_only'] ?? true);
+        $expectedIntent = trim((string) ($expected['expected_intent'] ?? ''));
+        $actualIntent = trim((string) data_get($pipeline, 'intent.type', ''));
 
         $keywordMatch = $mustContainAny === []
             ? true
@@ -103,7 +125,7 @@ class TestRunnerService
 
         $priceMatch = null;
         if (isset($expected['expected_price']) && is_numeric($expected['expected_price'])) {
-            $priceMatch = str_contains($normalizedResponse, (string) $expected['expected_price']);
+            $priceMatch = preg_match('/(?<!\d)' . preg_quote((string) $expected['expected_price'], '/') . '(?!\d)/u', $normalizedResponse) === 1;
         }
 
         $stockMatch = null;
@@ -111,8 +133,34 @@ class TestRunnerService
             $stockMatch = str_contains($normalizedResponse, mb_strtolower($stockClaim));
         }
 
-        $guardrailPassed = $guardrailShouldPass && !$mustNotContainViolated;
-        $georgianQaPassed = !$georgianOnly || $this->looksGeorgian($response);
+        $validationPassed = $pipeline['validation_passed'] ?? null;
+        $guardrailPassed = is_bool($validationPassed)
+            ? ($validationPassed === $guardrailShouldPass && !$mustNotContainViolated)
+            : null;
+        $georgianQaPassed = !$georgianOnly
+            ? true
+            : (is_bool($pipeline['georgian_passed'] ?? null)
+                ? $pipeline['georgian_passed']
+                : $this->looksGeorgian($response));
+        $intentMatch = $expectedIntent === '' || $actualIntent === ''
+            ? null
+            : $expectedIntent === $actualIntent;
+        $hasAnswerExpectation = $mustContainAny !== []
+            || $mustNotContain !== []
+            || $priceMatch !== null
+            || $stockMatch !== null;
+        $canGrade = $hasAnswerExpectation
+            && $guardrailPassed !== null
+            && ($expectedIntent === '' || $intentMatch !== null);
+        $matcherPass = $canGrade
+            ? $keywordMatch
+                && !$mustNotContainViolated
+                && $priceMatch !== false
+                && $stockMatch !== false
+                && $guardrailPassed
+                && $georgianQaPassed
+                && $intentMatch !== false
+            : null;
 
         return [
             'keyword_match' => $keywordMatch,
@@ -120,9 +168,9 @@ class TestRunnerService
             'stock_match' => $stockMatch,
             'guardrail_passed' => $guardrailPassed,
             'georgian_qa_passed' => $georgianQaPassed,
-            'intent_match' => true,
-            'entity_match' => $productSlug !== '' ? str_contains(mb_strtolower($normalizedResponse), mb_strtolower($productSlug)) : null,
-            'matcher_pass' => $keywordMatch && $guardrailPassed && $georgianQaPassed,
+            'intent_match' => $intentMatch,
+            'entity_match' => null,
+            'matcher_pass' => $matcherPass,
         ];
     }
 
@@ -132,21 +180,16 @@ class TestRunnerService
      */
     public function gradeWithLlmJudge(array $case, string $response, string $ragContextText = ''): array
     {
-        $hasGeorgian = $this->looksGeorgian($response);
-        $responseLength = mb_strlen(trim($response));
-
-        $overall = $responseLength === 0 ? 1.0 : ($hasGeorgian ? 4.5 : 2.0);
-
+        // The lab has no per-run provider budget. Do not disguise a heuristic
+        // as an LLM verdict or silently make an uncapped paid call.
         return [
-            'llm_accuracy' => $hasGeorgian ? 5 : 2,
-            'llm_relevance' => $responseLength > 20 ? 4 : 2,
-            'llm_grammar' => $hasGeorgian ? 5 : 1,
-            'llm_completeness' => $responseLength > 40 ? 4 : 2,
-            'llm_safety' => 5,
-            'llm_overall' => $overall,
-            'llm_notes' => $responseLength === 0
-                ? 'Empty response.'
-                : 'Heuristic judge placeholder used.',
+            'llm_accuracy' => null,
+            'llm_relevance' => null,
+            'llm_grammar' => null,
+            'llm_completeness' => null,
+            'llm_safety' => null,
+            'llm_overall' => null,
+            'llm_notes' => 'Ungraded: use the capped paired benchmark for a real judge.',
         ];
     }
 
@@ -160,22 +203,33 @@ class TestRunnerService
         $conversationId = null;
         $pipeline = null;
 
-        if ($messages !== []) {
-            foreach ($messages as $message) {
-                $content = trim((string) data_get($message, 'content', ''));
+        try {
+            if ($messages !== []) {
+                foreach ($messages as $message) {
+                    $content = trim((string) data_get($message, 'content', ''));
 
-                if ($content === '') {
-                    continue;
+                    if ($content === '') {
+                        continue;
+                    }
+
+                    $question = $content;
+                    $pipeline = $this->callPipeline($content, $conversationId, true);
+                    $conversationId = is_numeric($pipeline['conversation_id'] ?? null)
+                        ? (int) $pipeline['conversation_id']
+                        : null;
+                    if ($pipeline['error'] ?? false) {
+                        break;
+                    }
                 }
-
-                $question = $content;
-                $pipeline = $this->callPipeline($content, $conversationId);
-                $conversationId = (int) ($pipeline['conversation_id'] ?? 0);
             }
-        }
 
-        if ($pipeline === null) {
-            $pipeline = $this->callPipeline($question, $conversationId);
+            if ($pipeline === null) {
+                $pipeline = $this->callPipeline($question, $conversationId);
+            }
+        } finally {
+            if ($conversationId !== null && $conversationId > 0) {
+                app(ChatbotLabService::class)->resetSession($conversationId);
+            }
         }
 
         $response = (string) ($pipeline['response'] ?? '');
@@ -199,13 +253,17 @@ class TestRunnerService
             'question' => $question,
             'expected_summary' => $this->buildExpectedSummary($case),
             'actual_response' => $response,
-            'rag_context' => (string) ($pipeline['rag_context_text'] ?? ''),
-            'intent_json' => null,
-            'standalone_query' => null,
-            'intent_type' => null,
-            'intent_confidence' => null,
-            'intent_latency_ms' => null,
-            'status' => ($matchers['matcher_pass'] ?? false) ? 'pass' : 'fail',
+            'rag_context' => $pipeline['rag_context_text'] ?? null,
+            'intent_json' => $pipeline['intent'] ?? null,
+            'standalone_query' => data_get($pipeline, 'intent.standalone_query'),
+            'intent_type' => data_get($pipeline, 'intent.type'),
+            'intent_confidence' => data_get($pipeline, 'intent.confidence'),
+            'intent_latency_ms' => data_get($pipeline, 'intent.latency_ms'),
+            'status' => ($pipeline['error'] ?? false)
+                ? 'error'
+                : (($matchers['matcher_pass'] ?? null) === null
+                    ? 'skip'
+                    : ($matchers['matcher_pass'] ? 'pass' : 'fail')),
             'keyword_match' => $matchers['keyword_match'] ?? null,
             'price_match' => $matchers['price_match'] ?? null,
             'stock_match' => $matchers['stock_match'] ?? null,
@@ -222,8 +280,8 @@ class TestRunnerService
             'llm_notes' => $judge['llm_notes'] ?? null,
             'response_time_ms' => (int) ($pipeline['response_time_ms'] ?? 0),
             'fallback_reason' => $pipeline['fallback_reason'] ?? null,
-            'regeneration_attempted' => false,
-            'regeneration_succeeded' => false,
+            'regeneration_attempted' => $pipeline['regeneration_attempted'] ?? null,
+            'regeneration_succeeded' => $pipeline['regeneration_succeeded'] ?? null,
             'created_at' => now(),
         ]);
     }
@@ -234,10 +292,11 @@ class TestRunnerService
 
         $total = $run->results->count();
         $passed = $run->results->where('status', 'pass')->count();
-        $failed = $run->results->where('status', 'fail')->count();
-        $skipped = max(0, $total - $passed - $failed);
+        $failed = $run->results->whereIn('status', ['fail', 'error'])->count();
+        $skipped = $run->results->where('status', 'skip')->count();
 
-        $guardrailPassed = $run->results->filter(fn (ChatbotTestResult $result): bool => (bool) $result->guardrail_passed)->count();
+        $guardrailGraded = $run->results->filter(fn (ChatbotTestResult $result): bool => $result->guardrail_passed !== null);
+        $guardrailPassed = $guardrailGraded->filter(fn (ChatbotTestResult $result): bool => $result->guardrail_passed === true)->count();
         $durationSeconds = null;
         if ($run->started_at) {
             $durationSeconds = round(max(0, now()->diffInMilliseconds($run->started_at)) / 1000, 2);
@@ -249,9 +308,11 @@ class TestRunnerService
             'passed_cases' => $passed,
             'failed_cases' => $failed,
             'skipped_cases' => $skipped,
-            'accuracy_pct' => $total > 0 ? round(($passed / $total) * 100, 2) : 0,
+            'accuracy_pct' => ($passed + $failed) > 0 ? round(($passed / ($passed + $failed)) * 100, 2) : null,
             'avg_llm_score' => $run->results->avg('llm_overall'),
-            'guardrail_pass_rate' => $total > 0 ? round(($guardrailPassed / $total) * 100, 2) : 0,
+            'guardrail_pass_rate' => $guardrailGraded->isNotEmpty()
+                ? round(($guardrailPassed / $guardrailGraded->count()) * 100, 2)
+                : null,
             'duration_seconds' => $durationSeconds,
             'completed_at' => now(),
         ]);

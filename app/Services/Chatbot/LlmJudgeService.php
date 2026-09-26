@@ -91,7 +91,6 @@ class LlmJudgeService
             if (!$httpResponse->successful()) {
                 Log::warning('LLM judge Anthropic call failed', [
                     'status' => $httpResponse->status(),
-                    'body' => $httpResponse->body(),
                 ]);
 
                 return null;
@@ -106,7 +105,7 @@ class LlmJudgeService
             return $this->parseScores((string) $text);
         } catch (\Throwable $exception) {
             Log::warning('LLM judge Anthropic exception', [
-                'error' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
 
             return null;

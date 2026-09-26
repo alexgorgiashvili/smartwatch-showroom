@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
 
 class InventoryAgent
 {
+    use UsesVerifiedWidgetKnowledge;
+
     public function __construct(
         private ProductContextService $productContext,
         private PromptBuilderService $promptBuilder,
@@ -35,7 +37,8 @@ class InventoryAgent
         Collection $products,
         array $sessionContext,
         array $preferences,
-        array $trace = []
+        array $trace = [],
+        array $runtime = []
     ): array {
         $this->traceWidget('inventory_agent.started', [
             'intent' => $intent->intent(),
@@ -50,6 +53,8 @@ class InventoryAgent
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'ინვენტარის რეჟიმი: უპასუხე ზუსტად ფასზე, მარაგზე და ხელმისაწვდომობაზე. არ მოიგონო ინფორმაცია, რომელიც კონტექსტში არ ჩანს.';
         $systemPrompt .= "\n\n" . $modeInstruction;
+        $systemPrompt = $this->withVerifiedWidgetKnowledge($systemPrompt, $runtime);
+        $model = (string) ($runtime['model'] ?? config('chatbot.supervisor.model', 'gpt-4.1-mini'));
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -91,43 +96,14 @@ class InventoryAgent
         ], fn ($value) => $value !== null), $trace);
 
         $this->traceWidget('inventory_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            'model' => $model,
             'message_count' => count($messages),
         ], $trace);
 
-        $tools = [
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'search_database',
-                    'description' => 'Search products in database by keywords and criteria',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'query' => ['type' => 'string', 'description' => 'Search query/keywords'],
-                        ],
-                        'required' => ['query'],
-                    ]
-                ]
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'search_pinecone',
-                    'description' => 'Search related documentation and semantic product features in Pinecone',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'query' => ['type' => 'string', 'description' => 'Semantic search query'],
-                        ],
-                        'required' => ['query'],
-                    ]
-                ]
-            ]
-        ];
-
+        // Search and live product facts were resolved before this model call.
+        // Do not advertise tools without executing them and returning real data.
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            $model,
             $messages,
             [
                 'max_tokens' => 400,
@@ -138,47 +114,8 @@ class InventoryAgent
                     'intent' => $intent->intent(),
                     'conversation_id' => $conversationId,
                 ],
-                'tools' => $tools,
             ]
         );
-
-        if (!empty($completion['tool_calls'])) {
-            $this->traceWidget('inventory_agent.tool_calls_received', [
-                'tool_calls' => $completion['tool_calls']
-            ], $trace);
-
-            // Handle tool calls here - dummy loop to handle them later or now
-            // In a real implementation you would call searchOrchestrator or Pinecone
-            foreach ($completion['tool_calls'] as $toolCall) {
-                // To do: Implement tool call execution
-                $messages[] = [
-                    'role' => 'assistant',
-                    'content' => null,
-                    'tool_calls' => [$toolCall]
-                ];
-                $messages[] = [
-                    'role' => 'tool',
-                    'tool_call_id' => $toolCall['id'],
-                    'content' => '{"status": "success", "data": "Tool call executed"}'
-                ];
-            }
-
-            // Fetch the model response after tools
-            $completion = $this->modelCompletion->complete(
-                config('chatbot.supervisor.model', 'gpt-4.1-mini'),
-                $messages,
-                [
-                    'max_tokens' => 400,
-                    'temperature' => 0.5,
-                    'langfuse_name' => 'chatbot.inventory_agent_post_tools',
-                    'langfuse_metadata' => [
-                        'agent' => 'inventory',
-                        'intent' => $intent->intent(),
-                        'conversation_id' => $conversationId,
-                    ],
-                ]
-            );
-        }
 
         if ($completion['reason'] !== null) {
             $this->traceWidget('inventory_agent.model_failed', [

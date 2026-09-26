@@ -42,7 +42,6 @@ class PineconeService
         if (!$response->successful()) {
             Log::warning('Pinecone upsert failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
             ]);
 
             throw new \RuntimeException('Pinecone upsert failed.');
@@ -113,7 +112,6 @@ class PineconeService
         if (!$response->successful()) {
             Log::warning('Pinecone query failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
             ]);
 
             return [];
@@ -154,7 +152,7 @@ class PineconeService
         if ($response->status() === 404 && str_contains($response->body(), 'Namespace not found')) {
             Log::info('Pinecone namespace missing during delete; treating as no-op', [
                 'namespace' => $namespace,
-                'ids' => $ids,
+                'id_count' => count($ids),
             ]);
 
             return;
@@ -163,8 +161,7 @@ class PineconeService
         if (!$response->successful()) {
             Log::warning('Pinecone delete failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
-                'ids' => $ids,
+                'id_count' => count($ids),
             ]);
 
             throw new \RuntimeException('Pinecone delete failed.');

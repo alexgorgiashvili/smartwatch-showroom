@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cache;
 
 class MultiLayerCacheService
 {
-    private const CACHE_KEY_VERSION = 'v5';
+    private const CACHE_KEY_VERSION = 'v6';
     private const EMBEDDING_CACHE_TTL = 3600;
     private const SEMANTIC_CACHE_TTL = 1800;
     private const RESPONSE_CACHE_TTL = 600;
@@ -20,28 +20,28 @@ class MultiLayerCacheService
     /**
      * Get cached response (checks all layers)
      */
-    public function getCachedResponse(string $query, IntentResult $intent): ?array
+    public function getCachedResponse(string $query, IntentResult $intent, array $context = []): ?array
     {
         if (!config('chatbot.caching.enabled', true)) {
             return null;
         }
 
         // Try exact match first (fast)
-        $exactMatch = $this->getExactMatch($query, $intent);
+        $exactMatch = $this->getExactMatch($query, $intent, $context);
         if ($exactMatch) {
             return array_merge($exactMatch, ['cache_layer' => 'exact']);
         }
 
         // Skip semantic matching if semantic cache is disabled or empty
         $intentKey = $intent->intent();
-        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
+        $semanticIndex = $this->cache()->get($this->key($this->semanticIndexKey($intentKey, $context)), []);
 
         if (empty($semanticIndex)) {
             return null; // No semantic cache yet, skip expensive embedding
         }
 
         // Only do semantic matching if we have cached embeddings
-        $semanticMatch = $this->getSemanticMatch($query, $intent);
+        $semanticMatch = $this->getSemanticMatch($query, $intent, $context);
         if ($semanticMatch) {
             return array_merge($semanticMatch, ['cache_layer' => 'semantic']);
         }
@@ -52,20 +52,20 @@ class MultiLayerCacheService
     /**
      * Store response in cache
      */
-    public function cacheResponse(string $query, IntentResult $intent, string $response, array $metadata = []): void
+    public function cacheResponse(string $query, IntentResult $intent, string $response, array $metadata = [], array $context = []): void
     {
         if (!config('chatbot.caching.enabled', true)) {
             return;
         }
 
-        $queryHash = $this->hashQuery($query, $intent);
+        $queryHash = $this->hashQuery($query, $intent, $context);
         $intentKey = $intent->intent();
-        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
+        $semanticIndex = $this->cache()->get($this->key($this->semanticIndexKey($intentKey, $context)), []);
         $embedding = [];
 
         if (!app()->environment('testing') && !empty($semanticIndex)) {
             $embedding = $this->getOrCacheEmbedding($query);
-            $this->addToSemanticIndex($queryHash, $embedding, $intentKey);
+            $this->addToSemanticIndex($queryHash, $embedding, $intentKey, $context);
         }
 
         $cacheData = [
@@ -93,7 +93,9 @@ class MultiLayerCacheService
             return $this->embeddingService->embed($query);
         }
 
-        $queryHash = $this->hashQuery($query);
+        // Embeddings depend only on the query, so the existing shared cache
+        // remains valid across widget cohorts and social channels.
+        $queryHash = md5('v5|' . mb_strtolower(trim($query)) . '|||');
 
         return $this->cache()->remember(
             $this->key("embedding:{$queryHash}"),
@@ -140,18 +142,18 @@ class MultiLayerCacheService
         ];
     }
 
-    private function getExactMatch(string $query, IntentResult $intent): ?array
+    private function getExactMatch(string $query, IntentResult $intent, array $context): ?array
     {
-        $queryHash = $this->hashQuery($query, $intent);
+        $queryHash = $this->hashQuery($query, $intent, $context);
         return $this->cache()->get($this->key("response:{$queryHash}"));
     }
 
-    private function getSemanticMatch(string $query, IntentResult $intent): ?array
+    private function getSemanticMatch(string $query, IntentResult $intent, array $context): ?array
     {
         $embedding = $this->getOrCacheEmbedding($query);
         $intentKey = $intent->intent();
 
-        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
+        $semanticIndex = $this->cache()->get($this->key($this->semanticIndexKey($intentKey, $context)), []);
 
         $threshold = config('chatbot.caching.layers.semantic.threshold', self::SEMANTIC_SIMILARITY_THRESHOLD);
 
@@ -169,10 +171,11 @@ class MultiLayerCacheService
         return null;
     }
 
-    private function addToSemanticIndex(string $queryHash, array $embedding, string $intent): void
+    private function addToSemanticIndex(string $queryHash, array $embedding, string $intent, array $context): void
     {
         $intentKey = $intent;
-        $semanticIndex = $this->cache()->get($this->key("semantic_index:{$intentKey}"), []);
+        $indexKey = $this->semanticIndexKey($intentKey, $context);
+        $semanticIndex = $this->cache()->get($this->key($indexKey), []);
 
         $semanticIndex[$queryHash] = $embedding;
 
@@ -181,7 +184,7 @@ class MultiLayerCacheService
         }
 
         $this->cache()->put(
-            $this->key("semantic_index:{$intentKey}"),
+            $this->key($indexKey),
             $semanticIndex,
             config('chatbot.caching.layers.semantic.ttl', self::SEMANTIC_CACHE_TTL)
         );
@@ -236,17 +239,43 @@ class MultiLayerCacheService
         $cache->forever('chatbot:namespace_version', $current + 1);
     }
 
-    private function hashQuery(string $query, ?IntentResult $intent = null): string
+    private function hashQuery(string $query, IntentResult $intent, array $context): string
     {
-        $intentKey = $intent?->intent() ?? '';
-        $category = $intent?->category() ?? '';
+        $intentKey = $intent->intent();
+        $category = $intent->category() ?? '';
         $facetKey = implode('|', array_filter([
-            $intent?->hasCatalogFacet() ? 'catalog_facet' : '',
-            $intent?->mentionsTwoGCatalog() ? '2g' : '',
-            $intent?->mentionsFourGCatalog() ? '4g' : '',
-            $intent?->mentionsDiscountCatalog() ? 'discount' : '',
+            $intent->hasCatalogFacet() ? 'catalog_facet' : '',
+            $intent->mentionsTwoGCatalog() ? '2g' : '',
+            $intent->mentionsFourGCatalog() ? '4g' : '',
+            $intent->mentionsDiscountCatalog() ? 'discount' : '',
         ]));
 
-        return md5(self::CACHE_KEY_VERSION . '|' . mb_strtolower(trim($query)) . '|' . $intentKey . '|' . $category . '|' . $facetKey);
+        $legacy = 'v5|' . mb_strtolower(trim($query)) . '|' . $intentKey . '|' . $category . '|' . $facetKey;
+        return $context === []
+            ? md5($legacy)
+            : md5(self::CACHE_KEY_VERSION . '|' . $legacy . '|' . $this->contextHash($context));
+    }
+
+    private function semanticIndexKey(string $intent, array $context): string
+    {
+        return $context === []
+            ? 'semantic_index:' . $intent
+            : 'semantic_index:' . md5($intent . '|' . $this->contextHash($context));
+    }
+
+    private function contextHash(array $context): string
+    {
+        $prompt = config('chatbot-prompt', []);
+        $normalized = [
+            'channel' => (string) ($context['channel'] ?? 'omnichannel'),
+            'model' => (string) ($context['model'] ?? config('chatbot.supervisor.model', 'gpt-4.1-mini')),
+            'prompt_version' => (string) config('chatbot.caching.prompt_version', 'v1'),
+            'prompt_hash' => hash('sha256', serialize($prompt)),
+            'knowledge_version' => (string) ($context['knowledge_version'] ?? 'none'),
+            'catalog_version' => (string) ($context['catalog_version'] ?? config('chatbot.caching.catalog_version', 'v1')),
+            'conversation_id' => (string) ($context['conversation_id'] ?? ''),
+        ];
+
+        return hash('sha256', json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
     }
 }

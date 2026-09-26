@@ -1,0 +1,1802 @@
+[
+    {
+        "id": "conv-001",
+        "category": "recommendation",
+        "question": "მირჩიეთ ბავშვის GPS საათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-002",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში ბავშვის GPS საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-003",
+        "category": "price_query",
+        "question": "რა ღირს ბავშვის GPS საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-004",
+        "category": "comparison",
+        "question": "რით განსხვავდება ბავშვის GPS საათი სხვა მოდელებისგან?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "comparison",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "comparison",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-005",
+        "category": "price_query",
+        "question": "რა ღირს SIM-ბარათიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-006",
+        "category": "price_query",
+        "question": "რა ღირს ვიდეოზარის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-007",
+        "category": "price_query",
+        "question": "რა ღირს სკოლის ასაკის ბავშვის საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-008",
+        "category": "price_query",
+        "question": "რა ღირს საბავშვო სმარტსაათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-009",
+        "category": "recommendation",
+        "question": "მირჩიეთ SIM-ბარათიანი საბავშვო საათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-010",
+        "category": "price_query",
+        "question": "რა ღირს GPS ფუნქციის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-011",
+        "category": "features",
+        "question": "ბავშვის GPS საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-012",
+        "category": "price_query",
+        "question": "რა ღირს საბავშვო 4G საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-013",
+        "category": "comparison",
+        "question": "რით განსხვავდება SIM-ბარათიანი საბავშვო საათი სხვა მოდელებისგან?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "comparison",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "comparison",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-014",
+        "category": "price_query",
+        "question": "რა ღირს კამერიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-015",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში SIM-ბარათიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-016",
+        "category": "price_query",
+        "question": "რა ღირს SOS ღილაკიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-017",
+        "category": "price_query",
+        "question": "რა ღირს ბავშვის ტელეფონ-საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-018",
+        "category": "features",
+        "question": "ბავშვის GPS საათი როგორ დავაყენო?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "setup",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-019",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში ვიდეოზარის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-020",
+        "category": "price_query",
+        "question": "რა ფასი აქვს ბავშვის GPS საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-021",
+        "category": "price_query",
+        "question": "რა ფასი აქვს SIM-ბარათიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-022",
+        "category": "price_query",
+        "question": "რა ფასი აქვს ვიდეოზარის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-023",
+        "category": "price_query",
+        "question": "რა ფასი აქვს სკოლის ასაკის ბავშვის საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-024",
+        "category": "recommendation",
+        "question": "მირჩიეთ ვიდეოზარის მქონე საბავშვო საათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-025",
+        "category": "features",
+        "question": "SIM-ბარათიანი საბავშვო საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-026",
+        "category": "price_query",
+        "question": "რა ფასი აქვს საბავშვო სმარტსაათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-027",
+        "category": "general",
+        "question": "ბავშვის GPS საათი სად შემიძლია ადგილზე ვნახო?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "location",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-028",
+        "category": "price_query",
+        "question": "რა ფასი აქვს GPS ფუნქციის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-029",
+        "category": "features",
+        "question": "ბავშვის GPS საათი-ით დარეკვა შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "calling",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-030",
+        "category": "price_query",
+        "question": "რა ფასი აქვს საბავშვო 4G საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-031",
+        "category": "price_query",
+        "question": "რა ფასი აქვს კამერიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-032",
+        "category": "price_query",
+        "question": "რა ფასი აქვს SOS ღილაკიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-033",
+        "category": "price_query",
+        "question": "რა ფასი აქვს ბავშვის ტელეფონ-საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-034",
+        "category": "price_query",
+        "question": "ბავშვის GPS საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-035",
+        "category": "price_query",
+        "question": "SIM-ბარათიანი საბავშვო საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-036",
+        "category": "general",
+        "question": "ბავშვის GPS საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "delivery",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-037",
+        "category": "price_query",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-038",
+        "category": "features",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-039",
+        "category": "features",
+        "question": "SIM-ბარათიანი საბავშვო საათი-ით დარეკვა შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "calling",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-040",
+        "category": "features",
+        "question": "სკოლის ასაკის ბავშვის საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-041",
+        "category": "price_query",
+        "question": "სკოლის ასაკის ბავშვის საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-042",
+        "category": "price_query",
+        "question": "საბავშვო სმარტსაათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-043",
+        "category": "price_query",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-044",
+        "category": "price_query",
+        "question": "საბავშვო 4G საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-045",
+        "category": "features",
+        "question": "საბავშვო სმარტსაათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-046",
+        "category": "price_query",
+        "question": "კამერიანი საბავშვო საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-047",
+        "category": "general",
+        "question": "ბავშვის GPS საათი-ის შეძენა განვადებით შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "payment",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-048",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში სკოლის ასაკის ბავშვის საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-049",
+        "category": "price_query",
+        "question": "SOS ღილაკიანი საბავშვო საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-050",
+        "category": "general",
+        "question": "SIM-ბარათიანი საბავშვო საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "delivery",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-051",
+        "category": "price_query",
+        "question": "ბავშვის ტელეფონ-საათი რა ფასად იყიდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-052",
+        "category": "price_query",
+        "question": "ბავშვის GPS საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-053",
+        "category": "features",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-054",
+        "category": "price_query",
+        "question": "SIM-ბარათიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-055",
+        "category": "price_query",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-056",
+        "category": "features",
+        "question": "საბავშვო 4G საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-057",
+        "category": "features",
+        "question": "კამერიანი საბავშვო საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-058",
+        "category": "price_query",
+        "question": "სკოლის ასაკის ბავშვის საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-059",
+        "category": "price_query",
+        "question": "საბავშვო სმარტსაათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-060",
+        "category": "price_query",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-061",
+        "category": "price_query",
+        "question": "საბავშვო 4G საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-062",
+        "category": "price_query",
+        "question": "კამერიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-063",
+        "category": "features",
+        "question": "SOS ღილაკიანი საბავშვო საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-064",
+        "category": "price_query",
+        "question": "SOS ღილაკიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-065",
+        "category": "general",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "delivery",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-066",
+        "category": "recommendation",
+        "question": "მირჩიეთ სკოლის ასაკის ბავშვის საათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-067",
+        "category": "price_query",
+        "question": "ბავშვის ტელეფონ-საათი-ის ფასი მაინტერესებს.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-068",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება ბავშვის GPS საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-069",
+        "category": "general",
+        "question": "რა გარანტია აქვს ბავშვის GPS საათი-ს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "warranty",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-070",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება SIM-ბარათიანი საბავშვო საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-071",
+        "category": "features",
+        "question": "ბავშვის ტელეფონ-საათი რომელი SIM-ბარათით მუშაობს?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-072",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება ვიდეოზარის მქონე საბავშვო საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-073",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში საბავშვო სმარტსაათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-074",
+        "category": "general",
+        "question": "SIM-ბარათიანი საბავშვო საათი სად შემიძლია ადგილზე ვნახო?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "location",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-075",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება სკოლის ასაკის ბავშვის საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-076",
+        "category": "features",
+        "question": "SIM-ბარათიანი საბავშვო საათი როგორ დავაყენო?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "setup",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-077",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება საბავშვო სმარტსაათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-078",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში GPS ფუნქციის მქონე საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-079",
+        "category": "features",
+        "question": "ბავშვის GPS საათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-080",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება GPS ფუნქციის მქონე საბავშვო საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-081",
+        "category": "comparison",
+        "question": "რით განსხვავდება ვიდეოზარის მქონე საბავშვო საათი სხვა მოდელებისგან?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "comparison",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "comparison",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-082",
+        "category": "features",
+        "question": "SIM-ბარათიანი საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-083",
+        "category": "general",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი სად შემიძლია ადგილზე ვნახო?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "location",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-084",
+        "category": "features",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-085",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება საბავშვო 4G საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-086",
+        "category": "recommendation",
+        "question": "მირჩიეთ საბავშვო სმარტსაათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-087",
+        "category": "general",
+        "question": "სკოლის ასაკის ბავშვის საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "delivery",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-088",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში საბავშვო 4G საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-089",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება კამერიანი საბავშვო საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-090",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება SOS ღილაკიანი საბავშვო საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-091",
+        "category": "features",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი-ით დარეკვა შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "calling",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-092",
+        "category": "features",
+        "question": "სკოლის ასაკის ბავშვის საათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-093",
+        "category": "features",
+        "question": "სკოლის ასაკის ბავშვის საათი-ით დარეკვა შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "calling",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-094",
+        "category": "price_query",
+        "question": "რა თანხა დამჭირდება ბავშვის ტელეფონ-საათი-ის შესაძენად?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-095",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ ბავშვის GPS საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-096",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ SIM-ბარათიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-097",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ ვიდეოზარის მქონე საბავშვო საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-098",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ სკოლის ასაკის ბავშვის საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-099",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ საბავშვო სმარტსაათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-100",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ GPS ფუნქციის მქონე საბავშვო საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-101",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში კამერიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-102",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ საბავშვო 4G საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-103",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ კამერიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-104",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ SOS ღილაკიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-105",
+        "category": "general",
+        "question": "საბავშვო სმარტსაათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "general",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "delivery",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-106",
+        "category": "price_query",
+        "question": "შეგიძლიათ მითხრათ ბავშვის ტელეფონ-საათი-ის მიმდინარე ფასი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-107",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში SOS ღილაკიანი საბავშვო საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-108",
+        "category": "price_query",
+        "question": "ბავშვის GPS საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-109",
+        "category": "features",
+        "question": "საბავშვო სმარტსაათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-110",
+        "category": "features",
+        "question": "საბავშვო სმარტსაათი-ით დარეკვა შეიძლება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "calling",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-111",
+        "category": "price_query",
+        "question": "SIM-ბარათიანი საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-112",
+        "category": "recommendation",
+        "question": "მირჩიეთ GPS ფუნქციის მქონე საბავშვო საათი-ის ტიპის მოდელი.",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "recommendation",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "recommendation",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-113",
+        "category": "price_query",
+        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-114",
+        "category": "price_query",
+        "question": "სკოლის ასაკის ბავშვის საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "home",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-115",
+        "category": "features",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "features",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "answer_from_verified_context"
+        },
+        "source_category": "connectivity",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-116",
+        "category": "price_query",
+        "question": "საბავშვო სმარტსაათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-117",
+        "category": "stock_query",
+        "question": "არის თუ არა მარაგში ბავშვის ტელეფონ-საათი?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-118",
+        "category": "price_query",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-119",
+        "category": "price_query",
+        "question": "საბავშვო 4G საათი-ის ფასს სად ვნახავ?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "price_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "price",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    },
+    {
+        "id": "conv-120",
+        "category": "stock_query",
+        "question": "ბავშვის GPS საათი ამჟამად ხელმისაწვდომია?",
+        "language": "ka",
+        "expected": {
+            "expected_intent": "stock_query",
+            "guardrail_should_pass": true,
+            "georgian_only": true,
+            "answer_policy": "verify_current_business_source"
+        },
+        "source_category": "stock",
+        "source_channel": "facebook",
+        "review_status": "synthetic_question_from_observed_intent"
+    }
+]

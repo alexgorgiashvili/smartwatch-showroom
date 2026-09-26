@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
 
 class ComparisonAgent
 {
+    use UsesVerifiedWidgetKnowledge;
+
     public function __construct(
         private ProductContextService $productContext,
         private PromptBuilderService $promptBuilder,
@@ -35,7 +37,8 @@ class ComparisonAgent
         Collection $products,
         array $sessionContext,
         array $preferences,
-        array $trace = []
+        array $trace = [],
+        array $runtime = []
     ): array {
         $this->traceWidget('comparison_agent.started', [
             'intent' => $intent->intent(),
@@ -50,6 +53,8 @@ class ComparisonAgent
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'შედარების რეჟიმი: გააკეთე დეტალური შედარება პროდუქტებს შორის. გამოკვეთე მთავარი განსხვავებები ფუნქციებში, ფასში და სხვადასხვა გამოყენების შემთხვევისთვის შესაბამისობაში.';
         $systemPrompt .= "\n\n" . $modeInstruction;
+        $systemPrompt = $this->withVerifiedWidgetKnowledge($systemPrompt, $runtime);
+        $model = (string) ($runtime['model'] ?? config('chatbot.supervisor.model', 'gpt-4.1-mini'));
 
         $userContext = $this->promptBuilder->buildUserContext(
             $message,
@@ -91,13 +96,13 @@ class ComparisonAgent
         ], fn ($value) => $value !== null), $trace);
 
         $this->traceWidget('comparison_agent.model_request', [
-            'model' => config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            'model' => $model,
             'message_count' => count($messages),
             'product_count' => $selectedProducts->count(),
         ], $trace);
 
         $completion = $this->modelCompletion->complete(
-            config('chatbot.supervisor.model', 'gpt-4.1-mini'),
+            $model,
             $messages,
             [
                 'max_tokens' => 350,

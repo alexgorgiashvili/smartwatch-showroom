@@ -11,6 +11,21 @@ return [
         'model' => env('CHATBOT_SUPERVISOR_MODEL', 'gpt-4.1-mini'),
     ],
 
+    // Only the website widget can enter this cohort. Zero leaves existing
+    // widget and omnichannel behavior on the baseline model.
+    'widget_v2' => [
+        'rollout_percent' => env('CHATBOT_WIDGET_V2_PERCENT', 0),
+        'model' => env('CHATBOT_WIDGET_V2_MODEL', 'gpt-6-luna'),
+    ],
+
+    // Standard API rates in USD per million text tokens, checked 2026-09-26.
+    // Keep these estimates separate from the provider's billing records.
+    'model_pricing_usd_per_million' => [
+        'gpt-4.1-mini' => ['input' => 0.40, 'cached_input' => 0.10, 'cache_write' => 0.40, 'output' => 1.60],
+        'gpt-4.1-nano' => ['input' => 0.10, 'cached_input' => 0.025, 'cache_write' => 0.10, 'output' => 0.40],
+        'gpt-6-luna' => ['input' => 0.10, 'cached_input' => 0.01, 'cache_write' => 0.125, 'output' => 0.50],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Specialized Agents
@@ -39,6 +54,8 @@ return [
     */
     'caching' => [
         'enabled' => env('CHATBOT_CACHE_ENABLED', true),
+        'prompt_version' => env('CHATBOT_PROMPT_VERSION', 'v1'),
+        'catalog_version' => env('CHATBOT_CATALOG_VERSION', 'v1'),
         'layers' => [
             'embedding' => [
                 'ttl' => env('CHATBOT_EMBEDDING_CACHE_TTL', 3600),

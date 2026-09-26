@@ -58,7 +58,6 @@ class RerankService
             if (!$response->successful()) {
                 Log::warning('Cohere rerank failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
                 ]);
 
                 return $this->fallbackDocuments($documents, $topN);
@@ -97,7 +96,7 @@ class RerankService
             }
 
             Log::warning('Cohere rerank exception', [
-                'error' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
 
             return $this->fallbackDocuments($documents, $topN);

@@ -149,7 +149,7 @@ class ChatbotTrainingCaseService
             'recent_results' => $recentResults,
             'success_rate' => $recentResults->isEmpty()
                 ? 0
-                : round(($recentResults->where('status', 'passed')->count() / $recentResults->count()) * 100, 1),
+                : round(($recentResults->where('status', 'pass')->count() / $recentResults->count()) * 100, 1),
         ];
     }
 

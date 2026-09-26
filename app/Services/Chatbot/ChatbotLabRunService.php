@@ -128,7 +128,8 @@ class ChatbotLabRunService
             'completed_at' => $run->completed_at,
             'total' => $run->results->count(),
             'passed' => $run->results->where('status', 'pass')->count(),
-            'failed' => $run->results->where('status', 'fail')->count(),
+            'failed' => $run->results->whereIn('status', ['fail', 'error'])->count(),
+            'skipped' => $run->results->where('status', 'skip')->count(),
             'pending' => $run->results->where('status', 'pending')->count(),
         ];
     }
@@ -151,16 +152,16 @@ class ChatbotLabRunService
     public function summarizeResultSignal(ChatbotTestResult $result): array
     {
         return [
-            'has_issues' => $result->status === 'failed',
-            'quality_score' => $result->llm_overall ?? 0,
+            'has_issues' => in_array($result->status, ['fail', 'error'], true),
+            'quality_score' => $result->llm_overall,
         ];
     }
 
     public function runObservabilitySnapshot(ChatbotTestRun $run): array
     {
         return [
-            'avg_response_time' => $run->results->avg('response_time_ms') ?? 0,
-            'errors_count' => $run->results->where('status', 'failed')->count(),
+            'avg_response_time' => $run->results->avg('response_time_ms'),
+            'errors_count' => $run->results->where('status', 'error')->count(),
         ];
     }
 

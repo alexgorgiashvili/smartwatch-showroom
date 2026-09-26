@@ -23,6 +23,7 @@ class ChatPipelineService
             'trace_id' => $traceId,
             'conversation_id' => $conversation->id,
             'customer_id' => $customer->id,
+            'channel' => 'widget',
         ], fn ($value) => $value !== null);
 
         if ($policy->isGreetingOnly($safeIncomingMessage)) {

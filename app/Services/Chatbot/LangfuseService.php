@@ -223,12 +223,11 @@ class LangfuseService
             if (!$response->successful() && $response->status() !== 207) {
                 Log::warning('Langfuse ingestion failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
                 ]);
             }
         } catch (\Throwable $exception) {
             Log::warning('Langfuse ingestion exception', [
-                'error' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
         }
     }
