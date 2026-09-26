@@ -86,6 +86,12 @@
                     <span class="link-title">ბლოგის სტატიები</span>
                 </a>
             </li>
+            <li @class(['nav-item', 'active' => request()->routeIs('admin.content-studio.*')])>
+                <a href="{{ route('admin.content-studio.index') }}" class="nav-link" data-pjax>
+                    <i class="link-icon" data-feather="clipboard"></i>
+                    <span class="link-title">Content Studio</span>
+                </a>
+            </li>
             {{-- ── AI Lab ── --}}
             <li class="nav-item nav-category">AI ლაბი</li>
             <li @class(['nav-item', 'active' => request()->routeIs('admin.ai-analytics')])>

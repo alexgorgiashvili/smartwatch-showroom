@@ -13,8 +13,8 @@ class FacebookPageService
 
     public function __construct()
     {
-        $this->pageId = config('services.facebook.page_id');
-        $this->accessToken = config('services.facebook.page_access_token');
+        $this->pageId = (string) config('services.facebook.page_id', '');
+        $this->accessToken = (string) config('services.facebook.page_access_token', '');
     }
 
     /**

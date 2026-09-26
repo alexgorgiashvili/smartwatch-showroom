@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\FacebookPostController as AdminFacebookPostContro
 use App\Http\Controllers\Admin\InboxController as AdminInboxController;
 use App\Http\Controllers\Admin\SocialCommentController as AdminSocialCommentController;
 use App\Http\Controllers\Admin\SocialDashboardController as AdminSocialDashboardController;
+use App\Http\Controllers\Admin\ContentStudioController as AdminContentStudioController;
 use App\Http\Controllers\Admin\PushSubscriptionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
@@ -224,6 +225,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::post('/inbox/{conversationId}/toggle-ai', [AdminInboxController::class, 'toggleAi'])->name('inbox.toggle-ai');
 	Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
 
+	Route::get('/content-studio', [AdminContentStudioController::class, 'index'])->name('content-studio.index');
+	Route::get('/content-studio/{contentItem}', [AdminContentStudioController::class, 'show'])->name('content-studio.show');
 	// ── Content: Articles ──
 	Route::get('/articles', [AdminArticleController::class, 'index'])->name('articles.index');
 	Route::get('/articles/create', [AdminArticleController::class, 'create'])->name('articles.create');
@@ -394,6 +397,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		->names('articles');
 	Route::patch('/articles/{article}/toggle-publish', [AdminArticleController::class, 'togglePublish'])
 		->name('articles.toggle-publish');
+	Route::post('/content-studio/{contentItem}/approve-now', [AdminContentStudioController::class, 'approveNow'])->name('content-studio.approve-now');
+	Route::post('/content-studio/{contentItem}/schedule', [AdminContentStudioController::class, 'schedule'])->name('content-studio.schedule');
+	Route::post('/content-studio/{contentItem}/request-changes', [AdminContentStudioController::class, 'requestChanges'])->name('content-studio.request-changes');
+	Route::post('/content-studio/{contentItem}/reject', [AdminContentStudioController::class, 'reject'])->name('content-studio.reject');
+	Route::post('/content-studio/{contentItem}/retry', [AdminContentStudioController::class, 'retry'])->name('content-studio.retry');
 	Route::post('/products/{product}/images', [AdminProductImageController::class, 'store'])
 		->name('products.images.store');
 	Route::post('/products/{product}/images/{image}/primary', [AdminProductImageController::class, 'setPrimary'])

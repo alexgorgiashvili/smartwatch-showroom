@@ -146,6 +146,23 @@ class InstagramPageService
         }
     }
 
+    /** Read-only post insights used by Content Studio analytics snapshots. */
+    public function fetchPostInsights(string $postId): array
+    {
+        try {
+            $response = Http::timeout(20)->get("{$this->baseUrl}/{$postId}/insights", [
+                'metric' => 'likes,reach',
+                'access_token' => $this->accessToken,
+            ]);
+            if ($response->failed()) return ['success' => false, 'error' => 'Instagram insights request failed'];
+            $metrics = collect($response->json('data', []))->mapWithKeys(fn ($metric) => [$metric['name'] => $metric['values'][0]['value'] ?? 0]);
+            return ['success' => true, 'likes' => (int) ($metrics['likes'] ?? 0), 'reach' => (int) ($metrics['reach'] ?? 0)];
+        } catch (\Throwable $e) {
+            Log::warning('Instagram insights request failed.');
+            return ['success' => false, 'error' => 'Instagram insights request failed'];
+        }
+    }
+
     private function waitForContainerReady(string $containerId, string $mediaType): array
     {
         $maxAttempts = $mediaType === 'video' ? 12 : 6;

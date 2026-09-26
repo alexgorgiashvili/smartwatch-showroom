@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\ContactSetting;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -44,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('content-studio-intake', fn (Request $request) => Limit::perMinute(30)->by((string) optional($request->user())->id ?: $request->ip()));
         if (app()->environment('local')) {
             Vite::createAssetPathsUsing(fn (string $path) => '/'.ltrim($path, '/'));
         }

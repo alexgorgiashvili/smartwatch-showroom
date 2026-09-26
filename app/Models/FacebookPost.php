@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class FacebookPost extends Model
 {
     protected $fillable = [
+        'content_item_id',
         'user_id',
         'product_id',
         'message',

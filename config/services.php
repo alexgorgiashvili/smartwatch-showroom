@@ -34,6 +34,8 @@ return [
     'google' => [
         'search_console_credentials' => env('GOOGLE_SEARCH_CONSOLE_CREDENTIALS'),
         'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://mytechnic.ge'),
+        'analytics_credentials' => env('GOOGLE_ANALYTICS_CREDENTIALS'),
+        'analytics_property_id' => env('GOOGLE_ANALYTICS_PROPERTY_ID'),
     ],
 
     'openai' => [

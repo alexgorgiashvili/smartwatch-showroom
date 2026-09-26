@@ -12,6 +12,7 @@
         "automattic/woocommerce": "^3.1",
         "cweagans/composer-patches": "^1.7",
         "guzzlehttp/guzzle": "^7.2",
+        "google/apiclient": "^2.18",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",

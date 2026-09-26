@@ -47,6 +47,18 @@ class Kernel extends ConsoleKernel
                  ->withoutOverlapping()
                  ->runInBackground();
 
+        $schedule->command('content-studio:publish-scheduled --limit=25')
+            ->everyFiveMinutes()
+            ->timezone('Asia/Tbilisi')
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('content-studio:collect-analytics --limit=100')
+            ->dailyAt('06:20')
+            ->timezone('Asia/Tbilisi')
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Fetch engagement metrics for published posts (daily at 6 AM)
         $schedule->command('social:fetch-insights')
                  ->dailyAt('06:00')
