@@ -41,6 +41,66 @@ class ResponseValidatorServiceTest extends TestCase
         $this->assertSame('price_mismatch', $priced->violations()[0]['type']);
     }
 
+    public function testWidgetStockValidationBindsClaimToTheNamedOrRequestedProduct(): void
+    {
+        $service = new ResponseValidatorService();
+        $context = [
+            'products' => [
+                ['name' => 'MyTechnic Alpha', 'slug' => 'mytechnic-alpha', 'is_in_stock' => false],
+                ['name' => 'MyTechnic Beta', 'slug' => 'mytechnic-beta', 'is_in_stock' => true],
+            ],
+            'requested_product_slug' => 'mytechnic-alpha',
+            'require_live_catalog_evidence' => true,
+        ];
+
+        $named = $service->validateStockClaims('MyTechnic Alpha მარაგშია.', $context);
+        $this->assertFalse($named->isValid());
+        $this->assertSame('stock_claim_mismatch', $named->violations()[0]['type']);
+
+        $unnamed = $service->validateStockClaims('დიახ, მარაგშია.', $context);
+        $this->assertFalse($unnamed->isValid());
+
+        $correct = $service->validateStockClaims('MyTechnic Alpha მარაგში არ არის.', $context);
+        $this->assertTrue($correct->isValid());
+        $this->assertTrue($service->validateStockClaims('MyTechnic Beta მარაგშია.', $context)->isValid());
+    }
+
+    public function testWidgetStockValidationRejectsAmbiguousMixedCatalogClaim(): void
+    {
+        $context = [
+            'products' => [
+                ['name' => 'MyTechnic Alpha', 'slug' => 'mytechnic-alpha', 'is_in_stock' => false],
+                ['name' => 'MyTechnic Beta', 'slug' => 'mytechnic-beta', 'is_in_stock' => true],
+            ],
+            'require_live_catalog_evidence' => true,
+        ];
+
+        $result = (new ResponseValidatorService())->validateStockClaims('დიახ, მარაგშია.', $context);
+
+        $this->assertFalse($result->isValid());
+        $this->assertSame('stock_claim_ambiguous', $result->violations()[0]['type']);
+    }
+
+    public function testWidgetPriceCannotBorrowAnotherProductsPrice(): void
+    {
+        $service = new ResponseValidatorService();
+        $context = [
+            'products' => [
+                ['name' => 'MyTechnic Alpha', 'slug' => 'mytechnic-alpha', 'price' => 199],
+                ['name' => 'MyTechnic Beta', 'slug' => 'mytechnic-beta', 'price' => 299],
+            ],
+            'requested_product_slug' => 'mytechnic-alpha',
+            'require_live_catalog_evidence' => true,
+        ];
+
+        $wrong = $service->validatePriceIntegrity('MyTechnic Alpha ღირს 299 ₾.', $context);
+        $this->assertFalse($wrong->isValid());
+        $this->assertSame('product_price_mismatch', $wrong->violations()[0]['type']);
+
+        $this->assertTrue($service->validatePriceIntegrity('MyTechnic Alpha ღირს 199 ₾.', $context)->isValid());
+        $this->assertTrue($service->validatePriceIntegrity('MyTechnic Beta ღირს 299 ₾.', $context)->isValid());
+    }
+
     public function testBudgetPhraseDoesNotTriggerPriceMismatch(): void
     {
         $service = new ResponseValidatorService();

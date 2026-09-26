@@ -55,6 +55,67 @@ class ResponseValidatorService
             }
         }
 
+        if ($violations !== []) {
+            return ValidationResult::fail($violations);
+        }
+
+        return ($ragContext['require_live_catalog_evidence'] ?? false)
+            ? $this->validateWidgetPriceClaimsByProduct($response, $ragContext, $budgetPrices)
+            : ValidationResult::pass();
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @param array<int, float> $budgetPrices
+     */
+    private function validateWidgetPriceClaimsByProduct(string $response, array $context, array $budgetPrices): ValidationResult
+    {
+        $products = $context['products'] ?? [];
+        if (!is_array($products) || $products === []) {
+            return ValidationResult::pass();
+        }
+
+        $requestedSlug = mb_strtolower(trim((string) ($context['requested_product_slug'] ?? '')));
+        $clauses = preg_split('/[!?\n;]+|(?<!\d)[,](?!\d)|(?<!\d)\.(?!\d)/u', $response) ?: [];
+        $violations = [];
+
+        foreach ($clauses as $clause) {
+            $prices = $this->extractPrices($clause);
+            if ($prices === []) {
+                continue;
+            }
+
+            $text = mb_strtolower($clause);
+            $matched = array_values(array_filter($products, static function (array $product) use ($text): bool {
+                $name = mb_strtolower(trim((string) ($product['name'] ?? '')));
+                $slug = mb_strtolower(trim((string) ($product['slug'] ?? '')));
+
+                return ($name !== '' && str_contains($text, $name))
+                    || ($slug !== '' && str_contains($text, $slug));
+            }));
+            if ($matched === [] && $requestedSlug !== '') {
+                $matched = array_values(array_filter(
+                    $products,
+                    static fn (array $product): bool => mb_strtolower((string) ($product['slug'] ?? '')) === $requestedSlug
+                ));
+            }
+            if (count($matched) !== 1) {
+                continue;
+            }
+
+            $allowed = $this->collectAllowedPrices(['products' => $matched]);
+            foreach ($prices as $price) {
+                if (in_array($price, $budgetPrices, true)) {
+                    continue;
+                }
+                if (!collect($allowed)->contains(
+                    static fn (float $known): bool => abs($price - $known) <= max($known * 0.01, 0.01)
+                )) {
+                    $violations[] = ['type' => 'product_price_mismatch', 'price' => $price];
+                }
+            }
+        }
+
         return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
     }
 
@@ -65,11 +126,15 @@ class ResponseValidatorService
 
         if (!is_array($products) || $products === []) {
             $needsEvidence = (bool) ($ragContext['require_live_catalog_evidence'] ?? false);
-            $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|\bin stock\b|\bout of stock\b/iu', $normalized) === 1;
+            $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|მარაგში არ არის|ხელმისაწვდომია|\bin stock\b|\bout of stock\b/iu', $normalized) === 1;
 
             return $needsEvidence && $claimsStock
                 ? ValidationResult::fail([['type' => 'stock_without_live_catalog']])
                 : ValidationResult::pass();
+        }
+
+        if ($ragContext['require_live_catalog_evidence'] ?? false) {
+            return $this->validateWidgetStockClaimsByProduct($response, $products, $ragContext);
         }
 
         $hasInStock = collect($products)->contains(fn (array $product): bool => (bool) ($product['is_in_stock'] ?? false));
@@ -95,6 +160,64 @@ class ResponseValidatorService
                 'type' => 'stock_claim_mismatch',
                 'claim' => 'out_of_stock',
             ];
+        }
+
+        return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
+    }
+
+    /**
+     * A stock fact about one model cannot be justified by another model's inventory.
+     *
+     * @param array<int, array<string, mixed>> $products
+     */
+    private function validateWidgetStockClaimsByProduct(string $response, array $products, array $context): ValidationResult
+    {
+        $violations = [];
+        $requestedSlug = mb_strtolower(trim((string) ($context['requested_product_slug'] ?? '')));
+        $clauses = preg_split('/[.!?;\n,]+/u', $response) ?: [];
+
+        foreach ($clauses as $clause) {
+            $text = mb_strtolower(trim($clause));
+            $negative = preg_match('/არ არის მარაგში|მარაგში არ არის|მარაგი ამოწურულია|ამოწურულია|\bout of stock\b/iu', $text) === 1;
+            $positive = preg_match('/მარაგშია|მარაგი გვაქვს|ხელმისაწვდომია|\bin stock\b/iu', $text) === 1;
+            if (!$negative && !$positive) {
+                continue;
+            }
+
+            $matched = array_values(array_filter($products, static function (array $product) use ($text): bool {
+                $name = mb_strtolower(trim((string) ($product['name'] ?? '')));
+                $slug = mb_strtolower(trim((string) ($product['slug'] ?? '')));
+
+                return ($name !== '' && str_contains($text, $name))
+                    || ($slug !== '' && str_contains($text, $slug));
+            }));
+
+            if ($matched === [] && $requestedSlug !== '') {
+                $matched = array_values(array_filter(
+                    $products,
+                    static fn (array $product): bool => mb_strtolower((string) ($product['slug'] ?? '')) === $requestedSlug
+                ));
+            }
+            if ($matched === []) {
+                $matched = $products;
+            }
+
+            if ($positive && $negative) {
+                $violations[] = ['type' => 'stock_claim_ambiguous'];
+                continue;
+            }
+
+            $statuses = array_unique(array_map(
+                static fn (array $product): bool => (bool) ($product['is_in_stock'] ?? false),
+                $matched
+            ));
+            if (count($statuses) !== 1) {
+                $violations[] = ['type' => 'stock_claim_ambiguous'];
+                continue;
+            }
+            if (($positive && $statuses[0] !== true) || ($negative && $statuses[0] !== false)) {
+                $violations[] = ['type' => 'stock_claim_mismatch', 'claim' => $positive ? 'in_stock' : 'out_of_stock'];
+            }
         }
 
         return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);

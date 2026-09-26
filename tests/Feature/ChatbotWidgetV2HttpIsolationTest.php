@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -67,6 +69,65 @@ class ChatbotWidgetV2HttpIsolationTest extends TestCase
         $response->assertOk();
         $this->assertStringNotContainsString('დიახ, ეს მოდელი მარაგშია.', (string) $response->json('message'));
         $this->assertNotNull($response->json('debug.fallback_reason'));
+    }
+
+    public function testWidgetV2KeepsRequestedOutOfStockProductInValidationEvidence(): void
+    {
+        $this->createMixedStockCatalog();
+        $this->configureWidget(100, 'MyTechnic Alpha-ს ვიდეოზარი დადასტურებული არ არის. ეს მოდელი მარაგში არ არის.');
+
+        $response = $this->postJson('/chatbot', ['message' => 'MyTechnic Alpha-ს ვიდეოზარი აქვს?']);
+
+        $response->assertOk();
+        $this->assertStringContainsString('მარაგში არ არის', (string) $response->json('message'));
+        $this->assertNull($response->json('debug.fallback_reason'));
+    }
+
+    public function testWidgetV2RejectsStockClaimBorrowedFromAnotherProduct(): void
+    {
+        $this->createMixedStockCatalog();
+        $this->configureWidget(100, 'MyTechnic Alpha მარაგშია.');
+        config()->set('chatbot.reflection.max_retries', 1);
+
+        $response = $this->postJson('/chatbot', ['message' => 'MyTechnic Alpha მარაგშია?']);
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('MyTechnic Alpha მარაგშია.', (string) $response->json('message'));
+        $this->assertNotNull($response->json('debug.fallback_reason'));
+    }
+
+    public function testWidgetV2RejectsPriceBorrowedFromAnotherProduct(): void
+    {
+        $this->createMixedStockCatalog();
+        $this->configureWidget(100, 'MyTechnic Alpha ღირს 299 ₾.');
+        config()->set('chatbot.reflection.max_retries', 1);
+
+        $response = $this->postJson('/chatbot', ['message' => 'MyTechnic Alpha რა ღირს?']);
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('299 ₾', (string) $response->json('message'));
+        $this->assertNotNull($response->json('debug.fallback_reason'));
+    }
+
+    private function createMixedStockCatalog(): void
+    {
+        foreach ([
+            ['name' => 'MyTechnic Alpha', 'slug' => 'mytechnic-alpha', 'price' => 199, 'quantity' => 0],
+            ['name' => 'MyTechnic Beta', 'slug' => 'mytechnic-beta', 'price' => 299, 'quantity' => 5],
+        ] as $item) {
+            $product = Product::create([
+                'name_en' => $item['name'],
+                'name_ka' => $item['name'],
+                'slug' => $item['slug'],
+                'price' => $item['price'],
+                'is_active' => true,
+            ]);
+            ProductVariant::create([
+                'product_id' => $product->id,
+                'name' => 'Default',
+                'quantity' => $item['quantity'],
+            ]);
+        }
     }
 
     private function configureWidget(int $rolloutPercent, string $reply = 'მიწოდება უფასოა საქართველოს მასშტაბით.'): void

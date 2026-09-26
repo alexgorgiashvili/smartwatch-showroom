@@ -46,12 +46,21 @@ class InventoryAgent
         ], $trace);
 
         $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
+        $requestedSlug = ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
+            ? $this->requestedProductSlugForValidation($message, $intent, $searchContext)
+            : null;
+        $validationProducts = $requestedSlug
+            ? collect([$searchContext->requestedProduct()])->concat($selectedProducts)->unique('id')->values()
+            : $selectedProducts;
 
         $contactSettings = \App\Models\ContactSetting::allKeyed();
         $validationContext = $this->withWidgetValidationGuard(
-            $this->productContext->buildValidationContext($selectedProducts, $contactSettings),
+            $this->productContext->buildValidationContext($validationProducts, $contactSettings),
             $runtime
         );
+        if ($requestedSlug) {
+            $validationContext['requested_product_slug'] = $requestedSlug;
+        }
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);
         $modeInstruction = 'ინვენტარის რეჟიმი: უპასუხე ზუსტად ფასზე, მარაგზე და ხელმისაწვდომობაზე. არ მოიგონო ინფორმაცია, რომელიც კონტექსტში არ ჩანს.';

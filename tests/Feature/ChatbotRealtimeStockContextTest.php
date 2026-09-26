@@ -111,9 +111,11 @@ class ChatbotRealtimeStockContextTest extends TestCase
             $userMessage = $this->latestUserMessage(is_array($messages) ? $messages : []);
 
             return (str_contains($userMessage, 'Products (live stock from database):')
+                || str_contains($userMessage, 'პროდუქტები (live მარაგი ბაზიდან):')
                 || str_contains($userMessage, 'პროდუქტები (ლაივ მარაგი ბაზიდან):'))
                 && str_contains($userMessage, 'MyTechnic Ultra')
                 && (str_contains($userMessage, 'stock: მარაგშია (7 ცალი)')
+                    || str_contains($userMessage, 'მარაგი: მარაგშია')
                     || str_contains($userMessage, 'მარაგი: მარაგშია (7 ცალი)'));
         });
     }

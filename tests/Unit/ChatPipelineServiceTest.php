@@ -66,6 +66,7 @@ class ChatPipelineServiceTest extends TestCase
             ->with($message, [], $scopedPreferences, [
                 'conversation_id' => 101,
                 'customer_id' => 202,
+                'channel' => 'widget',
             ])
             ->willReturn($intentResult);
 
@@ -78,6 +79,7 @@ class ChatPipelineServiceTest extends TestCase
             ->with($message, 101, 202, $intentResult, $scopedPreferences, [
                 'conversation_id' => 101,
                 'customer_id' => 202,
+                'channel' => 'widget',
             ])
             ->willReturn([
                 'success' => true,

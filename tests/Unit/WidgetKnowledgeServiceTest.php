@@ -26,8 +26,16 @@ class WidgetKnowledgeServiceTest extends TestCase
     {
         $context = $this->service()->contextFor('საათი თუ არ მომეწონა, დავაბრუნებ?');
 
-        $this->assertStringContainsString('მხოლოდ მოდელის გაცვლა', $context);
-        $this->assertStringContainsString('დაუდასტურებელ პირობას ნუ დაჰპირდები', $context);
+        $this->assertStringContainsString('მოდელის გაცვლა', $context);
+        $this->assertStringContainsString('თანხის დაბრუნების პირობა ამ წყაროთი არ დასტურდება', $context);
+    }
+
+    public function test_money_back_wording_retrieves_exchange_distinction(): void
+    {
+        $context = $this->service()->contextFor('თუ არ მომეწონა, თანხას დამიბრუნებთ?');
+
+        $this->assertStringContainsString('მოდელის გაცვლა', $context);
+        $this->assertStringContainsString('თანხის დაბრუნება და მოდელის გაცვლა სხვადასხვა საკითხია', $context);
     }
 
     private function service(): WidgetKnowledgeService
