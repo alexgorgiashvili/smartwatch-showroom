@@ -123,17 +123,25 @@ class ChatPipelineService
             $agentResponse = $fallbackStrategy->resolveStaticReason((string) $agentReason)->reply();
         }
 
+        // Normalize the two Armenian punctuation marks Luna occasionally emits
+        // inside otherwise Georgian text, then reject any remaining Armenian script.
+        $agentResponse = str_replace(["\u{055D}", "\u{0589}"], [':', '.'], $agentResponse);
+        $hasForeignScript = preg_match('/[\x{0530}-\x{058F}]/u', $agentResponse) === 1;
         $localePassed = $agentResponse === '' || (
-            app()->getLocale() === 'en'
+            !$hasForeignScript && (app()->getLocale() === 'en'
                 ? $policy->passesLocaleQa($agentResponse, 'en')
-                : $policy->passesStrictGeorgianQa($agentResponse)
+                : $policy->passesStrictGeorgianQa($agentResponse))
         );
+        $validationContext = $supervisorResult['validation_context'] ?? ['products' => []];
         if (!$localePassed) {
-            $agentResponse = $policy->localeFallback();
+            $agentResponse = app()->getLocale() !== 'en'
+                && $intentResult->intent() === 'price_query'
+                && empty($validationContext['products'])
+                    ? 'ამჟამად ფასს ვერ ვადასტურებ. მომწერეთ კონკრეტული მოდელი ან პროდუქტის ბმული, რომ ინფორმაცია გადავამოწმო.'
+                    : $policy->localeFallback();
             $agentReason = ChatbotOutcomeReason::STRICT_GEORGIAN;
         }
 
-        $validationContext = $supervisorResult['validation_context'] ?? ['products' => []];
         $violations = $supervisorResult['violations'] ?? [];
         if (($validationContext['require_live_catalog_evidence'] ?? false) && $agentReason === null) {
             $validator = app(ResponseValidatorService::class);

@@ -32,6 +32,13 @@ class ResponseValidatorServiceTest extends TestCase
         $stock = $service->validateStockClaims('ეს საათი მარაგშია.', $empty);
         $this->assertFalse($stock->isValid());
         $this->assertSame('stock_without_live_catalog', $stock->violations()[0]['type']);
+        $this->assertFalse($service->validateStockClaims('ეს საათი ხელმისაწვდომია.', $empty)->isValid());
+        $this->assertFalse($service->validateStockClaims('დიახ, ხელმისაწვდომია.', $empty)->isValid());
+        $this->assertFalse($service->validateStockClaims('ეს მოდელი ხელმისაწვდომი არ არის.', $empty)->isValid());
+        $this->assertTrue($service->validateStockClaims(
+            'კურიერთან ნაღდი ანგარიშსწორება ხელმისაწვდომია მხოლოდ თბილისში.',
+            $empty
+        )->isValid());
 
         $priced = $service->validatePriceIntegrity('საათი ღირს 150 ₾.', [
             'products' => [['price' => 100], ['price' => 200]],
@@ -63,6 +70,11 @@ class ResponseValidatorServiceTest extends TestCase
         $correct = $service->validateStockClaims('MyTechnic Alpha მარაგში არ არის.', $context);
         $this->assertTrue($correct->isValid());
         $this->assertTrue($service->validateStockClaims('MyTechnic Beta მარაგშია.', $context)->isValid());
+        $this->assertTrue($service->validateStockClaims('MyTechnic Alpha ხელმისაწვდომი არ არის.', $context)->isValid());
+        $this->assertTrue($service->validateStockClaims(
+            'MyTechnic Alpha-სთვის ბარათით გადახდა ხელმისაწვდომია.',
+            $context
+        )->isValid());
     }
 
     public function testWidgetStockValidationRejectsAmbiguousMixedCatalogClaim(): void

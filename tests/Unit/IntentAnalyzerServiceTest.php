@@ -75,6 +75,29 @@ class IntentAnalyzerServiceTest extends TestCase
         $this->assertContains('გადაადგილების ისტორია', $intent->searchKeywords());
     }
 
+    public function testTrackingMentionAloneDoesNotForceRecommendation(): void
+    {
+        $service = new IntentAnalyzerService(
+            Mockery::mock(UnifiedAiPolicyService::class),
+            new WidgetTraceLogger(),
+            Mockery::mock(ModelCompletionService::class)
+        );
+        $method = new \ReflectionMethod($service, 'looksLikeTrackingRecommendation');
+
+        foreach ([
+            'რა ღირს ბავშვის GPS საათი?',
+            'არის თუ არა მარაგში ბავშვის GPS საათი?',
+            'რით განსხვავდება ბავშვის GPS საათი სხვა მოდელებისგან?',
+            'ბავშვის GPS საათი რომელ SIM-ბარათზე მუშაობს?',
+            'ბავშვის GPS საათი მდებარეობას რეალურ დროში აჩვენებს?',
+        ] as $question) {
+            $this->assertFalse($method->invoke($service, $question, true), $question);
+        }
+
+        $this->assertTrue($method->invoke($service, 'მირჩიეთ ბავშვის GPS საათი', true));
+        $this->assertTrue($method->invoke($service, 'რა ღირს ბავშვის GPS საათი?'));
+    }
+
     public function testModelCompletionResponseIsParsedIntoIntentResult(): void
     {
         config()->set('services.openai.intent_enabled', true);

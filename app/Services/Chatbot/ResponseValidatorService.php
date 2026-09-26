@@ -126,7 +126,8 @@ class ResponseValidatorService
 
         if (!is_array($products) || $products === []) {
             $needsEvidence = (bool) ($ragContext['require_live_catalog_evidence'] ?? false);
-            $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|მარაგში არ არის|ხელმისაწვდომია|\bin stock\b|\bout of stock\b/iu', $normalized) === 1;
+            $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|მარაგში არ არის|\bin stock\b|\bout of stock\b/iu', $normalized) === 1
+                || $this->hasStockAvailabilityClause($normalized);
 
             return $needsEvidence && $claimsStock
                 ? ValidationResult::fail([['type' => 'stock_without_live_catalog']])
@@ -178,8 +179,9 @@ class ResponseValidatorService
 
         foreach ($clauses as $clause) {
             $text = mb_strtolower(trim($clause));
-            $negative = preg_match('/არ არის მარაგში|მარაგში არ არის|მარაგი ამოწურულია|ამოწურულია|\bout of stock\b/iu', $text) === 1;
-            $positive = preg_match('/მარაგშია|მარაგი გვაქვს|ხელმისაწვდომია|\bin stock\b/iu', $text) === 1;
+            $negative = preg_match('/არ არის მარაგში|მარაგში არ არის|მარაგი ამოწურულია|ამოწურულია|ხელმისაწვდომი არ არის|არ არის ხელმისაწვდომი|\bout of stock\b/iu', $text) === 1;
+            $positive = preg_match('/მარაგშია|მარაგი გვაქვს|\bin stock\b/iu', $text) === 1
+                || (!$negative && $this->hasStockAvailabilityClause($text));
             if (!$negative && !$positive) {
                 continue;
             }
@@ -221,6 +223,22 @@ class ResponseValidatorService
         }
 
         return $violations === [] ? ValidationResult::pass() : ValidationResult::fail($violations);
+    }
+
+    private function hasStockAvailabilityClause(string $response): bool
+    {
+        foreach (preg_split('/[.!?;\n,]+/u', $response) ?: [] as $clause) {
+            if (!str_contains($clause, 'ხელმისაწვდომ')) {
+                continue;
+            }
+
+            // Availability of a payment or delivery method is not inventory.
+            if (preg_match('/გადახდ|ანგარიშსწორებ|ნაღდ|ბარათ|განვადებ|მიწოდებ|მიტან|სერვის|მხარდაჭერ|ფუნქცი|ფას/iu', $clause) !== 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function validateUrls(string $response, array $ragContext): ValidationResult

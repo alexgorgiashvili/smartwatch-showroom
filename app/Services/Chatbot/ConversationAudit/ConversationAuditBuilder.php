@@ -25,7 +25,7 @@ class ConversationAuditBuilder
 
     private const QUESTION_PATTERNS = [
         'price' => [
-            'რა ღირს %s?', 'რა ფასი აქვს %s?', '%s რა ფასად იყიდება?',
+            'რა ღირს %s?', 'რა არის %s-ის ფასი?', '%s რა ფასად იყიდება?',
             '%s-ის ფასი მაინტერესებს.', 'რა თანხა დამჭირდება %s-ის შესაძენად?',
             'შეგიძლიათ მითხრათ %s-ის მიმდინარე ფასი?',
             '%s-ის ფასს სად ვნახავ?', '%s-ზე რა ფასი მოქმედებს ახლა?',
@@ -305,6 +305,13 @@ class ConversationAuditBuilder
 
         $subject = self::SUBJECTS[$ordinal % count(self::SUBJECTS)];
         $pattern = $patterns[intdiv($ordinal, count(self::SUBJECTS))];
+
+        // All controlled subjects end in the nominative -ი. Inflect them for
+        // templates that attach a Georgian case ending to the placeholder.
+        $stem = mb_substr($subject, 0, -1);
+        foreach (['%s-იდან' => $stem . 'იდან', '%s-ის' => $stem . 'ის', '%s-ით' => $stem . 'ით', '%s-ზე' => $stem . 'ზე', '%s-ს' => $stem . 'ს'] as $placeholder => $inflected) {
+            $pattern = str_replace($placeholder, $inflected, $pattern);
+        }
 
         return sprintf($pattern, $subject);
     }

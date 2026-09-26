@@ -26,5 +26,10 @@ class ConversationAuditPrivacyTest extends TestCase
         $this->assertStringNotContainsString('platform-secret-', $json);
         $this->assertStringNotContainsString('პირადი ფრაზა', $json);
         $this->assertSame(120, $result['report']['messages_with_detectable_pii']);
+        foreach ($result['scenarios'] as $scenario) {
+            $this->assertDoesNotMatchRegularExpression('/ი-(?:ის|ს|ით|ზე|იდან)/u', $scenario['question']);
+            $this->assertDoesNotMatchRegularExpression('/რა ფასი აქვს [^?]*ი\?/u', $scenario['question']);
+            $this->assertDoesNotMatchRegularExpression('/საათს რა ფასი აქვს/u', $scenario['question']);
+        }
     }
 }

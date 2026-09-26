@@ -2,7 +2,7 @@
     {
         "id": "conv-001",
         "category": "recommendation",
-        "question": "მირჩიეთ ბავშვის GPS საათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ ბავშვის GPS საათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -122,7 +122,7 @@
     {
         "id": "conv-009",
         "category": "recommendation",
-        "question": "მირჩიეთ SIM-ბარათიანი საბავშვო საათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ SIM-ბარათიანი საბავშვო საათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -287,7 +287,7 @@
     {
         "id": "conv-020",
         "category": "price_query",
-        "question": "რა ფასი აქვს ბავშვის GPS საათი?",
+        "question": "რა არის ბავშვის GPS საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -302,7 +302,7 @@
     {
         "id": "conv-021",
         "category": "price_query",
-        "question": "რა ფასი აქვს SIM-ბარათიანი საბავშვო საათი?",
+        "question": "რა არის SIM-ბარათიანი საბავშვო საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -317,7 +317,7 @@
     {
         "id": "conv-022",
         "category": "price_query",
-        "question": "რა ფასი აქვს ვიდეოზარის მქონე საბავშვო საათი?",
+        "question": "რა არის ვიდეოზარის მქონე საბავშვო საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -332,7 +332,7 @@
     {
         "id": "conv-023",
         "category": "price_query",
-        "question": "რა ფასი აქვს სკოლის ასაკის ბავშვის საათი?",
+        "question": "რა არის სკოლის ასაკის ბავშვის საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -347,7 +347,7 @@
     {
         "id": "conv-024",
         "category": "recommendation",
-        "question": "მირჩიეთ ვიდეოზარის მქონე საბავშვო საათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ ვიდეოზარის მქონე საბავშვო საათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -377,7 +377,7 @@
     {
         "id": "conv-026",
         "category": "price_query",
-        "question": "რა ფასი აქვს საბავშვო სმარტსაათი?",
+        "question": "რა არის საბავშვო სმარტსაათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -407,7 +407,7 @@
     {
         "id": "conv-028",
         "category": "price_query",
-        "question": "რა ფასი აქვს GPS ფუნქციის მქონე საბავშვო საათი?",
+        "question": "რა არის GPS ფუნქციის მქონე საბავშვო საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -422,7 +422,7 @@
     {
         "id": "conv-029",
         "category": "features",
-        "question": "ბავშვის GPS საათი-ით დარეკვა შეიძლება?",
+        "question": "ბავშვის GPS საათით დარეკვა შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -437,7 +437,7 @@
     {
         "id": "conv-030",
         "category": "price_query",
-        "question": "რა ფასი აქვს საბავშვო 4G საათი?",
+        "question": "რა არის საბავშვო 4G საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -452,7 +452,7 @@
     {
         "id": "conv-031",
         "category": "price_query",
-        "question": "რა ფასი აქვს კამერიანი საბავშვო საათი?",
+        "question": "რა არის კამერიანი საბავშვო საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -467,7 +467,7 @@
     {
         "id": "conv-032",
         "category": "price_query",
-        "question": "რა ფასი აქვს SOS ღილაკიანი საბავშვო საათი?",
+        "question": "რა არის SOS ღილაკიანი საბავშვო საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -482,7 +482,7 @@
     {
         "id": "conv-033",
         "category": "price_query",
-        "question": "რა ფასი აქვს ბავშვის ტელეფონ-საათი?",
+        "question": "რა არის ბავშვის ტელეფონ-საათის ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -527,7 +527,7 @@
     {
         "id": "conv-036",
         "category": "general",
-        "question": "ბავშვის GPS საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "question": "ბავშვის GPS საათის მიწოდება რამდენ ხანში ხდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -572,7 +572,7 @@
     {
         "id": "conv-039",
         "category": "features",
-        "question": "SIM-ბარათიანი საბავშვო საათი-ით დარეკვა შეიძლება?",
+        "question": "SIM-ბარათიანი საბავშვო საათით დარეკვა შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -692,7 +692,7 @@
     {
         "id": "conv-047",
         "category": "general",
-        "question": "ბავშვის GPS საათი-ის შეძენა განვადებით შეიძლება?",
+        "question": "ბავშვის GPS საათის შეძენა განვადებით შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -737,7 +737,7 @@
     {
         "id": "conv-050",
         "category": "general",
-        "question": "SIM-ბარათიანი საბავშვო საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "question": "SIM-ბარათიანი საბავშვო საათის მიწოდება რამდენ ხანში ხდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -767,7 +767,7 @@
     {
         "id": "conv-052",
         "category": "price_query",
-        "question": "ბავშვის GPS საათი-ის ფასი მაინტერესებს.",
+        "question": "ბავშვის GPS საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -797,7 +797,7 @@
     {
         "id": "conv-054",
         "category": "price_query",
-        "question": "SIM-ბარათიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "question": "SIM-ბარათიანი საბავშვო საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -812,7 +812,7 @@
     {
         "id": "conv-055",
         "category": "price_query",
-        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "question": "ვიდეოზარის მქონე საბავშვო საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -857,7 +857,7 @@
     {
         "id": "conv-058",
         "category": "price_query",
-        "question": "სკოლის ასაკის ბავშვის საათი-ის ფასი მაინტერესებს.",
+        "question": "სკოლის ასაკის ბავშვის საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -872,7 +872,7 @@
     {
         "id": "conv-059",
         "category": "price_query",
-        "question": "საბავშვო სმარტსაათი-ის ფასი მაინტერესებს.",
+        "question": "საბავშვო სმარტსაათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -887,7 +887,7 @@
     {
         "id": "conv-060",
         "category": "price_query",
-        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -902,7 +902,7 @@
     {
         "id": "conv-061",
         "category": "price_query",
-        "question": "საბავშვო 4G საათი-ის ფასი მაინტერესებს.",
+        "question": "საბავშვო 4G საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -917,7 +917,7 @@
     {
         "id": "conv-062",
         "category": "price_query",
-        "question": "კამერიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "question": "კამერიანი საბავშვო საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -947,7 +947,7 @@
     {
         "id": "conv-064",
         "category": "price_query",
-        "question": "SOS ღილაკიანი საბავშვო საათი-ის ფასი მაინტერესებს.",
+        "question": "SOS ღილაკიანი საბავშვო საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -962,7 +962,7 @@
     {
         "id": "conv-065",
         "category": "general",
-        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "question": "ვიდეოზარის მქონე საბავშვო საათის მიწოდება რამდენ ხანში ხდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -977,7 +977,7 @@
     {
         "id": "conv-066",
         "category": "recommendation",
-        "question": "მირჩიეთ სკოლის ასაკის ბავშვის საათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ სკოლის ასაკის ბავშვის საათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -992,7 +992,7 @@
     {
         "id": "conv-067",
         "category": "price_query",
-        "question": "ბავშვის ტელეფონ-საათი-ის ფასი მაინტერესებს.",
+        "question": "ბავშვის ტელეფონ-საათის ფასი მაინტერესებს.",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1007,7 +1007,7 @@
     {
         "id": "conv-068",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება ბავშვის GPS საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება ბავშვის GPS საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1022,7 +1022,7 @@
     {
         "id": "conv-069",
         "category": "general",
-        "question": "რა გარანტია აქვს ბავშვის GPS საათი-ს?",
+        "question": "რა გარანტია აქვს ბავშვის GPS საათს?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -1037,7 +1037,7 @@
     {
         "id": "conv-070",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება SIM-ბარათიანი საბავშვო საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება SIM-ბარათიანი საბავშვო საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1067,7 +1067,7 @@
     {
         "id": "conv-072",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება ვიდეოზარის მქონე საბავშვო საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება ვიდეოზარის მქონე საბავშვო საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1112,7 +1112,7 @@
     {
         "id": "conv-075",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება სკოლის ასაკის ბავშვის საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება სკოლის ასაკის ბავშვის საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1142,7 +1142,7 @@
     {
         "id": "conv-077",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება საბავშვო სმარტსაათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება საბავშვო სმარტსაათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1172,7 +1172,7 @@
     {
         "id": "conv-079",
         "category": "features",
-        "question": "ბავშვის GPS საათი-ს ინტერნეტი სჭირდება?",
+        "question": "ბავშვის GPS საათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1187,7 +1187,7 @@
     {
         "id": "conv-080",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება GPS ფუნქციის მქონე საბავშვო საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება GPS ფუნქციის მქონე საბავშვო საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1217,7 +1217,7 @@
     {
         "id": "conv-082",
         "category": "features",
-        "question": "SIM-ბარათიანი საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "question": "SIM-ბარათიანი საბავშვო საათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1247,7 +1247,7 @@
     {
         "id": "conv-084",
         "category": "features",
-        "question": "ვიდეოზარის მქონე საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "question": "ვიდეოზარის მქონე საბავშვო საათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1262,7 +1262,7 @@
     {
         "id": "conv-085",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება საბავშვო 4G საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება საბავშვო 4G საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1277,7 +1277,7 @@
     {
         "id": "conv-086",
         "category": "recommendation",
-        "question": "მირჩიეთ საბავშვო სმარტსაათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ საბავშვო სმარტსაათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -1292,7 +1292,7 @@
     {
         "id": "conv-087",
         "category": "general",
-        "question": "სკოლის ასაკის ბავშვის საათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "question": "სკოლის ასაკის ბავშვის საათის მიწოდება რამდენ ხანში ხდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -1322,7 +1322,7 @@
     {
         "id": "conv-089",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება კამერიანი საბავშვო საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება კამერიანი საბავშვო საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1337,7 +1337,7 @@
     {
         "id": "conv-090",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება SOS ღილაკიანი საბავშვო საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება SOS ღილაკიანი საბავშვო საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1352,7 +1352,7 @@
     {
         "id": "conv-091",
         "category": "features",
-        "question": "ვიდეოზარის მქონე საბავშვო საათი-ით დარეკვა შეიძლება?",
+        "question": "ვიდეოზარის მქონე საბავშვო საათით დარეკვა შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1367,7 +1367,7 @@
     {
         "id": "conv-092",
         "category": "features",
-        "question": "სკოლის ასაკის ბავშვის საათი-ს ინტერნეტი სჭირდება?",
+        "question": "სკოლის ასაკის ბავშვის საათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1382,7 +1382,7 @@
     {
         "id": "conv-093",
         "category": "features",
-        "question": "სკოლის ასაკის ბავშვის საათი-ით დარეკვა შეიძლება?",
+        "question": "სკოლის ასაკის ბავშვის საათით დარეკვა შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1397,7 +1397,7 @@
     {
         "id": "conv-094",
         "category": "price_query",
-        "question": "რა თანხა დამჭირდება ბავშვის ტელეფონ-საათი-ის შესაძენად?",
+        "question": "რა თანხა დამჭირდება ბავშვის ტელეფონ-საათის შესაძენად?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1412,7 +1412,7 @@
     {
         "id": "conv-095",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ ბავშვის GPS საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ ბავშვის GPS საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1427,7 +1427,7 @@
     {
         "id": "conv-096",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ SIM-ბარათიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ SIM-ბარათიანი საბავშვო საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1442,7 +1442,7 @@
     {
         "id": "conv-097",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ ვიდეოზარის მქონე საბავშვო საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ ვიდეოზარის მქონე საბავშვო საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1457,7 +1457,7 @@
     {
         "id": "conv-098",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ სკოლის ასაკის ბავშვის საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ სკოლის ასაკის ბავშვის საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1472,7 +1472,7 @@
     {
         "id": "conv-099",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ საბავშვო სმარტსაათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ საბავშვო სმარტსაათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1487,7 +1487,7 @@
     {
         "id": "conv-100",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ GPS ფუნქციის მქონე საბავშვო საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ GPS ფუნქციის მქონე საბავშვო საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1517,7 +1517,7 @@
     {
         "id": "conv-102",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ საბავშვო 4G საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ საბავშვო 4G საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1532,7 +1532,7 @@
     {
         "id": "conv-103",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ კამერიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ კამერიანი საბავშვო საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1547,7 +1547,7 @@
     {
         "id": "conv-104",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ SOS ღილაკიანი საბავშვო საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ SOS ღილაკიანი საბავშვო საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1562,7 +1562,7 @@
     {
         "id": "conv-105",
         "category": "general",
-        "question": "საბავშვო სმარტსაათი-ის მიწოდება რამდენ ხანში ხდება?",
+        "question": "საბავშვო სმარტსაათის მიწოდება რამდენ ხანში ხდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "general",
@@ -1577,7 +1577,7 @@
     {
         "id": "conv-106",
         "category": "price_query",
-        "question": "შეგიძლიათ მითხრათ ბავშვის ტელეფონ-საათი-ის მიმდინარე ფასი?",
+        "question": "შეგიძლიათ მითხრათ ბავშვის ტელეფონ-საათის მიმდინარე ფასი?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1607,7 +1607,7 @@
     {
         "id": "conv-108",
         "category": "price_query",
-        "question": "ბავშვის GPS საათი-ის ფასს სად ვნახავ?",
+        "question": "ბავშვის GPS საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1622,7 +1622,7 @@
     {
         "id": "conv-109",
         "category": "features",
-        "question": "საბავშვო სმარტსაათი-ს ინტერნეტი სჭირდება?",
+        "question": "საბავშვო სმარტსაათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1637,7 +1637,7 @@
     {
         "id": "conv-110",
         "category": "features",
-        "question": "საბავშვო სმარტსაათი-ით დარეკვა შეიძლება?",
+        "question": "საბავშვო სმარტსაათით დარეკვა შეიძლება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1652,7 +1652,7 @@
     {
         "id": "conv-111",
         "category": "price_query",
-        "question": "SIM-ბარათიანი საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "question": "SIM-ბარათიანი საბავშვო საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1667,7 +1667,7 @@
     {
         "id": "conv-112",
         "category": "recommendation",
-        "question": "მირჩიეთ GPS ფუნქციის მქონე საბავშვო საათი-ის ტიპის მოდელი.",
+        "question": "მირჩიეთ GPS ფუნქციის მქონე საბავშვო საათის ტიპის მოდელი.",
         "language": "ka",
         "expected": {
             "expected_intent": "recommendation",
@@ -1682,7 +1682,7 @@
     {
         "id": "conv-113",
         "category": "price_query",
-        "question": "ვიდეოზარის მქონე საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "question": "ვიდეოზარის მქონე საბავშვო საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1697,7 +1697,7 @@
     {
         "id": "conv-114",
         "category": "price_query",
-        "question": "სკოლის ასაკის ბავშვის საათი-ის ფასს სად ვნახავ?",
+        "question": "სკოლის ასაკის ბავშვის საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1712,7 +1712,7 @@
     {
         "id": "conv-115",
         "category": "features",
-        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ს ინტერნეტი სჭირდება?",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათს ინტერნეტი სჭირდება?",
         "language": "ka",
         "expected": {
             "expected_intent": "features",
@@ -1727,7 +1727,7 @@
     {
         "id": "conv-116",
         "category": "price_query",
-        "question": "საბავშვო სმარტსაათი-ის ფასს სად ვნახავ?",
+        "question": "საბავშვო სმარტსაათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1757,7 +1757,7 @@
     {
         "id": "conv-118",
         "category": "price_query",
-        "question": "GPS ფუნქციის მქონე საბავშვო საათი-ის ფასს სად ვნახავ?",
+        "question": "GPS ფუნქციის მქონე საბავშვო საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",
@@ -1772,7 +1772,7 @@
     {
         "id": "conv-119",
         "category": "price_query",
-        "question": "საბავშვო 4G საათი-ის ფასს სად ვნახავ?",
+        "question": "საბავშვო 4G საათის ფასს სად ვნახავ?",
         "language": "ka",
         "expected": {
             "expected_intent": "price_query",

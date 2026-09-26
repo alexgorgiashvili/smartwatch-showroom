@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\Chatbot\IntentAnalyzerService;
+use App\Services\Chatbot\IntentResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -57,6 +59,45 @@ class ChatbotWidgetV2HttpIsolationTest extends TestCase
         $response->assertOk();
         $this->assertStringNotContainsString('199 ₾', (string) $response->json('message'));
         $this->assertNotNull($response->json('debug.fallback_reason'));
+    }
+
+    public function testWidgetV2RejectsArmenianScriptInOtherwiseGeorgianReply(): void
+    {
+        $this->configureWidget(100, 'ეს საათი ունի հատուկ ფუნქცია. Վստահ եմ.');
+
+        $response = $this->postJson('/chatbot', ['message' => 'საათის ფუნქციები მაინტერესებს']);
+
+        $response->assertOk();
+        $this->assertDoesNotMatchRegularExpression('/[\x{0530}-\x{058F}]/u', (string) $response->json('message'));
+    }
+
+    public function testWidgetV2NormalizesArmenianPunctuationInGeorgianReply(): void
+    {
+        $this->configureWidget(100, "მიწოდება უფასოა საქართველოს მასშტაბით\u{0589}");
+
+        $response = $this->postJson('/chatbot', ['message' => 'მიტანის პირობები მაინტერესებს']);
+
+        $response->assertOk()->assertJsonPath('message', 'მიწოდება უფასოა საქართველოს მასშტაბით.');
+    }
+
+    public function testWidgetV2KeepsPriceQuestionRelevantWhenRejectingMixedScript(): void
+    {
+        $this->configureWidget(100, 'ფასი ვერ დავადგინე, քանի որ კატალოგში არ ჩანს.');
+        $intentAnalyzer = \Mockery::mock(IntentAnalyzerService::class);
+        $intentAnalyzer->shouldReceive('analyze')->once()->andReturn(IntentResult::fromArray([
+            'standalone_query' => 'ეს საათი რა ღირს?',
+            'intent' => 'price_query',
+            'needs_product_data' => true,
+            'search_keywords' => ['საათი'],
+            'confidence' => 0.99,
+        ], 0));
+        app()->instance(IntentAnalyzerService::class, $intentAnalyzer);
+
+        $response = $this->postJson('/chatbot', ['message' => 'ეს საათი რა ღირს?']);
+
+        $response->assertOk();
+        $this->assertStringContainsString('ფასს ვერ ვადასტურებ', (string) $response->json('message'));
+        $this->assertDoesNotMatchRegularExpression('/[\x{0530}-\x{058F}]/u', (string) $response->json('message'));
     }
 
     public function testWidgetV2DoesNotPublishUnsupportedStockClaim(): void

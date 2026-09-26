@@ -48,6 +48,7 @@ trait UsesVerifiedWidgetKnowledge
                 . 'If no model or verified specification is available, ask for the model and say that the detail still needs confirmation; do not infer features from product type. '
                 . 'Do not promise “ზუსტად გეტყვით” or “დაგიზუსტებთ” merely because the customer will provide a model name; the actual specification or support must be checked first. '
                 . 'The widget accepts text only, so ask for a model name or product link, never a photo or attachment. '
+                . 'Use Georgian script for the answer. Do not mix in Armenian words or Armenian punctuation marks. '
                 . 'If the customer asks for a refund or money back, distinguish that request from the verified conditional model-exchange policy. Never promise a cash refund without a verified refund policy.';
         }
 

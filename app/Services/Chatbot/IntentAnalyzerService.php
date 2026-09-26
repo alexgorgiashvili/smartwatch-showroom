@@ -44,7 +44,11 @@ class IntentAnalyzerService
             'next_step' => 'prepare_intent_request',
         ], $traceContext);
 
-        $heuristicIntent = $this->applyLocalIntentHeuristics($normalizedMessage !== '' ? $normalizedMessage : $message, $preferences);
+        $heuristicIntent = $this->applyLocalIntentHeuristics(
+            $normalizedMessage !== '' ? $normalizedMessage : $message,
+            $preferences,
+            ($trace['channel'] ?? null) === 'widget'
+        );
         if ($heuristicIntent instanceof IntentResult) {
             $this->traceWidget('intent.heuristic_resolved', [
                 'intent' => $heuristicIntent->intent(),
@@ -351,7 +355,7 @@ class IntentAnalyzerService
         return $normalized === '' ? null : $normalized;
     }
 
-    private function applyLocalIntentHeuristics(string $message, array $preferences): ?IntentResult
+    private function applyLocalIntentHeuristics(string $message, array $preferences, bool $widget = false): ?IntentResult
     {
         $normalizedMessage = trim($message);
 
@@ -373,7 +377,7 @@ class IntentAnalyzerService
             ], 0);
         }
 
-        if ($this->looksLikeTrackingRecommendation($normalizedMessage)) {
+        if ($this->looksLikeTrackingRecommendation($normalizedMessage, $widget)) {
             return IntentResult::fromArray([
                 'standalone_query' => $normalizedMessage,
                 'intent' => 'recommendation',
@@ -927,7 +931,7 @@ class IntentAnalyzerService
         return preg_match('/\b(1[89]|[2-9][0-9])\s*(?:\+|წლ|წლის|years?|yrs?)\b/u', $normalized) === 1;
     }
 
-    private function looksLikeTrackingRecommendation(string $message): bool
+    private function looksLikeTrackingRecommendation(string $message, bool $widget = false): bool
     {
         $normalized = mb_strtolower(trim($message));
 
@@ -935,7 +939,7 @@ class IntentAnalyzerService
             return false;
         }
 
-        return $this->containsAnyNeedle($normalized, [
+        $mentionsTracking = $this->containsAnyNeedle($normalized, [
             'გადაადგილების ისტორია',
             'ადგილმდებარეობა',
             'ადგილმდებარეობ',
@@ -948,6 +952,32 @@ class IntentAnalyzerService
             'ტრეკერ',
             'anti-lost',
             'დაკარგვის',
+        ]);
+
+        if (!$mentionsTracking) {
+            return false;
+        }
+
+        if (!$widget) {
+            return true;
+        }
+
+        // Mentioning GPS is not itself a request for a recommendation.
+        // Let the normal intent analyzer handle price, stock and feature questions.
+        if ($this->containsAnyNeedle($normalized, [
+            'ფასი', 'ღირს', 'ღირებულ', 'რამდენი ლარი',
+            'მარაგ', 'ხელმისაწვდომ', 'გაქვთ',
+            'განსხვავ', 'შედარ', 'ჯობია',
+            'რომელი sim', 'რომელი სიმ', 'დაყენ',
+            'მიწოდ', 'მიტან', 'გარანტ', 'გადახდ',
+        ])) {
+            return false;
+        }
+
+        return $this->containsAnyNeedle($normalized, [
+            'მირჩ', 'გირჩ', 'მინდა', 'მჭირდება', 'ვეძებ',
+            'შესაფერის', 'შემომთავაზე', 'მაჩვენე',
+            'recommend', 'suggest', 'looking for', 'need a',
         ]);
     }
 
