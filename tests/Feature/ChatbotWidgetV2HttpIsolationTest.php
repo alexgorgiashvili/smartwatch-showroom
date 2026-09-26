@@ -57,6 +57,18 @@ class ChatbotWidgetV2HttpIsolationTest extends TestCase
         $this->assertNotNull($response->json('debug.fallback_reason'));
     }
 
+    public function testWidgetV2DoesNotPublishUnsupportedStockClaim(): void
+    {
+        $this->configureWidget(100, 'დიახ, ეს მოდელი მარაგშია.');
+        config()->set('chatbot.reflection.max_retries', 1);
+
+        $response = $this->postJson('/chatbot', ['message' => 'ეს მოდელი მარაგშია?']);
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('დიახ, ეს მოდელი მარაგშია.', (string) $response->json('message'));
+        $this->assertNotNull($response->json('debug.fallback_reason'));
+    }
+
     private function configureWidget(int $rolloutPercent, string $reply = 'მიწოდება უფასოა საქართველოს მასშტაბით.'): void
     {
         config()->set('chatbot.widget_v2.rollout_percent', $rolloutPercent);

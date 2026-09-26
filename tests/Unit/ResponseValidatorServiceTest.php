@@ -27,7 +27,6 @@ class ResponseValidatorServiceTest extends TestCase
         $empty = [
             'products' => [],
             'require_live_catalog_evidence' => true,
-            'catalog_intent' => 'stock_query',
         ];
 
         $stock = $service->validateStockClaims('ეს საათი მარაგშია.', $empty);

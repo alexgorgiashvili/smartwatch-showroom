@@ -50,8 +50,7 @@ class InventoryAgent
         $contactSettings = \App\Models\ContactSetting::allKeyed();
         $validationContext = $this->withWidgetValidationGuard(
             $this->productContext->buildValidationContext($selectedProducts, $contactSettings),
-            $runtime,
-            $intent->intent()
+            $runtime
         );
 
         $systemPrompt = $this->promptBuilder->buildSystemPrompt($preferences, $intent);

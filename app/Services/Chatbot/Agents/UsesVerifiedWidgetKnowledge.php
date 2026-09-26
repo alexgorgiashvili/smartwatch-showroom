@@ -4,11 +4,10 @@ namespace App\Services\Chatbot\Agents;
 
 trait UsesVerifiedWidgetKnowledge
 {
-    private function withWidgetValidationGuard(array $context, array $runtime, string $intent): array
+    private function withWidgetValidationGuard(array $context, array $runtime): array
     {
         if (($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2') {
             $context['require_live_catalog_evidence'] = true;
-            $context['catalog_intent'] = $intent;
         }
 
         return $context;

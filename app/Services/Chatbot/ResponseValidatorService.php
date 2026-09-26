@@ -64,9 +64,7 @@ class ResponseValidatorService
         $products = $ragContext['products'] ?? [];
 
         if (!is_array($products) || $products === []) {
-            $catalogIntent = (string) ($ragContext['catalog_intent'] ?? '');
-            $needsEvidence = ($ragContext['require_live_catalog_evidence'] ?? false)
-                && in_array($catalogIntent, ['price_query', 'stock_query', 'recommendation', 'comparison'], true);
+            $needsEvidence = (bool) ($ragContext['require_live_catalog_evidence'] ?? false);
             $claimsStock = preg_match('/მარაგშია|მარაგი გვაქვს|მარაგი ამოწურულია|არ არის მარაგში|\bin stock\b|\bout of stock\b/iu', $normalized) === 1;
 
             return $needsEvidence && $claimsStock
