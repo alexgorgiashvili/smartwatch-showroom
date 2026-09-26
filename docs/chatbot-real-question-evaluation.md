@@ -28,4 +28,6 @@ The first 17 route responses included three actionable quality issues above. Pol
 
 - Current production catalog contents and physical stock were not copied into the test database. Product-specific production answers still need a read-only catalog review and a follow-up isolated test with those public fields.
 - Historical Messenger data informed the earlier topic audit, but this run selected questions from local channel records only. Instagram history remains inaccessible through the configured API.
-- The code fixes are local on the isolated branch. They do not affect the live widget until a separately approved deployment.
+- The owner approved deployment after the isolated evaluation. Commit `14cd6b0` was fast-forwarded to production on 2026-09-26 without a migration, cache clear, or changes to existing unrelated server files. Production configuration still selects `gpt-6-luna` for 100% of widget conversations and `gpt-4.1-mini` for social channels.
+- A single clearly marked test question sent through the public live `/chatbot` endpoint returned HTTP 200. The answer withheld a refund promise and explained the conditional 14-day model exchange. This smoke test created an ordinary production chat record and admin notification; it is not a full production quality sample.
+- Public home and catalog pages returned HTTP 200. A read-only production runtime check loaded the refund policy, rejected a cross-product false price and stock claim, and accepted the correct out-of-stock claim.
