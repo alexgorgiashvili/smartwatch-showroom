@@ -220,6 +220,22 @@ class SmartSearchOrchestratorTest extends TestCase
         $widget = $this->makeOrchestrator()->search($intent, true);
         $this->assertSame($cheap->id, $widget->products()->first()?->id);
         $this->assertCount(2, $widget->products());
+        $this->assertNull($widget->requestedProduct());
+    }
+
+    public function testWidgetRequestedProductIsNamedInTheCustomerMessage(): void
+    {
+        $q21 = $this->createProduct('q21-watch', 'Q21 watch', 'Brand', 'Q21', 79);
+        $this->createProduct('q19-watch', 'Q19 watch', 'Brand', 'Q19', 79);
+        $intent = $this->catalogIntent('Q21 რა ღირს?', 'price_query', null, ['Q21']);
+
+        $named = $this->makeOrchestrator()->search($intent, true, 'Q21 რა ღირს?');
+        $generic = $this->makeOrchestrator()->search($intent, true, 'რომელ მოდელს აქვს კამერა?');
+        $differentModel = $this->makeOrchestrator()->search($intent, true, 'Q210 რა ღირს?');
+
+        $this->assertSame($q21->id, $named->requestedProduct()?->id);
+        $this->assertNull($generic->requestedProduct());
+        $this->assertNull($differentModel->requestedProduct());
     }
 
     public function testWidgetBudgetaryQuestionFindsAffordableCatalogModels(): void
@@ -272,6 +288,7 @@ class SmartSearchOrchestratorTest extends TestCase
 
         $this->assertSame(['video-watch'], $this->makeOrchestrator()->search($videoIntent, true)->products()->pluck('slug')->all());
         $this->assertSame(['video-watch'], $this->makeOrchestrator()->search($colorIntent, true)->products()->pluck('slug')->all());
+        $this->assertNull($this->makeOrchestrator()->search($videoIntent, true)->requestedProduct());
     }
 
     public function testWidgetUsesOriginalRecommendationWordingWhenIntentParaphraseDrifts(): void
@@ -282,6 +299,23 @@ class SmartSearchOrchestratorTest extends TestCase
         $context = $this->makeOrchestrator()->search($intent, true, 'რომელს მირჩევ?');
 
         $this->assertSame($product->id, $context->products()->first()?->id);
+    }
+
+    public function testWidgetIgnoresGenericHelperSlugAndFindsChildWatchPrices(): void
+    {
+        $product = $this->createProduct('q21-watch', 'Q21 საბავშვო საათი', 'Brand', 'Q21', 79, 59);
+        $message = 'საბავშვო მოდელი მაინტერესებს და ფასიც';
+        $intent = IntentResult::fromArray([
+            'standalone_query' => 'საბავშვო მოდელი და ფასები',
+            'intent' => 'price_query',
+            'entities' => ['product_slug_hint' => 'საბავშვო მოდელი'],
+            'needs_product_data' => true,
+        ], 0)->normalizedForWidget();
+
+        $context = $this->makeOrchestrator()->search($intent, true, $message);
+
+        $this->assertSame($product->id, $context->products()->first()?->id);
+        $this->assertNull($context->requestedProduct());
     }
 
     public function testWidgetGenericSimQuestionUsesPublishedSimSupport(): void

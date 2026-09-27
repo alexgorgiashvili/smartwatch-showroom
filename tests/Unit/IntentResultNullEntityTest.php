@@ -26,4 +26,17 @@ class IntentResultNullEntityTest extends TestCase
         $this->assertNull($intent->model());
         $this->assertNull($intent->productSlugHint());
     }
+
+    public function testGenericSlugHintDoesNotSuppressWidgetCatalogSearch(): void
+    {
+        $rawIntent = IntentResult::fromArray([
+            'standalone_query' => 'საბავშვო მოდელი და ფასები',
+            'intent' => 'price_query',
+            'entities' => ['product_slug_hint' => 'საბავშვო მოდელი'],
+            'needs_product_data' => true,
+        ], 0);
+
+        $this->assertSame('საბავშვო მოდელი', $rawIntent->productSlugHint());
+        $this->assertNull($rawIntent->normalizedForWidget()->productSlugHint());
+    }
 }

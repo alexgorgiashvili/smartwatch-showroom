@@ -122,6 +122,18 @@ class PromptBuilderService
             $sections[] = 'ბიუჯეტის თანხა ამ შეტყობინებაში არ ჩანს; თუ წინა კონტექსტშიც ვერ პოულობ, კონკრეტული მოდელის არჩევის ნაცვლად ჰკითხე თანხა.';
         }
 
+        if ($verifiedWidget && preg_match('/^სხვა.{0,20}მოდელ/iu', trim($normalizedMessage)) === 1) {
+            $sections[] = 'თუ წინა საუბარში კონკრეტული საათი არ ჩანს, არ ივარაუდო, რომ მომხმარებელმა Q21 ან სხვა მოდელი უკვე ნახა; ჩამოთვალე ახალი მაგალითები ამ სიის მიხედვით.';
+        }
+
+        if ($verifiedWidget && $intentResult->intent() === 'comparison') {
+            $sections[] = 'ორი მოდელის შედარებისას მხოლოდ დადასტურებული განსხვავება მიუთითე. ფუნქციის არხსენება ერთი მოდელის აღწერაში არ ნიშნავს, რომ მას ეს ფუნქცია არ აქვს.';
+        }
+
+        if ($verifiedWidget && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof|water.resistant/iu', $normalizedMessage) === 1) {
+            $sections[] = 'წყალგამძლეობაზე მიუთითე კატალოგში ჩაწერილი სტანდარტი, მაგალითად IP67. ცურვის, ჩაყვინთვის ან კონკრეტული გამოყენების უსაფრთხოებაზე დასკვნას ნუ გააკეთებ, თუ დადასტურებულ პოლიტიკაში არ წერია.';
+        }
+
         $warrantyTopic = preg_match('/(გარანტ|warranty|guarantee)/iu', $normalizedMessage) === 1;
         if (!$warrantyTopic) {
             foreach ($intentResult->searchKeywords() as $keyword) {
@@ -188,11 +200,12 @@ class PromptBuilderService
         $includeFunctions = $verifiedWidget && !$budgetOnly && ($intentResult->intent() === 'comparison'
             || preg_match('/ფუნქცი|შესაძლებლობ|ვიდეო|კამერ|gps|სოს|sos|ლოკაცი|მირჩევ|მირჩიე|შემირჩი/iu', $normalizedMessage) === 1);
         $includeWater = $verifiedWidget && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof|water.resistant/iu', $normalizedMessage) === 1;
+        $includeCamera = $verifiedWidget && preg_match('/კამერ|camera/iu', $normalizedMessage) === 1;
         $includeSim = $verifiedWidget && preg_match('/სიმ\s*(?:ბარათ|კარტ)|sim\s*card/iu', $normalizedMessage) === 1;
         $includeColors = $verifiedWidget && preg_match('/ფერ|შავი|ლურჯი|მწვანე|ვარდისფერი|იასამნისფერი/iu', $normalizedMessage) === 1;
 
         $productLines = $products
-            ->map(function (Product $product) use ($includeFunctions, $includeWater, $includeSim, $includeColors): string {
+            ->map(function (Product $product) use ($includeFunctions, $includeWater, $includeCamera, $includeSim, $includeColors, $intentResult): string {
                 $price = $product->sale_price
                     ? $product->sale_price . ' ₾ (ფასდაკლება, ძველი ფასი ' . $product->price . ' ₾)'
                     : $product->price . ' ₾';
@@ -208,11 +221,18 @@ class PromptBuilderService
                 if ($includeWater && filled($product->water_resistant)) {
                     $line .= ' | წყალგამძლეობის კატალოგის ჩანაწერი: ' . trim((string) $product->water_resistant);
                 }
+                if ($includeCamera && filled($product->camera)) {
+                    $line .= ' | კამერის კატალოგის ჩანაწერი: ' . trim((string) $product->camera);
+                }
                 if ($includeSim && $product->sim_support) {
                     $line .= ' | SIM მხარდაჭერა: მითითებულია';
                 }
                 if ($includeFunctions) {
-                    $features = array_slice(array_values(array_filter((array) ($product->functions ?? []), 'is_string')), 0, 6);
+                    $features = array_slice(
+                        array_values(array_filter((array) ($product->functions ?? []), 'is_string')),
+                        0,
+                        $intentResult->intent() === 'comparison' ? 12 : 6
+                    );
                     if ($features !== []) {
                         $line .= ' | კატალოგში მითითებული ფუნქციები: ' . implode(', ', $features);
                     }
@@ -238,8 +258,16 @@ class PromptBuilderService
             $sections[] = '- რადგან შესაბამისი live პროდუქტები უკვე ნაპოვნია, არ თქვა "არ გვაქვს", "არ არის", "ვერ მოვიძიე" ან "დაგვიკავშირდით ფასისთვის".';
             $sections[] = '- ჯერ დაასახელე 2-4 კონკრეტული მოდელი ამ სიიდან და მხოლოდ შემდეგ დაამატე მოკლე განმარტება ან follow-up.';
 
-            if ($verifiedWidget && $intentResult->intent() === 'price_query' && !$intentResult->hasSpecificProduct()) {
+            if ($verifiedWidget && $products->count() > 1) {
+                $sections[] = '- თითოეული მოდელის ფასი და ფასდაკლება მხოლოდ იმავე მოდელის სახელთან მიუთითე; სხვადასხვა მოდელის ფასი ან ფასდაკლება ერთ საერთო მტკიცებაში არ გააერთიანო.';
+            }
+
+            if ($verifiedWidget && $intentResult->intent() === 'price_query' && $searchContext->requestedProduct() === null) {
                 $sections[] = '- ეს სია სრული კატალოგი არ არის. თუ ზოგად ფასებს ეკითხებიან, დაასახელე კონკრეტული მაგალითები სიტყვით „მაგალითად“; ნუ განაცხადებ მთელი კატალოგის მინიმალურ-მაქსიმალურ ფასს მხოლოდ ამ სიის მიხედვით.';
+            }
+
+            if ($verifiedWidget && $intentResult->intent() === 'features' && $searchContext->requestedProduct() === null) {
+                $sections[] = '- ეს მხოლოდ ნაპოვნი მოდელების ნაწილია. დაასახელე 2-4 მოდელი სიტყვით „მაგალითად“ და ნუ იტყვი, რომ ჩამონათვალი სრულია.';
             }
 
             if ($budgetTopic) {

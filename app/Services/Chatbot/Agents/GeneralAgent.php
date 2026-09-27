@@ -45,7 +45,12 @@ class GeneralAgent
             'product_count' => $products->count(),
         ], $trace);
 
-        $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
+        $selectedProducts = $this->productContext->selectForPrompt(
+            $products,
+            $intent,
+            $preferences,
+            ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
+        );
         $requestedSlug = ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
             ? $this->requestedProductSlugForValidation($message, $intent, $searchContext)
             : null;
@@ -99,9 +104,11 @@ class GeneralAgent
             }
         }
 
-        $userQuestion = trim($intent->standaloneQuery()) !== ''
+        $userQuestion = ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
+            ? $message
+            : (trim($intent->standaloneQuery()) !== ''
             ? $intent->standaloneQuery()
-            : $message;
+            : $message);
 
         $messages[] = [
             'role' => 'user',

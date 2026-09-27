@@ -81,6 +81,35 @@ class ChatPipelineService
 
         $sessionContext = $memory->getSessionContext($conversation->id);
         $history = $sessionContext['recent'] ?? [];
+        if ($history === [] && empty($sessionContext['summary'])) {
+            $clarification = $this->firstTurnClarification($safeIncomingMessage);
+            if ($clarification !== null) {
+                $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
+                $memory->appendMessage($conversation->id, 'assistant', $clarification);
+
+                return new PipelineResult(
+                    $clarification,
+                    $conversation->id,
+                    '',
+                    IntentResult::fromArray([
+                        'standalone_query' => $safeIncomingMessage,
+                        'intent' => 'general',
+                        'entities' => [],
+                        'needs_product_data' => false,
+                    ], 0),
+                    ['products' => []],
+                    true,
+                    null,
+                    true,
+                    [],
+                    true,
+                    0,
+                    null,
+                    false,
+                    true
+                );
+            }
+        }
         $preferences = $memory->getUserPreferences($customer->id);
         $scopedPreferences = $memory->scopePreferencesForMessage($preferences, $safeIncomingMessage);
 
@@ -251,6 +280,37 @@ class ChatPipelineService
                 'is_out_of_domain' => false,
                 'confidence' => 1.0,
             ], 0);
+        }
+
+        return null;
+    }
+
+    private function firstTurnClarification(string $message): ?string
+    {
+        $question = mb_strtolower(trim($message));
+        if (preg_match('/^რომელს\s+მირჩევ(?:დი)?\s*[?!.]*$/iu', $question) === 1) {
+            return 'ვისთვის ეძებთ საათს, რა ბიუჯეტი გაქვთ და რომელი ფუნქციაა თქვენთვის მთავარი — ზარები, მდებარეობა თუ ვიდეოზარი? ამით შესაბამის მოდელებს შეგირჩევთ.';
+        }
+
+        if (preg_match('/^\d+\s*(?:₾|ლარ)(?:იან[ი]?)?(?:შიც|ში)\s*[?!.]*$/iu', $question) === 1) {
+            return 'რომელ ფუნქციას ან მოდელს გულისხმობთ ამ ფასის საათში? მომწერეთ მოდელის სახელი ან პროდუქტის ბმული, რომ ზუსტად შეგიმოწმოთ.';
+        }
+
+        if (preg_match('/^\d+\s*(?:₾|ლარიან[ი]?)\s+მხოლოდ\s+[\p{L}]+\s*[?!.]*$/iu', $question) === 1) {
+            return 'რომელი მოდელის ფერი გაინტერესებთ? ერთსა და იმავე ფასად რამდენიმე საათი გვაქვს; მომწერეთ მოდელის სახელი ან პროდუქტის ბმული, რომ ხელმისაწვდომი ფერები ზუსტად შეგიმოწმოთ.';
+        }
+
+        if (preg_match('/^(?:და\s+)?(?:რ?ამე\s+სხვა\s+)?სიმ\s*ბარათ[ი]?\s*(?:უნდა|იდება|რომელიმე)/iu', $question) === 1
+            || preg_match('/^ყველა\s+ქსელის\s+სიმ\s*ბარათ/iu', $question) === 1) {
+            return 'რომელი საათის მოდელზე კითხულობთ? SIM-ის ტიპი და ოპერატორთან თავსებადობა კონკრეტული მოდელის მიხედვით უნდა გადავამოწმო; მომწერეთ მოდელის სახელი ან ბმული.';
+        }
+
+        if (preg_match('/^ოპერატორი\s+ხომა?რ\s+გჭირდებათ/iu', $question) === 1) {
+            return 'მობილურ ოპერატორს გულისხმობთ SIM ბარათისთვის თუ მაღაზიის კონსულტანტთან დაკავშირებას?';
+        }
+
+        if (preg_match('/ლოკაციის\s+ჩართვა\s+საიდან/iu', $question) === 1) {
+            return 'რომელი მოდელის ლოკაციის ჩართვა გსურთ? მომწერეთ საათის მოდელი და, თუ იცით, აპლიკაციის სახელი — ზუსტი ნაბიჯები ამაზეა დამოკიდებული.';
         }
 
         return null;

@@ -22,7 +22,9 @@ class SmartSearchOrchestrator
             : $this->policy->normalizeIncomingMessage($standaloneQuery);
 
         $products = $this->lookupProducts($intent, $widget, $originalMessage);
-        $requestedProduct = $products->first();
+        $requestedProduct = $widget
+            ? $this->requestedWidgetProduct($products, $originalMessage)
+            : $products->first();
         $notFoundMessage = null;
 
         if ($intent->hasSpecificProduct() && $products->isEmpty()) {
@@ -58,6 +60,23 @@ class SmartSearchOrchestrator
             'general', 'comparison' => true,
             default => false,
         };
+    }
+
+    private function requestedWidgetProduct(Collection $products, ?string $message): ?Product
+    {
+        if ($message === null || trim($message) === '') {
+            return null;
+        }
+
+        $named = $products->filter(static function (Product $product) use ($message): bool {
+            $model = trim((string) ($product->model ?? ''));
+            $slug = trim((string) $product->slug);
+
+            return ($model !== '' && preg_match('/(?<![\p{L}\p{N}-])' . preg_quote($model, '/') . '(?![\p{L}\p{N}-])/iu', $message) === 1)
+                || ($slug !== '' && preg_match('/(?<![\p{L}\p{N}-])' . preg_quote($slug, '/') . '(?![\p{L}\p{N}-])/iu', $message) === 1);
+        })->values();
+
+        return $named->count() === 1 ? $named->first() : null;
     }
 
     private function lookupProducts(IntentResult $intent, bool $widget, ?string $originalMessage): Collection
@@ -242,7 +261,7 @@ class SmartSearchOrchestrator
         };
 
         preg_match('/შავი|ვარდისფერი|ლურჯი|მწვანე|იასამნისფერი/iu', $question, $color);
-        $isBroadQuestion = preg_match('/გაქვთ საათები|რა არჩევანი|სხვა.{0,12}მოდელ|ყველაზე იაფ|იაფიანი მოდელ|ბიუჯეტურ|საუკეთესო მოდელ|ყველაზე კარგი|შეკვეთას\?|შეკვეთას გამიფორმ|მირჩევ|მირჩიე|შემირჩი|შევარჩიო|რა\s*ღირს.{0,20}საათ|საათებ\p{L}*.{0,15}ფას|ფასებ\p{L}*.{0,15}საათ/iu', $question) === 1
+        $isBroadQuestion = preg_match('/გაქვთ საათები|რა არჩევანი|სხვა.{0,12}მოდელ|ყველაზე იაფ|იაფიანი მოდელ|ბიუჯეტურ|საუკეთესო მოდელ|ყველაზე კარგი|შეკვეთას\?|შეკვეთას გამიფორმ|მირჩევ|მირჩიე|შემირჩი|შევარჩიო|რა\s*ღირს.{0,20}საათ|საათებ\p{L}*.{0,15}ფას|ფასებ\p{L}*.{0,15}საათ|საბავშვო.{0,25}ფას|ფას.{0,25}საბავშვო|მოდელ.{0,20}ფას/iu', $question) === 1
             || (preg_match('/\d+\s*(?:₾|ლარ)/iu', $question) === 1
                 && preg_match('/ვიყიდ|მომივა|შეიძ|ვარიანტ|საათ/iu', $question) === 1);
         if ($feature === null && $color === [] && !$isBroadQuestion) {

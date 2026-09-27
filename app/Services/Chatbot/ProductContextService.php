@@ -30,7 +30,7 @@ class ProductContextService
      * @param Collection<int, Product> $products
      * @return Collection<int, Product>
      */
-    public function selectForPrompt(Collection $products, IntentResult $intentResult, array $preferences = []): Collection
+    public function selectForPrompt(Collection $products, IntentResult $intentResult, array $preferences = [], bool $widget = false): Collection
     {
         $productCollection = $products->values();
 
@@ -52,6 +52,10 @@ class ProductContextService
         }
 
         $productCollection = $this->filterCatalogFacetProducts($productCollection, $intentResult);
+
+        if ($widget && $intentResult->intent() === 'features' && !$intentResult->hasSpecificProduct()) {
+            return $productCollection->take(6)->values();
+        }
 
         if ($intentResult->hasCatalogFacet() && !$intentResult->hasSpecificProduct()) {
             return $productCollection

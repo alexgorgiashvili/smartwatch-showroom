@@ -155,6 +155,12 @@ class IntentResult
             }
         }
 
+        if (is_string($copy->productSlugHint)
+            && preg_match('/^(?:საბავშვო\s+)?(?:სმარტ\s*)?(?:საათ(?:ი|ები)|მოდელ(?:ი|ები))$/iu', trim($copy->productSlugHint)) === 1) {
+            $copy->productSlugHint = null;
+            $changed = true;
+        }
+
         return $changed ? $copy : $this;
     }
 

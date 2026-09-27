@@ -16,6 +16,36 @@ use Tests\TestCase;
 
 class ChatPipelineServiceTest extends TestCase
 {
+    public function testUnresolvedFirstTurnFollowupsAskForTheMissingReferentWithoutModelCalls(): void
+    {
+        $conversation = new Conversation();
+        $conversation->id = 101;
+        $customer = new Customer();
+        $customer->id = 202;
+        $memory = $this->createMock(BifurcatedMemoryService::class);
+        $memory->method('getSessionContext')->willReturn(['recent' => [], 'summary' => null]);
+        $memory->expects($this->exactly(8))->method('appendMessage');
+        $intentAnalyzer = $this->createMock(IntentAnalyzerService::class);
+        $intentAnalyzer->expects($this->never())->method('analyze');
+        $supervisor = $this->createMock(SupervisorAgent::class);
+        $supervisor->expects($this->never())->method('orchestrate');
+        $policy = $this->createMock(UnifiedAiPolicyService::class);
+        $policy->method('isGreetingOnly')->willReturn(false);
+        $fallbackStrategy = $this->createMock(ChatbotFallbackStrategyService::class);
+
+        $service = new ChatPipelineService();
+        $recommendation = $service->process('რომელს მირჩევ?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+        $priceFollowup = $service->process('79 ლარიანშიც?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+        $simFollowup = $service->process('სიმ ბარათი იდება?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+        $colorFollowup = $service->process('79 ლარიანი მხოლოდ შავია?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+
+        $this->assertStringContainsString('რა ბიუჯეტი', $recommendation->response());
+        $this->assertStringContainsString('რომელ ფუნქციას', $priceFollowup->response());
+        $this->assertStringContainsString('რომელი საათის მოდელზე', $simFollowup->response());
+        $this->assertStringContainsString('რომელი მოდელის ფერი', $colorFollowup->response());
+        $this->assertNull($simFollowup->fallbackReason());
+    }
+
     public function testForeignLanguageCatalogReplyUsesRelevantGeorgianFallback(): void
     {
         $message = 'რა 2G მოდელები გაქვთ?';

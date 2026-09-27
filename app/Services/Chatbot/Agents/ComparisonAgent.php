@@ -45,7 +45,12 @@ class ComparisonAgent
             'product_count' => $products->count(),
         ], $trace);
 
-        $selectedProducts = $this->productContext->selectForPrompt($products, $intent, $preferences);
+        $selectedProducts = $this->productContext->selectForPrompt(
+            $products,
+            $intent,
+            $preferences,
+            ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
+        );
 
         $contactSettings = \App\Models\ContactSetting::allKeyed();
         $validationContext = $this->withWidgetValidationGuard(
@@ -82,9 +87,11 @@ class ComparisonAgent
             }
         }
 
-        $userQuestion = trim($intent->standaloneQuery()) !== ''
+        $userQuestion = ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
+            ? $message
+            : (trim($intent->standaloneQuery()) !== ''
             ? $intent->standaloneQuery()
-            : $message;
+            : $message);
 
         $messages[] = [
             'role' => 'user',
