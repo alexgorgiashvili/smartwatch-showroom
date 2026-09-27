@@ -8,7 +8,7 @@ The 120-pair model-only comparison found lower Luna generation cost and p95 late
 
 ## Scope and release state
 
-The website widget keeps its existing `/chatbot` request and response contract. `CHATBOT_WIDGET_V2_PERCENT=0` is the code default; the previously deployed production configuration uses `gpt-6-luna` for 100% of widget conversations. The candidate cohort alone receives the versioned policy context and `CHATBOT_WIDGET_V2_MODEL`; Messenger, Instagram, and WhatsApp continue to use `CHATBOT_SUPERVISOR_MODEL`. The 2026-09-27 real-question corrections are local and have not been deployed.
+The website widget keeps its existing `/chatbot` request and response contract. `CHATBOT_WIDGET_V2_PERCENT=0` is the code default; production uses `gpt-6-luna` for 100% of widget conversations. The candidate cohort alone receives the versioned policy context and `CHATBOT_WIDGET_V2_MODEL`; Messenger, Instagram, and WhatsApp continue to use `CHATBOT_SUPERVISOR_MODEL`. The 2026-09-27 real-question corrections were deployed in commit `029441b` after owner authorization; the original quality gates remain measurement limits as described in the evaluation report.
 
 The historical conversation audit has a single purpose: count interests and reply patterns and generate controlled, anonymous evaluation questions. Full raw transcripts, contact information, attachments, platform IDs, and page reply text must not be committed or submitted as evaluation prompts. Individually reviewed, de-identified customer question wording may be replayed within the owner's approved API budget. Page replies are candidate evidence only; pricing, availability, warranties, and policies require a public or owner-approved source.
 
