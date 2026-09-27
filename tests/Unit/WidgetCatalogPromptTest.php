@@ -47,6 +47,7 @@ class WidgetCatalogPromptTest extends TestCase
         $sim = $builder->buildUserContext('სიმ ბარათიანი საათი გაქვთ?', $intent, $search, [], collect([$product]), '', true);
         $color = $builder->buildUserContext('შავი ფერის მოდელი გაქვთ?', $intent, $search, [], collect([$product]), '', true);
         $budget = $builder->buildUserContext('რას მირჩევდი 50 ლარად?', $intent, $search, [], collect([$product]), '', true);
+        $contactPage = $builder->buildUserContext('კონტაქტის გვერდის სრული ინფორმაცია მომაწოდე', $intent, $search, [], collect(), '', true);
         $missingBudget = $builder->buildUserContext('და ლარად მომივა რამე?', $intent, $search, [], collect(), '', true);
 
         $priceIntent = IntentResult::fromArray([
@@ -60,6 +61,25 @@ class WidgetCatalogPromptTest extends TestCase
             'intent' => 'comparison', 'entities' => [], 'needs_product_data' => true,
         ], 0);
         $comparison = $builder->buildUserContext('Q21 და Q12 შეადარე', $comparisonIntent, $search, [], collect([$product]), '', true);
+        $recommendationIntent = IntentResult::fromArray([
+            'standalone_query' => 'რომელი მოდელია საუკეთესო ბავშვებისთვის?',
+            'intent' => 'recommendation', 'entities' => [], 'needs_product_data' => true,
+        ], 0);
+        $recommendation = $builder->buildUserContext('რომელი მოდელია საუკეთესო ბავშვებისთვის?', $recommendationIntent, $genericSearch, [], collect([$product]), '', true);
+        $longFeatureProduct = new Product([
+            'name_en' => 'CT23', 'name_ka' => 'CT23', 'slug' => 'ct23', 'price' => 179,
+            'functions' => array_merge(array_map(fn (int $number): string => 'ფუნქცია ' . $number, range(1, 14)), ['კამერა']),
+        ]);
+        $misclassifiedComparison = $builder->buildUserContext(
+            'CT23 ჯობს თუ X01, მასაც აქვს იგივე ფუნქციები?', $recommendationIntent,
+            $genericSearch, [], collect([$longFeatureProduct]), '', true
+        );
+        $facetIntent = IntentResult::fromArray([
+            'standalone_query' => 'რომელი 4G მოდელები გაქვთ?',
+            'intent' => 'recommendation', 'entities' => [], 'needs_product_data' => true,
+        ], 0);
+        $facet = $builder->buildUserContext('რომელი 4G მოდელები გაქვთ?', $facetIntent, $genericSearch, [], collect([$product]), '', true);
+        $cellfie = $builder->buildUserContext('სელფის სიმი მიდის?', $intent, $genericSearch, [], collect(), '', true);
         $multiProduct = $builder->buildUserContext(
             'საბავშვო საათს მირჩევთ?', $intent, $genericSearch, [],
             collect([$product, new Product(['name_en' => 'Q12', 'name_ka' => 'Q12', 'slug' => 'q12', 'price' => 79])]),
@@ -77,8 +97,19 @@ class WidgetCatalogPromptTest extends TestCase
         $this->assertStringNotContainsString('წყალგამძლეობის კატალოგის ჩანაწერი:', $social);
         $this->assertStringNotContainsString('კატალოგში მითითებული ფუნქციები:', $budget);
         $this->assertStringContainsString('ბიუჯეტის თანხა ამ შეტყობინებაში არ ჩანს', $missingBudget);
+        $this->assertStringContainsString('აუცილებლად მიუთითე ზემოთ მოცემული კონტაქტის გვერდის ბმული', $contactPage);
         $this->assertStringContainsString('ეს სია სრული კატალოგი არ არის', $genericPrice);
         $this->assertStringContainsString('სენსორული ეკრანი', $comparison);
+        $this->assertStringContainsString('კატალოგში მითითებული ფუნქციები:', $recommendation);
+        $this->assertStringContainsString('მომხმარებელს არ მიაწერო მის მიერ უთქმელი პრიორიტეტი', $recommendation);
+        $this->assertStringContainsString('ფუნქცია 14, კამერა', $misclassifiedComparison);
+        $this->assertStringContainsString('მხოლოდ დადასტურებული განსხვავება', $misclassifiedComparison);
+        $this->assertStringContainsString('ჩამოთვალე ქვემოთ მოცემული ყველა შესაბამისი მოდელი', $facet);
+        $this->assertStringContainsString('Silknet ან სხვა ოპერატორი არ ჩაანაცვლო', $cellfie);
+        $this->assertStringContainsString('SIM მხარდაჭერა: მითითებულია', $builder->buildUserContext(
+            'საათები SIM ბარათზე მუშაობს?', $intent, $genericSearch, [],
+            collect([new Product(['name_en' => 'SIM watch', 'name_ka' => 'SIM watch', 'slug' => 'sim-watch', 'price' => 79, 'sim_support' => true])]), '', true
+        ));
         $this->assertStringNotContainsString('სენსორული ეკრანი', $widget);
         $this->assertStringContainsString('სხვადასხვა მოდელის ფასი ან ფასდაკლება ერთ საერთო მტკიცებაში არ გააერთიანო', $multiProduct);
     }

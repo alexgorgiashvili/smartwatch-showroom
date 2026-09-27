@@ -89,6 +89,17 @@ class SmartSearchOrchestrator
         $slugHint = $intent->productSlugHint();
         $limit = 6;
 
+        if ($widget && $originalMessage !== null
+            && preg_match('/^\s*(\d{2,4})\s+(?:გაქვთ|არის)\s+(?:საათ|სათ)/iu', $originalMessage, $priceQuestion) === 1) {
+            $quotedPrice = (float) $priceQuestion[1];
+            $pricedProducts = $this->baseProductQuery()->limit(50)->get()
+                ->filter(fn (Product $product): bool => abs((float) ($product->sale_price ?: $product->price) - $quotedPrice) < 0.01)
+                ->take($limit)->values();
+            if ($pricedProducts->isNotEmpty()) {
+                return $pricedProducts;
+            }
+        }
+
         // Customers often spell the published Wonlex brand in Georgian and
         // compare a budget with another watch identified only by its price.
         if ($widget && $originalMessage !== null
@@ -103,6 +114,17 @@ class SmartSearchOrchestrator
                 ->sortBy(fn (Product $product): float => (float) ($product->sale_price ?: $product->price))
                 ->take($limit)->values();
             if ($withinBudget->isNotEmpty()) {
+                if (preg_match('/ჯობს|იგივე|შეადარ|თუ/iu', $originalMessage) === 1
+                    && preg_match_all('/(?<!\d)(\d{2,4})\s*(?:₾|ლარ)/iu', $originalMessage, $priceMatches) > 1) {
+                    foreach (array_unique(array_map('intval', $priceMatches[1])) as $quotedPrice) {
+                        if ($quotedPrice === $budget || $quotedPrice < 20) {
+                            continue;
+                        }
+                        $pricedProducts = $this->baseProductQuery()->limit(50)->get()
+                            ->filter(fn (Product $product): bool => (float) ($product->sale_price ?: $product->price) === (float) $quotedPrice);
+                        $withinBudget = $withinBudget->concat($pricedProducts)->unique('id')->take($limit)->values();
+                    }
+                }
                 return $withinBudget;
             }
         }
@@ -256,7 +278,7 @@ class SmartSearchOrchestrator
             preg_match('/კამერ|camera/iu', $question) === 1 => 'camera',
             preg_match('/წყალ|waterproof|water resistant/iu', $question) === 1 => 'water',
             preg_match('/gps|გეოლოკაცი|ლოკაცი|მდებარეობ/iu', $question) === 1 => 'gps',
-            preg_match('/სიმ\s*(?:ბარათ|კარტ)|sim\s*card/iu', $question) === 1 => 'sim',
+            preg_match('/(?:სიმ|sim)\s*(?:ბარათ|კარტ|card)/iu', $question) === 1 => 'sim',
             default => null,
         };
 

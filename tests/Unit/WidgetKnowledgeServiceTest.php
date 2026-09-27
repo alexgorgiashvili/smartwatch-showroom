@@ -38,6 +38,23 @@ class WidgetKnowledgeServiceTest extends TestCase
         $this->assertStringContainsString('თანხის დაბრუნება და მოდელის გაცვლა სხვადასხვა საკითხია', $context);
     }
 
+    public function test_take_back_wording_retrieves_conditional_exchange_policy(): void
+    {
+        $context = $this->service()->contextFor('თუ შეიძლება, დაიბრუნეთ და სხვას ვუყიდი');
+
+        $this->assertStringContainsString('მოდელის გაცვლა მიღებიდან 14 კალენდარული დღის განმავლობაში', $context);
+        $this->assertStringContainsString('თანხის დაბრუნების პირობა ამ წყაროთი არ დასტურდება', $context);
+    }
+
+    public function test_courier_and_arrival_question_includes_payment_and_delivery_terms(): void
+    {
+        $context = $this->service()->contextFor('დიახ კურიერთან და როდის ჩამოდის ამანათი?');
+
+        $this->assertStringContainsString('მიწოდება უფასოა', $context);
+        $this->assertStringContainsString('რეგიონულ ქალაქებში 1–3 სამუშაო დღე', $context);
+        $this->assertStringContainsString('კურიერთან ნაღდი ანგარიშსწორება', $context);
+    }
+
     private function service(): WidgetKnowledgeService
     {
         return new WidgetKnowledgeService(__DIR__ . '/../../database/data/chatbot_widget_knowledge.json');

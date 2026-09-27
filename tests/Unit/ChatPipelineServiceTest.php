@@ -9,6 +9,7 @@ use App\Services\Chatbot\BifurcatedMemoryService;
 use App\Services\Chatbot\ChatPipelineService;
 use App\Services\Chatbot\ChatbotFallbackStrategyService;
 use App\Services\Chatbot\ChatbotFallbackResolution;
+use App\Services\Chatbot\ChatbotOutcomeReason;
 use App\Services\Chatbot\IntentAnalyzerService;
 use App\Services\Chatbot\IntentResult;
 use App\Services\Chatbot\UnifiedAiPolicyService;
@@ -24,7 +25,7 @@ class ChatPipelineServiceTest extends TestCase
         $customer->id = 202;
         $memory = $this->createMock(BifurcatedMemoryService::class);
         $memory->method('getSessionContext')->willReturn(['recent' => [], 'summary' => null]);
-        $memory->expects($this->exactly(8))->method('appendMessage');
+        $memory->expects($this->exactly(12))->method('appendMessage');
         $intentAnalyzer = $this->createMock(IntentAnalyzerService::class);
         $intentAnalyzer->expects($this->never())->method('analyze');
         $supervisor = $this->createMock(SupervisorAgent::class);
@@ -38,11 +39,16 @@ class ChatPipelineServiceTest extends TestCase
         $priceFollowup = $service->process('79 ლარიანშიც?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
         $simFollowup = $service->process('სიმ ბარათი იდება?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
         $colorFollowup = $service->process('79 ლარიანი მხოლოდ შავია?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+        $contactPage = $service->process('კონტაქტის გვერდის ინფორმაცია მომაწოდე', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
+        $operatorFollowup = $service->process('სელფის სიმი მიდის?', $conversation, $customer, null, $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy);
 
         $this->assertStringContainsString('რა ბიუჯეტი', $recommendation->response());
         $this->assertStringContainsString('რომელ ფუნქციას', $priceFollowup->response());
         $this->assertStringContainsString('რომელი საათის მოდელზე', $simFollowup->response());
         $this->assertStringContainsString('რომელი მოდელის ფერი', $colorFollowup->response());
+        $this->assertStringContainsString('კონტაქტის გვერდზე', $contactPage->response());
+        $this->assertStringContainsString(route('contact'), $contactPage->response());
+        $this->assertStringContainsString('Cellfie-ის SIM ბარათთან', $operatorFollowup->response());
         $this->assertNull($simFollowup->fallbackReason());
     }
 
@@ -89,6 +95,48 @@ class ChatPipelineServiceTest extends TestCase
         );
 
         $this->assertSame('2G მოდელები მარაგშია.', $result->response());
+    }
+
+    public function testForeignLanguageRecommendationUsesVerifiedCatalogFallback(): void
+    {
+        $message = 'რომელი მოდელია ყველაზე კარგი ბავშვებისთვის?';
+        $intent = IntentResult::fromArray([
+            'standalone_query' => $message, 'intent' => 'recommendation',
+            'entities' => [], 'needs_product_data' => true,
+        ], 0);
+        $conversation = new Conversation();
+        $conversation->id = 101;
+        $customer = new Customer();
+        $customer->id = 202;
+        $memory = $this->createMock(BifurcatedMemoryService::class);
+        $memory->method('getSessionContext')->willReturn(['recent' => []]);
+        $memory->method('getUserPreferences')->willReturn([]);
+        $memory->method('scopePreferencesForMessage')->willReturn([]);
+        $memory->expects($this->exactly(2))->method('appendMessage');
+        $intentAnalyzer = $this->createMock(IntentAnalyzerService::class);
+        $intentAnalyzer->method('analyze')->willReturn($intent);
+        $supervisor = $this->createMock(SupervisorAgent::class);
+        $supervisor->method('orchestrate')->willReturn([
+            'success' => true, 'response' => 'Հայերեն პასუხი',
+            'validation_passed' => true,
+            'validation_context' => ['products' => [['name' => 'Q19', 'price' => 79, 'sale_price' => 59, 'is_in_stock' => true]]],
+            'violations' => [], 'reflection_attempts' => 0,
+            'reason' => null, 'extracted_preferences' => [],
+        ]);
+        $policy = $this->createMock(UnifiedAiPolicyService::class);
+        $policy->method('isGreetingOnly')->willReturn(false);
+        $policy->method('passesStrictGeorgianQa')->willReturn(false);
+        $fallbackStrategy = $this->createMock(ChatbotFallbackStrategyService::class);
+        $fallbackStrategy->expects($this->once())->method('resolveProviderFailureOutcome')
+            ->willReturn(new ChatbotFallbackResolution('Q19 — 59 ₾, მარაგშია.', null, true, [], true));
+
+        $result = (new ChatPipelineService())->process(
+            $message, $conversation, $customer, null,
+            $memory, $intentAnalyzer, $supervisor, $policy, $fallbackStrategy
+        );
+
+        $this->assertSame('Q19 — 59 ₾, მარაგშია.', $result->response());
+        $this->assertSame(ChatbotOutcomeReason::STRICT_GEORGIAN, $result->fallbackReason());
     }
 
     public function testForeignLanguageWaterAnswerUsesVerifiedCatalogField(): void

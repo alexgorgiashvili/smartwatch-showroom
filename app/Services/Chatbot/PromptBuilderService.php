@@ -109,6 +109,10 @@ class PromptBuilderService
             $sections[] = $effectiveRagContextText;
         }
 
+        if ($verifiedWidget && preg_match('/კონტაქტის?\s+გვერდ|საკონტაქტო\s+გვერდ/iu', $normalizedMessage) === 1) {
+            $sections[] = 'მომხმარებელი კონტაქტის გვერდის ინფორმაციას ითხოვს: აუცილებლად მიუთითე ზემოთ მოცემული კონტაქტის გვერდის ბმული. თუ ადმინისტრატორის საკონტაქტო ველები შევსებულია, ჩამოთვალე შესაბამისი მონაცემები; ცარიელი ველების მნიშვნელობები არ გამოიგონო.';
+        }
+
         if ($verifiedWidget
             && preg_match('/მიწოდ|მიტან|კურიერ/iu', $normalizedMessage) === 1
             && preg_match('/კონტაქტ|დაკავშირ|ნომერ|whatsapp|ვაცაპ|messenger|მესენჯერ/iu', $normalizedMessage) === 1) {
@@ -126,8 +130,18 @@ class PromptBuilderService
             $sections[] = 'თუ წინა საუბარში კონკრეტული საათი არ ჩანს, არ ივარაუდო, რომ მომხმარებელმა Q21 ან სხვა მოდელი უკვე ნახა; ჩამოთვალე ახალი მაგალითები ამ სიის მიხედვით.';
         }
 
-        if ($verifiedWidget && $intentResult->intent() === 'comparison') {
+        $comparisonTopic = $intentResult->intent() === 'comparison'
+            || preg_match('/შეადარ|შორის|ჯობს|იგივე\s+ფუნქცი/iu', $normalizedMessage) === 1;
+        if ($verifiedWidget && $comparisonTopic) {
             $sections[] = 'ორი მოდელის შედარებისას მხოლოდ დადასტურებული განსხვავება მიუთითე. ფუნქციის არხსენება ერთი მოდელის აღწერაში არ ნიშნავს, რომ მას ეს ფუნქცია არ აქვს.';
+        }
+
+        if ($verifiedWidget && $intentResult->intent() === 'recommendation') {
+            $sections[] = 'ზოგად რეკომენდაციაში მომხმარებელს არ მიაწერო მის მიერ უთქმელი პრიორიტეტი. მოდელის ფუნქცია მხოლოდ ქვემოთ მოცემული კონკრეტული მოდელის ჩანაწერით დაასაბუთე; ბოლოს შეგიძლია ჰკითხო ბიუჯეტი ან სასურველი ფუნქცია.';
+        }
+
+        if ($verifiedWidget && preg_match('/სელფი|cellfie/iu', $normalizedMessage) === 1) {
+            $sections[] = 'მომხმარებელი Cellfie-ის ქსელს კითხულობს; Silknet ან სხვა ოპერატორი არ ჩაანაცვლო. კონკრეტული მოდელის გარეშე Cellfie-ის SIM თავსებადობა დაუდასტურებელია.';
         }
 
         if ($verifiedWidget && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof|water.resistant/iu', $normalizedMessage) === 1) {
@@ -197,15 +211,15 @@ class PromptBuilderService
 
         $budgetOnly = preg_match('/\d+\s*(?:₾|ლარ)/iu', $normalizedMessage) === 1
             && preg_match('/ფუნქცი|ვიდეო|კამერ|gps|სოს|sos|ლოკაცი|წყალ|სიმ/iu', $normalizedMessage) !== 1;
-        $includeFunctions = $verifiedWidget && !$budgetOnly && ($intentResult->intent() === 'comparison'
+        $includeFunctions = $verifiedWidget && !$budgetOnly && ($comparisonTopic || $intentResult->intent() === 'recommendation'
             || preg_match('/ფუნქცი|შესაძლებლობ|ვიდეო|კამერ|gps|სოს|sos|ლოკაცი|მირჩევ|მირჩიე|შემირჩი/iu', $normalizedMessage) === 1);
         $includeWater = $verifiedWidget && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof|water.resistant/iu', $normalizedMessage) === 1;
         $includeCamera = $verifiedWidget && preg_match('/კამერ|camera/iu', $normalizedMessage) === 1;
-        $includeSim = $verifiedWidget && preg_match('/სიმ\s*(?:ბარათ|კარტ)|sim\s*card/iu', $normalizedMessage) === 1;
+        $includeSim = $verifiedWidget && preg_match('/(?:სიმ|sim)\s*(?:ბარათ|კარტ|card)/iu', $normalizedMessage) === 1;
         $includeColors = $verifiedWidget && preg_match('/ფერ|შავი|ლურჯი|მწვანე|ვარდისფერი|იასამნისფერი/iu', $normalizedMessage) === 1;
 
         $productLines = $products
-            ->map(function (Product $product) use ($includeFunctions, $includeWater, $includeCamera, $includeSim, $includeColors, $intentResult): string {
+            ->map(function (Product $product) use ($includeFunctions, $includeWater, $includeCamera, $includeSim, $includeColors, $comparisonTopic): string {
                 $price = $product->sale_price
                     ? $product->sale_price . ' ₾ (ფასდაკლება, ძველი ფასი ' . $product->price . ' ₾)'
                     : $product->price . ' ₾';
@@ -231,7 +245,7 @@ class PromptBuilderService
                     $features = array_slice(
                         array_values(array_filter((array) ($product->functions ?? []), 'is_string')),
                         0,
-                        $intentResult->intent() === 'comparison' ? 12 : 6
+                        $comparisonTopic ? 24 : 6
                     );
                     if ($features !== []) {
                         $line .= ' | კატალოგში მითითებული ფუნქციები: ' . implode(', ', $features);
@@ -256,7 +270,9 @@ class PromptBuilderService
         if ($productLines !== '') {
             $sections[] = 'live კატალოგის პასუხის წესი:';
             $sections[] = '- რადგან შესაბამისი live პროდუქტები უკვე ნაპოვნია, არ თქვა "არ გვაქვს", "არ არის", "ვერ მოვიძიე" ან "დაგვიკავშირდით ფასისთვის".';
-            $sections[] = '- ჯერ დაასახელე 2-4 კონკრეტული მოდელი ამ სიიდან და მხოლოდ შემდეგ დაამატე მოკლე განმარტება ან follow-up.';
+            $sections[] = $verifiedWidget && $intentResult->hasCatalogFacet()
+                ? '- 2G/4G ან ფასდაკლებულ მოდელებზე შეკითხვისას ჩამოთვალე ქვემოთ მოცემული ყველა შესაბამისი მოდელი; ჩამონათვალი მოკლედ დაწერე და არ გამოტოვო ბოლო მოდელები.'
+                : '- ჯერ დაასახელე 2-4 კონკრეტული მოდელი ამ სიიდან და მხოლოდ შემდეგ დაამატე მოკლე განმარტება ან follow-up.';
 
             if ($verifiedWidget && $products->count() > 1) {
                 $sections[] = '- თითოეული მოდელის ფასი და ფასდაკლება მხოლოდ იმავე მოდელის სახელთან მიუთითე; სხვადასხვა მოდელის ფასი ან ფასდაკლება ერთ საერთო მტკიცებაში არ გააერთიანო.';

@@ -55,7 +55,7 @@ trait UsesVerifiedWidgetKnowledge
                 . 'A quoted price alone does not identify which watch the customer means; ask for its model or link before comparing its functions with another watch. '
                 . 'Answer every part of a combined question, including delivery and contact details when both are asked. '
                 . 'Use Georgian script for the answer. Do not mix in Armenian words or Armenian punctuation marks. '
-                . 'If the customer asks for a refund or money back, distinguish that request from the verified conditional model-exchange policy. Never promise a cash refund without a verified refund policy.';
+                . 'If the customer asks to return, exchange, or have the shop take back a watch, explain the verified conditional 14-day model-exchange policy when it appears in the provided knowledge. Distinguish model exchange from a cash refund; never promise a cash refund without a verified refund policy.';
         }
 
         $knowledge = trim((string) ($runtime['knowledge_context'] ?? ''));

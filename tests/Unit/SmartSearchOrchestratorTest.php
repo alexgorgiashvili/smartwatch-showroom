@@ -265,13 +265,27 @@ class SmartSearchOrchestratorTest extends TestCase
     {
         $withinBudget = $this->createProduct('wonlex-ct23', 'Wonlex CT23', 'Wonlex', 'CT23', 179, 149);
         $this->createProduct('wonlex-kt34', 'Wonlex KT34', 'Wonlex', 'KT34', 229);
-        $this->createProduct('other-109', 'Other 109', 'Other', 'Other', 109);
+        $other = $this->createProduct('other-109', 'Other 109', 'Other', 'Other', 109);
         $message = '150 ლარამდე ვონლექსი სჯობს თუ 109 ლარიანი?';
         $intent = $this->catalogIntent($message, 'recommendation', null, []);
 
         $context = $this->makeOrchestrator()->search($intent, true, $message);
 
-        $this->assertSame([$withinBudget->id], $context->products()->pluck('id')->all());
+        $this->assertSame([$withinBudget->id, $other->id], $context->products()->pluck('id')->all());
+    }
+
+    public function testWidgetBarePriceWatchQuestionFindsLiveSalePrices(): void
+    {
+        $q21 = $this->createProduct('q21', 'Q21', 'YQT', 'Q21', 79, 59);
+        $q19 = $this->createProduct('q19', 'Q19', 'YQT', 'Q19', 79, 59);
+        $this->createProduct('q12', 'Q12', 'YQT', 'Q12', 79);
+        $message = '59 გაქვთ სათი';
+        $intent = $this->catalogIntent($message, 'stock_query', null, []);
+
+        $context = $this->makeOrchestrator()->search($intent, true, $message);
+
+        $this->assertSame([$q21->id, $q19->id], $context->products()->pluck('id')->all());
+        $this->assertNull($context->requestedProduct());
     }
 
     public function testWidgetFeatureAndColorQuestionsUseVerifiedProductFields(): void
@@ -328,6 +342,12 @@ class SmartSearchOrchestratorTest extends TestCase
         $context = $this->makeOrchestrator()->search($intent, true, 'სიმ კარტიანი რა ღირს');
 
         $this->assertSame(['sim-watch'], $context->products()->pluck('slug')->all());
+
+        $mixedScriptQuestion = 'საათები SIM ბარათზე მუშაობს?';
+        $mixedScriptIntent = $this->catalogIntent($mixedScriptQuestion, 'features', null, []);
+        $mixedScriptContext = $this->makeOrchestrator()->search($mixedScriptIntent, true, $mixedScriptQuestion);
+
+        $this->assertSame(['sim-watch'], $mixedScriptContext->products()->pluck('slug')->all());
     }
 
     public function testUnnamedLocationFollowUpDoesNotSelectAnArbitraryModel(): void

@@ -57,7 +57,7 @@ final class WidgetKnowledgeService
         usort($matches, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
         $answers = array_map(
             static fn (array $match): string => $match['answer'],
-            array_slice($matches, 0, 2)
+            array_slice($matches, 0, 3)
         );
 
         return mb_substr(implode("\n", $answers), 0, 1000);

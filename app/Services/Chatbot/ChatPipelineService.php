@@ -47,6 +47,34 @@ class ChatPipelineService
             );
         }
 
+        $contactPageReply = $this->contactPageReply($safeIncomingMessage);
+        if ($contactPageReply !== null) {
+            $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
+            $memory->appendMessage($conversation->id, 'assistant', $contactPageReply);
+
+            return new PipelineResult(
+                $contactPageReply,
+                $conversation->id,
+                '',
+                IntentResult::fromArray([
+                    'standalone_query' => $safeIncomingMessage,
+                    'intent' => 'general',
+                    'entities' => [],
+                    'needs_product_data' => false,
+                ], 0),
+                ['products' => []],
+                true,
+                null,
+                true,
+                [],
+                true,
+                0,
+                null,
+                false,
+                true
+            );
+        }
+
         $directFallbackIntent = $this->directFallbackIntentForMessage($safeIncomingMessage);
         if ($directFallbackIntent instanceof IntentResult) {
             $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
@@ -179,7 +207,9 @@ class ChatPipelineService
                 $agentResponse = $waterFallback;
             } elseif ($cheapFallback !== null) {
                 $agentResponse = $cheapFallback;
-            } elseif (app()->getLocale() !== 'en' && $intentResult->hasCatalogFacet() && !empty($validationContext['products'])) {
+            } elseif (app()->getLocale() !== 'en'
+                && !empty($validationContext['products'])
+                && ($intentResult->hasCatalogFacet() || $intentResult->intent() === 'recommendation')) {
                 $agentResponse = $fallbackStrategy->resolveProviderFailureOutcome(
                     $intentResult,
                     $validationContext,
@@ -309,11 +339,27 @@ class ChatPipelineService
             return 'მობილურ ოპერატორს გულისხმობთ SIM ბარათისთვის თუ მაღაზიის კონსულტანტთან დაკავშირებას?';
         }
 
+        if (preg_match('/სელფი|cellfie/iu', $question) === 1
+            && preg_match('/სიმ|ქსელ/iu', $question) === 1
+            && preg_match('/\b(?:q|kt|ct|t)\s*\d{2,3}\b|\ba49\b|\bx01\b/iu', $question) !== 1) {
+            return 'რომელი საათის მოდელს გულისხმობთ? Cellfie-ის SIM ბარათთან თავსებადობა კონკრეტული მოდელის მიხედვით უნდა გადავამოწმო; მომწერეთ მოდელის სახელი ან პროდუქტის ბმული.';
+        }
+
         if (preg_match('/ლოკაციის\s+ჩართვა\s+საიდან/iu', $question) === 1) {
             return 'რომელი მოდელის ლოკაციის ჩართვა გსურთ? მომწერეთ საათის მოდელი და, თუ იცით, აპლიკაციის სახელი — ზუსტი ნაბიჯები ამაზეა დამოკიდებული.';
         }
 
         return null;
+    }
+
+    private function contactPageReply(string $message): ?string
+    {
+        if (preg_match('/(?:კონტაქტის?|საკონტაქტო)\s+გვერდ/iu', $message) !== 1) {
+            return null;
+        }
+
+        return 'დიახ, [კონტაქტის გვერდზე](' . route('contact')
+            . ') ნახავთ მოქმედ საკონტაქტო გზებს, მისამართსა და სამუშაო საათებს. თუ კონკრეტული დეტალი გაინტერესებთ, მომწერეთ და დაგეხმარებით.';
     }
 
     /**
