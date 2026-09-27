@@ -89,6 +89,7 @@ class ProductContextService
                     'price' => is_numeric($product->price) ? (float) $product->price : null,
                     'sale_price' => is_numeric($product->sale_price) ? (float) $product->sale_price : null,
                     'is_in_stock' => (int) ($product->total_stock ?? 0) > 0,
+                    'water_resistant' => trim((string) ($product->water_resistant ?? '')),
                     'url' => url('/products/' . $product->slug),
                     'image' => $product->primaryImage?->thumbnail_url ?: '',
                 ];

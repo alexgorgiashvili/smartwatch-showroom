@@ -82,7 +82,8 @@ class PromptBuilderService
         SearchContext $searchContext,
         array $contactSettings,
         Collection $products,
-        string $effectiveRagContextText
+        string $effectiveRagContextText,
+        bool $verifiedWidget = false
     ): string {
         $sections = [
             'საიტის ბმულები:',
@@ -106,6 +107,19 @@ class PromptBuilderService
         if ($effectiveRagContextText !== '') {
             $sections[] = 'ცოდნის ბაზა:';
             $sections[] = $effectiveRagContextText;
+        }
+
+        if ($verifiedWidget
+            && preg_match('/მიწოდ|მიტან|კურიერ/iu', $normalizedMessage) === 1
+            && preg_match('/კონტაქტ|დაკავშირ|ნომერ|whatsapp|ვაცაპ|messenger|მესენჯერ/iu', $normalizedMessage) === 1) {
+            $sections[] = 'ორივე ნაწილის პასუხი აუცილებელია:';
+            $sections[] = '- ჯერ უპასუხე მიწოდების საფასურს ან ვადას მხოლოდ ზემოთ მოცემული დადასტურებული პოლიტიკის მიხედვით.';
+            $sections[] = '- შემდეგ მიუთითე ზემოთ მოცემული შესაბამისი საკონტაქტო გზა.';
+        }
+
+        if ($verifiedWidget && preg_match('/ლარად/iu', $normalizedMessage) === 1
+            && preg_match('/\d+\s*(?:₾|ლარ)/iu', $normalizedMessage) !== 1) {
+            $sections[] = 'ბიუჯეტის თანხა ამ შეტყობინებაში არ ჩანს; თუ წინა კონტექსტშიც ვერ პოულობ, კონკრეტული მოდელის არჩევის ნაცვლად ჰკითხე თანხა.';
         }
 
         $warrantyTopic = preg_match('/(გარანტ|warranty|guarantee)/iu', $normalizedMessage) === 1;
@@ -169,8 +183,16 @@ class PromptBuilderService
             }
         }
 
+        $budgetOnly = preg_match('/\d+\s*(?:₾|ლარ)/iu', $normalizedMessage) === 1
+            && preg_match('/ფუნქცი|ვიდეო|კამერ|gps|სოს|sos|ლოკაცი|წყალ|სიმ/iu', $normalizedMessage) !== 1;
+        $includeFunctions = $verifiedWidget && !$budgetOnly && ($intentResult->intent() === 'comparison'
+            || preg_match('/ფუნქცი|შესაძლებლობ|ვიდეო|კამერ|gps|სოს|sos|ლოკაცი|მირჩევ|მირჩიე|შემირჩი/iu', $normalizedMessage) === 1);
+        $includeWater = $verifiedWidget && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof|water.resistant/iu', $normalizedMessage) === 1;
+        $includeSim = $verifiedWidget && preg_match('/სიმ\s*(?:ბარათ|კარტ)|sim\s*card/iu', $normalizedMessage) === 1;
+        $includeColors = $verifiedWidget && preg_match('/ფერ|შავი|ლურჯი|მწვანე|ვარდისფერი|იასამნისფერი/iu', $normalizedMessage) === 1;
+
         $productLines = $products
-            ->map(function (Product $product): string {
+            ->map(function (Product $product) use ($includeFunctions, $includeWater, $includeSim, $includeColors): string {
                 $price = $product->sale_price
                     ? $product->sale_price . ' ₾ (ფასდაკლება, ძველი ფასი ' . $product->price . ' ₾)'
                     : $product->price . ' ₾';
@@ -178,10 +200,33 @@ class PromptBuilderService
                 $stockTotal = max(0, (int) ($product->total_stock ?? 0));
                 $stockStatus = $stockTotal > 0 ? 'მარაგშია' : 'ამოწურულია';
 
-                return '- ' . $product->name
+                $line = '- ' . $product->name
                     . ' | ბმული იდენტიფიკატორი: ' . $product->slug
                     . ' | ფასი: ' . $price
                     . ' | მარაგი: ' . $stockStatus;
+
+                if ($includeWater && filled($product->water_resistant)) {
+                    $line .= ' | წყალგამძლეობის კატალოგის ჩანაწერი: ' . trim((string) $product->water_resistant);
+                }
+                if ($includeSim && $product->sim_support) {
+                    $line .= ' | SIM მხარდაჭერა: მითითებულია';
+                }
+                if ($includeFunctions) {
+                    $features = array_slice(array_values(array_filter((array) ($product->functions ?? []), 'is_string')), 0, 6);
+                    if ($features !== []) {
+                        $line .= ' | კატალოგში მითითებული ფუნქციები: ' . implode(', ', $features);
+                    }
+                }
+                if ($includeColors) {
+                    $colors = $product->variants
+                        ->filter(fn (ProductVariant $variant): bool => $variant->available_quantity > 0 && filled($variant->color_name))
+                        ->pluck('color_name')->unique()->values()->all();
+                    if ($colors !== []) {
+                        $line .= ' | მარაგში არსებული ფერები: ' . implode(', ', $colors);
+                    }
+                }
+
+                return $line;
             })
             ->implode("\n");
 
@@ -192,6 +237,10 @@ class PromptBuilderService
             $sections[] = 'live კატალოგის პასუხის წესი:';
             $sections[] = '- რადგან შესაბამისი live პროდუქტები უკვე ნაპოვნია, არ თქვა "არ გვაქვს", "არ არის", "ვერ მოვიძიე" ან "დაგვიკავშირდით ფასისთვის".';
             $sections[] = '- ჯერ დაასახელე 2-4 კონკრეტული მოდელი ამ სიიდან და მხოლოდ შემდეგ დაამატე მოკლე განმარტება ან follow-up.';
+
+            if ($verifiedWidget && $intentResult->intent() === 'price_query' && !$intentResult->hasSpecificProduct()) {
+                $sections[] = '- ეს სია სრული კატალოგი არ არის. თუ ზოგად ფასებს ეკითხებიან, დაასახელე კონკრეტული მაგალითები სიტყვით „მაგალითად“; ნუ განაცხადებ მთელი კატალოგის მინიმალურ-მაქსიმალურ ფასს მხოლოდ ამ სიის მიხედვით.';
+            }
 
             if ($budgetTopic) {
                 $sections[] = '- თუ შეკითხვა ბიუჯეტს ეხება, ჯერ ბიუჯეტში მოქცეული ვარიანტები დაასახელე; თუ ზუსტად არ ეტევა, ახსენე უახლოესი ალტერნატივა.';
@@ -341,4 +390,3 @@ class PromptBuilderService
         return implode("\n", $instructions);
     }
 }
-

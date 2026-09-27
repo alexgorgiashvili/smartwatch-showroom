@@ -74,7 +74,8 @@ class InventoryAgent
             $searchContext ?? new SearchContext('', collect(), null, null),
             $contactSettings,
             $selectedProducts,
-            $searchContext?->ragContext() ?? ''
+            $searchContext?->ragContext() ?? '',
+            ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
         );
 
         $messages = [

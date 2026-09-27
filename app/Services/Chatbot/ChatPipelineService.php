@@ -89,7 +89,7 @@ class ChatPipelineService
             $history,
             $scopedPreferences,
             $trace
-        );
+        )->normalizedForWidget();
 
         $memory->appendMessage($conversation->id, 'user', $safeIncomingMessage);
 
@@ -134,11 +134,36 @@ class ChatPipelineService
         );
         $validationContext = $supervisorResult['validation_context'] ?? ['products' => []];
         if (!$localePassed) {
-            $agentResponse = app()->getLocale() !== 'en'
-                && $intentResult->intent() === 'price_query'
-                && empty($validationContext['products'])
-                    ? 'ამჟამად ფასს ვერ ვადასტურებ. მომწერეთ კონკრეტული მოდელი ან პროდუქტის ბმული, რომ ინფორმაცია გადავამოწმო.'
-                    : $policy->localeFallback();
+            $isMediaRequest = preg_match('/ფოტო|ვიდეო/iu', $safeIncomingMessage) === 1
+                && preg_match('/გამომიგზავ|გამოგზავ|მომაწოდ|აჩვენ/iu', $safeIncomingMessage) === 1;
+            $waterFallback = app()->getLocale() !== 'en'
+                && preg_match('/წყალგამძლ|წყალგაუმტ|waterproof/iu', $safeIncomingMessage) === 1
+                    ? $this->verifiedWaterResistanceFallback($validationContext)
+                    : null;
+            $cheapFallback = app()->getLocale() !== 'en'
+                && preg_match('/ყველაზე\s+იაფ|იაფიანი|ბიუჯეტურ/iu', $safeIncomingMessage) === 1
+                    ? $this->verifiedAffordableProductsFallback($validationContext)
+                    : null;
+            if (app()->getLocale() !== 'en' && $isMediaRequest) {
+                $agentResponse = 'ამ ტექსტურ ჩატში რეალურ ფოტოს ან ვიდეოს ვერ გამოგიგზავნით. მომწერეთ სასურველი მოდელის სახელი, რომ შესაბამისი პროდუქტის გვერდის ბმული მოგაწოდოთ.';
+            } elseif ($waterFallback !== null) {
+                $agentResponse = $waterFallback;
+            } elseif ($cheapFallback !== null) {
+                $agentResponse = $cheapFallback;
+            } elseif (app()->getLocale() !== 'en' && $intentResult->hasCatalogFacet() && !empty($validationContext['products'])) {
+                $agentResponse = $fallbackStrategy->resolveProviderFailureOutcome(
+                    $intentResult,
+                    $validationContext,
+                    $history,
+                    $scopedPreferences
+                )->reply();
+            } else {
+                $agentResponse = app()->getLocale() !== 'en'
+                    && $intentResult->intent() === 'price_query'
+                    && empty($validationContext['products'])
+                        ? 'ამჟამად ფასს ვერ ვადასტურებ. მომწერეთ კონკრეტული მოდელი ან პროდუქტის ბმული, რომ ინფორმაცია გადავამოწმო.'
+                        : $policy->localeFallback();
+            }
             $agentReason = ChatbotOutcomeReason::STRICT_GEORGIAN;
         }
 
@@ -153,6 +178,12 @@ class ChatPipelineService
                 $agentReason = ChatbotOutcomeReason::VALIDATOR_FAILED;
                 $validationPassed = false;
             }
+        }
+
+        if (in_array($agentReason, [ChatbotOutcomeReason::VALIDATOR_FAILED, ChatbotOutcomeReason::VALIDATOR_RETRY_FAILED], true)
+            && preg_match('/რეკლამ|აქცი/iu', $safeIncomingMessage) === 1
+            && preg_match('/\d+\s*(?:₾|ლარ)|ფას/iu', $safeIncomingMessage) === 1) {
+            $agentResponse = 'რეკლამაში ნაჩვენები შეთავაზების პირობებს ამ შეტყობინებით ვერ ვადასტურებ. მომწერეთ რეკლამის ბმული და მოდელის სახელი, რომ მოქმედი ფასი კატალოგში გადავამოწმო.';
         }
 
         if ($supervisorResult['success'] ?? false) {
@@ -185,7 +216,8 @@ class ChatPipelineService
             return null;
         }
 
-        if ($this->containsAny($normalized, ['საკონტაქტო', 'კონტაქტ', 'whatsapp', 'messenger', 'ვაცაპ', 'მესენჯერ'])) {
+        if ($this->containsAny($normalized, ['საკონტაქტო', 'კონტაქტ', 'whatsapp', 'messenger', 'ვაცაპ', 'მესენჯერ'])
+            && !$this->containsAny($normalized, ['მიწოდ', 'მიტან', 'ფას', 'ღირს', 'მარაგ', 'გარანტ', 'გაცვლ', 'გადახდ'])) {
             return IntentResult::fromArray([
                 'standalone_query' => $message,
                 'intent' => 'general',
@@ -253,5 +285,51 @@ class ChatPipelineService
             'products' => [],
             'allowed_urls' => $allowedUrls,
         ];
+    }
+
+    private function verifiedWaterResistanceFallback(array $validationContext): ?string
+    {
+        $products = $validationContext['products'] ?? [];
+        if (!is_array($products)) {
+            return null;
+        }
+
+        $lines = collect($products)
+            ->filter(fn ($product): bool => is_array($product)
+                && trim((string) ($product['name'] ?? '')) !== ''
+                && trim((string) ($product['water_resistant'] ?? '')) !== '')
+            ->take(4)
+            ->map(fn (array $product): string => '**' . trim((string) $product['name']) . '** — '
+                . trim((string) $product['water_resistant']))
+            ->all();
+
+        return $lines === []
+            ? null
+            : 'კატალოგის აღწერაში წყალგამძლეობად მითითებულია: ' . implode('; ', $lines)
+                . '. წყალში გამოყენების ზუსტი პირობები პროდუქტის აღწერაში გადაამოწმეთ.';
+    }
+
+    private function verifiedAffordableProductsFallback(array $validationContext): ?string
+    {
+        $products = $validationContext['products'] ?? [];
+        if (!is_array($products)) {
+            return null;
+        }
+
+        $lines = collect($products)
+            ->filter(fn ($product): bool => is_array($product)
+                && !empty($product['is_in_stock'])
+                && trim((string) ($product['name'] ?? '')) !== ''
+                && is_numeric(($product['sale_price'] ?? null) ?: ($product['price'] ?? null)))
+            ->sortBy(fn (array $product): float => (float) (($product['sale_price'] ?? null) ?: $product['price']))
+            ->take(2)
+            ->map(fn (array $product): string => '**' . trim((string) $product['name']) . '** — '
+                . (string) (float) (($product['sale_price'] ?? null) ?: $product['price']) . ' ₾')
+            ->all();
+
+        return $lines === []
+            ? null
+            : 'შემოწმებული კატალოგის მარაგში არსებული იაფი ვარიანტებია: ' . implode('; ', $lines)
+                . '. ფასი შეკვეთამდე პროდუქტის გვერდზე გადაამოწმეთ.';
     }
 }

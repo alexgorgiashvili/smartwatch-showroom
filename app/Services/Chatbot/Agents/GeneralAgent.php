@@ -75,7 +75,8 @@ class GeneralAgent
             $searchContext ?? new SearchContext('', collect(), null, null),
             $contactSettings,
             $selectedProducts,
-            $searchContext?->ragContext() ?? ''
+            $searchContext?->ragContext() ?? '',
+            ($runtime['channel'] ?? null) === 'widget' && ($runtime['cohort'] ?? null) === 'v2'
         );
 
         $messages = [
@@ -202,7 +203,10 @@ class GeneralAgent
             ];
         }
 
-        if ($this->shouldReplaceDirectContactReply($response, $message)) {
+        if ($this->shouldReplaceDirectContactReply($response, $message)
+            && !(($runtime['channel'] ?? null) === 'widget'
+                && ($runtime['cohort'] ?? null) === 'v2'
+                && preg_match('/მიწოდ|მიტან|კურიერ/iu', $message) === 1)) {
             $fallback = $this->fallbackStrategy->resolveProviderFailureOutcome(
                 $intent,
                 $validationContext,

@@ -36,6 +36,10 @@ class ResponseValidatorServiceTest extends TestCase
         $this->assertFalse($service->validateStockClaims('დიახ, ხელმისაწვდომია.', $empty)->isValid());
         $this->assertFalse($service->validateStockClaims('ეს მოდელი ხელმისაწვდომი არ არის.', $empty)->isValid());
         $this->assertTrue($service->validateStockClaims(
+            'ამ მოდელის ხელმისაწვდომობას ამჟამად ვერ ვადასტურებ.',
+            $empty
+        )->isValid());
+        $this->assertTrue($service->validateStockClaims(
             'კურიერთან ნაღდი ანგარიშსწორება ხელმისაწვდომია მხოლოდ თბილისში.',
             $empty
         )->isValid());
@@ -111,6 +115,30 @@ class ResponseValidatorServiceTest extends TestCase
 
         $this->assertTrue($service->validatePriceIntegrity('MyTechnic Alpha ღირს 199 ₾.', $context)->isValid());
         $this->assertTrue($service->validatePriceIntegrity('MyTechnic Beta ღირს 299 ₾.', $context)->isValid());
+    }
+
+    public function testUnknownPriceOnlyModelReferenceDoesNotHideAFalsePriceClaim(): void
+    {
+        $service = new ResponseValidatorService();
+        $context = [
+            'products' => [['name' => 'Wonlex CT23', 'slug' => 'wonlex-ct23', 'price' => 179, 'sale_price' => 149]],
+            'requested_product_slug' => 'wonlex-ct23',
+            'require_live_catalog_evidence' => true,
+        ];
+
+        $valid = 'Wonlex CT23 ფასდაკლებით 149 ₾ ღირს. 109 ₾-იანი საათის მოდელი არ არის მითითებული.';
+        $this->assertTrue($service->validatePriceIntegrity($valid, $context)->isValid());
+        $this->assertTrue($service->validatePriceIntegrity(
+            'Wonlex CT23 149 ₾ ღირს. 109 ₾-იანი საათის მოდელი მითითებული არ არის.',
+            $context
+        )->isValid());
+        $this->assertTrue($service->validatePriceIntegrity(
+            '55 ₾-იანი საათის შესახებ ინფორმაცია ვერ მოიძებნა; რეკლამის ბმული მომწერეთ.',
+            ['products' => [], 'require_live_catalog_evidence' => true]
+        )->isValid());
+
+        $falseClaim = 'Wonlex CT23 ღირს 109 ₾.';
+        $this->assertFalse($service->validatePriceIntegrity($falseClaim, $context)->isValid());
     }
 
     public function testBudgetPhraseDoesNotTriggerPriceMismatch(): void

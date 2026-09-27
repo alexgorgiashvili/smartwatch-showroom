@@ -175,8 +175,12 @@ class SupervisorAgent
         $this->traceWidget('supervisor.parallel_fanout_started', [], $trace);
 
         $parallelResult = $this->parallelExecution->execute([
-            'search' => fn() => $intent->requiresSearch()
-                ? $this->searchOrchestrator->search($intent)
+            'search' => fn() => ($intent->requiresSearch()
+                || (($runtime['channel'] ?? null) === 'widget'
+                    && ($runtime['cohort'] ?? null) === 'v2'
+                    && !$intent->isOutOfDomain()
+                    && $intent->intent() === 'recommendation'))
+                ? $this->searchOrchestrator->search($intent, $runtime['channel'] === 'widget' && $runtime['cohort'] === 'v2', $message)
                 : null,
             'session' => fn() => $this->memory->getSessionContext($conversationId),
             'profile' => fn() => $this->memory->getUserPreferences($customerId),

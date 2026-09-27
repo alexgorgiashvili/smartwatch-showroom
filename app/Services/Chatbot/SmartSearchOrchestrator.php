@@ -14,14 +14,14 @@ class SmartSearchOrchestrator
     ) {
     }
 
-    public function search(IntentResult $intent): SearchContext
+    public function search(IntentResult $intent, bool $widget = false, ?string $originalMessage = null): SearchContext
     {
         $standaloneQuery = trim($intent->standaloneQuery());
         $query = $standaloneQuery !== ''
             ? $standaloneQuery
             : $this->policy->normalizeIncomingMessage($standaloneQuery);
 
-        $products = $this->lookupProducts($intent);
+        $products = $this->lookupProducts($intent, $widget, $originalMessage);
         $requestedProduct = $products->first();
         $notFoundMessage = null;
 
@@ -60,10 +60,33 @@ class SmartSearchOrchestrator
         };
     }
 
-    private function lookupProducts(IntentResult $intent): Collection
+    private function lookupProducts(IntentResult $intent, bool $widget, ?string $originalMessage): Collection
     {
+        if ($widget && !$intent->hasSpecificProduct() && !$intent->hasCatalogFacet()
+            && $originalMessage !== null && $this->isContextDependentWidgetQuestion($originalMessage)) {
+            return collect();
+        }
+
         $slugHint = $intent->productSlugHint();
         $limit = 6;
+
+        // Customers often spell the published Wonlex brand in Georgian and
+        // compare a budget with another watch identified only by its price.
+        if ($widget && $originalMessage !== null
+            && preg_match('/ვონლექს/iu', $originalMessage) === 1
+            && preg_match('/(?<!\d)(\d{2,4})\s*(?:₾|ლარ)/iu', $originalMessage, $budgetMatch) === 1
+            && preg_match('/\b(?:KT|CT)\s*\d+\b/iu', $originalMessage) !== 1) {
+            $budget = (int) $budgetMatch[1];
+            $withinBudget = $this->baseProductQuery()
+                ->where('brand', 'like', '%Wonlex%')
+                ->limit(50)->get()
+                ->filter(fn (Product $product): bool => (float) ($product->sale_price ?: $product->price) <= $budget)
+                ->sortBy(fn (Product $product): float => (float) ($product->sale_price ?: $product->price))
+                ->take($limit)->values();
+            if ($withinBudget->isNotEmpty()) {
+                return $withinBudget;
+            }
+        }
 
         if ($slugHint !== null) {
             $exact = $this->baseProductQuery()
@@ -146,6 +169,13 @@ class SmartSearchOrchestrator
                 ->values();
         }
 
+        if ($widget && !$intent->hasSpecificProduct()) {
+            $widgetMatches = $this->lookupWidgetQuestionProducts($originalMessage ?: $intent->standaloneQuery());
+            if ($widgetMatches->isNotEmpty()) {
+                return $widgetMatches;
+            }
+        }
+
         $keywords = $intent->searchKeywords();
 
         if ($keywords !== []) {
@@ -169,6 +199,87 @@ class SmartSearchOrchestrator
         }
 
         return collect();
+    }
+
+    private function isContextDependentWidgetQuestion(string $message): bool
+    {
+        $question = mb_strtolower(trim($message));
+        if (preg_match('/\d+\s*(?:₾|ლარ)/iu', $question) === 1) {
+            return false;
+        }
+
+        if (preg_match('/ფოტო|ვიდეო/iu', $question) === 1
+            && preg_match('/გამომიგზავ|გამოგზავ|მომაწოდ|აჩვენ/iu', $question) === 1) {
+            return true;
+        }
+
+        return preg_match('/^(?:და\s+|ეს\s+|ამას\s+|იმას\s+)/iu', $question) === 1
+            && preg_match('/რომელ\p{L}*\s+მოდელ|რომელ\p{L}*\s+საათ|მოდელებ|რა\s+გაქვთ/iu', $question) !== 1;
+    }
+
+    /** Use public catalog fields for broad widget questions that have no model name. */
+    private function lookupWidgetQuestionProducts(string $message): Collection
+    {
+        $question = mb_strtolower(trim($message));
+        if ($question === '') {
+            return collect();
+        }
+
+        // A follow-up about "this" device needs conversation context; do not
+        // silently pick the first catalog model as if the customer named it.
+        if (preg_match('/^(?:და\s+)?(?:ეს|ამას|ამის|იმას|ლოკაციაც)(?!\p{L})/iu', $question) === 1
+            && preg_match('/რომელ\p{L}*\s+მოდელ|რომელ\p{L}*\s+საათ/iu', $question) !== 1) {
+            return collect();
+        }
+
+        $feature = match (true) {
+            preg_match('/ვიდეო\s*ზარ|video\s*call/iu', $question) === 1 => 'video',
+            preg_match('/კამერ|camera/iu', $question) === 1 => 'camera',
+            preg_match('/წყალ|waterproof|water resistant/iu', $question) === 1 => 'water',
+            preg_match('/gps|გეოლოკაცი|ლოკაცი|მდებარეობ/iu', $question) === 1 => 'gps',
+            preg_match('/სიმ\s*(?:ბარათ|კარტ)|sim\s*card/iu', $question) === 1 => 'sim',
+            default => null,
+        };
+
+        preg_match('/შავი|ვარდისფერი|ლურჯი|მწვანე|იასამნისფერი/iu', $question, $color);
+        $isBroadQuestion = preg_match('/გაქვთ საათები|რა არჩევანი|სხვა.{0,12}მოდელ|ყველაზე იაფ|იაფიანი მოდელ|ბიუჯეტურ|საუკეთესო მოდელ|ყველაზე კარგი|შეკვეთას\?|შეკვეთას გამიფორმ|მირჩევ|მირჩიე|შემირჩი|შევარჩიო|რა\s*ღირს.{0,20}საათ|საათებ\p{L}*.{0,15}ფას|ფასებ\p{L}*.{0,15}საათ/iu', $question) === 1
+            || (preg_match('/\d+\s*(?:₾|ლარ)/iu', $question) === 1
+                && preg_match('/ვიყიდ|მომივა|შეიძ|ვარიანტ|საათ/iu', $question) === 1);
+        if ($feature === null && $color === [] && !$isBroadQuestion) {
+            return collect();
+        }
+
+        $catalogQuery = $this->baseProductQuery();
+        if ($feature === null && $color === []) {
+            // Apply the limit after price ordering so "cheapest" can see the
+            // store's lowest-priced active products even as the catalog grows.
+            $catalogQuery->orderByRaw('COALESCE(NULLIF(sale_price, 0), price) ASC');
+        }
+        $candidates = $catalogQuery->limit(50)->get();
+
+        if ($feature !== null) {
+            return $candidates->filter(function (Product $product) use ($feature): bool {
+                $functions = mb_strtolower(implode(' ', array_filter((array) ($product->functions ?? []), 'is_string')));
+                $name = mb_strtolower((string) $product->name);
+                return match ($feature) {
+                    'video' => preg_match('/ვიდეო\s*ზარ|video\s*call/iu', $functions . ' ' . $name) === 1,
+                    'camera' => trim((string) $product->camera) !== '' || preg_match('/კამერ|camera/iu', $functions . ' ' . $name) === 1,
+                    'water' => trim((string) $product->water_resistant) !== '',
+                    'gps' => preg_match('/gps|გეოლოკაცი/iu', $functions . ' ' . $name) === 1,
+                    'sim' => (bool) $product->sim_support,
+                };
+            })->take(6)->values();
+        }
+
+        if ($color !== []) {
+            return $candidates->filter(fn (Product $product): bool => $product->variants->contains(
+                fn ($variant): bool => str_contains(mb_strtolower((string) $variant->color_name), $color[0])
+                    && $variant->available_quantity > 0
+            ))->take(6)->values();
+        }
+
+        return $candidates->sortBy(fn (Product $product): float => (float) ($product->sale_price ?: $product->price))
+            ->take(6)->values();
     }
 
     private function lookupCatalogFacetProducts(IntentResult $intent): Collection

@@ -144,6 +144,20 @@ class IntentResult
         return $this->isFallback;
     }
 
+    public function normalizedForWidget(): self
+    {
+        $copy = clone $this;
+        $changed = false;
+        foreach (['brand', 'model', 'productSlugHint', 'color', 'category'] as $field) {
+            if (is_string($copy->$field) && in_array(mb_strtolower(trim($copy->$field)), ['null', 'none', 'n/a'], true)) {
+                $copy->$field = null;
+                $changed = true;
+            }
+        }
+
+        return $changed ? $copy : $this;
+    }
+
     public function requiresSearch(): bool
     {
         return $this->needsProductData && !$this->isOutOfDomain;

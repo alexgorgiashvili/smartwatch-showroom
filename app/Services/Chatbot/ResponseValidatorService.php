@@ -7,7 +7,10 @@ class ResponseValidatorService
     public function validatePriceIntegrity(string $response, array $ragContext): ValidationResult
     {
         $mentionedPrices = $this->extractPrices($response);
-        $budgetPrices = $this->extractBudgetPrices($response);
+        $budgetPrices = array_values(array_unique(array_merge(
+            $this->extractBudgetPrices($response),
+            $this->extractUnidentifiedModelPriceReferences($response)
+        )));
 
         if ($mentionedPrices === []) {
             return ValidationResult::pass();
@@ -229,6 +232,11 @@ class ResponseValidatorService
     {
         foreach (preg_split('/[.!?;\n,]+/u', $response) ?: [] as $clause) {
             if (!str_contains($clause, 'ხელმისაწვდომ')) {
+                continue;
+            }
+
+            // Uncertainty about availability is not an affirmative stock claim.
+            if (preg_match('/ვერ\s+ვადასტურებ|არ\s+შემიძლია\s+დავადასტურო/iu', $clause) === 1) {
                 continue;
             }
 
@@ -523,6 +531,24 @@ class ResponseValidatorService
             ->unique()
             ->values()
             ->all();
+    }
+
+    /** A customer's price-only reference is not a product price claim. */
+    private function extractUnidentifiedModelPriceReferences(string $text): array
+    {
+        $patterns = [
+            '/(\d+(?:[\.,]\d+)?)\s*(?:₾|ლარ)(?:-?იან[ი]?)?\s+(?:საათის\s+)?მოდელი\s+(?:არ\s+არის\s+მითითებული|მითითებული\s+არ\s+არის|უცნობია)/iu',
+            '/(\d+(?:[\.,]\d+)?)\s*(?:₾|ლარ)(?:-?იან[ი]?)?\s+საათის\s+შესახებ\s+ინფორმაცია\s+(?:ვერ\s+მოიძებნა|არ\s+არის\s+დადასტურებული)/iu',
+        ];
+        $values = [];
+        foreach ($patterns as $pattern) {
+            preg_match_all($pattern, $text, $matches);
+            array_push($values, ...($matches[1] ?? []));
+        }
+
+        return collect($values)
+            ->map(fn (string $value): float => (float) str_replace(',', '.', $value))
+            ->unique()->values()->all();
     }
 
     private function isWithinReasonableCatalogRange(float $price, float $minAllowed, float $maxAllowed): bool
