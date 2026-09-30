@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Services\Product\ProductImageProcessor;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AlibabaScraperService
 {
+    public function __construct(private ProductImageProcessor $imageProcessor)
+    {
+    }
+
     public function scrape(?string $url, ?string $rawHtml = null): array
     {
         $html = $rawHtml && trim($rawHtml) !== ''
@@ -77,7 +81,7 @@ class AlibabaScraperService
     {
         $saved = [];
 
-        foreach (array_values(array_unique($imageUrls)) as $index => $url) {
+        foreach (array_values(array_unique($imageUrls)) as $url) {
             if (!is_string($url) || !str_starts_with($url, 'http')) {
                 continue;
             }
@@ -93,11 +97,16 @@ class AlibabaScraperService
                 continue;
             }
 
-            $baseName = str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
-            $filePath = 'images/products/' . $slug . '/' . $baseName . '.' . $extension;
-            Storage::disk('public')->put($filePath, $response->body());
+            $binary = $response->body();
+            if (strlen($binary) > 10 * 1024 * 1024) {
+                continue;
+            }
 
-            $thumbnailPath = $this->createThumbnailFromBinary($response->body(), $slug, $baseName, $extension);
+            try {
+                [$filePath, $thumbnailPath] = $this->imageProcessor->storeBinary($binary, 'images/products/'.$slug);
+            } catch (\RuntimeException) {
+                continue;
+            }
 
             $saved[] = [
                 'path' => $filePath,
@@ -112,84 +121,6 @@ class AlibabaScraperService
         return $saved;
     }
 
-    private function createThumbnailFromBinary(string $binary, string $slug, string $baseName, string $extension): ?string
-    {
-        if (!function_exists('imagecreatefromstring')) {
-            return null;
-        }
-
-        $sourceImage = @imagecreatefromstring($binary);
-        if ($sourceImage === false) {
-            return null;
-        }
-
-        $sourceWidth = imagesx($sourceImage);
-        $sourceHeight = imagesy($sourceImage);
-        if ($sourceWidth <= 0 || $sourceHeight <= 0) {
-            imagedestroy($sourceImage);
-            return null;
-        }
-
-        $targetWidth = 320;
-        $targetHeight = 320;
-
-        $sourceRatio = $sourceWidth / $sourceHeight;
-        $targetRatio = $targetWidth / $targetHeight;
-
-        if ($sourceRatio > $targetRatio) {
-            $cropHeight = $sourceHeight;
-            $cropWidth = (int) round($sourceHeight * $targetRatio);
-            $srcX = (int) round(($sourceWidth - $cropWidth) / 2);
-            $srcY = 0;
-        } else {
-            $cropWidth = $sourceWidth;
-            $cropHeight = (int) round($sourceWidth / $targetRatio);
-            $srcX = 0;
-            $srcY = (int) round(($sourceHeight - $cropHeight) / 2);
-        }
-
-        $thumb = imagecreatetruecolor($targetWidth, $targetHeight);
-
-        if (in_array($extension, ['png', 'webp'], true)) {
-            imagealphablending($thumb, false);
-            imagesavealpha($thumb, true);
-            $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
-            imagefilledrectangle($thumb, 0, 0, $targetWidth, $targetHeight, $transparent);
-        }
-
-        imagecopyresampled(
-            $thumb,
-            $sourceImage,
-            0,
-            0,
-            $srcX,
-            $srcY,
-            $targetWidth,
-            $targetHeight,
-            $cropWidth,
-            $cropHeight
-        );
-
-        ob_start();
-        $written = match ($extension) {
-            'png' => imagepng($thumb, null, 6),
-            'webp' => function_exists('imagewebp') ? imagewebp($thumb, null, 80) : imagejpeg($thumb, null, 82),
-            default => imagejpeg($thumb, null, 82),
-        };
-        $thumbBinary = ob_get_clean();
-
-        imagedestroy($thumb);
-        imagedestroy($sourceImage);
-
-        if (!$written || !is_string($thumbBinary) || $thumbBinary === '') {
-            return null;
-        }
-
-        $thumbnailPath = 'images/products/' . $slug . '/' . $baseName . '_thumb.' . ($extension === 'webp' && !function_exists('imagewebp') ? 'jpg' : $extension);
-        Storage::disk('public')->put($thumbnailPath, $thumbBinary);
-
-        return $thumbnailPath;
-    }
 
     private function fetchHtml(string $url): string
     {

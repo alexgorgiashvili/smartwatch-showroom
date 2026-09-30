@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Services\AlibabaScraperService;
 use App\Services\Product\ProductImageProcessor;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -35,5 +37,27 @@ class ProductImageProcessorTest extends TestCase
         } finally {
             unlink($sourcePath);
         }
+    }
+
+    public function test_alibaba_import_uses_the_same_optimized_images(): void
+    {
+        if (! extension_loaded('gd') || ! function_exists('imagewebp')) {
+            $this->markTestSkipped('GD with WebP support is required.');
+        }
+
+        Storage::fake('public');
+        $source = imagecreatetruecolor(1800, 900);
+        ob_start();
+        imagepng($source);
+        $binary = ob_get_clean();
+        imagedestroy($source);
+
+        Http::fake(['https://example.com/watch.png' => Http::response($binary, 200, ['Content-Type' => 'image/png'])]);
+        $images = app(AlibabaScraperService::class)->downloadImages(['https://example.com/watch.png'], 'watch-test');
+
+        $this->assertCount(1, $images);
+        $this->assertStringEndsWith('.webp', $images[0]['path']);
+        Storage::disk('public')->assertExists([$images[0]['path'], $images[0]['thumbnail_path']]);
+        $this->assertSame([1200, 600], array_slice(getimagesize(Storage::disk('public')->path($images[0]['path'])), 0, 2));
     }
 }

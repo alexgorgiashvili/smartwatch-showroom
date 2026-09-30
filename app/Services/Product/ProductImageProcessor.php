@@ -16,16 +16,26 @@ class ProductImageProcessor
 
     public function storeFile(string $sourcePath, string $directory = 'images/products'): array
     {
+        $binary = @file_get_contents($sourcePath);
+        if (! is_string($binary)) {
+            throw new RuntimeException('Could not read the product image.');
+        }
+
+        return $this->storeBinary($binary, $directory);
+    }
+
+    public function storeBinary(string $binary, string $directory = 'images/products'): array
+    {
         if (! extension_loaded('gd') || ! function_exists('imagewebp')) {
             throw new RuntimeException('GD with WebP support is required for product images.');
         }
 
-        $dimensions = @getimagesize($sourcePath);
+        $dimensions = @getimagesizefromstring($binary);
         if ($dimensions === false || $dimensions[0] * $dimensions[1] > 30000000) {
             throw new RuntimeException('Product image exceeds the supported pixel dimensions.');
         }
 
-        $source = @imagecreatefromstring((string) @file_get_contents($sourcePath));
+        $source = @imagecreatefromstring($binary);
         if ($source === false) {
             throw new RuntimeException('Could not decode the uploaded product image.');
         }
