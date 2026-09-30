@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Services\Product\ProductImageProcessor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductImageController extends Controller
 {
-    public function store(Request $request, Product $product): RedirectResponse|JsonResponse
+    public function store(Request $request, Product $product, ProductImageProcessor $imageProcessor): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'images' => ['required', 'array', 'max:8'],
@@ -22,12 +23,11 @@ class ProductImageController extends Controller
         ]);
 
         foreach ($data['images'] as $index => $upload) {
-            $path = $upload->store('images/products', 'public');
-            $thumbnailPath = $this->createThumbnailForUpload($upload, $path);
+            [$path, $thumbnailPath] = $imageProcessor->storeUpload($upload);
 
             $product->images()->create([
                 'path' => 'storage/' . $path,
-                'thumbnail_path' => $thumbnailPath ? 'storage/' . $thumbnailPath : null,
+                'thumbnail_path' => 'storage/' . $thumbnailPath,
                 'alt_en' => $data['alt_en'] ?? null,
                 'alt_ka' => $data['alt_ka'] ?? null,
                 'sort_order' => $product->images()->count() + $index,
@@ -107,18 +107,17 @@ class ProductImageController extends Controller
     /**
      * Upload a standalone image (e.g. from Cropper)
      */
-    public function uploadStandalone(Request $request): JsonResponse
+    public function uploadStandalone(Request $request, ProductImageProcessor $imageProcessor): JsonResponse
     {
         $request->validate([
             'image' => ['required', 'file', 'image', 'mimetypes:image/jpeg,image/png,image/webp', 'max:5120'],
         ]);
 
         $upload = $request->file('image');
-        $path = $upload->store('images/standalone', 'public');
-        $thumbnailPath = $this->createThumbnailForUpload($upload, $path);
+        [$path, $thumbnailPath] = $imageProcessor->storeUpload($upload, 'images/standalone');
 
         $url = asset('storage/' . $path);
-        $thumbnailUrl = $thumbnailPath ? asset('storage/' . $thumbnailPath) : $url;
+        $thumbnailUrl = asset('storage/' . $thumbnailPath);
 
         // If a product_id is provided, attach it to the product
         if ($request->filled('product_id')) {
@@ -126,7 +125,7 @@ class ProductImageController extends Controller
             if ($product) {
                 $product->images()->create([
                     'path' => 'storage/' . $path,
-                    'thumbnail_path' => $thumbnailPath ? 'storage/' . $thumbnailPath : null,
+                    'thumbnail_path' => 'storage/' . $thumbnailPath,
                     'sort_order' => $product->images()->count(),
                     'is_primary' => $product->images()->count() === 0,
                 ]);
@@ -210,78 +209,5 @@ class ProductImageController extends Controller
         })->values()->all();
     }
 
-    private function createThumbnailForUpload($upload, string $mainPath): ?string
-    {
-        if (!function_exists('imagecreatefromstring')) {
-            return null;
-        }
 
-        $binary = @file_get_contents($upload->getRealPath());
-        if (!is_string($binary) || $binary === '') {
-            return null;
-        }
-
-        $source = @imagecreatefromstring($binary);
-        if ($source === false) {
-            return null;
-        }
-
-        $width = imagesx($source);
-        $height = imagesy($source);
-        if ($width <= 0 || $height <= 0) {
-            imagedestroy($source);
-            return null;
-        }
-
-        $target = imagecreatetruecolor(320, 320);
-        imagealphablending($target, false);
-        imagesavealpha($target, true);
-        $transparent = imagecolorallocatealpha($target, 0, 0, 0, 127);
-        imagefilledrectangle($target, 0, 0, 320, 320, $transparent);
-
-        $sourceRatio = $width / $height;
-        if ($sourceRatio > 1) {
-            $cropHeight = $height;
-            $cropWidth = (int) round($height);
-            $srcX = (int) round(($width - $cropWidth) / 2);
-            $srcY = 0;
-        } else {
-            $cropWidth = $width;
-            $cropHeight = (int) round($width);
-            $srcX = 0;
-            $srcY = (int) round(($height - $cropHeight) / 2);
-        }
-
-        imagecopyresampled($target, $source, 0, 0, $srcX, $srcY, 320, 320, $cropWidth, $cropHeight);
-
-        $extension = strtolower(pathinfo($mainPath, PATHINFO_EXTENSION));
-        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-            $extension = 'jpg';
-        }
-
-        ob_start();
-        if ($extension === 'png') {
-            imagepng($target, null, 6);
-        } elseif ($extension === 'webp' && function_exists('imagewebp')) {
-            imagewebp($target, null, 80);
-        } else {
-            imagejpeg($target, null, 82);
-            if ($extension === 'webp') {
-                $extension = 'jpg';
-            }
-        }
-        $thumbBinary = ob_get_clean();
-
-        imagedestroy($target);
-        imagedestroy($source);
-
-        if (!is_string($thumbBinary) || $thumbBinary === '') {
-            return null;
-        }
-
-        $thumbnailPath = preg_replace('/\.[^.]+$/', '', $mainPath) . '_thumb.' . $extension;
-        Storage::disk('public')->put($thumbnailPath, $thumbBinary);
-
-        return $thumbnailPath;
-    }
 }
