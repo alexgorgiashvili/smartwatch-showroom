@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class GiftBuilderSetting extends Model
 {
+    public $incrementing = false;
+
     protected $table = 'gift_builder_settings';
 
     protected $fillable = [
+        'id',
         'packaging_options',
         'delivery_fee',
         'free_delivery_threshold',

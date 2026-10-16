@@ -194,6 +194,23 @@ class GiftBuilderV2Test extends TestCase
         $this->assertFalse($report['is_net_profit']);
     }
 
+    public function test_settings_save_uses_the_explicit_singleton_id_without_auto_increment(): void
+    {
+        $service = app(\App\Services\GiftBuilder\GiftBuilderSettingsService::class);
+        $settings = $service->current();
+        DB::table('gift_builder_settings')->insert([
+            'id' => 2, 'packaging_options' => json_encode($settings['packaging_options']),
+            'delivery_fee' => 9, 'free_delivery_threshold' => 150,
+        ]);
+        $saved = $service->save($settings);
+        $this->assertSame(1, $saved->id);
+        $this->assertFalse($saved->getIncrementing());
+        $this->assertNull($saved->ad_cost_per_order);
+        $service->save($settings);
+        $this->assertSame(1, DB::table('gift_builder_settings')->where('id', 1)->count());
+        $this->assertEquals(9, DB::table('gift_builder_settings')->where('id', 2)->value('delivery_fee'));
+    }
+
     public function test_v2_assets_load_independently_and_legacy_selector_remains_behind_flag(): void
     {
         $this->variant(17, 39);
