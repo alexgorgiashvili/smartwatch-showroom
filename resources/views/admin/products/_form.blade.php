@@ -347,13 +347,6 @@
                     </div>
 
                     <div class="col-md-2">
-                        <label for="gift_capacity_units" class="form-label">Capacity units</label>
-                        <input type="number" min="1" max="20" class="form-control @error('gift_capacity_units') is-invalid @enderror"
-                               id="gift_capacity_units" name="gift_capacity_units" value="{{ old('gift_capacity_units', $product->gift_capacity_units ?: 1) }}">
-                        @error('gift_capacity_units') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="col-md-2">
                         <label for="gift_sort_order" class="form-label">Sort order</label>
                         <input type="number" min="0" class="form-control @error('gift_sort_order') is-invalid @enderror"
                                id="gift_sort_order" name="gift_sort_order" value="{{ old('gift_sort_order', $product->gift_sort_order ?: 0) }}">

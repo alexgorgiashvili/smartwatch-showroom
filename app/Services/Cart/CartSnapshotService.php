@@ -157,7 +157,6 @@ class CartSnapshotService
             $normalizedItems = [];
             $itemsSubtotal = 0.0;
             $itemsCount = 0;
-            $capacityUnits = 0;
             $mainCount = 0;
             $mainCompatibilityTags = [];
             $addonCompatibilityTags = [];
@@ -189,7 +188,6 @@ class CartSnapshotService
                     $addonCompatibilityTags[] = array_values((array) ($variant->product->gift_compatibility_tags ?? []));
                 }
 
-                $capacityUnits += max(1, (int) ($variant->product->gift_capacity_units ?: 1));
                 $sortOrder = (int) ($item['sort_order'] ?? ($index + 1));
                 $line = $this->lineItem($variant, $quantity, (string) $groupId, $role, $sortOrder);
                 if (! $line) {
@@ -230,11 +228,6 @@ class CartSnapshotService
                 $packaging = (array) config('gift_builder.packaging.standard', []);
             }
             $packagingLabel = $this->localizedLabel($packaging, $packagingSlug);
-            $packagingCapacity = (int) ($packaging['capacity_units'] ?? 0);
-            if ($enforceStock && $packagingCapacity > 0 && $capacityUnits > $packagingCapacity) {
-                throw new RuntimeException('Selected gift packaging can no longer fit the gift box.');
-            }
-
             if ($enforceStock) {
                 foreach ($addonCompatibilityTags as $addonTags) {
                     if ($addonTags !== [] && array_intersect($mainCompatibilityTags, $addonTags) === []) {

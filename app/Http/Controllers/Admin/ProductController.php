@@ -389,7 +389,6 @@ class ProductController extends Controller
             'gift_compatibility_tags' => ['nullable'],
             'gift_recommendation_tags' => ['nullable', 'array'],
             'gift_recommendation_tags.*' => ['string', 'in:' . implode(',', array_keys((array) config('gift_builder.recommendation_priorities', [])))],
-            'gift_capacity_units' => ['nullable', 'integer', 'min:1', 'max:20'],
             'gift_badge_ka' => ['nullable', 'string', 'max:80'],
             'gift_badge_en' => ['nullable', 'string', 'max:80'],
             'gift_builder_note_ka' => ['nullable', 'string', 'max:255'],
@@ -417,7 +416,6 @@ class ProductController extends Controller
             ->filter(fn ($tag): bool => is_string($tag) && array_key_exists($tag, (array) config('gift_builder.recommendation_priorities', [])))
             ->values()
             ->all();
-        $data['gift_capacity_units'] = max(1, (int) ($request->input('gift_capacity_units') ?: 1));
         $data['gift_sort_order'] = max(0, (int) ($request->input('gift_sort_order') ?: 0));
 
         if (! Schema::hasColumn('products', 'battery_life_range')) {
