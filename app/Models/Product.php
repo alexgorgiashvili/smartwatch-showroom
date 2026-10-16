@@ -74,7 +74,11 @@ class Product extends Model
         'gift_sort_order',
     ];
 
+    protected $hidden = ['gift_box_price', 'gift_landed_cost', 'gift_cost_status', 'gift_requires_compatibility'];
+
     protected $casts = [
+        'gift_box_price' => 'decimal:2',
+        'gift_landed_cost' => 'decimal:4',
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'charging_time_hours' => 'decimal:1',

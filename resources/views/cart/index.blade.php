@@ -76,6 +76,14 @@
                                             </div>
                                         </div>
 
+                                        @if(!empty($group['validation_errors']))
+                                            <div class="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+                                                <p class="font-semibold">ბოქსის არჩევანი გადასამოწმებელია:</p>
+                                                <ul class="mt-1 list-inside list-disc">@foreach($group['validation_errors'] as $validationError)<li>{{ $validationError }}</li>@endforeach</ul>
+                                                <p class="mt-1 text-xs">წაშალე ეს ბოქსი ან შეცვალე არჩევანი Gift Builder-ში.</p>
+                                            </div>
+                                        @endif
+
                                         <div class="divide-y divide-slate-100">
                                             @foreach($group['items'] as $item)
                                                 <div class="flex items-center gap-4 p-4">
@@ -87,7 +95,7 @@
                                                             <a href="{{ \App\Support\StorefrontUrl::route('products.show', $item['product']) }}" class="truncate text-sm font-semibold text-gray-900 hover:text-primary-600 sm:text-base">
                                                                 {{ $item['product']->name }}
                                                             </a>
-                                                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ $item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon') }}</span>
+                                                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">{{ (int) ($group['pricing_version'] ?? 1) === 2 ? __('storefront.gift_builder.box_product') : ($item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon')) }}</span>
                                                         </div>
                                                         <div class="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
                                                             @if (!empty($item['color_hex']))
@@ -262,21 +270,38 @@
                             <dl class="mt-4 space-y-2 text-sm text-gray-700">
                                 <div class="flex justify-between">
                                     <dt>{{ __('storefront.common.products') }} (<span data-cart-count>{{ $cartCount }}</span> {{ __('storefront.checkout.unit_short') }})</dt>
-                                    <dd class="font-medium" data-cart-total>{{ number_format($cartTotal, 2) }} ₾</dd>
+                                    <dd class="font-medium" data-cart-goods-total>{{ number_format($cartTotal, 2) }} ₾</dd>
                                 </div>
+                                @if($packagingTotal > 0)
+                                    <div class="flex justify-between text-gray-500">
+                                        <dt>{{ app()->getLocale() === 'en' ? 'Packaging (included)' : 'შეფუთვა (ჩათვლილია)' }}</dt>
+                                        <dd>{{ number_format($packagingTotal, 2) }} ₾</dd>
+                                    </div>
+                                @endif
                                 <div class="flex justify-between text-gray-500">
                                     <dt>{{ __('storefront.cart.delivery') }}</dt>
-                                    <dd>{{ __('storefront.common.free') }}</dd>
+                                    <dd data-cart-delivery>{{ $deliveryTotal > 0 ? number_format($deliveryTotal, 2).' ₾' : __('storefront.common.free') }}</dd>
                                 </div>
                                 <div class="flex justify-between border-t border-slate-100 pt-2 text-base font-bold text-gray-900">
                                     <dt>{{ __('storefront.common.total') }}</dt>
-                                    <dd class="text-primary-600" data-cart-total>{{ number_format($cartTotal, 2) }} ₾</dd>
+                                    <dd class="text-primary-600" data-cart-total>{{ number_format($payableTotal, 2) }} ₾</dd>
                                 </div>
                             </dl>
+                            @if($giftGroups->isNotEmpty())
+                                <p data-cart-free-remaining class="mt-3 text-xs text-gray-500" @if($freeDeliveryRemaining <= 0) hidden @endif>
+                                    {{ app()->getLocale() === 'en' ? 'Remaining for free delivery: ' : 'უფასო მიწოდებამდე დარჩა: ' }}<span>{{ number_format($freeDeliveryRemaining, 2) }} ₾</span>
+                                </p>
+                            @endif
 
-                            <a href="{{ route('checkout.index') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
-                                <i class="fa-solid fa-lock text-xs"></i>{{ __('storefront.cart.continue') }}
-                            </a>
+                            @if($hasInvalidGiftGroups)
+                                <button type="button" disabled class="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-300 px-5 py-3 text-sm font-semibold text-slate-600">
+                                    <i class="fa-solid fa-lock text-xs"></i>ბოქსი შესასწორებელია
+                                </button>
+                            @else
+                                <a href="{{ route('checkout.index') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
+                                    <i class="fa-solid fa-lock text-xs"></i>{{ __('storefront.cart.continue') }}
+                                </a>
+                            @endif
 
                             <form method="POST" action="{{ route('cart.clear') }}" class="mt-3">
                                 @csrf
@@ -340,6 +365,12 @@
             });
         }
 
+        function setGoodsTotal(totalText) {
+            document.querySelectorAll('[data-cart-goods-total]').forEach(function (node) {
+                node.textContent = totalText;
+            });
+        }
+
         function submitUpdate(form) {
             var submitButton = form.querySelector('button[type="submit"]');
             if (submitButton) submitButton.disabled = true;
@@ -377,7 +408,21 @@
                 }
 
                 if (result.data.cart_total_formatted) {
-                    setTotals(result.data.cart_total_formatted);
+                    setGoodsTotal(result.data.cart_total_formatted);
+                }
+                if (result.data.payable_total_formatted) setTotals(result.data.payable_total_formatted);
+                if (typeof result.data.delivery_total !== 'undefined') {
+                    const delivery = document.querySelector('[data-cart-delivery]');
+                    if (delivery) delivery.textContent = Number(result.data.delivery_total) > 0 ? Number(result.data.delivery_total).toFixed(2) + ' ₾' : @js(__('storefront.common.free'));
+                }
+
+                if (typeof result.data.free_delivery_remaining !== 'undefined') {
+                    const remaining = document.querySelector('[data-cart-free-remaining]');
+                    if (remaining) {
+                        const amount = Number(result.data.free_delivery_remaining);
+                        remaining.hidden = amount <= 0;
+                        remaining.querySelector('span').textContent = amount.toFixed(2) + ' ₾';
+                    }
                 }
 
                 showMessage(result.data.message || @js(__('storefront.messages.cart_updated')), false);

@@ -44,9 +44,13 @@ class Order extends Model
         'gift_groups',
         'gift_packaging_amount',
         'gift_discount_amount',
+        'gift_cost_snapshot',
     ];
 
+    protected $hidden = ['gift_cost_snapshot'];
+
     protected $casts = [
+        'gift_cost_snapshot' => 'array',
         'total_amount' => 'decimal:2',
         'payment_type' => 'integer',
         'sms_sent_at' => 'datetime',

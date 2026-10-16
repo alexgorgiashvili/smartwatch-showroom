@@ -332,18 +332,6 @@ class GiftBuilderPricingService
                 ]),
             ];
         }
-        foreach ($pricedItems as $item) {
-            if ($item['retail_unit_price'] + 0.00001 < $item['unit_price']) {
-                $warnings[] = [
-                    'code' => 'retail_below_box_price',
-                    'message' => app()->getLocale() === 'en'
-                        ? 'A current retail sale price is below the owner-set gift-box price.'
-                        : 'მოქმედი საცალო აქციის ფასი ბოქსის მფლობელის ფასზე დაბალია.',
-                ];
-                break;
-            }
-        }
-
         $message = $this->sanitizeMessage((string) ($payload['message'] ?? ''));
         $retailReferenceMinor = $retailSubtotalMinor + $packagingMinor;
         $discountMinor = 0;
@@ -519,7 +507,9 @@ class GiftBuilderPricingService
             return null;
         }
 
-        $box = ReadyGiftBox::query()->active()->with('items')->where('slug', $slug)->first();
+        $box = ReadyGiftBox::query()->active()->with('items')
+            ->where('pricing_version', (bool) config('gift_builder.pricing_v2_enabled', false) ? 2 : 1)
+            ->where('slug', $slug)->first();
         if (! $box) {
             throw ValidationException::withMessages([
                 'ready_box_slug' => app()->getLocale() === 'en'

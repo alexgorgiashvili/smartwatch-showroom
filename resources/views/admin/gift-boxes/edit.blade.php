@@ -12,7 +12,7 @@
             <a href="{{ route('admin.gift-boxes.preview-box', $box) }}" class="btn btn-outline-primary btn-sm"><i data-feather="eye" style="width:14px;height:14px;"></i> Preview</a>
             <form method="POST" action="{{ route('admin.gift-boxes.toggle-status', $box) }}">
                 @csrf @method('PATCH')
-                <button class="btn btn-outline-{{ $box->is_active ? 'warning' : 'success' }} btn-sm">{{ $box->is_active ? 'Draft-ში გადატანა' : 'გააქტიურება' }}</button>
+                <button class="btn btn-outline-{{ $box->is_active ? 'warning' : 'success' }} btn-sm" @disabled($pricingV2 && !$box->is_active && !config('gift_builder.pricing_v2_enabled', false))>{{ $box->is_active ? 'Draft-ში გადატანა' : 'გააქტიურება' }}</button>
             </form>
             <form method="POST" action="{{ route('admin.gift-boxes.destroy', $box) }}" onsubmit="return confirm('წაიშალოს ეს ყუთი?')">
                 @csrf @method('DELETE')

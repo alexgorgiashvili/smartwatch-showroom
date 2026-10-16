@@ -5,7 +5,7 @@
 @section('robots', config('gift_builder.public_enabled') === true ? 'index, follow' : 'noindex, nofollow, noarchive')
 
 @section('content')
-    <div class="gift-experience gift-builder-page" data-gift-builder-experience>
+    <div class="gift-experience gift-builder-page" @if($pricingV2) data-gift-builder-v2 @else data-gift-builder-experience @endif>
         <section class="gift-builder-intro">
             <div class="gift-shell">
                 <a href="{{ route('gift-builder.boxes') }}" class="gift-back-link">
@@ -104,6 +104,9 @@
 @endsection
 
 @push('scripts')
+    @if($pricingV2)
+        @vite('resources/js/gift-builder.js', 'build/gift-v2')
+    @endif
     @php
         $giftBuilderPayload = [
             'builder' => $builderConfig,

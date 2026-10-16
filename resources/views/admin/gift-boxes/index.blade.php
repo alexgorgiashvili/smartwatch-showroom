@@ -8,6 +8,7 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap grid-margin">
         <div><h4 class="mb-3 mb-md-0">სასაჩუქრე ყუთები</h4></div>
         <div class="d-flex gap-2">
+            <a href="{{ route('admin.gift-boxes.settings.edit') }}" class="btn btn-outline-secondary btn-sm" data-pjax>პარამეტრები</a>
             <a href="{{ route('admin.gift-boxes.preview') }}" class="btn btn-outline-primary btn-sm"><i data-feather="eye" style="width:16px;height:16px;"></i> Private preview</a>
             <a href="{{ route('admin.gift-boxes.create') }}" class="btn btn-primary btn-sm" data-pjax><i data-feather="plus" style="width:16px;height:16px;"></i> ახალი ყუთი</a>
         </div>

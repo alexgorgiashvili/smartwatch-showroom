@@ -1,4 +1,4 @@
-const root = document.querySelector('[data-gift-box-experience]');
+const root = document.querySelector('[data-gift-box-v2], [data-gift-box-experience]');
 
 if (root) {
 	const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';

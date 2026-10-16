@@ -45,7 +45,7 @@
                                                         @if (!empty($item['color_hex']))
                                                             <span class="h-3 w-3 rounded-full border border-slate-200" style="background-color: {{ $item['color_hex'] }}"></span>
                                                         @endif
-                                                        <span>{{ $item['variant_label'] }} • {{ $item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon') }}</span>
+                                                        <span>{{ $item['variant_label'] }} • {{ (int) ($group['pricing_version'] ?? 1) === 2 ? __('storefront.gift_builder.box_product') : ($item['gift_role'] === 'main' ? __('storefront.common.main') : __('storefront.common.addon')) }}</span>
                                                     </div>
                                                 </div>
                                                 <p class="text-xs font-semibold text-gray-900">{{ number_format($item['subtotal'], 2) }} {{ $groupSym }}</p>
@@ -82,9 +82,15 @@
                                 <span>{{ __('storefront.checkout.total_quantity') }}</span>
                                 <span class="font-semibold">{{ $cartCount }}</span>
                             </div>
+                            @if($deliveryTotal > 0 || $quoteVersion)
+                                <div class="mt-2 flex items-center justify-between text-sm text-gray-700">
+                                    <span>{{ __('storefront.cart.delivery') }}</span>
+                                    <span id="checkout-delivery-total">{{ $deliveryTotal > 0 ? number_format($deliveryTotal, 2).' ₾' : __('storefront.common.free') }}</span>
+                                </div>
+                            @endif
                             <div class="mt-2 flex items-center justify-between text-base text-gray-900">
                                 <span class="font-semibold">{{ __('storefront.checkout.total_due') }}</span>
-                                <span class="text-right text-xl font-extrabold text-primary-600 sm:text-2xl">{{ number_format($cartTotal, 2) }} {{ $currencySymbol }}</span>
+                                <span id="checkout-payable-total" class="text-right text-xl font-extrabold text-primary-600 sm:text-2xl">{{ number_format($payableTotal, 2) }} {{ $currencySymbol }}</span>
                             </div>
                         </div>
                     </div>
@@ -98,6 +104,9 @@
 
                         <form id="checkout-form" class="mt-5 space-y-4">
                             @csrf
+                            @if($quoteVersion)
+                                <input type="hidden" name="quote_version" value="{{ $quoteVersion }}">
+                            @endif
 
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <input type="text" name="customer_name" required placeholder="{{ __('storefront.checkout.name_placeholder') }}" class="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500">
@@ -477,6 +486,17 @@
 
                 if (!response.ok) {
                     errorBox.textContent = data.message || @js(__('storefront.messages.payment_initialization_failed'));
+                    if (response.status === 409 && data.cart_summary) {
+                        if (Number.isFinite(Number(data.cart_summary.payable_total))) {
+                        errorBox.append(document.createTextNode(@js(app()->getLocale() === 'en' ? ' Updated amount: ' : ' ახალი გადასახდელი: ') + Number(data.cart_summary.payable_total).toFixed(2) + ' {{ $currencySymbol }}. '));
+                        }
+                        const reload = document.createElement('button');
+                        reload.type = 'button';
+                        reload.className = 'ml-2 font-semibold underline';
+                        reload.textContent = @js(app()->getLocale() === 'en' ? 'Reload updated summary' : 'განახლებული შეჯამების ნახვა');
+                        reload.addEventListener('click', () => window.location.reload());
+                        errorBox.append(reload);
+                    }
                     errorBox.classList.remove('hidden');
                     return;
                 }

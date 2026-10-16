@@ -11,7 +11,7 @@
 @endpush
 
 @section('content')
-    <div class="gift-experience gift-landing" data-gift-box-experience>
+    <div class="gift-experience gift-landing" @if($pricingV2) data-gift-box-v2 @else data-gift-box-experience @endif>
         <section class="gift-hero" data-gift-hero>
             <div class="gift-hero-glow gift-hero-glow-one" aria-hidden="true"></div>
             <div class="gift-hero-glow gift-hero-glow-two" aria-hidden="true"></div>
@@ -263,6 +263,9 @@
 @endsection
 
 @push('scripts')
+    @if($pricingV2)
+        @vite('resources/js/gift-box-experience.js', 'build/gift-v2')
+    @endif
     @php
         $giftBoxCopyPayload = [
             'quick' => trans('storefront.gift_boxes.quick'),

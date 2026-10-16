@@ -207,6 +207,11 @@ class ReadyGiftBoxController extends Controller
     private function validateBox(Request $request, ?ReadyGiftBox $box = null): array
     {
         $pricingV2 = $box ? (int) $box->pricing_version === 2 : true;
+        if ($pricingV2) {
+            $request->merge(['items' => collect((array) $request->input('items', []))
+                ->filter(fn ($item): bool => is_array($item) && filled($item['product_id'] ?? null))
+                ->values()->all()]);
+        }
         $packageOptions = $pricingV2
             ? collect($this->packagingOptions())->filter(fn (array $option): bool => $option['active'])->keys()->all()
             : array_keys((array) config('gift_builder.packaging', []));

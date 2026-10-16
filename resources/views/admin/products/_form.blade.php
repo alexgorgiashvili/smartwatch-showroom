@@ -298,6 +298,9 @@
                         <input type="number" min="0" step="0.01" class="form-control @error('gift_box_price') is-invalid @enderror"
                                id="gift_box_price" name="gift_box_price" value="{{ old('gift_box_price', $product->gift_box_price) }}">
                         <div class="form-text">ფასი, რომელიც გამოიყენება მზა ბოქსის ჯამში.</div>
+                        @if($product->gift_box_price !== null && ($product->sale_price ?? $product->price) !== null && (float) ($product->sale_price ?? $product->price) < (float) $product->gift_box_price)
+                            <div class="small text-warning mt-1">მოქმედი საცალო ფასი ბოქსის ფასზე დაბალია. გადაამოწმე ფასები.</div>
+                        @endif
                         @error('gift_box_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3">

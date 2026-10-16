@@ -32,6 +32,7 @@ class GiftBuilderController extends Controller
 
         return $this->giftView('gift-builder.show', [
             'builderConfig' => $catalog->builderConfig($request),
+            'pricingV2' => (bool) config('gift_builder.pricing_v2_enabled', false),
         ]);
     }
 
@@ -218,6 +219,7 @@ class GiftBuilderController extends Controller
     private function ensurePublicBox(ReadyGiftBox $box): void
     {
         abort_unless($box->is_active && ! $box->trashed(), 404);
+        abort_unless((int) ($box->pricing_version ?? 1) === ((bool) config('gift_builder.pricing_v2_enabled', false) ? 2 : 1), 404);
     }
 
     private function captureCampaign(Request $request): void

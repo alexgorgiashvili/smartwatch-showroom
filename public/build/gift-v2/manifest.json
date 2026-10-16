@@ -1,0 +1,42 @@
+{
+  "_preload-helper-CWenl_qp.js": {
+    "file": "assets/preload-helper-CWenl_qp.js",
+    "name": "preload-helper"
+  },
+  "node_modules/canvas-confetti/dist/confetti.module.mjs": {
+    "file": "assets/confetti.module-DX0toIYy.js",
+    "name": "confetti.module",
+    "src": "node_modules/canvas-confetti/dist/confetti.module.mjs",
+    "isDynamicEntry": true
+  },
+  "node_modules/three/build/three.module.js": {
+    "file": "assets/three.module-COlGrOZU.js",
+    "name": "three.module",
+    "src": "node_modules/three/build/three.module.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/gift-box-experience.js": {
+    "file": "assets/gift-box-experience-BgIsUcnn.js",
+    "name": "gift-box-experience",
+    "src": "resources/js/gift-box-experience.js",
+    "isEntry": true,
+    "imports": [
+      "_preload-helper-CWenl_qp.js"
+    ],
+    "dynamicImports": [
+      "node_modules/three/build/three.module.js"
+    ]
+  },
+  "resources/js/gift-builder.js": {
+    "file": "assets/gift-builder-CiplEn0R.js",
+    "name": "gift-builder",
+    "src": "resources/js/gift-builder.js",
+    "isEntry": true,
+    "imports": [
+      "_preload-helper-CWenl_qp.js"
+    ],
+    "dynamicImports": [
+      "node_modules/canvas-confetti/dist/confetti.module.mjs"
+    ]
+  }
+}

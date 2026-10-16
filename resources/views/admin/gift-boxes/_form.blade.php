@@ -156,7 +156,10 @@
             <div class="mb-3"><label class="form-label">თემა</label><select name="theme_key" class="form-select"><option value="grape" @selected(old('theme_key', $box->theme_key ?: 'grape') === 'grape')>Grape</option><option value="coral" @selected(old('theme_key', $box->theme_key) === 'coral')>Coral</option><option value="mint" @selected(old('theme_key', $box->theme_key) === 'mint')>Mint</option></select></div>
             <div class="mb-3"><label class="form-label">რიგითობა</label><input type="number" name="sort_order" min="0" class="form-control" value="{{ old('sort_order', $box->sort_order ?? 0) }}"></div>
             <div class="form-check mb-2"><input type="checkbox" name="is_featured" value="1" class="form-check-input" id="gift-featured" @checked(old('is_featured', $box->is_featured))><label for="gift-featured" class="form-check-label">Featured</label></div>
-            <div class="form-check"><input type="checkbox" name="is_active" value="1" class="form-check-input" id="gift-active" @checked(old('is_active', $box->is_active))><label for="gift-active" class="form-check-label">აქტიური</label></div>
+            <div class="form-check"><input type="checkbox" name="is_active" value="1" class="form-check-input" id="gift-active" @checked(old('is_active', $box->is_active)) @disabled($pricingV2 && !config('gift_builder.pricing_v2_enabled', false))><label for="gift-active" class="form-check-label">აქტიური</label></div>
+            @if($pricingV2 && !config('gift_builder.pricing_v2_enabled', false))
+                <div class="form-text">V2 საჯარო რეჟიმი გამორთულია. ყუთი ინახება მხოლოდ draft-ად.</div>
+            @endif
             <div class="form-text">აქტივაცია ვერ მოხდება, თუ პროდუქტი, მარაგი ან შეფუთვა პრობლემურია.</div>
         </div></div>
     </div>

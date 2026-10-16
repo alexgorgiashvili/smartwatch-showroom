@@ -53,6 +53,7 @@ class GeoPaymentController extends Controller
             'city_id' => ['required', 'integer', 'exists:cities,id'],
             'exact_address' => ['required', 'string'],
             'payment_type' => ['required', 'in:1,2'],
+            'quote_version' => ['nullable', 'string', 'size:64'],
         ]);
 
         DB::beginTransaction();
@@ -65,6 +66,29 @@ class GeoPaymentController extends Controller
 
             $summary = $cartSnapshot['summary'];
             $lineItems = $cartSnapshot['all_items']->values()->all();
+
+            $usesGiftPricingV2 = (bool) config('gift_builder.pricing_v2_enabled', false)
+                && $cartSnapshot['gift_groups']->isNotEmpty();
+            if ($usesGiftPricingV2 && (
+                ! is_string($data['quote_version'] ?? null)
+                || ! is_string($summary['quote_version'] ?? null)
+                || ! hash_equals($summary['quote_version'], $data['quote_version'])
+            )) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => app()->getLocale() === 'en'
+                        ? 'Prices or box contents changed. Review the updated order total and confirm again.'
+                        : 'ფასი ან ბოქსის შემადგენლობა შეიცვალა. გადაამოწმე ახალი ჯამი და თავიდან დაადასტურე.',
+                    'quote_version' => $summary['quote_version'],
+                    'cart_summary' => [
+                        'goods_total' => (float) $summary['total'],
+                        'delivery_total' => (float) $summary['delivery_total'],
+                        'payable_total' => (float) $summary['payable_total'],
+                        'free_delivery_remaining' => (float) $summary['free_delivery_remaining'],
+                    ],
+                ], 409);
+            }
 
             if ((int) $summary['count'] <= 0 || $lineItems === []) {
                 throw new RuntimeException('Cart is empty.');
@@ -109,13 +133,16 @@ class GeoPaymentController extends Controller
                     ? ((int) $data['payment_type'] === 1 ? 'pending_payment' : 'pending_push')
                     : 'not_required',
                 'fulfillment_status' => 'unfulfilled',
-                'total_amount' => (float) $summary['total'],
+                'total_amount' => (float) $summary['payable_total'],
                 'currency' => config('bog.currency', 'GEL'),
                 'notes' => null,
                 'is_gift_order' => $giftGroups->isNotEmpty(),
                 'gift_groups' => $this->giftGroupMetadata($giftGroups),
                 'gift_packaging_amount' => (float) $summary['packaging_total'],
                 'gift_discount_amount' => (float) $summary['discount_total'],
+                'gift_cost_snapshot' => $usesGiftPricingV2
+                    ? app(\App\Services\GiftBuilder\GiftEconomicsService::class)->snapshot($giftGroups, (float) $summary['delivery_total'])
+                    : null,
             ]);
 
             foreach ($lineItems as $lineItem) {
@@ -141,6 +168,7 @@ class GeoPaymentController extends Controller
             }
 
             $this->createGiftAdjustments($order, $giftGroups);
+            $this->createDeliveryAdjustment($order, (float) $summary['delivery_total']);
 
             $redirectData = null;
             if ((int) $data['payment_type'] === 1) {
@@ -391,6 +419,10 @@ class GeoPaymentController extends Controller
                 'packaging_label' => $group['packaging_label'],
                 'packaging_amount' => (float) $group['packaging_amount'],
                 'discount_amount' => (float) $group['discount_amount'],
+                'pricing_version' => (int) ($group['pricing_version'] ?? 1),
+                'quote_version' => $group['quote_version'] ?? null,
+                'retail_reference_total' => isset($group['retail_reference_total']) ? (float) $group['retail_reference_total'] : null,
+                'savings' => isset($group['savings']) ? (float) $group['savings'] : null,
                 'discount_source' => $group['discount_source'] ?? 'none',
                 'discount_type' => $group['discount_type'] ?? null,
                 'discount_value' => (float) ($group['discount_value'] ?? 0),
@@ -425,7 +457,7 @@ class GeoPaymentController extends Controller
                 ]);
             }
 
-            if ((float) $group['discount_amount'] > 0) {
+            if ((int) ($group['pricing_version'] ?? 1) !== 2 && (float) $group['discount_amount'] > 0) {
                 OrderAdjustment::create([
                     'order_id' => $order->id,
                     'gift_group_id' => $group['id'],
@@ -444,5 +476,20 @@ class GeoPaymentController extends Controller
                 ]);
             }
         }
+    }
+
+    private function createDeliveryAdjustment(Order $order, float $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+        OrderAdjustment::create([
+            'order_id' => $order->id,
+            'gift_group_id' => null,
+            'type' => 'delivery',
+            'title' => 'Delivery',
+            'amount' => $amount,
+            'metadata' => ['scope' => 'order'],
+        ]);
     }
 }

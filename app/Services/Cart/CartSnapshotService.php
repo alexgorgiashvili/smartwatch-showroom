@@ -5,6 +5,8 @@ namespace App\Services\Cart;
 use App\Models\ProductVariant;
 use App\Models\ReadyGiftBox;
 use App\Services\GiftBuilder\GiftBuilderDiscountService;
+use App\Services\GiftBuilder\GiftBuilderPricingService;
+use App\Services\GiftBuilder\GiftDeliveryPricingService;
 use App\Services\Product\VariantImageResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,6 +17,8 @@ class CartSnapshotService
     public function __construct(
         private readonly VariantImageResolver $variantImageResolver,
         private readonly GiftBuilderDiscountService $giftDiscounts,
+        private readonly GiftBuilderPricingService $giftPricing,
+        private readonly GiftDeliveryPricingService $giftDelivery,
     ) {}
 
     public function build(Request $request, array $options = []): array
@@ -35,7 +39,8 @@ class CartSnapshotService
 
         $variantQuery = ProductVariant::query()
             ->with(['product.primaryImage', 'product.variants'])
-            ->whereIn('id', $variantIds);
+            ->whereIn('id', $variantIds)
+            ->orderBy('id');
 
         if ($lockForUpdate) {
             $variantQuery->lockForUpdate();
@@ -63,6 +68,11 @@ class CartSnapshotService
         $standardTotal = (float) $standardItems->sum('subtotal');
         $giftTotal = (float) $giftGroups->sum('total');
         $count = (int) $standardItems->sum('quantity') + (int) $giftGroups->sum(fn (array $group) => collect($group['items'])->sum('quantity'));
+        $goodsTotalMinor = (int) round(($standardTotal + $giftTotal) * 100, 0, PHP_ROUND_HALF_UP);
+        $delivery = (bool) config('gift_builder.pricing_v2_enabled', false)
+            ? $this->giftDelivery->quote($giftGroups->isNotEmpty(), $goodsTotalMinor, $count > 0)
+            : ['delivery_amount' => 0.0, 'delivery_amount_minor' => 0, 'free_delivery_remaining' => 0.0, 'free_delivery_remaining_minor' => 0];
+        $quoteVersion = $this->cartQuoteVersion($standardItems, $giftGroups, $delivery);
 
         return [
             'standard_items' => $standardItems,
@@ -75,6 +85,10 @@ class CartSnapshotService
                 'total' => $standardTotal + $giftTotal,
                 'packaging_total' => (float) $giftGroups->sum('packaging_amount'),
                 'discount_total' => (float) $giftGroups->sum('discount_amount'),
+                'delivery_total' => $delivery['delivery_amount'],
+                'free_delivery_remaining' => $delivery['free_delivery_remaining'],
+                'payable_total' => $standardTotal + $giftTotal + $delivery['delivery_amount'],
+                'quote_version' => $quoteVersion,
             ],
         ];
     }
@@ -149,6 +163,10 @@ class CartSnapshotService
 
     private function giftGroups(Collection $groups, Collection $variants, bool $enforceStock): array
     {
+        if ((bool) config('gift_builder.pricing_v2_enabled', false)) {
+            return $this->giftGroupsV2($groups, $variants, $enforceStock);
+        }
+
         $normalizedGroups = [];
         $giftGroups = collect();
 
@@ -356,6 +374,165 @@ class CartSnapshotService
         }
 
         return [$giftGroups, $normalizedGroups];
+    }
+
+    private function giftGroupsV2(Collection $groups, Collection $variants, bool $enforceStock): array
+    {
+        $normalizedGroups = [];
+        $giftGroups = collect();
+        foreach ($groups as $groupId => $group) {
+            $rawItems = collect($group['items'] ?? [])->values();
+            $valid = [];
+            $linesByVariant = [];
+            $errors = [];
+            foreach ($rawItems as $index => $item) {
+                $variant = $variants->get((int) ($item['variant_id'] ?? 0));
+                if (! $variant || ! $variant->product) {
+                    $errors[] = app()->getLocale() === 'en' ? 'One or more selected products are unavailable.' : 'არჩეული პროდუქტებიდან ერთ-ერთი ხელმისაწვდომი აღარ არის.';
+                    continue;
+                }
+                $variant->product->variants->each(fn ($candidate) => $candidate->setRelation('product', $variant->product));
+                $lineRole = $index === 0 ? 'main' : 'addon';
+                $valid[] = [
+                    'variant_id' => (int) $variant->id,
+                    'quantity' => 1,
+                    'role' => $lineRole,
+                ];
+                $linesByVariant[(int) $variant->id] = [
+                    'variant' => $variant,
+                    'role' => $lineRole,
+                    'sort_order' => (int) ($item['sort_order'] ?? $index + 1),
+                ];
+            }
+
+            $pricing = null;
+            if ($errors === []) {
+                try {
+                    $pricing = $this->giftPricing->price([
+                        'recipient_type' => $group['recipient_type'] ?? 'other',
+                        'occasion' => $group['occasion'] ?? 'just_because',
+                        'budget_band' => $group['budget_band'] ?? 'all',
+                        'packaging_slug' => $group['packaging_slug'] ?? 'standard',
+                        'ready_box_slug' => data_get($group, 'ready_box.slug') ?? $group['ready_box_slug'] ?? null,
+                        'message' => $group['message'] ?? '',
+                        'items' => $valid,
+                    ], $variants);
+                } catch (\Illuminate\Validation\ValidationException $exception) {
+                    $errors = collect($exception->errors())->flatten()->map(fn ($error): string => (string) $error)->all();
+                }
+            }
+
+            if ($errors !== [] && $enforceStock) {
+                throw new RuntimeException(implode(' ', $errors));
+            }
+
+            $groupItems = collect();
+            if ($pricing) {
+                foreach ($pricing['items'] as $pricedItem) {
+                    $source = $linesByVariant[(int) $pricedItem['variant_id']] ?? null;
+                    if (! $source) {
+                        continue;
+                    }
+                    $line = $this->lineItem($source['variant'], 1, (string) $groupId, $source['role'], $source['sort_order']);
+                    if ($line) {
+                        $line['unit_price'] = (float) $pricedItem['unit_price'];
+                        $line['subtotal'] = (float) $pricedItem['subtotal'];
+                        $line['retail_unit_price'] = (float) $pricedItem['retail_unit_price'];
+                        $groupItems->push($line);
+                    }
+                }
+            } else {
+                foreach ($linesByVariant as $variantId => $source) {
+                    $line = $this->lineItem($source['variant'], 1, (string) $groupId, $source['role'], $source['sort_order']);
+                    if ($line) {
+                        $groupItems->push($line);
+                    }
+                }
+            }
+
+            $packageSlug = (string) ($pricing['packaging_slug'] ?? $group['packaging_slug'] ?? 'standard');
+            $packageLabel = (string) ($pricing['packaging_label'] ?? $group['packaging_label'] ?? $packageSlug);
+            $packageAmount = (float) ($pricing['packaging_amount'] ?? 0);
+            $discountAmount = 0.0;
+            $total = (float) ($pricing['total'] ?? $groupItems->sum('subtotal'));
+            $campaign = collect((array) ($group['campaign'] ?? []))
+                ->only(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'])
+                ->filter(fn ($value): bool => is_scalar($value))
+                ->map(fn ($value): string => mb_substr(trim((string) $value), 0, 200))
+                ->filter()->all();
+            $normalizedItems = $rawItems->map(function ($item, $index): array {
+                return [
+                    'variant_id' => (int) ($item['variant_id'] ?? 0),
+                    'quantity' => 1,
+                    'role' => $index === 0 ? 'main' : 'addon',
+                    'sort_order' => (int) ($item['sort_order'] ?? $index + 1),
+                ];
+            })->all();
+            $normalizedGroups[(string) $groupId] = [
+                'recipient_type' => $group['recipient_type'] ?? 'other',
+                'occasion' => $group['occasion'] ?? 'just_because',
+                'budget_band' => $group['budget_band'] ?? 'all',
+                'packaging_slug' => $packageSlug,
+                'message' => (string) ($group['message'] ?? ''),
+                'ready_box' => $group['ready_box'] ?? null,
+                'campaign' => $campaign,
+                'items' => $normalizedItems,
+            ];
+            $giftGroups->push([
+                'id' => (string) $groupId,
+                'recipient_type' => $group['recipient_type'] ?? 'other',
+                'occasion' => $group['occasion'] ?? 'just_because',
+                'budget_band' => $group['budget_band'] ?? 'all',
+                'packaging_slug' => $packageSlug,
+                'packaging_label' => $packageLabel,
+                'packaging_amount' => $packageAmount,
+                'discount_amount' => $discountAmount,
+                'discount_source' => 'none',
+                'discount_type' => null,
+                'discount_value' => 0.0,
+                'discount_retained' => false,
+                'preset_discount_removed' => false,
+                'ready_box' => $group['ready_box'] ?? null,
+                'campaign' => $campaign,
+                'message' => (string) ($group['message'] ?? ''),
+                'items' => $groupItems->sortBy('gift_sort_order')->values(),
+                'items_count' => $rawItems->count(),
+                'items_subtotal' => (float) ($pricing['items_subtotal'] ?? $groupItems->sum('subtotal')),
+                'retail_reference_total' => (float) ($pricing['retail_reference_total'] ?? 0),
+                'savings' => (float) ($pricing['savings'] ?? 0),
+                'pricing_version' => 2,
+                'quote_version' => $pricing['quote_version'] ?? null,
+                'validation_errors' => $errors,
+                'total' => $total,
+                'currency' => 'GEL',
+            ]);
+        }
+
+        return [$giftGroups, $normalizedGroups];
+    }
+
+    private function cartQuoteVersion(Collection $standardItems, Collection $giftGroups, array $delivery): ?string
+    {
+        if (! (bool) config('gift_builder.pricing_v2_enabled', false)) {
+            return null;
+        }
+        if ($giftGroups->contains(fn (array $group): bool => ! empty($group['validation_errors']) || empty($group['quote_version']))) {
+            return null;
+        }
+        $items = $standardItems->map(fn (array $item): array => [
+            'variant_id' => (int) $item['variant']->id,
+            'quantity' => (int) $item['quantity'],
+            'unit_price_minor' => (int) round((float) $item['unit_price'] * 100),
+        ])->all();
+        $payload = [
+            'standard' => $items,
+            'gifts' => $giftGroups->map(fn (array $group): array => [
+                'quote_version' => $group['quote_version'],
+                'id' => $group['id'],
+            ])->all(),
+            'delivery_minor' => $delivery['delivery_amount_minor'],
+        ];
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
     private function lineItem(ProductVariant $variant, int $quantity, ?string $giftGroupId, ?string $giftRole, ?int $giftSortOrder): ?array

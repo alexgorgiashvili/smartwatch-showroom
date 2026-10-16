@@ -4,7 +4,7 @@ import { MotionPathPlugin } from 'gsap/MotionPathPlugin.js';
 
 gsap.registerPlugin(Flip, MotionPathPlugin);
 
-const root = document.querySelector('[data-gift-builder-experience]');
+const root = document.querySelector('[data-gift-builder-v2], [data-gift-builder-experience]');
 
 export const GIFT_DRAFT_KEY = 'gift-builder:draft:v2';
 export const GIFT_DRAFT_TTL = 24 * 60 * 60 * 1000;

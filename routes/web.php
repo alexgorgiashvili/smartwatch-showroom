@@ -208,6 +208,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
 	Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
 	Route::get('/gift-boxes', [AdminReadyGiftBoxController::class, 'index'])->name('gift-boxes.index');
+	Route::get('/gift-boxes/settings', [\App\Http\Controllers\Admin\GiftBuilderSettingsController::class, 'edit'])->name('gift-boxes.settings.edit');
+	Route::put('/gift-boxes/settings', [\App\Http\Controllers\Admin\GiftBuilderSettingsController::class, 'update'])->name('gift-boxes.settings.update');
 	Route::get('/gift-boxes/create', [AdminReadyGiftBoxController::class, 'create'])->name('gift-boxes.create');
 	Route::get('/gift-boxes/preview', [AdminReadyGiftBoxController::class, 'preview'])->name('gift-boxes.preview');
 	Route::get('/gift-boxes/{giftBox}/preview', [AdminReadyGiftBoxController::class, 'previewBox'])->name('gift-boxes.preview-box');
