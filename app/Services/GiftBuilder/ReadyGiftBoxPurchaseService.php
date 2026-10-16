@@ -10,7 +10,10 @@ class ReadyGiftBoxPurchaseService
     /** @return array<string, mixed> */
     public function pricingPayload(ReadyGiftBox $box, array $payload): array
     {
-        $box->loadMissing(['items.product.variants', 'items.defaultVariant']);
+        $box->loadMissing([
+            'items.product.variants' => fn ($query) => $query,
+            'items.defaultVariant',
+        ]);
 
         $requestedByItem = $this->validateRequestedItems($payload, $box);
         $items = $box->items->map(function ($boxItem) use ($requestedByItem): array {

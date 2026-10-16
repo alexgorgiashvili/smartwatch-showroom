@@ -4,6 +4,7 @@ return [
     'enabled' => env('GIFT_BUILDER_ENABLED', false),
     'public_enabled' => env('GIFT_BUILDER_PUBLIC_ENABLED', false),
     'recommender_enabled' => env('GIFT_BUILDER_RECOMMENDER_ENABLED', false),
+    'pricing_v2_enabled' => env('GIFT_BUILDER_PRICING_V2_ENABLED', false),
     'preview_key' => env('GIFT_BUILDER_PREVIEW_KEY'),
     'max_items' => 4,
     'message_max_length' => 300,
@@ -72,17 +73,41 @@ return [
             'min' => null,
             'max' => 50,
         ],
+        'under_80' => [
+            'label_ka' => '80₾-მდე',
+            'label_en' => 'Up to 80₾',
+            'min' => null,
+            'max' => 80,
+        ],
         'under_100' => [
             'label_ka' => '100₾-მდე',
             'label_en' => 'Up to 100₾',
             'min' => null,
             'max' => 100,
         ],
+        'under_150' => [
+            'label_ka' => '150₾-მდე',
+            'label_en' => 'Up to 150₾',
+            'min' => null,
+            'max' => 150,
+        ],
+        'under_200' => [
+            'label_ka' => '200₾-მდე',
+            'label_en' => 'Up to 200₾',
+            'min' => null,
+            'max' => 200,
+        ],
         'under_250' => [
             'label_ka' => '250₾-მდე',
             'label_en' => 'Up to 250₾',
             'min' => null,
             'max' => 250,
+        ],
+        'all' => [
+            'label_ka' => 'ყველა ბიუჯეტი',
+            'label_en' => 'Any budget',
+            'min' => null,
+            'max' => null,
         ],
     ],
 
@@ -91,13 +116,11 @@ return [
             'label_ka' => 'სტანდარტული სასაჩუქრე ყუთი',
             'label_en' => 'Standard gift box',
             'price' => 0,
-            'capacity_units' => 4,
         ],
         'premium' => [
             'label_ka' => 'პრემიუმ ყუთი',
             'label_en' => 'Premium box',
             'price' => 12,
-            'capacity_units' => 6,
         ],
     ],
 

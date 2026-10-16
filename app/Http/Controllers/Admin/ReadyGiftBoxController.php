@@ -8,6 +8,8 @@ use App\Models\ReadyGiftBox;
 use App\Services\GiftBuilder\GiftBuilderDiscountService;
 use App\Services\GiftBuilder\ReadyGiftBoxAvailabilityService;
 use App\Services\GiftBuilder\ReadyGiftBoxManager;
+use App\Services\GiftBuilder\GiftBuilderSettingsService;
+use App\Services\GiftBuilder\GiftEconomicsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +22,7 @@ class ReadyGiftBoxController extends Controller
         Request $request,
         ReadyGiftBoxAvailabilityService $availability,
         GiftBuilderDiscountService $discounts,
+        GiftEconomicsService $economics,
     ) {
         $boxes = ReadyGiftBox::query()
             ->with(['items.product.primaryImage', 'items.product.variants', 'items.defaultVariant'])
@@ -42,6 +45,17 @@ class ReadyGiftBoxController extends Controller
             fn (ReadyGiftBox $box): array => [$box->id => $availability->report($box)]
         );
         $totals = $boxes->getCollection()->mapWithKeys(function (ReadyGiftBox $box) use ($discounts): array {
+            if ((int) $box->pricing_version === 2) {
+                $hasPrices = $box->items->isNotEmpty() && $box->items->every(
+                    fn ($item): bool => $item->product && (float) $item->product->gift_box_price > 0
+                );
+                $settingsPackage = app(GiftBuilderSettingsService::class)->packagingOptions()[$box->packaging_slug] ?? null;
+                $packagePrice = $settingsPackage['price'] ?? null;
+                $total = $hasPrices && $packagePrice !== null
+                    ? round((float) $box->items->sum(fn ($item): float => (float) $item->product->gift_box_price) + (float) $packagePrice, 2)
+                    : null;
+                return [$box->id => ['original' => $total, 'discount' => 0, 'total' => $total]];
+            }
             $itemsSubtotal = (float) $box->items->sum(fn ($item): float => (float) ($item->product?->sale_price ?? $item->product?->price ?? 0));
             $packagingAmount = max(0, (float) config("gift_builder.packaging.{$box->packaging_slug}.price", 0));
             $discountAmount = $discounts->calculate($box->discount_type, (float) $box->discount_value, $itemsSubtotal);
@@ -52,13 +66,19 @@ class ReadyGiftBoxController extends Controller
                 'total' => max(0, $itemsSubtotal + $packagingAmount - $discountAmount),
             ]];
         });
+        $economicsReports = $boxes->getCollection()
+            ->filter(fn (ReadyGiftBox $box): bool => (int) $box->pricing_version === 2)
+            ->mapWithKeys(fn (ReadyGiftBox $box): array => [$box->id => $economics->evaluateReadyBox($box)]);
 
         $view = view('admin.gift-boxes.index', [
             'boxes' => $boxes,
             'reports' => $reports,
             'totals' => $totals,
+            'economicsReports' => $economicsReports,
             'q' => $request->string('q')->value(),
             'status' => $request->string('status')->value(),
+            'pricingV2' => (bool) config('gift_builder.pricing_v2_enabled', false)
+                || $boxes->getCollection()->contains(fn (ReadyGiftBox $box): bool => (int) $box->pricing_version === 2),
         ]);
 
         return $this->renderPjaxView($request, $view);
@@ -73,7 +93,10 @@ class ReadyGiftBoxController extends Controller
                 'discount_type' => 'none',
             ]),
             'products' => $this->products(),
+            'pricingV2' => true,
+            'packagingOptions' => $this->packagingOptions(),
             'report' => null,
+            'giftEconomics' => null,
         ]);
 
         return $this->renderPjaxView($request, $view);
@@ -98,13 +121,16 @@ class ReadyGiftBoxController extends Controller
             ->with('status', 'სასაჩუქრე ყუთი შეიქმნა.');
     }
 
-    public function edit(Request $request, ReadyGiftBox $giftBox, ReadyGiftBoxAvailabilityService $availability)
+    public function edit(Request $request, ReadyGiftBox $giftBox, ReadyGiftBoxAvailabilityService $availability, GiftEconomicsService $economics)
     {
         $giftBox->load(['items.product.primaryImage', 'items.product.variants', 'items.defaultVariant']);
         $view = view('admin.gift-boxes.edit', [
             'box' => $giftBox,
             'products' => $this->products($giftBox),
+            'pricingV2' => (int) $giftBox->pricing_version === 2,
+            'packagingOptions' => $this->packagingOptions(),
             'report' => $availability->report($giftBox),
+            'giftEconomics' => (int) $giftBox->pricing_version === 2 ? $economics->evaluateReadyBox($giftBox) : null,
         ]);
 
         return $this->renderPjaxView($request, $view);
@@ -180,9 +206,13 @@ class ReadyGiftBoxController extends Controller
     /** @return array<string, mixed> */
     private function validateBox(Request $request, ?ReadyGiftBox $box = null): array
     {
-        $packaging = implode(',', array_keys((array) config('gift_builder.packaging', [])));
+        $pricingV2 = $box ? (int) $box->pricing_version === 2 : true;
+        $packageOptions = $pricingV2
+            ? collect($this->packagingOptions())->filter(fn (array $option): bool => $option['active'])->keys()->all()
+            : array_keys((array) config('gift_builder.packaging', []));
+        $packaging = implode(',', $packageOptions);
 
-        $data = $request->validate([
+        $rules = [
             'slug' => ['required', 'alpha_dash', 'max:160', Rule::unique('ready_gift_boxes', 'slug')->ignore($box?->id)],
             'title_ka' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
@@ -192,19 +222,31 @@ class ReadyGiftBoxController extends Controller
             'badge_en' => ['nullable', 'string', 'max:120'],
             'theme_key' => ['required', Rule::in(['grape', 'coral', 'mint'])],
             'packaging_slug' => ['required', "in:{$packaging}"],
-            'discount_type' => ['required', Rule::in(['none', 'fixed', 'percent'])],
-            'discount_value' => ['nullable', 'numeric', 'min:0', 'max:99999'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
-            'main_product_id' => ['required', 'integer', 'exists:products,id'],
-            'main_default_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'addons' => ['nullable', 'array', 'max:3'],
-            'addons.*.product_id' => ['nullable', 'integer', 'distinct', 'exists:products,id'],
-            'addons.*.default_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'hero_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'remove_hero_image' => ['nullable', 'boolean'],
-        ]);
+        ];
+        if ($pricingV2) {
+            $rules += [
+                'items' => ['required', 'array', 'min:2', 'max:'.(int) config('gift_builder.max_items', 4)],
+                'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
+                'items.*.default_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+                'items.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+            ];
+        } else {
+            $rules += [
+                'discount_type' => ['required', Rule::in(['none', 'fixed', 'percent'])],
+                'discount_value' => ['nullable', 'numeric', 'min:0', 'max:99999'],
+                'main_product_id' => ['required', 'integer', 'exists:products,id'],
+                'main_default_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+                'addons' => ['nullable', 'array', 'max:3'],
+                'addons.*.product_id' => ['nullable', 'integer', 'distinct', 'exists:products,id'],
+                'addons.*.default_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            ];
+        }
+        $data = $request->validate($rules);
 
         if (($data['discount_type'] ?? 'none') === 'percent' && (float) ($data['discount_value'] ?? 0) > 100) {
             throw ValidationException::withMessages(['discount_value' => 'პროცენტული ფასდაკლება 100%-ს ვერ გადააჭარბებს.']);
@@ -212,6 +254,10 @@ class ReadyGiftBoxController extends Controller
 
         $data['is_active'] = $request->boolean('is_active');
         $data['is_featured'] = $request->boolean('is_featured');
+        $data['pricing_version'] = $pricingV2 ? 2 : 1;
+        if ($pricingV2 && ! (bool) config('gift_builder.pricing_v2_enabled', false)) {
+            $data['is_active'] = false;
+        }
 
         return $data;
     }
@@ -233,6 +279,22 @@ class ReadyGiftBoxController extends Controller
     {
         $existingProductIds = $box?->items->pluck('product_id')->all() ?? [];
 
+        if ($box === null || (int) $box->pricing_version === 2) {
+            return Product::query()
+                ->with('variants')
+                ->where(function ($query) use ($existingProductIds): void {
+                    $query->where(function ($eligible): void {
+                        $eligible->where('gift_builder_enabled', true)
+                            ->where('fulfillment_mode', 'local_stock')
+                            ->where('gift_box_price', '>', 0);
+                    });
+                    if ($existingProductIds !== []) {
+                        $query->orWhereIn('id', $existingProductIds);
+                    }
+                })
+                ->orderBy('name_en')->orderBy('name_ka')->get();
+        }
+
         return Product::query()
             ->with('variants')
             ->where(function ($query) use ($existingProductIds): void {
@@ -250,5 +312,10 @@ class ReadyGiftBoxController extends Controller
             ->orderBy('name_en')
             ->orderBy('name_ka')
             ->get();
+    }
+
+    private function packagingOptions(): array
+    {
+        return app(GiftBuilderSettingsService::class)->packagingOptions();
     }
 }

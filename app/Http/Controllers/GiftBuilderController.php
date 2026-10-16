@@ -8,6 +8,7 @@ use App\Services\GiftBuilder\GiftBuilderCartService;
 use App\Services\GiftBuilder\GiftBuilderCatalogService;
 use App\Services\GiftBuilder\GiftBuilderPricingService;
 use App\Services\GiftBuilder\GiftRecommendationService;
+use App\Services\GiftBuilder\GiftBuilderSettingsService;
 use App\Services\GiftBuilder\ReadyGiftBoxAvailabilityService;
 use App\Services\GiftBuilder\ReadyGiftBoxPurchaseService;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class GiftBuilderController extends Controller
         ]);
     }
 
-    public function boxes(Request $request, GiftBuilderCatalogService $catalog): Response|RedirectResponse
+    public function boxes(Request $request, GiftBuilderCatalogService $catalog, GiftBuilderSettingsService $settings): Response|RedirectResponse
     {
         $this->captureCampaign($request);
 
@@ -44,8 +45,15 @@ class GiftBuilderController extends Controller
 
         $this->ensureAccess($request);
 
+        $currentSettings = $settings->current();
+
         return $this->giftView('gift-builder.boxes', [
             'readyBoxes' => $catalog->readyBoxes(),
+            'pricingV2' => (bool) config('gift_builder.pricing_v2_enabled', false),
+            'deliverySettings' => [
+                'fee' => (float) $currentSettings['delivery_fee'],
+                'free_threshold' => (float) $currentSettings['free_delivery_threshold'],
+            ],
         ]);
     }
 
@@ -102,6 +110,7 @@ class GiftBuilderController extends Controller
 
         $priced = $pricing->price($request->all());
         $result = $cart->addGroup($request, $priced);
+        app(\App\Services\Analytics\StorefrontAttribution::class)->record($request, 'add_to_cart');
 
         return response()->json([
             'success' => true,
@@ -158,6 +167,7 @@ class GiftBuilderController extends Controller
 
         $priced = $pricing->price($purchase->pricingPayload($box, $request->all()));
         $result = $cart->addGroup($request, $priced);
+        app(\App\Services\Analytics\StorefrontAttribution::class)->record($request, 'add_to_cart');
 
         return response()->json([
             'success' => true,

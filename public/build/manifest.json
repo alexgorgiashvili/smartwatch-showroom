@@ -1,6 +1,6 @@
 {
-  "_bootstrap-Bjx54H5_.js": {
-    "file": "assets/bootstrap-Bjx54H5_.js",
+  "_bootstrap-9UVtqoYu.js": {
+    "file": "assets/bootstrap-9UVtqoYu.js",
     "name": "bootstrap",
     "imports": [
       "_vendor-C0Zqfgkc.js"
@@ -44,27 +44,27 @@
     "isEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-CY_ye9Hc.css",
+    "file": "assets/app-C539tKVa.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/admin.js": {
-    "file": "assets/admin-BdQb_GZb.js",
+    "file": "assets/admin-0nmTzU96.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-Bjx54H5_.js",
+      "_bootstrap-9UVtqoYu.js",
       "_vendor-C0Zqfgkc.js"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-DReC9Nna.js",
+    "file": "assets/app-CcnKN78Z.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-Bjx54H5_.js",
+      "_bootstrap-9UVtqoYu.js",
       "_vendor-C0Zqfgkc.js"
     ],
     "dynamicImports": [
@@ -77,13 +77,13 @@
     ]
   },
   "resources/js/gift-box-experience.js": {
-    "file": "assets/gift-box-experience-B9Q6hb6t.js",
+    "file": "assets/gift-box-experience-8ChHwRPB.js",
     "name": "gift-box-experience",
     "src": "resources/js/gift-box-experience.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_bootstrap-Bjx54H5_.js",
+      "_bootstrap-9UVtqoYu.js",
       "_vendor-C0Zqfgkc.js"
     ],
     "dynamicImports": [
@@ -91,13 +91,13 @@
     ]
   },
   "resources/js/gift-builder.js": {
-    "file": "assets/gift-builder-OJPMpjfz.js",
+    "file": "assets/gift-builder-L4hZzVQ8.js",
     "name": "gift-builder",
     "src": "resources/js/gift-builder.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_bootstrap-Bjx54H5_.js",
+      "_bootstrap-9UVtqoYu.js",
       "_vendor-C0Zqfgkc.js"
     ],
     "dynamicImports": [

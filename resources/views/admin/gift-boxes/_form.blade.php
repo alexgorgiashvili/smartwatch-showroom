@@ -3,6 +3,10 @@
     $addonItems = $box->exists ? $box->items->where('role', 'addon')->values() : collect();
     $selectedMainProduct = (int) old('main_product_id', $mainItem?->product_id);
     $selectedMainVariant = (int) old('main_default_variant_id', $mainItem?->default_variant_id);
+    $v2Items = old('items');
+    if (!is_array($v2Items)) {
+        $v2Items = $box->exists ? $box->items->sortBy('sort_order')->map(fn ($item) => ['product_id' => $item->product_id, 'default_variant_id' => $item->default_variant_id])->values()->all() : [];
+    }
 @endphp
 
 @if($errors->any())
@@ -34,6 +38,36 @@
 
         <div class="card"><div class="card-body">
             <h6 class="card-title">პროდუქტები</h6>
+            @if($pricingV2)
+                <p class="small text-muted">აირჩიე 2–4 განსხვავებული პროდუქტი. ბოქსის ფასი გამოითვლება პროდუქტის ხელით მითითებული ფასებისა და შეფუთვის ფასის ჯამით; შეფუთვის ტევადობის ზღვარი არ გამოიყენება.</p>
+                @for($index = 0; $index < 4; $index++)
+                    @php
+                        $selectedProduct = (int) old("items.$index.product_id", $v2Items[$index]['product_id'] ?? 0);
+                        $selectedVariant = (int) old("items.$index.default_variant_id", $v2Items[$index]['default_variant_id'] ?? 0);
+                    @endphp
+                    <div class="row g-2 align-items-end mb-2 gift-box-item-row">
+                        <div class="col-md-7">
+                            <label class="form-label">პროდუქტი {{ $index + 1 }}{{ $index < 2 ? ' *' : '' }}</label>
+                            <select name="items[{{ $index }}][product_id]" class="form-select js-gift-product" @required($index < 2)>
+                                <option value="">{{ $index < 2 ? 'აირჩიე პროდუქტი' : 'არ არის' }}</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-gift-price="{{ $product->gift_box_price }}" @selected($selectedProduct === (int) $product->id)>{{ $product->name }} · ბოქსში {{ $product->gift_box_price === null ? 'ფასი აკლია' : number_format((float) $product->gift_box_price, 2).' ₾' }} · მარაგი {{ $product->stock_quantity }}</option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="items[{{ $index }}][sort_order]" value="{{ $index }}">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">ნაგულისხმევი ფერი</label>
+                            <select name="items[{{ $index }}][default_variant_id]" class="form-select js-gift-variant">
+                                <option value="">აირჩიე ნაგულისხმევი ფერი</option>
+                                @foreach($products as $product) @foreach($product->variants as $variant)
+                                    <option value="{{ $variant->id }}" data-product-id="{{ $product->id }}" @selected($selectedVariant === (int) $variant->id)>{{ $variant->localizedName() }} · მარაგი {{ $variant->available_quantity }}</option>
+                                @endforeach @endforeach
+                            </select>
+                        </div>
+                    </div>
+                @endfor
+            @else
             <div class="row g-2 align-items-end gift-box-item-row">
                 <div class="col-md-7">
                     <label class="form-label">მთავარი საჩუქარი *</label>
@@ -85,19 +119,38 @@
                     </div>
                 </div>
             @endfor
+            @endif
         </div></div>
     </div>
 
     <div class="col-xl-4">
         <div class="card mb-3"><div class="card-body">
             <h6 class="card-title">შეთავაზება</h6>
-            <div class="mb-3"><label class="form-label">შეფუთვა</label><select name="packaging_slug" class="form-select">@foreach(config('gift_builder.packaging', []) as $slug => $package)<option value="{{ $slug }}" @selected(old('packaging_slug', $box->packaging_slug ?: 'standard') === $slug)>{{ $package['label_ka'] ?? $slug }} · {{ number_format((float)($package['price'] ?? 0), 2) }} ₾</option>@endforeach</select></div>
+            <div class="mb-3"><label class="form-label">შეფუთვა</label><select name="packaging_slug" class="form-select" @if($pricingV2)data-gift-packaging-select @endif>@foreach($pricingV2 ? $packagingOptions : config('gift_builder.packaging', []) as $slug => $package)<option value="{{ $slug }}" data-gift-price="{{ $package['price'] ?? 0 }}" @selected(old('packaging_slug', $box->packaging_slug ?: 'standard') === $slug)>{{ $package['label_ka'] ?? $package['label_en'] ?? $slug }} · {{ number_format((float)($package['price'] ?? 0), 2) }} ₾</option>@endforeach</select></div>
+            @if($pricingV2)
+                <p class="small text-muted">ბოქსის ფასი ავტომატურად გამოითვლება. შეფუთვის ფიზიკური ტევადობის ლიმიტი არ გამოიყენება.</p>
+                <div class="alert alert-light border mb-0">
+                    <div class="small text-muted">მიმდინარე შემადგენლობის ფასი</div>
+                    <strong data-gift-box-total>აირჩიე მინიმუმ 2 პროდუქტი</strong>
+                </div>
+            @else
             <div class="row g-2">
                 <div class="col-6"><label class="form-label">ფასდაკლება</label><select name="discount_type" class="form-select"><option value="none" @selected(old('discount_type', $box->discount_type ?: 'none') === 'none')>არა</option><option value="fixed" @selected(old('discount_type', $box->discount_type) === 'fixed')>ფიქსირებული</option><option value="percent" @selected(old('discount_type', $box->discount_type) === 'percent')>პროცენტი</option></select></div>
                 <div class="col-6"><label class="form-label">მნიშვნელობა</label><input type="number" name="discount_value" min="0" step="0.01" class="form-control" value="{{ old('discount_value', $box->discount_value ?? 0) }}"></div>
             </div>
             <div class="form-text mt-2">ფასდაკლება ითვლება მხოლოდ პროდუქტებზე; შეფუთვა არ იკლებს.</div>
+            @endif
         </div></div>
+        @if($pricingV2 && $giftEconomics)
+            <div class="card mt-3"><div class="card-body">
+                <h6 class="card-title">შიდა ეკონომიკის შეფასება</h6>
+                <div class="small text-muted mb-2">სავარაუდო დარჩენილი თანხა — არა დადასტურებული წმინდა მოგება.</div>
+                <div class="small">შემოსავალი: {{ $giftEconomics['revenue'] === null ? 'არასრული ფასი' : 'GEL '.number_format((float) $giftEconomics['revenue'], 2) }}</div>
+                <div class="small">ცნობილი ხარჯები: {{ $giftEconomics['known_costs'] === null ? '—' : 'GEL '.number_format((float) $giftEconomics['known_costs'], 2) }}</div>
+                <div class="small fw-semibold">სავარაუდო დარჩენილი თანხა: {{ $giftEconomics['probable_remaining_amount'] === null ? '—' : 'GEL '.number_format((float) $giftEconomics['probable_remaining_amount'], 2) }}</div>
+                @if(!empty($giftEconomics['missing_inputs']))<div class="small text-muted mt-2">აკლია ან დაუდასტურებელია: {{ implode(', ', $giftEconomics['missing_inputs']) }}</div>@endif
+            </div></div>
+        @endif
         <div class="card"><div class="card-body">
             <h6 class="card-title">გამოჩენა</h6>
             <div class="mb-3"><label class="form-label">თემა</label><select name="theme_key" class="form-select"><option value="grape" @selected(old('theme_key', $box->theme_key ?: 'grape') === 'grape')>Grape</option><option value="coral" @selected(old('theme_key', $box->theme_key) === 'coral')>Coral</option><option value="mint" @selected(old('theme_key', $box->theme_key) === 'mint')>Mint</option></select></div>
@@ -111,6 +164,31 @@
 
 <script>
 (() => {
+    const pricingV2 = @js((bool) $pricingV2);
+    const totalNode = document.querySelector('[data-gift-box-total]');
+    const packagingSelect = document.querySelector('[data-gift-packaging-select]');
+    const formatMoney = (value) => `${value.toFixed(2)} ₾`;
+    const updateTotal = () => {
+        if (!pricingV2 || !totalNode) return;
+        const rows = Array.from(document.querySelectorAll('.gift-box-item-row'));
+        const selected = rows.map((row) => row.querySelector('.js-gift-product')?.selectedOptions?.[0])
+            .filter((option) => option?.value);
+        if (selected.length < 2) {
+            totalNode.textContent = 'აირჩიე მინიმუმ 2 პროდუქტი';
+            return;
+        }
+        const prices = selected.map((option) => Number(option.dataset.giftPrice));
+        if (prices.some((price) => !Number.isFinite(price) || price <= 0)) {
+            totalNode.textContent = 'ერთ ან მეტ პროდუქტს ბოქსის ფასი აკლია';
+            return;
+        }
+        const packagePrice = Number(packagingSelect?.selectedOptions?.[0]?.dataset.giftPrice);
+        if (!Number.isFinite(packagePrice)) {
+            totalNode.textContent = 'შეფუთვის ფასი მიუწვდომელია';
+            return;
+        }
+        totalNode.textContent = formatMoney(prices.reduce((sum, price) => sum + price, packagePrice));
+    };
     document.querySelectorAll('.gift-box-item-row').forEach((row) => {
         const product = row.querySelector('.js-gift-product');
         const variant = row.querySelector('.js-gift-variant');
@@ -126,7 +204,10 @@
             if (selected?.dataset.productId && selected.dataset.productId !== selectedProduct) variant.value = '';
         };
         product.addEventListener('change', sync);
+        product.addEventListener('change', updateTotal);
         sync();
     });
+    packagingSelect?.addEventListener('change', updateTotal);
+    updateTotal();
 })();
 </script>

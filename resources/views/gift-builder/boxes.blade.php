@@ -59,7 +59,7 @@
                         <span>{{ __('storefront.gift_boxes.disable_effects') }}</span>
                     </button>
                     <p id="gift-open-status" class="sr-only" data-gift-open-status role="status" aria-live="polite">{{ __('storefront.gift_boxes.box_closed_status') }}</p>
-                    <span class="gift-float-chip gift-float-chip-one" aria-hidden="true"><i class="fa-solid fa-truck-fast"></i>{{ __('storefront.gift_boxes.free_delivery_short') }}</span>
+                    <span class="gift-float-chip gift-float-chip-one" aria-hidden="true"><i class="fa-solid fa-truck-fast"></i>{{ $pricingV2 ? __('storefront.gift_boxes.free_delivery_from', ['amount' => number_format($deliverySettings['free_threshold'], 2)]) : __('storefront.gift_boxes.free_delivery_short') }}</span>
                     <span class="gift-float-chip gift-float-chip-two" aria-hidden="true"><i class="fa-solid fa-gift"></i>{{ __('storefront.gift_boxes.gift_ready') }}</span>
                 </div>
             </div>
@@ -69,7 +69,7 @@
             <div class="gift-shell gift-trust-grid">
                 <div>
                     <span class="gift-trust-icon is-mint"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i></span>
-                    <p><strong>{{ __('storefront.gift_boxes.free_delivery') }}</strong><small>{{ __('storefront.gift_boxes.across_georgia') }}</small></p>
+                    <p><strong>{{ $pricingV2 ? __('storefront.gift_boxes.free_delivery_from', ['amount' => number_format($deliverySettings['free_threshold'], 2)]) : __('storefront.gift_boxes.free_delivery') }}</strong><small>{{ $pricingV2 ? __('storefront.gift_boxes.delivery_below_threshold', ['amount' => number_format($deliverySettings['fee'], 2)]) : __('storefront.gift_boxes.across_georgia') }}</small></p>
                 </div>
                 <div>
                     <span class="gift-trust-icon is-coral"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i></span>
@@ -154,6 +154,9 @@
                                         @endif
                                         <strong>{{ number_format($total, 2) }} ₾</strong>
                                     </div>
+                                    @if($pricingV2)
+                                        <p class="gift-box-description">{{ __('storefront.gift_boxes.delivery_rule', ['amount' => number_format($deliverySettings['free_threshold'], 2), 'fee' => number_format($deliverySettings['fee'], 2)]) }}</p>
+                                    @endif
                                 </div>
 
                                 @if($description)
@@ -166,8 +169,8 @@
                                             $product = data_get($item, 'product', $item);
                                         @endphp
                                         <li>
-                                            <span><i class="fa-solid {{ data_get($item, 'role') === 'main' ? 'fa-clock' : 'fa-check' }}" aria-hidden="true"></i></span>
-                                            <p><strong>{{ data_get($product, 'name', data_get($item, 'name')) }}</strong>@if(data_get($item, 'role') === 'main')<small>{{ __('storefront.gift_boxes.main_gift') }}</small>@endif</p>
+                                            <span><i class="fa-solid {{ !$pricingV2 && data_get($item, 'role') === 'main' ? 'fa-clock' : 'fa-check' }}" aria-hidden="true"></i></span>
+                                            <p><strong>{{ data_get($product, 'name', data_get($item, 'name')) }}</strong>@if(!$pricingV2 && data_get($item, 'role') === 'main')<small>{{ __('storefront.gift_boxes.main_gift') }}</small>@endif</p>
                                         </li>
                                     @endforeach
                                     <li>

@@ -292,6 +292,37 @@
                     </div>
                 </div>
 
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label for="gift_box_price" class="form-label">Gift box price (₾)</label>
+                        <input type="number" min="0" step="0.01" class="form-control @error('gift_box_price') is-invalid @enderror"
+                               id="gift_box_price" name="gift_box_price" value="{{ old('gift_box_price', $product->gift_box_price) }}">
+                        <div class="form-text">ფასი, რომელიც გამოიყენება მზა ბოქსის ჯამში.</div>
+                        @error('gift_box_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="gift_landed_cost" class="form-label">Landed cost (შიდა)</label>
+                        <input type="number" min="0" step="0.0001" class="form-control @error('gift_landed_cost') is-invalid @enderror"
+                               id="gift_landed_cost" name="gift_landed_cost" value="{{ old('gift_landed_cost', $product->gift_landed_cost) }}">
+                        @error('gift_landed_cost') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="gift_cost_status" class="form-label">Cost status</label>
+                        <select class="form-select" id="gift_cost_status" name="gift_cost_status">
+                            @foreach(['unknown' => 'Unknown', 'estimated' => 'Estimated', 'confirmed' => 'Confirmed'] as $value => $label)
+                                <option value="{{ $value }}" @selected(old('gift_cost_status', $product->gift_cost_status ?? 'unknown') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="gift_requires_compatibility" name="gift_requires_compatibility" value="1"
+                                   @checked(old('gift_requires_compatibility', $product->gift_requires_compatibility))>
+                            <label class="form-check-label" for="gift_requires_compatibility">Requires compatible product</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label for="gift_builder_role" class="form-label">Builder role</label>

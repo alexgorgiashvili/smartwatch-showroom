@@ -159,9 +159,12 @@ function initializeBuilder() {
 		ready_box_slug: state.readyBox?.slug || null,
 		items: selectedLines().map((line) => ({ variant_id: Number(line.variant.id), quantity: 1, role: line.role })),
 	});
-	const roleMatches = (product, role) => (role === 'main'
+	const roleMatches = (product, role) => Number(config.pricingVersion || 1) === 2 || (role === 'main'
 		? ['main', 'both'].includes(product.role)
 		: ['addon', 'both'].includes(product.role));
+	const productRoleLabel = (role) => Number(config.pricingVersion || 1) === 2
+		? (i18n.box_product || i18n.products_total)
+		: (role === 'main' ? i18n.main_gift : i18n.addon);
 	const budgetMatches = (product) => {
 		if (state.budget_band === 'all') return true;
 		const band = bySlug(config.budgetBands, state.budget_band);
@@ -410,7 +413,9 @@ function initializeBuilder() {
 		const main = assigned[0];
 		const addons = assigned.slice(1).filter(Boolean).length;
 		preview.querySelector('[data-gift-live-status]').textContent = main
-			? `${main.product.name}${addons ? `, ${addons} ${i18n.addon || 'add-on'}` : ''}`
+			? (Number(config.pricingVersion || 1) === 2
+				? `${selectedLines().length} ${String(i18n.products_total || 'products').toLowerCase()}`
+				: `${main.product.name}${addons ? `, ${addons} ${i18n.addon || 'add-on'}` : ''}`)
 			: i18n.choose_main;
 	}
 
@@ -466,9 +471,9 @@ function initializeBuilder() {
 		}
 		if (step === 'finish') {
 			body = `<div class="gift-step-heading"><div><span>3</span><div><h2 tabindex="-1">${escapeHtml(i18n.finish_title)}</h2><p>${escapeHtml(i18n.finish_text)}</p></div></div></div>
-				<div class="gift-finish-grid"><fieldset class="gift-packaging-options"><legend>${escapeHtml(i18n.packaging)}</legend>${(config.packaging || []).map((option) => `<button type="button" data-package="${escapeHtml(option.slug)}"><span class="gift-package-icon"><i class="fa-solid ${option.slug === 'premium' ? 'fa-gem' : 'fa-gift'}" aria-hidden="true"></i></span><span><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(tr('capacity', { count: option.capacity_units }))}</small></span><b>${Number(option.price || 0) ? money(option.price) : escapeHtml(common.free || i18n.free)}</b><i class="fa-solid fa-circle-check" aria-hidden="true"></i></button>`).join('')}</fieldset>
+				<div class="gift-finish-grid"><fieldset class="gift-packaging-options"><legend>${escapeHtml(i18n.packaging)}</legend>${(config.packaging || []).map((option) => `<button type="button" data-package="${escapeHtml(option.slug)}"><span class="gift-package-icon"><i class="fa-solid ${option.slug === 'premium' ? 'fa-gem' : 'fa-gift'}" aria-hidden="true"></i></span><span><strong>${escapeHtml(option.label)}</strong></span><b>${Number(option.price || 0) ? money(option.price) : escapeHtml(common.free || i18n.free)}</b><i class="fa-solid fa-circle-check" aria-hidden="true"></i></button>`).join('')}</fieldset>
 				<div class="gift-card-message"><div class="gift-message-heading"><span><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></span><div><h3>${escapeHtml(i18n.card_message)}</h3><p>${escapeHtml(i18n.message_optional_help)}</p></div></div><div class="gift-message-suggestions">${(i18n.message_suggestions || []).map((suggestion) => `<button type="button" data-message-suggestion="${escapeHtml(suggestion)}">${escapeHtml(suggestion)}</button>`).join('')}</div><label for="gift-message" class="sr-only">${escapeHtml(i18n.card_message)}</label><textarea id="gift-message" maxlength="${Number(config.messageMaxLength || 300)}" rows="5" placeholder="${escapeHtml(i18n.message_placeholder)}"></textarea><div><small>${escapeHtml(i18n.optional)}</small><span data-message-count></span></div><div class="gift-message-preview" aria-label="${escapeHtml(i18n.card_message)}"></div></div></div>
-				${state.readyBox ? `<div data-discount-warning class="gift-discount-warning"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><p><strong>${escapeHtml(i18n.discount_changed_title)}</strong><span>${escapeHtml(i18n.discount_changed_text)}</span></p></div>` : ''}`;
+				${state.readyBox && Number(config.pricingVersion || 1) !== 2 ? `<div data-discount-warning class="gift-discount-warning"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><p><strong>${escapeHtml(i18n.discount_changed_title)}</strong><span>${escapeHtml(i18n.discount_changed_text)}</span></p></div>` : ''}`;
 		}
 		content.innerHTML = `${body}<div class="gift-step-actions"><button type="button" data-prev class="gift-secondary-button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>${escapeHtml(i18n.back)}</button><button type="button" data-next class="gift-primary-button"><span></span><i aria-hidden="true"></i></button></div>`;
 		activeContentStep = step;
@@ -534,16 +539,22 @@ function initializeBuilder() {
 
 	function summaryLinesHtml({ editable = false } = {}) {
 		if (!selectedLines().length) return `<p class="gift-summary-empty">${escapeHtml(i18n.choose_main)}</p>`;
-		return selectedLines().map((line) => `<div class="gift-summary-line"><img src="${escapeHtml(line.variant?.thumbnail_image || line.product.image)}" alt="" loading="lazy"><div><p>${escapeHtml(line.product.name)}</p><small>${escapeHtml(line.role === 'main' ? i18n.main_gift : i18n.addon)} · ${escapeHtml(line.variant?.color_name || line.variant?.name || '')}</small></div><strong>${escapeHtml(line.product.price_formatted || money(line.product.price))}</strong>${editable ? `<div class="gift-summary-line-actions"><button type="button" data-go-step="${line.role === 'main' ? 0 : 1}" aria-label="${escapeHtml(i18n.edit)}"><i class="fa-solid fa-pen" aria-hidden="true"></i></button><button type="button" data-remove-variant="${Number(line.variant.id)}" aria-label="${escapeHtml(i18n.remove)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></div>` : ''}</div>`).join('');
+		return selectedLines().map((line) => `<div class="gift-summary-line"><img src="${escapeHtml(line.variant?.thumbnail_image || line.product.image)}" alt="" loading="lazy"><div><p>${escapeHtml(line.product.name)}</p><small>${escapeHtml(productRoleLabel(line.role))} · ${escapeHtml(line.variant?.color_name || line.variant?.name || '')}</small></div><strong>${escapeHtml(line.product.price_formatted || money(line.product.price))}</strong>${editable ? `<div class="gift-summary-line-actions"><button type="button" data-go-step="${line.role === 'main' ? 0 : 1}" aria-label="${escapeHtml(i18n.edit)}"><i class="fa-solid fa-pen" aria-hidden="true"></i></button><button type="button" data-remove-variant="${Number(line.variant.id)}" aria-label="${escapeHtml(i18n.remove)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></div>` : ''}</div>`).join('');
 	}
 
 	function totalsHtml() {
 		const values = totals();
-		return `<dl><div><dt>${escapeHtml(i18n.products_total)}</dt><dd>${money(values.itemSubtotal)}</dd></div><div><dt>${escapeHtml(i18n.packaging)} <small>${escapeHtml(values.packaging?.label || '')}</small></dt><dd>${values.packagingAmount ? money(values.packagingAmount) : escapeHtml(common.free || i18n.free)}</dd></div>${values.discount > 0 ? `<div class="is-discount"><dt>${escapeHtml(i18n.gift_discount)}</dt><dd>−${money(values.discount)}</dd></div>` : ''}<div class="is-total"><dt>${escapeHtml(common.total || i18n.total)}</dt><dd>${money(values.total)}</dd></div></dl>`;
+		const deliveryNote = config.delivery
+			? `<p class="gift-builder-delivery-note">${escapeHtml(tr('delivery_rule', { fee: Number(config.delivery.fee).toFixed(2), amount: Number(config.delivery.free_threshold).toFixed(2) }))}</p>`
+			: '';
+		return `<dl><div><dt>${escapeHtml(i18n.products_total)}</dt><dd>${money(values.itemSubtotal)}</dd></div><div><dt>${escapeHtml(i18n.packaging)} <small>${escapeHtml(values.packaging?.label || '')}</small></dt><dd>${values.packagingAmount ? money(values.packagingAmount) : escapeHtml(common.free || i18n.free)}</dd></div>${values.discount > 0 ? `<div class="is-discount"><dt>${escapeHtml(i18n.gift_discount)}</dt><dd>−${money(values.discount)}</dd></div>` : ''}<div class="is-total"><dt>${escapeHtml(common.total || i18n.total)}</dt><dd>${money(values.total)}</dd></div></dl>${deliveryNote}`;
 	}
 
 	function canAddToCart() {
-		return Boolean(state.mainVariantId && state.priced && !state.error && !state.isAdding && !state.isPricing);
+		const minimumReady = Number(config.pricingVersion || 1) === 2
+			? selectedLines().length >= 2
+			: Boolean(state.mainVariantId);
+		return Boolean(minimumReady && state.priced && !state.error && !state.isAdding && !state.isPricing);
 	}
 
 	function summaryLineKey(line) {
@@ -564,7 +575,7 @@ function initializeBuilder() {
 		node.dataset.variantId = String(Number(line.variant?.id || 0));
 		image.alt = line.product.name || '';
 		node.querySelector('p').textContent = line.product.name || '';
-		node.querySelector('small').textContent = `${line.role === 'main' ? i18n.main_gift : i18n.addon} · ${line.variant?.color_name || line.variant?.name || ''}`;
+		node.querySelector('small').textContent = `${productRoleLabel(line.role)} · ${line.variant?.color_name || line.variant?.name || ''}`;
 		node.querySelector('strong').textContent = line.product.price_formatted || money(line.product.price);
 	}
 
@@ -709,6 +720,13 @@ function initializeBuilder() {
 		priceRequestSequence += 1;
 		priceRequest?.abort();
 		priceRequest = null;
+		if (Number(config.pricingVersion || 1) === 2 && selectedLines().length < 2) {
+			state.priced = null;
+			state.error = null;
+			state.isPricing = false;
+			renderSummary();
+			return;
+		}
 		if (!state.mainVariantId) {
 			state.priced = null;
 			state.error = null;
@@ -897,7 +915,7 @@ function initializeBuilder() {
 		if (event.target.closest('[data-summary-open]')) { openSheet('summary'); return; }
 		if (event.target.closest('[data-builder-sheet-close]')) { closeSheet(); return; }
 		const remove = event.target.closest('[data-remove-variant]');
-		if (remove) { const id = Number(remove.dataset.removeVariant); const role = id === Number(state.mainVariantId) ? 'main' : 'addon'; state.removed = { id, role }; if (role === 'main') state.mainVariantId = null; else state.addonVariantIds.delete(id); markPresetChanged(); render(); saveDraft(); schedulePrice(); return; }
+		if (remove) { const id = Number(remove.dataset.removeVariant); const role = id === Number(state.mainVariantId) ? 'main' : 'addon'; state.removed = { id, role }; if (role === 'main') { state.mainVariantId = null; if (Number(config.pricingVersion || 1) === 2 && state.addonVariantIds.size) { const promoted = Array.from(state.addonVariantIds)[0]; state.addonVariantIds.delete(promoted); state.mainVariantId = promoted; } } else state.addonVariantIds.delete(id); markPresetChanged(); render(); saveDraft(); schedulePrice(); return; }
 		if (event.target.closest('[data-undo-remove]') && state.removed) { if (state.removed.role === 'main') state.mainVariantId = state.removed.id; else state.addonVariantIds.add(state.removed.id); state.removed = null; render(); saveDraft(); schedulePrice(); return; }
 		if (event.target.closest('[data-stock-recover]')) { recoverStock(); return; }
 		if (event.target.closest('[data-restore-draft]')) { applyDraft(storedDraft); document.getElementById('gift-draft-restore').hidden = true; render(true); schedulePrice(); return; }

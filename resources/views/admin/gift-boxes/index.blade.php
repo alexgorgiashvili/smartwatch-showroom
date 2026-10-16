@@ -35,7 +35,7 @@
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th>ყუთი</th><th>პროდუქტები</th><th>ფასი</th><th>ფასდაკლება</th><th>მდგომარეობა</th><th>რიგი</th><th></th></tr></thead>
+                    <thead><tr><th>ყუთი</th><th>პროდუქტები</th><th>ფასი</th>@unless($pricingV2)<th>ფასდაკლება</th>@endunless<th>მდგომარეობა</th>@if($pricingV2)<th>შიდა შეფასება</th>@endif<th>რიგი</th><th></th></tr></thead>
                     <tbody>
                     @forelse($boxes as $box)
                         @php($report = $reports->get($box->id))
@@ -53,7 +53,16 @@
                                 </div>
                             </td>
                             <td>{{ $box->items->count() }} / {{ config('gift_builder.max_items', 4) }}</td>
-                            <td><span class="text-muted text-decoration-line-through">{{ number_format((float)$total['original'], 2) }} ₾</span><br><strong>{{ number_format((float)$total['total'], 2) }} ₾</strong></td>
+                            <td>
+                                @if($total['total'] === null)
+                                    <span class="text-muted">ფასი არასრულია</span>
+                                @elseif($pricingV2)
+                                    <strong>{{ number_format((float)$total['total'], 2) }} ₾</strong>
+                                @else
+                                    <span class="text-muted text-decoration-line-through">{{ number_format((float)$total['original'], 2) }} ₾</span><br><strong>{{ number_format((float)$total['total'], 2) }} ₾</strong>
+                                @endif
+                            </td>
+                            @unless($pricingV2)
                             <td>
                                 @if($box->discount_type === 'percent')
                                     {{ (float) $box->discount_value }}%
@@ -63,19 +72,31 @@
                                     —
                                 @endif
                             </td>
+                            @endunless
                             <td>
                                 <span class="badge bg-{{ $box->is_active ? 'success' : 'secondary' }}">{{ $box->is_active ? 'აქტიური' : 'Draft' }}</span>
                                 @if(!($report['available'] ?? false))
                                     <span class="badge bg-danger" title="{{ collect($report['reasons'] ?? [])->pluck('message')->implode(' ') }}">პრობლემაა</span>
                                 @endif
                             </td>
+                            @if($pricingV2)
+                                @php($economics = $economicsReports->get($box->id))
+                                <td title="{{ implode(', ', $economics['missing_inputs'] ?? []) }}">
+                                    @if(($economics['probable_remaining_amount'] ?? null) !== null)
+                                        <span>≈ {{ number_format((float) $economics['probable_remaining_amount'], 2) }} ₾</span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                    <div class="small text-muted">{{ count($economics['missing_inputs'] ?? []) ? 'ხარჯები არასრულია' : 'შეფასება; არა წმინდა მოგება' }}</div>
+                                </td>
+                            @endif
                             <td>{{ $box->sort_order }}</td>
                             <td class="text-end">
                                 <a href="{{ route('admin.gift-boxes.edit', $box) }}" class="btn btn-outline-primary btn-sm" data-pjax>რედაქტირება</a>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">ყუთები ჯერ არ დამატებულა.</td></tr>
+                        <tr><td colspan="{{ $pricingV2 ? 7 : 7 }}" class="text-center text-muted py-4">ყუთები ჯერ არ დამატებულა.</td></tr>
                     @endforelse
                     </tbody>
                 </table>

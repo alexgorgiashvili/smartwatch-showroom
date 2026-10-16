@@ -24,6 +24,7 @@ class ReadyGiftBox extends Model
         'cover_image_path',
         'theme_key',
         'packaging_slug',
+        'pricing_version',
         'discount_type',
         'discount_value',
         'is_active',
@@ -33,6 +34,7 @@ class ReadyGiftBox extends Model
 
     protected $casts = [
         'discount_value' => 'decimal:2',
+        'pricing_version' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'sort_order' => 'integer',

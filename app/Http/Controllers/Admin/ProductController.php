@@ -378,6 +378,10 @@ class ProductController extends Controller
             'featured' => ['nullable', 'boolean'],
             'home_sort_order' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'gift_builder_enabled' => ['nullable', 'boolean'],
+            'gift_box_price' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
+            'gift_landed_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+            'gift_cost_status' => ['nullable', 'in:unknown,estimated,confirmed'],
+            'gift_requires_compatibility' => ['nullable', 'boolean'],
             'gift_builder_role' => ['nullable', 'in:none,main,addon,both'],
             'gift_recipient_tags' => ['nullable'],
             'gift_occasion_tags' => ['nullable'],
@@ -403,6 +407,7 @@ class ProductController extends Controller
         $data['functions'] = $this->normalizeFunctions($request->input('functions'));
         $data['fulfillment_mode'] = $request->input('fulfillment_mode', $productId ? 'local_stock' : 'local_stock');
         $data['gift_builder_enabled'] = $request->boolean('gift_builder_enabled');
+        $data['gift_requires_compatibility'] = $request->boolean('gift_requires_compatibility');
         $data['gift_builder_role'] = $request->input('gift_builder_role', 'none') ?: 'none';
         $data['gift_recipient_tags'] = $this->normalizeTags($request->input('gift_recipient_tags'));
         $data['gift_occasion_tags'] = $this->normalizeTags($request->input('gift_occasion_tags'));
@@ -423,6 +428,11 @@ class ProductController extends Controller
         }
         if (! Schema::hasColumn('products', 'gift_recommendation_tags')) {
             unset($data['gift_recommendation_tags']);
+        }
+        foreach (['gift_box_price', 'gift_landed_cost', 'gift_cost_status', 'gift_requires_compatibility'] as $column) {
+            if (! Schema::hasColumn('products', $column)) {
+                unset($data[$column]);
+            }
         }
 
         return $data;

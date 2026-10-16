@@ -82,6 +82,12 @@ class GiftRecommendationService
         $mains = $this->ranked($products->filter(fn (array $product): bool => in_array($product['role'], ['main', 'both'], true)), $priority, $shown)->take(10);
         $addons = $this->ranked($products->filter(fn (array $product): bool => in_array($product['role'], ['addon', 'both'], true)), $priority, $shown)->take(10);
         $max = data_get(config("gift_builder.budget_bands.{$budgetBand}"), 'max');
+        $packagingSlugs = (bool) config('gift_builder.pricing_v2_enabled', false)
+            ? collect(app(GiftBuilderSettingsService::class)->packagingOptions())
+                ->filter(fn (array $package): bool => $package['active'])
+                ->keys()
+                ->all()
+            : array_keys((array) config('gift_builder.packaging', []));
         $best = null;
 
         foreach ($mains as $main) {
@@ -99,7 +105,7 @@ class GiftRecommendationService
                 }
             }
 
-            foreach (array_keys((array) config('gift_builder.packaging', [])) as $packagingSlug) {
+            foreach ($packagingSlugs as $packagingSlug) {
                 foreach ($addonSets as $set) {
                     $priced = $this->priceCandidate($main, $set, $budgetBand, $packagingSlug);
                     if (! $priced || ($max !== null && (float) $priced['total'] > (float) $max)) {

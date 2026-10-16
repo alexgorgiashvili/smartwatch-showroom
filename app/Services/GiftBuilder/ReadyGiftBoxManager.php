@@ -16,7 +16,7 @@ class ReadyGiftBoxManager
     {
         return DB::transaction(function () use ($data): ReadyGiftBox {
             $box = ReadyGiftBox::query()->create($this->boxAttributes($data));
-            $this->syncItems($box, $data);
+            $this->syncItemsForCurrentMode($box, $data);
             $this->assertCanActivate($box);
 
             return $box->fresh(['items.product.variants', 'items.defaultVariant']);
@@ -27,7 +27,7 @@ class ReadyGiftBoxManager
     {
         return DB::transaction(function () use ($box, $data): ReadyGiftBox {
             $box->update($this->boxAttributes($data));
-            $this->syncItems($box, $data);
+            $this->syncItemsForCurrentMode($box, $data);
             $this->assertCanActivate($box);
 
             return $box->fresh(['items.product.variants', 'items.defaultVariant']);
@@ -36,6 +36,12 @@ class ReadyGiftBoxManager
 
     public function setActive(ReadyGiftBox $box, bool $active): ReadyGiftBox
     {
+        if ($active && (int) $box->pricing_version === 2 && ! (bool) config('gift_builder.pricing_v2_enabled', false)) {
+            throw ValidationException::withMessages([
+                'is_active' => 'V2 ყუთების საჯარო რეჟიმი ჯერ გამორთულია; draft-ის გააქტიურება ვერ მოხდება.',
+            ]);
+        }
+
         if ($active) {
             $box->load(['items.product.primaryImage', 'items.product.variants', 'items.defaultVariant']);
             $report = $this->availability->report($box);
@@ -54,6 +60,10 @@ class ReadyGiftBoxManager
     /** @return array<string, mixed> */
     private function boxAttributes(array $data): array
     {
+        if ((int) ($data['pricing_version'] ?? 1) === 2) {
+            $data['discount_type'] = 'none';
+            $data['discount_value'] = 0;
+        }
         $discountType = in_array(($data['discount_type'] ?? 'none'), ['none', 'fixed', 'percent'], true)
             ? $data['discount_type']
             : 'none';
@@ -69,12 +79,56 @@ class ReadyGiftBoxManager
             'cover_image_path' => $this->nullableString($data['cover_image_path'] ?? null),
             'theme_key' => $data['theme_key'] ?? 'grape',
             'packaging_slug' => $data['packaging_slug'] ?? 'standard',
+            'pricing_version' => (int) ($data['pricing_version'] ?? 1),
             'discount_type' => $discountType,
             'discount_value' => $discountType === 'none' ? 0 : max(0, (float) ($data['discount_value'] ?? 0)),
-            'is_active' => (bool) ($data['is_active'] ?? false),
+            'is_active' => (bool) ($data['is_active'] ?? false) && ((int) ($data['pricing_version'] ?? 1) !== 2 || (bool) config('gift_builder.pricing_v2_enabled', false)),
             'is_featured' => (bool) ($data['is_featured'] ?? false),
             'sort_order' => max(0, (int) ($data['sort_order'] ?? 0)),
         ];
+    }
+
+    private function syncItemsForCurrentMode(ReadyGiftBox $box, array $data): void
+    {
+        if ((int) $box->pricing_version === 2 || (int) ($data['pricing_version'] ?? 1) === 2) {
+            $this->syncItemsV2($box, $data);
+            return;
+        }
+        $this->syncItems($box, $data);
+    }
+
+    private function syncItemsV2(ReadyGiftBox $box, array $data): void
+    {
+        $items = collect((array) ($data['items'] ?? []))
+            ->filter(fn ($item): bool => is_array($item) && ! empty($item['product_id']))
+            ->values();
+        $productIds = $items->pluck('product_id')->map(fn ($id): int => (int) $id);
+        if ($productIds->count() < 2 || $productIds->count() > (int) config('gift_builder.max_items', 4)) {
+            throw ValidationException::withMessages(['items' => 'მონახაზში მიუთითე 2–4 განსხვავებული პროდუქტი.']);
+        }
+        if ($productIds->unique()->count() !== $productIds->count()) {
+            throw ValidationException::withMessages(['items' => 'ერთი პროდუქტი ბოქსში მხოლოდ ერთხელ შეიძლება.']);
+        }
+        $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
+        if ($products->count() !== $productIds->count()) {
+            throw ValidationException::withMessages(['items' => 'არჩეული პროდუქტი ვერ მოიძებნა.']);
+        }
+        $rows = [];
+        foreach ($items as $index => $item) {
+            $productId = (int) $item['product_id'];
+            $rows[] = [
+                'product_id' => $productId,
+                'default_variant_id' => $this->validatedVariantId($products->get($productId), $item['default_variant_id'] ?? null),
+                'role' => $index === 0 ? 'main' : 'addon',
+                'sort_order' => (int) ($item['sort_order'] ?? $index),
+            ];
+        }
+        $desiredProductIds = collect($rows)->pluck('product_id')->all();
+        foreach ($rows as $row) {
+            $box->items()->updateOrCreate(['product_id' => $row['product_id']], $row);
+        }
+        $box->items()->whereNotIn('product_id', $desiredProductIds)->delete();
+        $box->unsetRelation('items');
     }
 
     private function syncItems(ReadyGiftBox $box, array $data): void

@@ -153,6 +153,7 @@ if (root) {
 
 		const renderBox = (payload) => {
 			const box = payload.box || payload.gift_box || payload;
+		const pricingV2 = Number(box.pricing_version || 1) === 2;
 			const items = (Array.isArray(box.items) ? box.items : []).map(normalizeItem);
 			currentBox = { ...box, items };
 			title.textContent = box.title || box.label || copy.quick_buy_title || '';
@@ -178,7 +179,7 @@ if (root) {
 					<section class="gift-quick-product">
 						<img src="${escapeHtml(item.image)}" alt="" loading="lazy">
 						<div class="gift-quick-product-copy">
-							<p class="gift-quick-role">${escapeHtml(item.role === 'main' ? (copy.main_gift || 'Main gift') : (copy.addon || 'Add-on'))}</p>
+							<p class="gift-quick-role">${escapeHtml(pricingV2 ? (copy.box_product || 'Product') : (item.role === 'main' ? (copy.main_gift || 'Main gift') : (copy.addon || 'Add-on')))}</p>
 							<h3>${escapeHtml(item.name)}</h3>
 							<p class="gift-quick-price">${money(item.price)}</p>
 						</div>
